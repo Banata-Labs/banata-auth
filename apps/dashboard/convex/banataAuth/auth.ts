@@ -67,7 +67,7 @@ export function getConfig(): BanataAuthConfig {
 				: []),
 		],
 		authMethods: {
-			emailPassword: true,
+			emailPassword: false,
 			magicLink: false,
 			emailOtp: false,
 			passkey: false,

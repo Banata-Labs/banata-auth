@@ -33,16 +33,9 @@ export default function SignInPage() {
 				callbackURL={redirectUrl}
 				title="Sign in to Banata"
 				description="Access the Banata Auth dashboard"
+				socialOnly
 				socialProviders={[{ id: "github", label: "GitHub" }]}
 				logo={<LogoMark size={36} className="text-primary" />}
-				footer={
-					<p>
-						Don&apos;t have an account?{" "}
-						<a href="/sign-up" className="font-medium text-primary hover:underline">
-							Create one
-						</a>
-					</p>
-				}
 			/>
 		</div>
 	);

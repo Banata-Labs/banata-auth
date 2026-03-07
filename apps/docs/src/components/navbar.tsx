@@ -34,7 +34,7 @@ export function Navbar() {
 							API Reference
 						</Link>
 						<Link
-							href="https://github.com/banata-dev/banata-auth"
+							href="https://github.com/Banata-Labs/banata-auth"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-muted-foreground hover:text-foreground transition-colors"
