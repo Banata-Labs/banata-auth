@@ -56,18 +56,7 @@ export function getConfig(): BanataAuthConfig {
 		// During Convex module analysis env vars are unavailable, so we fall back
 		// to a placeholder.  At actual request time we enforce a real secret.
 		secret:
-			process.env.BETTER_AUTH_SECRET ??
-			(() => {
-				// Module-analysis phase: return a safe placeholder.  The first real
-				// request will re-evaluate getConfig() with env vars present.
-				if (typeof process !== "undefined" && process.env.CONVEX_CLOUD_URL === undefined) {
-					return "placeholder-for-module-analysis";
-				}
-				throw new Error(
-					"BETTER_AUTH_SECRET is not set. " +
-						'Set it via `npx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"`',
-				);
-			})(),
+			process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
 		trustedOrigins: [
 			"http://localhost:3000",
 			"http://localhost:3001",

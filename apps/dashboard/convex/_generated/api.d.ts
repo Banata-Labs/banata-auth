@@ -514,6 +514,18 @@ export declare const components: {
               }
             | {
                 data: {
+                  createdAt: number;
+                  expiresAt: number;
+                  intent: string;
+                  organizationId: string;
+                  projectId?: string;
+                  returnUrl?: string;
+                  token: string;
+                };
+                model: "portalSession";
+              }
+            | {
+                data: {
                   checkCount?: number;
                   createdAt: number;
                   domain: string;
@@ -1695,6 +1707,40 @@ export declare const components: {
                     | "metadata"
                     | "createdAt"
                     | "updatedAt"
+                    | "_id";
+                  operator?:
+                    | "lt"
+                    | "lte"
+                    | "gt"
+                    | "gte"
+                    | "eq"
+                    | "in"
+                    | "not_in"
+                    | "ne"
+                    | "contains"
+                    | "starts_with"
+                    | "ends_with";
+                  value:
+                    | string
+                    | number
+                    | boolean
+                    | Array<string>
+                    | Array<number>
+                    | null;
+                }>;
+              }
+            | {
+                model: "portalSession";
+                where?: Array<{
+                  connector?: "AND" | "OR";
+                  field:
+                    | "organizationId"
+                    | "intent"
+                    | "returnUrl"
+                    | "token"
+                    | "projectId"
+                    | "expiresAt"
+                    | "createdAt"
                     | "_id";
                   operator?:
                     | "lt"
@@ -2952,6 +2998,40 @@ export declare const components: {
                 }>;
               }
             | {
+                model: "portalSession";
+                where?: Array<{
+                  connector?: "AND" | "OR";
+                  field:
+                    | "organizationId"
+                    | "intent"
+                    | "returnUrl"
+                    | "token"
+                    | "projectId"
+                    | "expiresAt"
+                    | "createdAt"
+                    | "_id";
+                  operator?:
+                    | "lt"
+                    | "lte"
+                    | "gt"
+                    | "gte"
+                    | "eq"
+                    | "in"
+                    | "not_in"
+                    | "ne"
+                    | "contains"
+                    | "starts_with"
+                    | "ends_with";
+                  value:
+                    | string
+                    | number
+                    | boolean
+                    | Array<string>
+                    | Array<number>
+                    | null;
+                }>;
+              }
+            | {
                 model: "domainVerification";
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -3035,6 +3115,7 @@ export declare const components: {
             | "addonConfig"
             | "projectConfig"
             | "vaultSecret"
+            | "portalSession"
             | "domainVerification";
           offset?: number;
           paginationOpts: {
@@ -3111,6 +3192,7 @@ export declare const components: {
             | "addonConfig"
             | "projectConfig"
             | "vaultSecret"
+            | "portalSession"
             | "domainVerification";
           select?: Array<string>;
           where?: Array<{
@@ -4656,6 +4738,49 @@ export declare const components: {
                     | "metadata"
                     | "createdAt"
                     | "updatedAt"
+                    | "_id";
+                  operator?:
+                    | "lt"
+                    | "lte"
+                    | "gt"
+                    | "gte"
+                    | "eq"
+                    | "in"
+                    | "not_in"
+                    | "ne"
+                    | "contains"
+                    | "starts_with"
+                    | "ends_with";
+                  value:
+                    | string
+                    | number
+                    | boolean
+                    | Array<string>
+                    | Array<number>
+                    | null;
+                }>;
+              }
+            | {
+                model: "portalSession";
+                update: {
+                  createdAt?: number;
+                  expiresAt?: number;
+                  intent?: string;
+                  organizationId?: string;
+                  projectId?: string;
+                  returnUrl?: string;
+                  token?: string;
+                };
+                where?: Array<{
+                  connector?: "AND" | "OR";
+                  field:
+                    | "organizationId"
+                    | "intent"
+                    | "returnUrl"
+                    | "token"
+                    | "projectId"
+                    | "expiresAt"
+                    | "createdAt"
                     | "_id";
                   operator?:
                     | "lt"
@@ -6262,6 +6387,49 @@ export declare const components: {
                     | "metadata"
                     | "createdAt"
                     | "updatedAt"
+                    | "_id";
+                  operator?:
+                    | "lt"
+                    | "lte"
+                    | "gt"
+                    | "gte"
+                    | "eq"
+                    | "in"
+                    | "not_in"
+                    | "ne"
+                    | "contains"
+                    | "starts_with"
+                    | "ends_with";
+                  value:
+                    | string
+                    | number
+                    | boolean
+                    | Array<string>
+                    | Array<number>
+                    | null;
+                }>;
+              }
+            | {
+                model: "portalSession";
+                update: {
+                  createdAt?: number;
+                  expiresAt?: number;
+                  intent?: string;
+                  organizationId?: string;
+                  projectId?: string;
+                  returnUrl?: string;
+                  token?: string;
+                };
+                where?: Array<{
+                  connector?: "AND" | "OR";
+                  field:
+                    | "organizationId"
+                    | "intent"
+                    | "returnUrl"
+                    | "token"
+                    | "projectId"
+                    | "expiresAt"
+                    | "createdAt"
                     | "_id";
                   operator?:
                     | "lt"
