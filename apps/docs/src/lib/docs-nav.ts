@@ -87,6 +87,7 @@ export const docsNav: DocNavSection[] = [
 		items: [
 			{ slug: "env-vars", title: "Environment Variables" },
 			{ slug: "deploy", title: "Deploying to Production" },
+			{ slug: "self-hosting", title: "Self-Hosting" },
 		],
 	},
 ];

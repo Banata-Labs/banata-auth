@@ -203,7 +203,7 @@ export function Sidebar() {
 			<div className="mt-auto">
 				<div className="px-3 pb-2">
 					<Link
-						href="https://docs.banata.dev"
+						href="https://auth-docs.banata.dev"
 						target="_blank"
 						rel="noreferrer"
 						className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"

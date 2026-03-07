@@ -4,8 +4,8 @@
  * DO NOT EDIT MANUALLY -- regenerate with:
  *   bun run scripts/generate-search-index.ts
  *
- * Pages: 40
- * Total headings: 955
+ * Pages: 41
+ * Total headings: 946
  */
 
 export interface SearchIndexHeading {
@@ -29,14 +29,14 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
   {
     "slug": "introduction",
     "title": "Introduction",
-    "description": "Banata Auth is an open-source authentication infrastructure platform — a self-hostable, type-safe replacement for WorkOS, built on Better Auth, Convex, and Next.js.",
+    "description": "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS, built on Convex and Next.js.",
     "section": "Getting Started",
     "headings": [
       {
         "level": 2,
         "text": "What is Banata Auth?",
         "anchor": "what-is-banata-auth",
-        "snippet": "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS built on three proven technologies:"
+        "snippet": "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS that gives you everything you need to add enterprise-grade authentication to your application: u"
       },
       {
         "level": 2,
@@ -64,68 +64,32 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Architecture",
-        "anchor": "architecture",
-        "snippet": "Banata Auth follows a four-layer architecture where each layer has a clear responsibility:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 1: Convex Backend (@banata-auth/convex)",
-        "anchor": "layer-1-convex-backend-banata-authconvex",
-        "snippet": "All authentication logic runs inside Convex functions. Better Auth is instantiated server-side with a Convex database adapter, meaning:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 2: Next.js Proxy (@banata-auth/nextjs)",
-        "anchor": "layer-2-nextjs-proxy-banata-authnextjs",
-        "snippet": "A reverse proxy route handler at /api/auth/[...all] forwards browser requests to the Convex backend. This is necessary because:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 3: React Client (@banata-auth/react)",
-        "anchor": "layer-3-react-client-banata-authreact",
-        "snippet": "The React layer provides:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 4: Admin SDK (@banata-auth/sdk)",
-        "anchor": "layer-4-admin-sdk-banata-authsdk",
-        "snippet": "The TypeScript SDK provides server-side management of your entire auth system:"
+        "text": "How It Works",
+        "anchor": "how-it-works",
+        "snippet": "Banata Auth integrates into your Next.js + Convex application through a set of npm packages. You install them, configure your auth settings, and you're ready to go."
       },
       {
         "level": 2,
-        "text": "What's Included",
-        "anchor": "whats-included",
-        "snippet": "Banata Auth ships as a monorepo with 5 npm packages, a pre-built admin dashboard, and an example application:"
-      },
-      {
-        "level": 3,
         "text": "Packages",
         "anchor": "packages",
-        "snippet": ""
+        "snippet": "---"
       },
       {
-        "level": 3,
-        "text": "Applications",
-        "anchor": "applications",
-        "snippet": ""
-      },
-      {
-        "level": 3,
+        "level": 2,
         "text": "Authentication Methods",
         "anchor": "authentication-methods",
         "snippet": "Banata Auth supports 12 authentication methods, all configurable via the BanataAuthConfig object:"
       },
       {
-        "level": 3,
+        "level": 2,
         "text": "Enterprise Features",
         "anchor": "enterprise-features",
         "snippet": "---"
       },
       {
         "level": 2,
-        "text": "Security Model",
-        "anchor": "security-model",
+        "text": "Security",
+        "anchor": "security",
         "snippet": "Banata Auth implements defense-in-depth security:"
       },
       {
@@ -159,160 +123,46 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "<a href=\"/docs/quickstart\" className=\"block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors\"> <strong>Quick Start</strong>"
       }
     ],
-    "searchText": "introduction banata auth is an open-source authentication infrastructure platform — a self-hostable, type-safe replacement for workos, built on better auth, convex, and next.js. what is banata auth? banata auth is an open-source authentication infrastructure platform — a drop-in replacement for workos built on three proven technologies: why banata auth? the problem building authentication for modern saas applications means choosing between: the solution banata auth sits in the sweet spot: enterprise-grade auth infrastructure that you own and control. you get the developer experience of a managed service with the freedom of open source. key advantages open source (mit) — no vendor lock-in. fork it, modify it, self-host it. no per-user pricing, ever. enterprise-grade from day one — organizations, rbac, audit logs, webhooks, and mfa are built in, not architecture banata auth follows a four-layer architecture where each layer has a clear responsibility: layer 1: convex backend (@banata-auth/convex) all authentication logic runs inside convex functions. better auth is instantiated server-side with a convex database adapter, meaning: layer 2: next.js proxy (@banata-auth/nextjs) a reverse proxy route handler at /api/auth/[...all] forwards browser requests to the convex backend. this is necessary because: layer 3: react client (@banata-auth/react) the react layer provides: layer 4: admin sdk (@banata-auth/sdk) the typescript sdk provides server-side management of your entire auth system: what's included banata auth ships as a monorepo with 5 npm packages, a pre-built admin dashboard, and an example application: packages applications authentication methods banata auth supports 12 authentication methods, all configurable via the banataauthconfig object: enterprise features --- security model banata auth implements defense-in-depth security: how it compares vs. workos workos is the primary inspiration for banata auth. both provide authentication infrastructure with enterprise features. the key differences: vs. clerk clerk excels at developer experience with polished pre-built ui components. banata auth differs in: vs. auth0 auth0 is the incumbent enterprise auth platform. banata auth differs in: next steps <a href=\"/docs/quickstart\" classname=\"block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors\"> <strong>quick start</strong>"
+    "searchText": "introduction banata auth is an open-source authentication infrastructure platform — a drop-in replacement for workos, built on convex and next.js. what is banata auth? banata auth is an open-source authentication infrastructure platform — a drop-in replacement for workos that gives you everything you need to add enterprise-grade authentication to your application: u why banata auth? the problem building authentication for modern saas applications means choosing between: the solution banata auth sits in the sweet spot: enterprise-grade auth infrastructure that you own and control. you get the developer experience of a managed service with the freedom of open source. key advantages open source (mit) — no vendor lock-in. fork it, modify it, self-host it. no per-user pricing, ever. enterprise-grade from day one — organizations, rbac, audit logs, webhooks, and mfa are built in, not how it works banata auth integrates into your next.js + convex application through a set of npm packages. you install them, configure your auth settings, and you're ready to go. packages --- authentication methods banata auth supports 12 authentication methods, all configurable via the banataauthconfig object: enterprise features --- security banata auth implements defense-in-depth security: how it compares vs. workos workos is the primary inspiration for banata auth. both provide authentication infrastructure with enterprise features. the key differences: vs. clerk clerk excels at developer experience with polished pre-built ui components. banata auth differs in: vs. auth0 auth0 is the incumbent enterprise auth platform. banata auth differs in: next steps <a href=\"/docs/quickstart\" classname=\"block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors\"> <strong>quick start</strong>"
   },
   {
     "slug": "project-structure",
     "title": "Project Structure",
-    "description": "Detailed walkthrough of the Banata Auth monorepo â€” every package, every app, and how they fit together.",
+    "description": "Overview of the Banata Auth monorepo — packages, applications, and how they connect.",
     "section": "Getting Started",
     "headings": [
       {
         "level": 2,
-        "text": "Top-Level Structure",
-        "anchor": "top-level-structure",
-        "snippet": ""
-      },
-      {
-        "level": 2,
         "text": "Packages",
         "anchor": "packages",
-        "snippet": ""
+        "snippet": "Banata Auth ships as 5 npm packages that you install in your application:"
       },
       {
         "level": 3,
-        "text": "@banata-auth/shared (packages/shared)",
-        "anchor": "banata-authshared-packagesshared",
-        "snippet": "The foundation package â€” every other package depends on it. Contains no runtime dependencies on any framework."
-      },
-      {
-        "level": 3,
-        "text": "@banata-auth/sdk (packages/sdk)",
-        "anchor": "banata-authsdk-packagessdk",
-        "snippet": "The server-side admin SDK for managing your auth system programmatically. Used in backend services, admin scripts, and CI/CD pipelines."
-      },
-      {
-        "level": 3,
-        "text": "@banata-auth/react (packages/react)",
-        "anchor": "banata-authreact-packagesreact",
-        "snippet": "React integration with 3 entry points: main, /convex, and /plugins."
-      },
-      {
-        "level": 3,
-        "text": "@banata-auth/nextjs (packages/nextjs)",
-        "anchor": "banata-authnextjs-packagesnextjs",
-        "snippet": "Next.js integration with 4 entry points: main, /server, /client, /middleware."
-      },
-      {
-        "level": 3,
-        "text": "@banata-auth/convex (packages/convex)",
-        "anchor": "banata-authconvex-packagesconvex",
-        "snippet": "The Convex backend â€” the heart of the system. This is where Better Auth runs."
-      },
-      {
-        "level": 2,
-        "text": "Applications",
-        "anchor": "applications",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "apps/dashboard",
-        "anchor": "appsdashboard",
-        "snippet": "The admin dashboard â€” a full Next.js application for managing your Banata Auth deployment. This is what end-users (developers) use to manage users, organizations, SSO connections, API keys, branding"
-      },
-      {
-        "level": 3,
-        "text": "apps/example-app",
-        "anchor": "appsexample-app",
-        "snippet": "A reference implementation showing how to integrate Banata Auth into a Next.js + Convex project. This is the same setup described in the Quick Start guide."
-      },
-      {
-        "level": 3,
-        "text": "apps/auth-ui",
-        "anchor": "appsauth-ui",
-        "snippet": "Hosted auth pages â€” pre-built sign-in, sign-up, forgot password, and other auth-related pages that can be served at a custom domain."
-      },
-      {
-        "level": 3,
-        "text": "apps/docs",
-        "anchor": "appsdocs",
-        "snippet": "This documentation site â€” built with Next.js, MDX, and the same design system as the dashboard."
-      },
-      {
-        "level": 2,
-        "text": "Package Dependency Graph",
-        "anchor": "package-dependency-graph",
+        "text": "How They Connect",
+        "anchor": "how-they-connect",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Tooling",
-        "anchor": "tooling",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "tooling/typescript",
-        "anchor": "toolingtypescript",
-        "snippet": "Shared TypeScript configuration presets. All packages and apps extend from these:"
-      },
-      {
-        "level": 3,
-        "text": "tooling/tailwind",
-        "anchor": "toolingtailwind",
-        "snippet": "Shared Tailwind CSS configuration with the oklch color system used across dashboard, docs, and UI components."
-      },
-      {
-        "level": 3,
-        "text": "tooling/biome",
-        "anchor": "toolingbiome",
-        "snippet": "Shared Biome configuration for linting and formatting. Biome replaces ESLint + Prettier with a single, fast tool."
+        "text": "Your Project Structure",
+        "anchor": "your-project-structure",
+        "snippet": "After following the Quick Start, your project should look like this:"
       },
       {
         "level": 2,
-        "text": "Build System",
-        "anchor": "build-system",
-        "snippet": "The monorepo uses Turborepo for build orchestration with Bun as the package manager."
-      },
-      {
-        "level": 3,
-        "text": "Turbo Pipeline",
-        "anchor": "turbo-pipeline",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Commands",
-        "anchor": "commands",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Package Publishing",
-        "anchor": "package-publishing",
-        "snippet": "Packages are published to npm using Changesets:"
-      },
-      {
-        "level": 2,
-        "text": "Database Schema (26 Tables)",
-        "anchor": "database-schema-26-tables",
-        "snippet": "The Convex backend uses 26 tables to store all auth data. These are defined in @banata-auth/convex/schema:"
-      },
-      {
-        "level": 2,
-        "text": "CI/CD",
-        "anchor": "cicd",
-        "snippet": "The project includes GitHub Actions workflows:"
+        "text": "Key Files Explained",
+        "anchor": "key-files-explained",
+        "snippet": "---"
       },
       {
         "level": 2,
         "text": "What's Next",
         "anchor": "whats-next",
-        "snippet": "Quick Start â€” Set up Banata Auth in your project SDK Reference â€” Complete API reference for @banata-auth/sdk Convex Integration â€” Deep dive into the backend configuration"
+        "snippet": "Quick Start — Step-by-step setup guide Convex Integration — Backend configuration details Next.js Integration — Route handler and middleware Self-Hosting — Full architecture and deployment guide"
       }
     ],
-    "searchText": "project structure detailed walkthrough of the banata auth monorepo â€” every package, every app, and how they fit together. top-level structure packages @banata-auth/shared (packages/shared) the foundation package â€” every other package depends on it. contains no runtime dependencies on any framework. @banata-auth/sdk (packages/sdk) the server-side admin sdk for managing your auth system programmatically. used in backend services, admin scripts, and ci/cd pipelines. @banata-auth/react (packages/react) react integration with 3 entry points: main, /convex, and /plugins. @banata-auth/nextjs (packages/nextjs) next.js integration with 4 entry points: main, /server, /client, /middleware. @banata-auth/convex (packages/convex) the convex backend â€” the heart of the system. this is where better auth runs. applications apps/dashboard the admin dashboard â€” a full next.js application for managing your banata auth deployment. this is what end-users (developers) use to manage users, organizations, sso connections, api keys, branding apps/example-app a reference implementation showing how to integrate banata auth into a next.js + convex project. this is the same setup described in the quick start guide. apps/auth-ui hosted auth pages â€” pre-built sign-in, sign-up, forgot password, and other auth-related pages that can be served at a custom domain. apps/docs this documentation site â€” built with next.js, mdx, and the same design system as the dashboard. package dependency graph tooling tooling/typescript shared typescript configuration presets. all packages and apps extend from these: tooling/tailwind shared tailwind css configuration with the oklch color system used across dashboard, docs, and ui components. tooling/biome shared biome configuration for linting and formatting. biome replaces eslint + prettier with a single, fast tool. build system the monorepo uses turborepo for build orchestration with bun as the package manager. turbo pipeline commands package publishing packages are published to npm using changesets: database schema (26 tables) the convex backend uses 26 tables to store all auth data. these are defined in @banata-auth/convex/schema: ci/cd the project includes github actions workflows: what's next quick start â€” set up banata auth in your project sdk reference â€” complete api reference for @banata-auth/sdk convex integration â€” deep dive into the backend configuration"
+    "searchText": "project structure overview of the banata auth monorepo — packages, applications, and how they connect. packages banata auth ships as 5 npm packages that you install in your application: how they connect your project structure after following the quick start, your project should look like this: key files explained --- what's next quick start — step-by-step setup guide convex integration — backend configuration details next.js integration — route handler and middleware self-hosting — full architecture and deployment guide"
   },
   {
     "slug": "quickstart",
@@ -2389,7 +2239,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "createRouteHandler(options?)",
+        "text": "createRouteHandler(options)",
         "anchor": "createroutehandleroptions",
         "snippet": ""
       },
@@ -2508,7 +2358,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Convex — Backend configuration and plugin system React — Client-side hooks and components Environment Variables — All configuration options"
       }
     ],
-    "searchText": "next.js complete reference for @banata-auth/nextjs — reverse proxy route handler, middleware, server auth utilities, and preloaded queries. entry points --- route handler (reverse proxy) the route handler acts as a reverse proxy — it forwards auth requests from your next.js app to the convex .site url where better auth is running. this keeps session cookies on your domain. createroutehandler(options?) how the proxy works browser sends request to /api/auth/sign-in/email route handler receives the request forwards to {convex_site_url}/api/auth/sign-in/email preserves all headers and body middleware (route protection) the middleware checks for the better auth session cookie on incoming requests and redirects unauthenticated users. banataauthproxy(options) / banataauthmiddleware(options) these are aliases for the same function: route matching routes are matched using regex with ^...$ anchoring. this means: how middleware works request comes in check if the route matches any publicroutes → allow through check for better auth session cookie (via getsessioncookie()) cookie found → set x-pathname header and allow through the x-pathname header the middleware sets an x-pathname header on authenticated requests. you can use this in your server components to know the current path: server utilities createbanataauthserver(options) a factory that returns server-side auth utilities: isauthenticated() check if the current request has a valid session. use in server components and server actions: gettoken() get a convex-compatible jwt token for making authenticated queries: preloadauthquery(query, args) preload an authenticated convex query in a server component, then consume it client-side without waterfalls: fetchauthquery(query, args) / fetchauthmutation(mutation, args) / fetchauthaction(action, args) execute authenticated convex operations from server components and server actions: client hook usepreloadedauthquery(preloadedquery) consume a preloaded auth query on the client side: two route handler approaches there are two ways to set up the auth route handler: approach 1: createroutehandler (from @banata-auth/nextjs) simple proxy — just forwards requests: approach 2: convexbetterauthnextjs (from @convex-dev/better-auth) full-featured — provides the handler plus server utilities: complete setup example what's next convex — backend configuration and plugin system react — client-side hooks and components environment variables — all configuration options"
+    "searchText": "next.js complete reference for @banata-auth/nextjs — reverse proxy route handler, middleware, server auth utilities, and preloaded queries. entry points --- route handler (reverse proxy) the route handler acts as a reverse proxy — it forwards auth requests from your next.js app to the convex .site url where better auth is running. this keeps session cookies on your domain. createroutehandler(options) how the proxy works browser sends request to /api/auth/sign-in/email route handler receives the request forwards to {convex_site_url}/api/auth/sign-in/email preserves all headers and body middleware (route protection) the middleware checks for the better auth session cookie on incoming requests and redirects unauthenticated users. banataauthproxy(options) / banataauthmiddleware(options) these are aliases for the same function: route matching routes are matched using regex with ^...$ anchoring. this means: how middleware works request comes in check if the route matches any publicroutes → allow through check for better auth session cookie (via getsessioncookie()) cookie found → set x-pathname header and allow through the x-pathname header the middleware sets an x-pathname header on authenticated requests. you can use this in your server components to know the current path: server utilities createbanataauthserver(options) a factory that returns server-side auth utilities: isauthenticated() check if the current request has a valid session. use in server components and server actions: gettoken() get a convex-compatible jwt token for making authenticated queries: preloadauthquery(query, args) preload an authenticated convex query in a server component, then consume it client-side without waterfalls: fetchauthquery(query, args) / fetchauthmutation(mutation, args) / fetchauthaction(action, args) execute authenticated convex operations from server components and server actions: client hook usepreloadedauthquery(preloadedquery) consume a preloaded auth query on the client side: two route handler approaches there are two ways to set up the auth route handler: approach 1: createroutehandler (from @banata-auth/nextjs) simple proxy — just forwards requests: approach 2: convexbetterauthnextjs (from @convex-dev/better-auth) full-featured — provides the handler plus server utilities: complete setup example what's next convex — backend configuration and plugin system react — client-side hooks and components environment variables — all configuration options"
   },
   {
     "slug": "react",
@@ -2709,7 +2559,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Resource Classes",
         "anchor": "resource-classes",
-        "snippet": "The SDK exposes 12 resource classes via the BanataAuth instance:"
+        "snippet": "The SDK exposes 14 resource classes via the BanataAuth instance:"
       },
       {
         "level": 2,
@@ -2874,7 +2724,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "React -- Client-side hooks and components Next.js -- Server utilities and middleware Convex -- Backend configuration reference"
       }
     ],
-    "searchText": "sdk reference complete api reference for @banata-auth/sdk -- the typescript admin sdk with 14 resource classes for server-side auth management. initialization banataauthoptions --- http client behavior all sdk methods use post requests (convex http actions accept post bodies). the internal httpclient provides: error handling pagination all list methods return paginated results: resource classes the sdk exposes 12 resource classes via the banataauth instance: usermanagement listusers(options?) getuser(userid) createuser(data) updateuser({ userid, ...data }) deleteuser(userid) banuser({ userid, ... }) / unbanuser(userid) listusersessions(userid) revokesession(sessionid) / revokeallsessions(userid) setrole(userid, role) impersonateuser(userid) / stopimpersonating() setuserpassword(userid, newpassword) haspermission(...) organizations crud members invitations sso directorysync auditlogs webhooks rbac events portal vault domains what's next react -- client-side hooks and components next.js -- server utilities and middleware convex -- backend configuration reference"
+    "searchText": "sdk reference complete api reference for @banata-auth/sdk -- the typescript admin sdk with 14 resource classes for server-side auth management. initialization banataauthoptions --- http client behavior all sdk methods use post requests (convex http actions accept post bodies). the internal httpclient provides: error handling pagination all list methods return paginated results: resource classes the sdk exposes 14 resource classes via the banataauth instance: usermanagement listusers(options?) getuser(userid) createuser(data) updateuser({ userid, ...data }) deleteuser(userid) banuser({ userid, ... }) / unbanuser(userid) listusersessions(userid) revokesession(sessionid) / revokeallsessions(userid) setrole(userid, role) impersonateuser(userid) / stopimpersonating() setuserpassword(userid, newpassword) haspermission(...) organizations crud members invitations sso directorysync auditlogs webhooks rbac events portal vault domains what's next react -- client-side hooks and components next.js -- server utilities and middleware convex -- backend configuration reference"
   },
   {
     "slug": "shared",
@@ -5490,12 +5340,6 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": ""
       },
       {
-        "level": 3,
-        "text": "Rotate Bearer Token",
-        "anchor": "rotate-bearer-token",
-        "snippet": "If a bearer token is compromised or needs to be rotated:"
-      },
-      {
         "level": 2,
         "text": "API Endpoints",
         "anchor": "api-endpoints",
@@ -5532,7 +5376,118 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "You can subscribe to SCIM-related events via webhooks to trigger custom logic in your application when directory changes occur. The following webhook event types are available:"
       }
     ],
-    "searchText": "directory sync (scim) automated user provisioning and deprovisioning via scim 2.0 directory synchronization. overview directory sync enables automated user provisioning and deprovisioning between your identity provider (idp) and banata auth using the scim 2.0 protocol. when an employee is added, updated, or removed i how it works directories and organizations each scim directory is tied to a specific organization in banata auth. this means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped an push-based synchronization banata auth exposes a scim 2.0-compliant endpoint for each directory. the idp is configured to push user and group changes to this endpoint. whenever a change occurs in the idp (a new hire, a terminat authentication all scim endpoints are authenticated using a bearer token. each directory has its own unique token, generated at the time of directory creation. the idp must include this token in the authorization he supported scim events banata auth processes the following scim operations: dashboard setup step 1: navigate to directory sync open the banata auth dashboard and navigate to the directory sync section under your project settings. this page lists all configured scim directories across your organizations. step 2: create a directory click create directory and fill in the required fields: step 3: copy the scim endpoint and bearer token after creating the directory, banata auth will display: step 4: configure your identity provider use the scim endpoint url and bearer token to configure provisioning in your idp. the exact steps vary by provider: sdk usage the banata auth sdk provides methods for managing scim directories programmatically. initialize the client list scim directories retrieve all configured scim directories across your project: get a specific directory retrieve details about a single directory by its id: create a directory delete a directory rotate bearer token if a bearer token is compromised or needs to be rotated: api endpoints create a scim directory list all directories directory object each scim directory is represented by the following object: scim events when the idp pushes changes to the scim endpoint, banata auth processes each operation and triggers the corresponding internal action. the table below summarizes the supported events and their effects webhooks for scim events you can subscribe to scim-related events via webhooks to trigger custom logic in your application when directory changes occur. the following webhook event types are available:"
+    "searchText": "directory sync (scim) automated user provisioning and deprovisioning via scim 2.0 directory synchronization. overview directory sync enables automated user provisioning and deprovisioning between your identity provider (idp) and banata auth using the scim 2.0 protocol. when an employee is added, updated, or removed i how it works directories and organizations each scim directory is tied to a specific organization in banata auth. this means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped an push-based synchronization banata auth exposes a scim 2.0-compliant endpoint for each directory. the idp is configured to push user and group changes to this endpoint. whenever a change occurs in the idp (a new hire, a terminat authentication all scim endpoints are authenticated using a bearer token. each directory has its own unique token, generated at the time of directory creation. the idp must include this token in the authorization he supported scim events banata auth processes the following scim operations: dashboard setup step 1: navigate to directory sync open the banata auth dashboard and navigate to the directory sync section under your project settings. this page lists all configured scim directories across your organizations. step 2: create a directory click create directory and fill in the required fields: step 3: copy the scim endpoint and bearer token after creating the directory, banata auth will display: step 4: configure your identity provider use the scim endpoint url and bearer token to configure provisioning in your idp. the exact steps vary by provider: sdk usage the banata auth sdk provides methods for managing scim directories programmatically. initialize the client list scim directories retrieve all configured scim directories across your project: get a specific directory retrieve details about a single directory by its id: create a directory delete a directory api endpoints create a scim directory list all directories directory object each scim directory is represented by the following object: scim events when the idp pushes changes to the scim endpoint, banata auth processes each operation and triggers the corresponding internal action. the table below summarizes the supported events and their effects webhooks for scim events you can subscribe to scim-related events via webhooks to trigger custom logic in your application when directory changes occur. the following webhook event types are available:"
+  },
+  {
+    "slug": "self-hosting",
+    "title": "Self-Hosting",
+    "description": "Run Banata Auth on your own infrastructure — architecture overview, project structure, deployment, and configuration.",
+    "section": "Advanced",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Architecture",
+        "anchor": "architecture",
+        "snippet": "Banata Auth follows a four-layer architecture where each layer has a clear responsibility:"
+      },
+      {
+        "level": 3,
+        "text": "Layer 1: Convex Backend (@banata-auth/convex)",
+        "anchor": "layer-1-convex-backend-banata-authconvex",
+        "snippet": "All authentication logic runs inside Convex functions. Better Auth is instantiated server-side with a Convex database adapter, meaning:"
+      },
+      {
+        "level": 3,
+        "text": "Layer 2: Next.js Proxy (@banata-auth/nextjs)",
+        "anchor": "layer-2-nextjs-proxy-banata-authnextjs",
+        "snippet": "A reverse proxy route handler at /api/auth/[...all] forwards browser requests to the Convex backend. This is necessary because:"
+      },
+      {
+        "level": 3,
+        "text": "Layer 3: React Client (@banata-auth/react)",
+        "anchor": "layer-3-react-client-banata-authreact",
+        "snippet": "The React layer provides:"
+      },
+      {
+        "level": 3,
+        "text": "Layer 4: Admin SDK (@banata-auth/sdk)",
+        "anchor": "layer-4-admin-sdk-banata-authsdk",
+        "snippet": "The TypeScript SDK provides server-side management of your entire auth system:"
+      },
+      {
+        "level": 2,
+        "text": "Monorepo Structure",
+        "anchor": "monorepo-structure",
+        "snippet": "Banata Auth is organized as a Turborepo monorepo with 5 npm packages, 4 applications, and shared tooling."
+      },
+      {
+        "level": 3,
+        "text": "Package Dependency Graph",
+        "anchor": "package-dependency-graph",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Package Details",
+        "anchor": "package-details",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Database Schema (26 Tables)",
+        "anchor": "database-schema-26-tables",
+        "snippet": "The Convex backend uses 26 tables to store all auth data:"
+      },
+      {
+        "level": 2,
+        "text": "Plugin System (15 Plugins)",
+        "anchor": "plugin-system-15-plugins",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Build System",
+        "anchor": "build-system",
+        "snippet": "The monorepo uses Turborepo for build orchestration with Bun as the package manager."
+      },
+      {
+        "level": 3,
+        "text": "Commands",
+        "anchor": "commands",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Package Publishing",
+        "anchor": "package-publishing",
+        "snippet": "Packages are published to npm using Changesets:"
+      },
+      {
+        "level": 2,
+        "text": "CI/CD",
+        "anchor": "cicd",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Self-Hosting Deployment",
+        "anchor": "self-hosting-deployment",
+        "snippet": "To self-host Banata Auth, you need:"
+      },
+      {
+        "level": 3,
+        "text": "Required Infrastructure",
+        "anchor": "required-infrastructure",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "What's Next",
+        "anchor": "whats-next",
+        "snippet": "Quick Start — Set up Banata Auth in your project Deploy — Production deployment guide Environment Variables — Complete variable reference Convex Integration — Backend configuration deep dive"
+      }
+    ],
+    "searchText": "self-hosting run banata auth on your own infrastructure — architecture overview, project structure, deployment, and configuration. architecture banata auth follows a four-layer architecture where each layer has a clear responsibility: layer 1: convex backend (@banata-auth/convex) all authentication logic runs inside convex functions. better auth is instantiated server-side with a convex database adapter, meaning: layer 2: next.js proxy (@banata-auth/nextjs) a reverse proxy route handler at /api/auth/[...all] forwards browser requests to the convex backend. this is necessary because: layer 3: react client (@banata-auth/react) the react layer provides: layer 4: admin sdk (@banata-auth/sdk) the typescript sdk provides server-side management of your entire auth system: monorepo structure banata auth is organized as a turborepo monorepo with 5 npm packages, 4 applications, and shared tooling. package dependency graph package details --- database schema (26 tables) the convex backend uses 26 tables to store all auth data: plugin system (15 plugins) --- build system the monorepo uses turborepo for build orchestration with bun as the package manager. commands package publishing packages are published to npm using changesets: ci/cd --- self-hosting deployment to self-host banata auth, you need: required infrastructure --- what's next quick start — set up banata auth in your project deploy — production deployment guide environment variables — complete variable reference convex integration — backend configuration deep dive"
   },
   {
     "slug": "settings",

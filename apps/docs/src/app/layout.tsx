@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 		template: "%s - Banata Auth Docs",
 	},
 	description:
-		"Open-source authentication infrastructure. Drop-in WorkOS replacement built on Better Auth + Convex + Next.js.",
-	metadataBase: new URL("https://docs.banata.dev"),
+		"Open-source authentication infrastructure. Drop-in WorkOS replacement built on Convex + Next.js.",
+	metadataBase: new URL("https://auth-docs.banata.dev"),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
