@@ -1,0 +1,307 @@
+---
+title: "Projects"
+description: "Multi-tenant project isolation with per-project users, organizations, branding, and configuration."
+section: "Infrastructure"
+order: 16
+---
+
+Projects are the foundation of **multi-tenant isolation** in Banata Auth. They allow a single Banata Auth deployment to serve multiple independent applications, each with its own users, organizations, branding, and configuration.
+
+---
+
+## Why Projects?
+
+Consider a software engineering firm that builds and operates authentication for several client products from a single dashboard. Without project isolation, all users, organizations, email templates, roles, and audit logs would be mixed together. With projects, each client product gets a fully isolated auth tenant:
+
+- **Project A** ("Twitter Clone") has its own user base, branding, roles, and SSO providers.
+- **Project B** ("E-Commerce Platform") has a completely separate set of users, organizations, and permissions.
+- **Both** are managed from the same admin dashboard by the firm's engineering team.
+
+Switching projects in the dashboard shows a completely **clean slate** -- zero data spillover between projects.
+
+---
+
+## Concepts
+
+### Project
+
+A **project** is a fully isolated auth tenant. Everything that constitutes an application's auth system lives within a project boundary:
+
+| Isolated per project | Description |
+|---|---|
+| Users | User accounts and profiles |
+| Sessions | Active sessions and tokens |
+| Accounts | Linked OAuth/social accounts |
+| Organizations | Multi-tenant workspaces |
+| Members | Organization memberships |
+| Invitations | Pending org invitations |
+| API keys | Programmatic access keys |
+| Branding | Colors, logo, custom CSS, fonts |
+| Email templates | Customized auth and transactional emails |
+| Email config | Per-email-type enable/disable toggles |
+| Email provider config | Active email provider and API keys |
+| Roles | Custom RBAC role definitions |
+| Permissions | Custom RBAC permission definitions |
+| Resource types | Fine-grained authorization resource types |
+| Dashboard config | Runtime configuration overrides |
+| Webhook endpoints | Registered webhook URLs and secrets |
+| Domain configs | Service domain settings (email, auth API, admin portal) |
+| Redirect configs | Redirect URIs and callback URLs |
+| Action configs | Automated event-triggered webhook actions |
+| Radar config | Bot protection / rate limiting settings |
+| Addon configs | Third-party integration settings |
+| Audit events | All auditable auth events |
+| SSO connections | SAML/OIDC enterprise SSO providers |
+| SCIM directories | Directory sync configurations |
+| Vault secrets | Encrypted secrets (envelope encryption) |
+| Domain verifications | Domain ownership verification records |
+
+The only entities shared across projects are **dashboard admin users** (the people who log in to the admin dashboard itself).
+
+---
+
+## Data Model
+
+### Project
+
+```typescript
+interface Project {
+  id: string;
+  name: string;            // e.g., "Twitter Clone"
+  slug: string;            // URL-friendly, unique (e.g., "twitter-clone")
+  description?: string;    // Optional description (max 500 chars)
+  logoUrl?: string;        // Project logo URL
+  ownerId: string;         // Dashboard admin who created the project
+  createdAt: number;       // Unix timestamp (ms)
+  updatedAt: number;
+}
+```
+
+Slug validation: lowercase alphanumeric characters and hyphens only (`/^[a-z0-9-]+$/`), 1-100 characters.
+
+### Project Scoping
+
+Every record in the database (except the `project` table itself) has an optional `projectId` field. This field links the record to its parent project. Records without a `projectId` are excluded from dashboard views (strict isolation).
+
+All 33 non-project tables have a `projectId` index for efficient filtering.
+
+---
+
+## Default Bootstrapping
+
+On the first dashboard load, the dashboard calls the `ensure-default` endpoint. If no projects exist in the database and `autoCreateDefault` is enabled (the default), Banata Auth automatically creates:
+
+1. A **"Default Project"** with slug `default`.
+2. A `super_admin` role seeded with all built-in permissions (23 permissions).
+
+No default organization is created automatically. Organizations are created explicitly by developers when needed.
+
+### Plugin Options
+
+```typescript
+import { projectsPlugin } from "@banata-auth/convex/plugins";
+
+projectsPlugin({
+  autoCreateDefault: true,               // Default: true
+  defaultProjectName: "Default Project", // Default: "Default Project"
+});
+```
+
+Set `autoCreateDefault: false` to disable automatic bootstrapping and require manual project creation.
+
+---
+
+## Dashboard Usage
+
+### Project Switcher
+
+The dashboard sidebar includes a **ProjectSwitcher** component that lists all projects. Selecting a project updates the active scope, and all subsequent API calls from the dashboard are automatically scoped to that project.
+
+### Automatic Scope Injection
+
+The dashboard API layer automatically injects the active `projectId` into every outgoing POST request body, unless the endpoint is scope-exempt (project management endpoints themselves are exempt). This means dashboard components do not need to manually pass scope identifiers.
+
+```
+Request to /api/auth/admin/list-users
+  -> Body automatically includes { projectId: "..." }
+
+Request to /api/auth/banata/projects/list
+  -> Body is NOT modified (scope-exempt)
+```
+
+The client-side cache is also keyed by project, so switching projects does not return stale data from a different project.
+
+---
+
+## SDK Usage
+
+The `@banata-auth/sdk` provides a `Projects` resource for programmatic management of projects.
+
+### Initialize the SDK
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const client = new BanataAuth({
+  apiKey: "sk_live_...",
+  baseUrl: "https://your-deployment.convex.site",
+});
+```
+
+### List All Projects
+
+```typescript
+const projects = await client.projects.listProjects();
+
+for (const project of projects) {
+  console.log(`${project.name} (${project.slug})`);
+}
+```
+
+### Create a Project
+
+Creating a project seeds RBAC permissions and a `super_admin` role automatically.
+
+```typescript
+const result = await client.projects.createProject({
+  name: "Twitter Clone",
+  slug: "twitter-clone",
+  description: "Social media auth backend",
+});
+
+if (result.success) {
+  console.log(`Project: ${result.project.name} (${result.project.id})`);
+}
+```
+
+### Get a Project
+
+```typescript
+const project = await client.projects.getProject("project-id-here");
+
+if (project) {
+  console.log(project.name, project.slug);
+}
+```
+
+### Update a Project
+
+```typescript
+const result = await client.projects.updateProject("project-id-here", {
+  name: "Twitter Clone v2",
+  description: "Updated social media auth",
+});
+```
+
+### Delete a Project
+
+Deleting a project removes the project record. Note that this does not cascade-delete project-scoped data (users, organizations, etc.) which requires a separate migration.
+
+```typescript
+await client.projects.deleteProject("project-id-here");
+```
+
+### Bootstrap Default Project
+
+Typically called by the dashboard on first load. If no projects exist, creates a "Default Project" with seeded RBAC permissions.
+
+```typescript
+const result = await client.projects.ensureDefaultProject();
+
+if (result.created) {
+  console.log("Default project created:", result.project.name);
+} else {
+  console.log("Projects already exist:", result.project?.name);
+}
+```
+
+---
+
+## API Endpoints
+
+All project management endpoints are under `/api/auth/banata/projects/`. Every endpoint requires admin authentication.
+
+| Method | Path | Description | Body |
+|---|---|---|---|
+| `POST` | `/projects/list` | List all projects | (none) |
+| `POST` | `/projects/get` | Get a project by ID | `{ id }` |
+| `POST` | `/projects/create` | Create project + seed RBAC | `{ name, slug, description?, logoUrl? }` |
+| `POST` | `/projects/update` | Update project metadata | `{ id, name?, slug?, description?, logoUrl? }` |
+| `POST` | `/projects/delete` | Delete project record | `{ id }` |
+| `POST` | `/projects/ensure-default` | Bootstrap default project if none exist | (none) |
+
+### Validation Rules
+
+- **Project slug**: 1-100 characters, lowercase alphanumeric with hyphens (`/^[a-z0-9-]+$/`), must be unique across all projects.
+- **Project name**: 1-100 characters.
+- **Description**: Max 500 characters.
+- **Logo URL**: Must be a valid URL.
+
+### Response Examples
+
+**Create Project**
+
+```json
+{
+  "success": true,
+  "project": {
+    "id": "jh77abc123def456...",
+    "name": "Twitter Clone",
+    "slug": "twitter-clone",
+    "ownerId": "jh77xyz789...",
+    "createdAt": 1709337600000,
+    "updatedAt": 1709337600000
+  }
+}
+```
+
+---
+
+## Migrations
+
+Banata Auth includes built-in migrations for managing project data. These run inside the Convex component via CLI.
+
+### Backfill Project IDs
+
+If you have existing records that were created before project isolation was enforced, they may be missing `projectId`. These records are hidden from dashboard views. To assign them to a project:
+
+```bash
+# Auto-detect first project:
+npx convex run --component banataAuth migrations:backfillProjectId
+
+# Target a specific project:
+npx convex run --component banataAuth migrations:backfillProjectId '{"targetProjectId": "abc123"}'
+```
+
+### Clear All Data
+
+For a complete fresh start (wipes ALL records from ALL tables):
+
+```bash
+npx convex run --component banataAuth migrations:clearAllData
+```
+
+All migrations are batched. If a migration returns `done: false`, re-run with the `startFromTable` value from the response.
+
+---
+
+## Security Considerations
+
+1. **Admin-only access**: All project management endpoints require admin authentication. Regular users cannot create, modify, or delete projects.
+
+2. **Cascade on delete**: Deleting a project removes only the project record. Project-scoped data (users, sessions, organizations, etc.) is not automatically cascade-deleted. Run the `clearAllData` migration or plan data cleanup separately before deleting a project.
+
+3. **Scope injection**: The dashboard automatically injects `projectId` into API calls. Server-side integrations using the SDK should ensure they are calling the correct project's endpoints.
+
+4. **Strict isolation**: Records without `projectId` are excluded from all dashboard views. This prevents legacy/orphaned data from appearing in any project.
+
+---
+
+## What's Next
+
+- **[API Keys](/docs/api-keys)** -- Programmatic access with scoped API keys
+- **[SDK Reference](/docs/sdk)** -- Complete API reference for all SDK methods
+- **[Webhooks](/docs/webhooks)** -- Configure webhook endpoints per project
+- **[Domains](/docs/domains)** -- Set up custom domains per project
+- **[Redirects](/docs/redirects)** -- Configure redirect URIs per project
+- **[Radar / Bot Protection](/docs/radar)** -- Project-specific bot protection settings

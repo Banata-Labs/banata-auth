@@ -1,0 +1,6 @@
+{
+  "headed": true,
+  "allowedDomains": ["localhost:3000", "*.convex.cloud", "*.convex.site"],
+  "contentBoundaries": true,
+  "maxOutput": 50000
+}

@@ -1,0 +1,581 @@
+---
+title: "SDK Reference"
+description: "Complete API reference for @banata-auth/sdk -- the TypeScript admin SDK with 14 resource classes for server-side auth management."
+section: "Packages"
+order: 14
+---
+
+The `@banata-auth/sdk` package provides a **server-side TypeScript SDK** for managing your Banata Auth deployment programmatically. It's used for admin operations, backend integrations, CI/CD scripts, and any server-side code that needs to manage users, organizations, or configuration.
+
+```bash
+npm install @banata-auth/sdk
+```
+
+---
+
+## Initialization
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+// Option 1: API key string
+const banata = new BanataAuth("ba_live_your-api-key");
+
+// Option 2: Options object
+const banata = new BanataAuth({
+  apiKey: "ba_live_your-api-key",
+  baseUrl: "https://your-deployment.convex.site",  // Custom base URL
+  timeout: 30000,   // Request timeout in ms (default: 30000)
+  retries: 3,       // Retry count on 5xx errors (default: 3)
+});
+```
+
+### `BanataAuthOptions`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `apiKey` | `string` | Required | Your API key (starts with `ba_` or `ba_live_`) |
+| `baseUrl` | `string` | Auto-detected | Convex `.site` URL for your deployment |
+| `timeout` | `number` | `30000` | Request timeout in milliseconds |
+| `retries` | `number` | `3` | Number of retries on 5xx errors |
+
+---
+
+## HTTP Client Behavior
+
+All SDK methods use POST requests (Convex HTTP actions accept POST bodies). The internal `HttpClient` provides:
+
+- **Automatic retries** -- On 5xx server errors, the client retries with exponential backoff (`attempt * 1000ms` delay).
+- **Timeout** -- Requests are aborted after the configured timeout using `AbortController`.
+- **Typed errors** -- Non-2xx responses are converted to typed errors via `createErrorFromStatus()` from `@banata-auth/shared`.
+
+### Error Handling
+
+```typescript
+import { AuthenticationError, NotFoundError, ValidationError } from "@banata-auth/shared";
+
+try {
+  const user = await banata.users.getUser("usr_01HXYZ...");
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    console.log("User not found");
+  } else if (error instanceof AuthenticationError) {
+    console.log("Invalid API key");
+  } else if (error instanceof ValidationError) {
+    console.log("Invalid input:", error.message);
+  }
+}
+```
+
+### Pagination
+
+All list methods return paginated results:
+
+```typescript
+interface PaginatedResult<T> {
+  data: T[];
+  listMetadata: {
+    before: string | null;  // Cursor for previous page
+    after: string | null;   // Cursor for next page
+  };
+}
+```
+
+```typescript
+// First page
+const page1 = await banata.users.listUsers({ limit: 20 });
+
+// Next page
+if (page1.listMetadata.after) {
+  const page2 = await banata.users.listUsers({
+    limit: 20,
+    after: page1.listMetadata.after,
+  });
+}
+```
+
+---
+
+## Resource Classes
+
+The SDK exposes **14 resource classes** via the `BanataAuth` instance:
+
+| Property | Class | Alias |
+|---|---|---|
+| `banata.users` | `UserManagement` | Also `banata.userManagement` |
+| `banata.organizations` | `Organizations` | Also `banata.orgs` |
+| `banata.sso` | `SSO` | -- |
+| `banata.directories` | `DirectorySync` | Also `banata.directorySync` |
+| `banata.auditLogs` | `AuditLogs` | -- |
+| `banata.events` | `Events` | -- |
+| `banata.webhooks` | `Webhooks` | -- |
+| `banata.portal` | `Portal` | -- |
+| `banata.vault` | `Vault` | -- |
+| `banata.domains` | `Domains` | -- |
+| `banata.rbac` | `Rbac` | -- |
+| `banata.apiKeys` | `ApiKeys` | -- |
+| `banata.emails` | `Emails` | -- |
+| `banata.projects` | `Projects` | -- |
+
+---
+
+## `UserManagement`
+
+### `listUsers(options?)`
+
+```typescript
+const { data, listMetadata } = await banata.users.listUsers({
+  limit: 20,           // Max results per page
+  after: "cursor...",  // Pagination cursor
+  email: "search@",   // Filter by email (prefix match)
+  organizationId: "org_01...",  // Filter by org membership
+});
+```
+
+### `getUser(userId)`
+
+```typescript
+const user = await banata.users.getUser("usr_01HXYZ...");
+// Returns: { id, email, name, image, role, emailVerified, banned, metadata, createdAt, updatedAt }
+```
+
+### `createUser(data)`
+
+```typescript
+const user = await banata.users.createUser({
+  projectId: "proj_01HXYZ...",
+  email: "user@example.com",
+  password: "securePassword123",  // Optional -- omit for passwordless
+  name: "Jane Doe",
+  role: "member",
+  metadata: { plan: "pro" },
+});
+```
+
+### `updateUser({ userId, ...data })`
+
+```typescript
+await banata.users.updateUser({
+  userId: "usr_01HXYZ...",
+  name: "Updated Name",
+  metadata: { plan: "enterprise" },
+});
+```
+
+### `deleteUser(userId)`
+
+```typescript
+await banata.users.deleteUser("usr_01HXYZ...");
+```
+
+### `banUser({ userId, ... })` / `unbanUser(userId)`
+
+```typescript
+await banata.users.banUser({ userId: "usr_01HXYZ..." });
+// User can no longer sign in. Existing sessions are revoked immediately.
+
+await banata.users.unbanUser("usr_01HXYZ...");
+```
+
+### `listUserSessions(userId)`
+
+```typescript
+const sessions = await banata.users.listUserSessions("usr_01HXYZ...");
+// Returns: [{ id, token, expiresAt, ipAddress, userAgent, createdAt }, ...]
+```
+
+### `revokeSession(sessionId)` / `revokeAllSessions(userId)`
+
+```typescript
+// Revoke a specific session
+await banata.users.revokeSession("ses_01HXYZ...");
+
+// Revoke ALL sessions for a user (force sign-out everywhere)
+await banata.users.revokeAllSessions("usr_01HXYZ...");
+```
+
+### `setRole(userId, role)`
+
+```typescript
+await banata.users.setRole("usr_01HXYZ...", "admin");
+```
+
+### `impersonateUser(userId)` / `stopImpersonating()`
+
+```typescript
+const impersonation = await banata.users.impersonateUser("usr_01HXYZ...");
+// Returns: { session, user }
+
+const restored = await banata.users.stopImpersonating();
+// Returns the original admin session and user
+```
+
+### `setUserPassword(userId, newPassword)`
+
+```typescript
+const updated = await banata.users.setUserPassword(
+  "usr_01HXYZ...",
+  "N3wSecurePassword123",
+);
+// Returns: true
+```
+
+### `hasPermission(...)`
+
+```typescript
+const allowed = await banata.users.hasPermission({
+  projectId: "proj_01HXYZ...",
+  userId: "usr_01HXYZ...",
+  permission: { user: ["impersonate"] },
+});
+// Returns: true | false
+```
+
+---
+
+## `Organizations`
+
+### CRUD
+
+```typescript
+// List
+const { data } = await banata.organizations.listOrganizations({ limit: 20 });
+
+// Get
+const org = await banata.organizations.getOrganization({ organizationId: "org_01..." });
+
+// Create
+const org = await banata.organizations.createOrganization({
+  name: "Acme Corp",
+  slug: "acme-corp",
+  metadata: { plan: "enterprise" },
+});
+
+// Update
+await banata.organizations.updateOrganization({
+  organizationId: "org_01...",
+  name: "Acme Corporation",
+});
+
+// Delete
+await banata.organizations.deleteOrganization({ organizationId: "org_01..." });
+```
+
+### Members
+
+```typescript
+// List members
+const { data: members } = await banata.organizations.listMembers({ organizationId: "org_01..." });
+
+// Update member role (uses memberIdOrUserId)
+await banata.organizations.updateMemberRole({
+  organizationId: "org_01...",
+  memberIdOrUserId: "usr_01...",
+  role: "owner",
+});
+
+// Remove member (uses memberIdOrUserId)
+await banata.organizations.removeMember({
+  organizationId: "org_01...",
+  memberIdOrUserId: "usr_01...",
+});
+```
+
+> **Note:** There is no `addMember()` method. Use `createInvitation()` to invite users to organizations.
+
+### Invitations
+
+```typescript
+// List invitations
+const invitations = await banata.organizations.listInvitations({
+  organizationId: "org_01...",
+});
+
+// Create invitation
+await banata.organizations.createInvitation({
+  organizationId: "org_01...",
+  email: "user@example.com",
+  role: "member",
+});
+
+// Revoke invitation
+await banata.organizations.revokeInvitation({ invitationId: "inv_01..." });
+```
+
+---
+
+## `SSO`
+
+```typescript
+// List SSO connections
+const { data: connections } = await banata.sso.listConnections();
+
+// Get a specific connection (takes a plain string ID)
+const conn = await banata.sso.getConnection("sso_01...");
+
+// Create a connection
+const conn = await banata.sso.createConnection({
+  organizationId: "org_01...",
+  type: "saml",          // "saml" or "oidc"
+  name: "Okta SSO",
+  domains: ["acme.com"],
+  samlConfig: {
+    idpEntityId: "https://idp.example.com",
+    idpSsoUrl: "https://idp.example.com/sso",
+    idpCertificate: "-----BEGIN CERTIFICATE-----...",
+  },
+});
+
+// Update
+await banata.sso.updateConnection({
+  connectionId: "sso_01...",
+  name: "Updated",
+});
+
+// Delete (takes a plain string ID)
+await banata.sso.deleteConnection("sso_01...");
+
+// Get authorization URL (for initiating SSO flow)
+const { url } = await banata.sso.getAuthorizationUrl({
+  connectionId: "sso_01...",
+  redirectUri: "https://myapp.com/auth/callback",
+});
+```
+
+> **Note:** SSO (SAML/OIDC) is currently in preview. The SDK and backend stubs are functional, but full SAML XML processing may require a Node.js sidecar.
+
+---
+
+## `DirectorySync`
+
+```typescript
+// List directories
+const { data: directories } = await banata.directories.listDirectories();
+
+// Get a directory (takes a plain string ID)
+const dir = await banata.directories.getDirectory("dir_01...");
+
+// Create (uses `provider`, not `type`)
+const dir = await banata.directories.createDirectory({
+  organizationId: "org_01...",
+  name: "Okta SCIM",
+  provider: "okta",
+});
+
+// Delete (takes a plain string ID)
+await banata.directories.deleteDirectory("dir_01...");
+
+// List directory users
+const { data: users } = await banata.directories.listUsers({ directoryId: "dir_01..." });
+
+// List directory groups
+const { data: groups } = await banata.directories.listGroups({ directoryId: "dir_01..." });
+```
+
+> **Note:** Directory Sync (SCIM) is currently in preview. The SDK and backend stubs are functional.
+
+---
+
+## `AuditLogs`
+
+```typescript
+// List events
+const { data } = await banata.auditLogs.listEvents({
+  limit: 50,
+  action: "user.created",
+  actorId: "usr_01...",
+  organizationId: "org_01...",
+});
+
+// Create a custom event (flat fields, JSON-stringified arrays)
+await banata.auditLogs.createEvent({
+  action: "document.exported",
+  actorType: "user",
+  actorId: "usr_01...",
+  actorName: "Jane Doe",
+  targets: [{ type: "document", id: "doc_01..." }],
+  organizationId: "org_01...",
+});
+
+// Export events (dates converted to epoch ms, cursor is a number)
+const result = await banata.auditLogs.exportEvents({
+  startDate: new Date("2025-01-01"),
+  endDate: new Date("2025-01-31"),
+  format: "json",
+});
+// result.data, result.count, result.nextCursor (number)
+```
+
+---
+
+## `Webhooks`
+
+```typescript
+// List endpoints
+const { data } = await banata.webhooks.listEndpoints();
+
+// Create endpoint (uses `eventTypes`, not `events`)
+const endpoint = await banata.webhooks.createEndpoint({
+  url: "https://myapp.com/api/webhooks",
+  eventTypes: ["user.created", "session.created"],
+});
+console.log(endpoint.secret); // "whsec_..." -- save this!
+
+// Update
+await banata.webhooks.updateEndpoint({
+  endpointId: "whe_01...",
+  eventTypes: ["user.created"],
+});
+
+// Delete (takes a plain string ID)
+await banata.webhooks.deleteEndpoint("whe_01...");
+
+// Verify a webhook signature (ASYNC -- uses Web Crypto API)
+const event = await banata.webhooks.constructEvent({
+  payload: body,                          // Raw request body string
+  sigHeader: headers["webhook-signature"], // "t=...,v1=..." header value
+  secret: "whsec_your-secret",            // Endpoint signing secret
+});
+```
+
+---
+
+## `Rbac`
+
+```typescript
+// List roles
+const roles = await banata.rbac.listRoles();
+
+// Check single permission (requires projectId, not userId)
+const { allowed } = await banata.rbac.checkPermission({
+  projectId: "proj_01...",
+  permission: "users:write",
+});
+
+// Check multiple permissions
+const { allowed } = await banata.rbac.checkPermissions({
+  projectId: "proj_01...",
+  permissions: ["users:read", "users:write"],
+  operator: "all",             // "all" = AND, "any" = OR
+});
+
+// Assign role (via organization membership)
+await banata.rbac.assignRole({
+  userId: "usr_01...",
+  role: "admin",
+  organizationId: "org_01...",
+});
+
+// Revoke role (resets to fallback role)
+await banata.rbac.revokeRole({
+  userId: "usr_01...",
+  organizationId: "org_01...",
+  fallbackRole: "member",
+});
+
+// Helper: check if a user has a specific permission
+const hasAccess = await banata.rbac.hasPermission("proj_01...", "users:write");
+// Returns: true | false
+```
+
+---
+
+## `Events`
+
+```typescript
+// List events (uses `eventTypes` array for filtering)
+const { data, cursor, hasMore } = await banata.events.listEvents({
+  limit: 50,
+  eventTypes: ["user.created"],
+  organizationId: "org_01...",
+  rangeStart: new Date("2025-01-01"),
+  rangeEnd: new Date("2025-01-31"),
+});
+
+// Paginate with cursor
+if (hasMore && cursor) {
+  const nextPage = await banata.events.listEvents({
+    after: cursor,
+    limit: 50,
+  });
+}
+```
+
+---
+
+## `Portal`
+
+```typescript
+// Generate a short-lived admin portal link for an organization's IT admin
+const { url } = await banata.portal.generateLink({
+  organizationId: "org_01...",
+  intent: "sso",              // "sso" | "dsync" | "domain_verification" | "audit_logs" | "log_streams" | "users"
+  returnUrl: "https://myapp.com/settings",
+  expiresIn: 3600,            // Optional: seconds until link expires (default: 3600)
+});
+
+// Redirect the user to the portal URL
+console.log(url);
+```
+
+---
+
+## `Vault`
+
+```typescript
+// Encrypt and store a secret
+const { id } = await banata.vault.encrypt({
+  name: "stripe_api_key",
+  data: "sk_live_...",
+  context: "billing",               // Optional: must match on decrypt
+  organizationId: "org_01...",
+  metadata: { env: "production" },
+});
+
+// Decrypt a secret by ID
+const { data } = await banata.vault.decrypt({
+  secretId: id,
+  context: "billing",               // Must match the context used during encryption
+});
+
+// List vault secrets (metadata only -- no decrypted values)
+const { data: secrets, listMetadata } = await banata.vault.list({
+  organizationId: "org_01...",
+  limit: 50,
+});
+
+// Delete a secret
+await banata.vault.delete({ secretId: id });
+
+// Rotate encryption key (re-encrypts all secrets with a new derived key)
+const result = await banata.vault.rotateKey({ batchSize: 100 });
+// result: { status, rotated, failed, remaining }
+```
+
+---
+
+## `Domains`
+
+```typescript
+// Verify a domain
+const verification = await banata.domains.verifyDomain({
+  domain: "example.com",
+  organizationId: "org_01...",
+});
+// Returns DNS records to add for verification
+
+// Check verification status
+const status = await banata.domains.checkVerification({
+  domain: "example.com",
+  organizationId: "org_01...",
+});
+```
+
+---
+
+## What's Next
+
+- **[React](/docs/react)** -- Client-side hooks and components
+- **[Next.js](/docs/nextjs)** -- Server utilities and middleware
+- **[Convex](/docs/convex)** -- Backend configuration reference
+

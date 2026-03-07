@@ -1,0 +1,121 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Scan @banata-auth/react dist so Tailwind generates classes used by auth components */
+@source "@banata-auth/react";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+	--radius: 0.625rem;
+	--background: oklch(0.145 0.005 286);
+	--foreground: oklch(0.95 0.005 286);
+	--card: oklch(0.178 0.005 286);
+	--card-foreground: oklch(0.95 0.005 286);
+	--popover: oklch(0.178 0.005 286);
+	--popover-foreground: oklch(0.95 0.005 286);
+	--primary: oklch(0.7 0.1 195);
+	--primary-foreground: oklch(0.14 0.03 195);
+	--secondary: oklch(0.22 0.005 286);
+	--secondary-foreground: oklch(0.85 0.01 286);
+	--muted: oklch(0.22 0.005 286);
+	--muted-foreground: oklch(0.6 0.01 286);
+	--accent: oklch(0.22 0.005 286);
+	--accent-foreground: oklch(0.95 0.005 286);
+	--destructive: oklch(0.65 0.22 25);
+	--border: oklch(0.24 0.005 286);
+	--input: oklch(0.25 0.005 286);
+	--ring: oklch(0.7 0.1 195);
+}
+
+.light {
+	--background: oklch(0.985 0.002 286);
+	--foreground: oklch(0.145 0.005 286);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0.005 286);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0.005 286);
+	--primary: oklch(0.48 0.1 195);
+	--primary-foreground: oklch(0.99 0.005 195);
+	--secondary: oklch(0.95 0.005 286);
+	--secondary-foreground: oklch(0.2 0.005 286);
+	--muted: oklch(0.95 0.005 286);
+	--muted-foreground: oklch(0.5 0.01 286);
+	--accent: oklch(0.95 0.005 286);
+	--accent-foreground: oklch(0.145 0.005 286);
+	--destructive: oklch(0.55 0.22 25);
+	--border: oklch(0.88 0.005 286);
+	--input: oklch(0.88 0.005 286);
+	--ring: oklch(0.48 0.1 195);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--radius-2xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+
+	/* Pointer cursor for all interactive elements */
+	button,
+	[role="button"],
+	a,
+	label[for],
+	select,
+	summary,
+	[type="button"],
+	[type="submit"],
+	[type="reset"],
+	[type="checkbox"],
+	[type="radio"],
+	[tabindex]:not([tabindex="-1"]) {
+		cursor: pointer;
+	}
+}
+
+/* Noise texture overlay */
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	pointer-events: none;
+	opacity: 0.07;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	background-repeat: repeat;
+	background-size: 256px 256px;
+}
+
+.light body::after {
+	opacity: 0.12;
+	filter: invert(1);
+}

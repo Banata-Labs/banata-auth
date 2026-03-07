@@ -1,0 +1,51 @@
+{
+	"name": "@banata-auth/dashboard",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "next dev --turbopack --port 3000",
+		"build": "next build",
+		"start": "next start --port 3001",
+		"lint": "biome check src/",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:once": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
+	"dependencies": {
+		"@banata-auth/convex": "workspace:*",
+		"@banata-auth/nextjs": "workspace:*",
+		"@banata-auth/react": "workspace:*",
+		"@banata-auth/sdk": "workspace:*",
+		"@banata-auth/shared": "workspace:*",
+		"@react-email/components": "^1.0.8",
+		"@react-email/render": "^2.0.4",
+		"@tailwindcss/postcss": "^4",
+		"better-auth": "^1.4.20",
+		"botid": "^1.5.10",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"cmdk": "^1.1.1",
+		"convex": "^1.25.0",
+		"geist": "^1.3.0",
+		"lucide-react": "^0.575.0",
+		"next": "^16.1.1",
+		"radix-ui": "^1.4.3",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
+		"sonner": "^2.0.7",
+		"tailwind-merge": "^3.5.0",
+		"tailwindcss": "^4",
+		"tw-animate-css": "^1.2.0"
+	},
+	"devDependencies": {
+		"@edge-runtime/vm": "^5.0.0",
+		"@types/node": "^25.3.2",
+		"@types/react": "^19.2.2",
+		"@types/react-dom": "^19.2.2",
+		"convex-test": "^0.0.25",
+		"vitest": "^3.2.4",
+		"typescript": "^5.7.0"
+	}
+}

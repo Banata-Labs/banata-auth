@@ -1,0 +1,277 @@
+---
+title: "Directory Sync (SCIM)"
+description: "Automated user provisioning and deprovisioning via SCIM 2.0 directory synchronization."
+section: "Enterprise"
+order: 18
+---
+
+> **Preview** — Directory Sync (SCIM) is under active development. The SCIM 2.0 plugin is enabled, but full HTTP verb support (PUT/PATCH/DELETE) and group sync are not yet complete. APIs may change before stable release.
+
+## Overview
+
+Directory Sync enables automated user provisioning and deprovisioning between your identity provider (IdP) and Banata Auth using the SCIM 2.0 protocol. When an employee is added, updated, or removed in an IdP such as Okta, Azure AD, or OneLogin, the corresponding user record in Banata Auth is automatically created, modified, or disabled.
+
+This eliminates the need for manual user management and ensures that your application's user directory stays in sync with your customer's corporate directory at all times.
+
+Key capabilities:
+
+- **Automatic provisioning** — New employees added in the IdP are automatically created as users in Banata Auth.
+- **Automatic deprovisioning** — Employees removed from the IdP are automatically disabled in Banata Auth, revoking their access.
+- **Profile synchronization** — Changes to user attributes (name, email, department, etc.) in the IdP are propagated to Banata Auth.
+- **Group synchronization** — Group membership changes in the IdP are reflected in Banata Auth, enabling role and permission mapping.
+
+## How It Works
+
+### Directories and Organizations
+
+Each SCIM directory is tied to a specific organization in Banata Auth. This means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped and isolated per tenant.
+
+### Push-Based Synchronization
+
+Banata Auth exposes a SCIM 2.0-compliant endpoint for each directory. The IdP is configured to push user and group changes to this endpoint. Whenever a change occurs in the IdP (a new hire, a termination, a group membership update), the IdP sends an HTTP request to the SCIM endpoint, and Banata Auth processes the event accordingly.
+
+The flow is as follows:
+
+1. An admin creates a SCIM directory in Banata Auth for a given organization.
+2. Banata Auth generates a unique SCIM endpoint URL and a bearer token for that directory.
+3. The admin configures the IdP with the endpoint URL and bearer token.
+4. The IdP begins pushing user and group changes to Banata Auth in real time.
+
+### Authentication
+
+All SCIM endpoints are authenticated using a bearer token. Each directory has its own unique token, generated at the time of directory creation. The IdP must include this token in the `Authorization` header of every SCIM request:
+
+```
+Authorization: Bearer scim_tok_xxxxxxxxxxxxxxxx
+```
+
+### Supported SCIM Events
+
+Banata Auth processes the following SCIM operations:
+
+| SCIM Operation | Resource | Effect in Banata Auth |
+| --- | --- | --- |
+| `POST /Users` | User | Creates a new user in the organization. If the user already exists (matched by email), the existing record is linked. |
+| `PUT /Users/:id` | User | Updates the user's profile attributes (name, email, etc.). |
+| `PATCH /Users/:id` | User | Partially updates user attributes. Commonly used for activating or deactivating a user. |
+| `DELETE /Users/:id` | User | Deactivates the user and revokes all active sessions. The user record is retained for audit purposes. |
+| `POST /Groups` | Group | Creates a new group in the organization. |
+| `PUT /Groups/:id` | Group | Replaces the group's attributes and membership list. |
+| `PATCH /Groups/:id` | Group | Partially updates group attributes or membership (add/remove members). |
+| `DELETE /Groups/:id` | Group | Removes the group and disassociates all members. |
+
+## Dashboard Setup
+
+### Step 1: Navigate to Directory Sync
+
+Open the Banata Auth dashboard and navigate to the **Directory Sync** section under your project settings. This page lists all configured SCIM directories across your organizations.
+
+### Step 2: Create a Directory
+
+Click **Create Directory** and fill in the required fields:
+
+- **Organization** — Select the organization this directory will be associated with.
+- **Directory Name** — A human-readable name for the directory (e.g., "Acme Corp Okta Directory").
+- **Directory Type** — The IdP type (Okta, Azure AD, OneLogin, Google Workspace, or Generic SCIM).
+
+### Step 3: Copy the SCIM Endpoint and Bearer Token
+
+After creating the directory, Banata Auth will display:
+
+- **SCIM Endpoint URL** — The URL the IdP will send SCIM requests to (e.g., `https://api.banata-auth.com/scim/v2/dir_xxx`).
+- **Bearer Token** — The authentication token the IdP must include in all requests.
+
+Copy both values. The bearer token is only shown once at creation time. If you lose it, you will need to rotate the token from the dashboard.
+
+### Step 4: Configure Your Identity Provider
+
+Use the SCIM endpoint URL and bearer token to configure provisioning in your IdP. The exact steps vary by provider:
+
+**Okta:**
+1. In the Okta Admin Console, go to **Applications** and select your application.
+2. Navigate to the **Provisioning** tab and click **Configure API Integration**.
+3. Paste the SCIM endpoint URL into the **SCIM 2.0 Base URL** field.
+4. Paste the bearer token into the **API Token** field.
+5. Click **Test API Credentials** to verify the connection.
+6. Enable the desired provisioning features (Create Users, Update User Attributes, Deactivate Users).
+
+**Azure AD (Entra ID):**
+1. In the Azure Portal, go to **Enterprise Applications** and select your application.
+2. Navigate to **Provisioning** and set the mode to **Automatic**.
+3. Under **Admin Credentials**, paste the SCIM endpoint URL into the **Tenant URL** field.
+4. Paste the bearer token into the **Secret Token** field.
+5. Click **Test Connection** to verify.
+6. Configure attribute mappings as needed, then start the provisioning service.
+
+**OneLogin:**
+1. In the OneLogin Admin Panel, go to **Applications** and select your application.
+2. Navigate to the **Provisioning** tab and enable provisioning.
+3. Under **SCIM Base URL**, paste the SCIM endpoint URL.
+4. Under **SCIM Bearer Token**, paste the bearer token.
+5. Save and configure the desired provisioning actions.
+
+## SDK Usage
+
+The Banata Auth SDK provides methods for managing SCIM directories programmatically.
+
+### Initialize the Client
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const client = new BanataAuth({ apiKey: "sk_..." });
+```
+
+### List SCIM Directories
+
+Retrieve all configured SCIM directories across your project:
+
+```typescript
+const { data: directories } = await client.directorySync.listDirectories();
+
+for (const dir of directories) {
+  console.log(dir.id, dir.name, dir.state);
+}
+```
+
+### Get a Specific Directory
+
+Retrieve details about a single directory by its ID:
+
+```typescript
+const directory = await client.directorySync.getDirectory("dir_xxx");
+
+console.log(directory.name);         // "Acme Corp Okta Directory"
+console.log(directory.state);        // "active"
+```
+
+### Create a Directory
+
+```typescript
+const newDirectory = await client.directorySync.createDirectory({
+  name: "Acme Corp Azure AD",
+  organizationId: "org_xxx",
+  provider: "azure-ad",
+});
+
+console.log(newDirectory.id);          // "dir_yyy"
+```
+
+### Delete a Directory
+
+```typescript
+await client.directorySync.deleteDirectory("dir_xxx");
+```
+
+> **Note:** The `rotateToken()` method is not yet implemented. Token rotation will be available in a future release.
+
+## API Endpoints
+
+### Create a SCIM Directory
+
+```
+POST /scim/register
+```
+
+Creates a new SCIM directory for an organization.
+
+**Request Body:**
+
+```json
+{
+  "name": "Acme Corp Okta Directory",
+  "organizationId": "org_xxx",
+  "type": "okta"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "dir_xxx",
+  "name": "Acme Corp Okta Directory",
+  "organizationId": "org_xxx",
+  "type": "okta",
+  "state": "active",
+  "scimEndpoint": "https://api.banata-auth.com/scim/v2/dir_xxx",
+  "bearerToken": "scim_tok_xxxxxxxxxxxxxxxx",
+  "createdAt": "2026-01-15T10:30:00.000Z",
+  "updatedAt": "2026-01-15T10:30:00.000Z"
+}
+```
+
+### List All Directories
+
+```
+POST /scim/list-providers
+```
+
+Returns all SCIM directories configured in the project.
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "dir_xxx",
+      "name": "Acme Corp Okta Directory",
+      "organizationId": "org_xxx",
+      "type": "okta",
+      "state": "active",
+      "scimEndpoint": "https://api.banata-auth.com/scim/v2/dir_xxx",
+      "idpEntityId": "0oa1b2c3d4e5f6g7h8",
+      "createdAt": "2026-01-15T10:30:00.000Z",
+      "updatedAt": "2026-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+Note: The `bearerToken` field is not included in list responses. It is only returned at directory creation time or when explicitly rotated.
+
+## Directory Object
+
+Each SCIM directory is represented by the following object:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Unique identifier for the directory (e.g., `dir_xxx`). |
+| `name` | `string` | Human-readable name for the directory. |
+| `organizationId` | `string` | The ID of the organization this directory is associated with. |
+| `type` | `string` | The IdP type. One of: `okta`, `azure-ad`, `onelogin`, `google-workspace`, `generic-scim`. |
+| `state` | `string` | Current state of the directory. One of: `active`, `inactive`. |
+| `scimEndpoint` | `string` | The SCIM 2.0 endpoint URL that the IdP should send requests to. |
+| `bearerToken` | `string` | The authentication token for SCIM requests. Only returned on creation or token rotation. |
+| `idpEntityId` | `string \| null` | An optional identifier from the IdP, used for correlation and debugging. |
+| `createdAt` | `string` | ISO 8601 timestamp of when the directory was created. |
+| `updatedAt` | `string` | ISO 8601 timestamp of the last update to the directory record. |
+
+## SCIM Events
+
+When the IdP pushes changes to the SCIM endpoint, Banata Auth processes each operation and triggers the corresponding internal action. The table below summarizes the supported events and their effects.
+
+| Event | Trigger | Banata Auth Action |
+| --- | --- | --- |
+| **User Created** | IdP sends `POST /Users` | A new user is created in the organization. If a user with the same email already exists, the existing user is linked to the directory instead of creating a duplicate. |
+| **User Updated** | IdP sends `PUT /Users/:id` or `PATCH /Users/:id` | The user's profile attributes are updated to match the IdP. Fields such as name, email, and department are synchronized. |
+| **User Deactivated** | IdP sends `PATCH /Users/:id` with `active: false` | The user is deactivated in Banata Auth. All active sessions are revoked. The user can no longer sign in. |
+| **User Reactivated** | IdP sends `PATCH /Users/:id` with `active: true` | The user is reactivated. They can sign in again with their previous credentials. |
+| **User Deleted** | IdP sends `DELETE /Users/:id` | The user is deactivated and marked as deleted. The user record is retained for audit trail purposes but cannot sign in. |
+| **Group Created** | IdP sends `POST /Groups` | A new group is created in the organization. Group membership is set based on the request payload. |
+| **Group Updated** | IdP sends `PUT /Groups/:id` or `PATCH /Groups/:id` | The group's name, description, or membership list is updated. Members may be added or removed. |
+| **Group Deleted** | IdP sends `DELETE /Groups/:id` | The group is removed and all members are disassociated. |
+
+### Webhooks for SCIM Events
+
+You can subscribe to SCIM-related events via [webhooks](/docs/webhooks) to trigger custom logic in your application when directory changes occur. The following webhook event types are available:
+
+- `scim.user.created`
+- `scim.user.updated`
+- `scim.user.deleted`
+- `scim.group.created`
+- `scim.group.updated`
+- `scim.group.deleted`
+
+Each webhook payload includes the full user or group object, the directory ID, and the organization ID.

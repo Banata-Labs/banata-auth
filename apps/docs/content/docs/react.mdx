@@ -1,0 +1,518 @@
+---
+title: "React"
+description: "Complete reference for @banata-auth/react — provider, hooks, pre-built components, and Convex integration."
+section: "Packages"
+order: 15
+---
+
+The `@banata-auth/react` package provides React integration for Banata Auth — a context provider, hooks for auth state, pre-built authentication UI components, and Convex real-time integration.
+
+```bash
+npm install @banata-auth/react
+```
+
+---
+
+## Entry Points
+
+The package has **3 entry points**:
+
+| Import | What It Provides |
+|---|---|
+| `@banata-auth/react` | Provider, hooks, UI components |
+| `@banata-auth/react/convex` | `BanataConvexProvider` for JWT token exchange |
+| `@banata-auth/react/plugins` | Client plugin re-exports |
+
+---
+
+## BanataAuthProvider
+
+The provider supplies auth context to your entire component tree. It supports two modes.
+
+### Adapter Mode
+
+Provide callback functions that the provider calls to fetch auth state:
+
+```tsx
+"use client";
+
+import { BanataAuthProvider } from "@banata-auth/react";
+import type { BanataAuthAdapter } from "@banata-auth/react";
+
+const adapter: BanataAuthAdapter = {
+  fetchSession: async () => {
+    const res = await fetch("/api/auth/get-session");
+    if (!res.ok) return null;
+    return res.json(); // { user, session, organization? }
+  },
+  signOut: async () => {
+    await fetch("/api/auth/sign-out", { method: "POST" });
+  },
+  setActiveOrganization: async (orgId: string) => {
+    await fetch("/api/auth/set-active-org", {
+      method: "POST",
+      body: JSON.stringify({ organizationId: orgId }),
+    });
+  },
+};
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <BanataAuthProvider adapter={adapter}>
+      {children}
+    </BanataAuthProvider>
+  );
+}
+```
+
+### Controlled Mode
+
+Pass auth state as props directly (useful when you manage state externally):
+
+```tsx
+"use client";
+
+import { BanataAuthProvider } from "@banata-auth/react";
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ... fetch auth state from your own source
+
+  return (
+    <BanataAuthProvider
+      user={user}
+      session={session}
+      organization={null}
+      isLoading={isLoading}
+    >
+      {children}
+    </BanataAuthProvider>
+  );
+}
+```
+
+### `BanataAuthAdapter` Interface
+
+```typescript
+interface BanataAuthAdapter {
+  fetchSession: () => Promise<{
+    user: User | null;
+    session: Session | null;
+    organization?: Organization | null;
+  } | null>;
+  signOut: () => Promise<void>;
+  setActiveOrganization?: (organizationId: string) => Promise<void>;
+}
+```
+
+---
+
+## Hooks
+
+### `useBanataAuth()`
+
+Returns the full auth context:
+
+```typescript
+import { useBanataAuth } from "@banata-auth/react";
+
+function MyComponent() {
+  const {
+    user,                      // User | null
+    session,                   // Session | null
+    organization,              // Organization | null
+    isLoading,                 // boolean
+    signOut,                   // () => Promise<void>
+    setActiveOrganization,     // (orgId: string) => Promise<void>
+  } = useBanataAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <div>Not signed in</div>;
+
+  return <div>Hello, {user.name}!</div>;
+}
+```
+
+### `useUser()`
+
+Returns only the user:
+
+```typescript
+import { useUser } from "@banata-auth/react";
+
+function Profile() {
+  const { user, isLoading } = useUser();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <div>Not signed in</div>;
+
+  return (
+    <div>
+      <p>Name: {user.name}</p>
+      <p>Email: {user.email}</p>
+      <p>Role: {user.role}</p>
+      <img src={user.image} alt={user.name} />
+    </div>
+  );
+}
+```
+
+**Return type:**
+```typescript
+{
+  user: User | null;
+  isLoading: boolean;
+}
+```
+
+### `useSession()`
+
+Returns only the session:
+
+```typescript
+import { useSession } from "@banata-auth/react";
+
+function SessionInfo() {
+  const { session, isLoading } = useSession();
+
+  if (isLoading || !session) return null;
+
+  return (
+    <div>
+      <p>Session ID: {session.id}</p>
+      <p>Expires: {new Date(session.expiresAt).toLocaleDateString()}</p>
+    </div>
+  );
+}
+```
+
+**Return type:**
+```typescript
+{
+  session: Session | null;
+  isLoading: boolean;
+}
+```
+
+### `useOrganization()`
+
+Returns the active organization:
+
+```typescript
+import { useOrganization } from "@banata-auth/react";
+
+function OrgBanner() {
+  const { organization, isLoading } = useOrganization();
+
+  if (isLoading || !organization) return null;
+
+  return (
+    <div>
+      <img src={organization.logo} alt={organization.name} />
+      <h2>{organization.name}</h2>
+      <p>Slug: {organization.slug}</p>
+    </div>
+  );
+}
+```
+
+**Return type:**
+```typescript
+{
+  organization: Organization | null;
+  isLoading: boolean;
+}
+```
+
+---
+
+## UI Components
+
+### `AuthBoundary`
+
+Renders children only when the user is authenticated. Shows a fallback during loading and when unauthenticated:
+
+```tsx
+import { AuthBoundary } from "@banata-auth/react";
+
+function App() {
+  return (
+    <AuthBoundary
+      loading={<div>Checking authentication...</div>}
+      unauthenticated={<a href="/sign-in">Sign in to continue</a>}
+    >
+      {/* Only rendered when authenticated */}
+      <Dashboard />
+    </AuthBoundary>
+  );
+}
+```
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | Yes | Content to show when authenticated |
+| `loading` | `ReactNode` | No | Content to show while loading |
+| `unauthenticated` | `ReactNode` | No | Content to show when not authenticated |
+
+### `AuthCard`
+
+A styled card wrapper for auth forms:
+
+```tsx
+import { AuthCard } from "@banata-auth/react";
+
+function SignInPage() {
+  return (
+    <AuthCard
+      title="Sign In"
+      description="Enter your credentials to continue"
+      footer={<a href="/sign-up">Don't have an account? Sign up</a>}
+    >
+      <SignInForm authClient={authClient} />
+    </AuthCard>
+  );
+}
+```
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `title` | `string` | No | Card title |
+| `description` | `string` | No | Card description |
+| `children` | `ReactNode` | Yes | Card content |
+| `footer` | `ReactNode` | No | Footer content (links, etc.) |
+
+### `SignInForm`
+
+Pre-built sign-in form with email/password inputs:
+
+```tsx
+import { SignInForm } from "@banata-auth/react";
+
+<SignInForm
+  authClient={authClient}
+  onSuccess={() => { window.location.href = "/dashboard"; }}
+  onError={(error) => { console.error(error.message); }}
+/>
+```
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `authClient` | `AuthClientLike` | Yes | Better Auth client instance |
+| `onSuccess` | `() => void` | No | Called after successful sign-in |
+| `onError` | `(error: Error) => void` | No | Called on sign-in failure |
+
+> **Note:** The form uses `window.location.href` (hard navigation) after success, not client-side routing. This ensures the session cookie is properly read on the next page load.
+
+### `SignUpForm`
+
+Pre-built sign-up form with name, email, and password inputs:
+
+```tsx
+import { SignUpForm } from "@banata-auth/react";
+
+<SignUpForm
+  authClient={authClient}
+  onSuccess={() => { window.location.href = "/dashboard"; }}
+  onError={(error) => { console.error(error.message); }}
+/>
+```
+
+**Props:** Same as `SignInForm`.
+
+### `SocialButtons`
+
+Renders OAuth sign-in buttons for configured social providers:
+
+```tsx
+import { SocialButtons } from "@banata-auth/react";
+
+const providers = [
+  { id: "google", label: "Google" },
+  { id: "github", label: "GitHub" },
+  { id: "apple", label: "Apple", icon: <AppleIcon /> },
+];
+
+<SocialButtons
+  providers={providers}
+  authClient={authClient}
+  callbackURL="/dashboard"
+/>
+```
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `providers` | `SocialProvider[]` | Yes | List of providers to show |
+| `authClient` | `AuthClientLike` | Yes | Better Auth client instance |
+| `callbackURL` | `string` | No | Where to redirect after OAuth |
+
+**`SocialProvider` interface:**
+
+```typescript
+interface SocialProvider {
+  id: string;       // Provider ID: "google", "github", etc.
+  label: string;    // Display name: "Google", "GitHub", etc.
+  icon?: ReactNode; // Optional custom icon component
+}
+```
+
+---
+
+## `AuthClientLike` Interface
+
+The components accept any object matching the `AuthClientLike` interface, which is a loose typing against Better Auth's client:
+
+```typescript
+interface AuthClientLike {
+  signIn: {
+    email: (data: { email: string; password: string }) => Promise<any>;
+    social: (data: { provider: string; callbackURL?: string }) => Promise<any>;
+  };
+  signUp: {
+    email: (data: { email: string; password: string; name?: string }) => Promise<any>;
+  };
+}
+```
+
+This means you can pass the standard Better Auth client:
+
+```typescript
+import { createAuthClient } from "better-auth/react";
+
+const authClient = createAuthClient({ baseURL: "/api/auth" });
+// This satisfies AuthClientLike
+```
+
+---
+
+## Convex Integration
+
+### `BanataConvexProvider`
+
+The Convex provider wraps `ConvexBetterAuthProvider` to handle JWT token exchange between your auth system and Convex:
+
+```tsx
+// src/components/convex-client-provider.tsx
+"use client";
+
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { BanataConvexProvider } from "@banata-auth/react/convex";
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export function ConvexClientProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <ConvexProvider client={convex}>
+      <BanataConvexProvider>
+        {children}
+      </BanataConvexProvider>
+    </ConvexProvider>
+  );
+}
+```
+
+The provider:
+1. Fetches a JWT token from the Convex auth endpoint
+2. Passes the token to the Convex client
+3. Refreshes the token automatically before expiration
+4. Enables authenticated Convex queries and mutations
+
+---
+
+## Plugin Re-exports
+
+Import client-side plugins from `@banata-auth/react/plugins`:
+
+```typescript
+import {
+  createAuthClient,
+  convexClient,
+  crossDomainClient,
+  organizationClient,
+  apiKeyClient,
+} from "@banata-auth/react/plugins";
+
+// Create a client with plugins
+const authClient = createAuthClient({
+  baseURL: "/api/auth",
+  plugins: [
+    convexClient(),
+    organizationClient(),
+    apiKeyClient(),
+  ],
+});
+```
+
+| Plugin | What It Adds |
+|---|---|
+| `convexClient()` | Convex token exchange methods |
+| `crossDomainClient()` | Cross-domain auth support |
+| `organizationClient()` | Organization management methods |
+| `apiKeyClient()` | API key CRUD methods |
+
+---
+
+## Type Reference
+
+### `User`
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  image?: string;
+  role?: string;
+  emailVerified: boolean;
+  banned: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### `Session`
+
+```typescript
+interface Session {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+```
+
+### `Organization`
+
+```typescript
+interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+---
+
+## What's Next
+
+- **[Next.js](/docs/nextjs)** — Server-side utilities and middleware
+- **[SDK Reference](/docs/sdk)** — Server-side admin SDK
+- **[Convex](/docs/convex)** — Backend configuration

@@ -1,0 +1,102 @@
+{
+	"name": "@banata-auth/convex",
+	"version": "0.1.0",
+	"private": false,
+	"license": "MIT",
+	"type": "module",
+	"description": "Convex backend integration for Banata Auth — auth factory, plugins, triggers, and database schema",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/banata-auth/banata-auth",
+		"directory": "packages/convex"
+	},
+	"homepage": "https://auth-docs.banata.dev/docs/convex",
+	"keywords": [
+		"banata-auth",
+		"auth",
+		"convex",
+		"better-auth",
+		"plugins",
+		"sso",
+		"rbac",
+		"webhooks"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./auth-config": {
+			"types": "./dist/auth-config.d.ts",
+			"import": "./dist/auth-config.js",
+			"default": "./dist/auth-config.js"
+		},
+		"./adapter": {
+			"types": "./dist/component/adapter.d.ts",
+			"import": "./dist/component/adapter.js",
+			"default": "./dist/component/adapter.js"
+		},
+		"./http": {
+			"types": "./dist/http.d.ts",
+			"import": "./dist/http.js",
+			"default": "./dist/http.js"
+		},
+		"./node": {
+			"types": "./dist/node.d.ts",
+			"import": "./dist/node.js",
+			"default": "./dist/node.js"
+		},
+		"./triggers": {
+			"types": "./dist/triggers.d.ts",
+			"import": "./dist/triggers.js",
+			"default": "./dist/triggers.js"
+		},
+		"./plugins": {
+			"types": "./dist/plugins/index.d.ts",
+			"import": "./dist/plugins/index.js",
+			"default": "./dist/plugins/index.js"
+		},
+		"./convex.config": {
+			"import": "./src/component/convex.config.ts"
+		},
+		"./schema": {
+			"import": "./src/component/schema.ts"
+		}
+	},
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": ["dist", "src/component"],
+	"scripts": {
+		"build": "tsup && tsc",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests",
+		"prepublishOnly": "bun run build",
+		"clean": "rm -rf dist .turbo"
+	},
+	"dependencies": {
+		"@better-auth/passkey": "^1.4.9",
+		"@better-auth/scim": "^1.4.20",
+		"@better-auth/sso": "^1.4.20",
+		"@convex-dev/better-auth": "^0.10.13",
+		"@banata-auth/shared": "workspace:*",
+		"zod": "^3.23.0"
+	},
+	"peerDependencies": {
+		"better-auth": ">=1.4.9 <2.0.0",
+		"convex": "^1.25.0"
+	},
+	"devDependencies": {
+		"better-auth": "^1.4.9",
+		"convex": "^1.25.0",
+		"tsup": "^8.3.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
+}

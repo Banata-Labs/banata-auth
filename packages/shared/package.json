@@ -1,0 +1,46 @@
+{
+	"name": "@banata-auth/shared",
+	"version": "0.1.0",
+	"private": false,
+	"license": "MIT",
+	"type": "module",
+	"description": "Shared types, schemas, constants, and utilities for the Banata Auth ecosystem",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/banata-auth/banata-auth",
+		"directory": "packages/shared"
+	},
+	"homepage": "https://auth-docs.banata.dev/docs/packages/shared",
+	"keywords": ["banata-auth", "auth", "shared", "types", "schemas", "validation"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests",
+		"prepublishOnly": "bun run build",
+		"clean": "rm -rf dist .turbo"
+	},
+	"dependencies": {
+		"zod": "^3.24.0"
+	},
+	"devDependencies": {
+		"tsup": "^8.3.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
+}

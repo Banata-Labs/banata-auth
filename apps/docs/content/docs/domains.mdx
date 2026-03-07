@@ -1,0 +1,215 @@
+---
+title: "Domains"
+description: "Configure custom domains for authentication services, email delivery, admin portal, and hosted AuthKit UI."
+section: "Configuration"
+order: 20
+---
+
+> **Preview** — Custom domain management is under active development. Dashboard UI is available, but backend CRUD endpoints are not yet wired. APIs may change before stable release.
+
+Banata Auth uses **domain configuration** to control the base URLs for authentication services, email delivery, the admin portal, and the hosted AuthKit UI. Each domain is managed through the admin dashboard and stored in the backend — no manual environment variable editing required.
+
+---
+
+## How Domains Work
+
+```
+1. Banata Auth ships with 4 default domains:
+   - Email         — sender address for auth emails
+   - Admin Portal  — the admin dashboard URL
+   - Auth API      — the authentication endpoint
+   - AuthKit       — hosted authentication UI
+2. Each domain has a key, title, description, and value
+3. Default domains are pre-seeded on first dashboard load
+4. You can add custom domains for additional services
+5. Domain values are stored in Convex and persisted per project
+```
+
+> **Important:** Domain values should be updated to match your production URLs before deploying. The defaults point to local or staging URLs.
+
+---
+
+## Default Domains
+
+| Domain Key | Title | Default Value | Description |
+|---|---|---|---|
+| `email` | Email | `banata.dev` | Domain used in sender address for Admin Portal invitations and auth flows |
+| `admin-portal` | Admin Portal | `setup.banata.dev` | Domain to use for Admin Portal |
+| `auth-api` | Authentication API | `auth.banata.dev` | Domain to use for authentication requests |
+| `authkit` | AuthKit | `auth-ui.banata.dev` | Domain for hosted authentication UI |
+
+Default domains are seeded automatically when you first visit the **Domains** page in the dashboard. They cannot be deleted but their values can be edited.
+
+---
+
+## Domain Data Model
+
+```typescript
+interface DomainConfig {
+  id: string;           // Internal ID
+  domainKey: string;    // Unique key (e.g., "email", "admin-portal", or a UUID for custom domains)
+  title: string;        // Human-readable title
+  description: string;  // What this domain is used for
+  value: string;        // The actual domain (e.g., "auth.banata.dev")
+  isDefault: boolean;   // Whether this is a built-in default domain
+}
+```
+
+---
+
+## Managing Domains via the Dashboard
+
+1. Navigate to **Domains** in the dashboard sidebar
+2. Default domains are pre-populated on first visit
+3. Click the **pencil icon** on any domain to edit its value inline
+4. Press **Enter** to save or **Escape** to cancel
+5. Click **Add domain** to create a custom domain with a title, description, and value
+6. Custom domains can be deleted via the **trash icon** — default domains cannot
+
+---
+
+## API Endpoints
+
+The `configPlugin` exposes 3 domain management endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/banata/config/domains/list` | POST | List all configured domains |
+| `/api/auth/banata/config/domains/save` | POST | Create or update a domain by `domainKey` |
+| `/api/auth/banata/config/domains/delete` | POST | Delete a domain by `domainKey` |
+
+All endpoints require **admin authentication** — a valid session with `role: "admin"`.
+
+### List Domains
+
+```typescript
+// POST /api/auth/banata/config/domains/list
+// Body: {}
+// Response: array of DomainConfig objects
+```
+
+### Save (Upsert) a Domain
+
+```typescript
+// POST /api/auth/banata/config/domains/save
+// Body:
+{
+  "domainKey": "email",           // Required — unique key
+  "title": "Email",               // Required — display name
+  "description": "Sender domain", // Optional
+  "value": "mail.myapp.com",      // Required — the domain value
+  "isDefault": false              // Optional — defaults to false
+}
+```
+
+The save endpoint uses an **upsert pattern** — if a domain with the given `domainKey` already exists, it updates the record. Otherwise, it creates a new one.
+
+### Delete a Domain
+
+```typescript
+// POST /api/auth/banata/config/domains/delete
+// Body:
+{
+  "domainKey": "custom-domain-uuid"
+}
+```
+
+---
+
+## Database Storage
+
+Domains are stored in the `domainConfig` table in Convex:
+
+```typescript
+// Simplified schema
+defineTable({
+  domainKey: v.string(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  value: v.string(),
+  isDefault: v.optional(v.boolean()),
+  createdAt: v.float64(),
+  updatedAt: v.float64(),
+})
+  .index("domainKey", ["domainKey"])
+  .index("createdAt", ["createdAt"])
+```
+
+---
+
+## Using Domains Programmatically
+
+### Via the Dashboard API Client
+
+The dashboard uses these functions internally. If you're building custom admin tooling, you can call them the same way:
+
+```typescript
+import { listDomains, saveDomain, deleteDomain } from "@/lib/dashboard-api";
+
+// List all domains
+const domains = await listDomains();
+
+// Update a domain's value
+await saveDomain({
+  domainKey: "email",
+  title: "Email",
+  value: "mail.mycompany.com",
+});
+
+// Create a custom domain
+await saveDomain({
+  domainKey: crypto.randomUUID(),
+  title: "CDN",
+  description: "Content delivery for auth assets",
+  value: "cdn.mycompany.com",
+});
+
+// Delete a custom domain
+await deleteDomain("custom-domain-key");
+```
+
+---
+
+## Custom Domain Setup
+
+When you change a domain value (e.g., switching from `auth.banata.dev` to `auth.mycompany.com`), you also need to configure DNS and SSL:
+
+1. **Add a CNAME record** pointing your custom domain to the Banata Auth service
+2. **Provision an SSL certificate** — if deploying to Vercel, this is automatic
+3. **Update the domain value** in the dashboard
+4. **Verify connectivity** — the dashboard shows the current domain value for each service
+
+> **Important:** DNS propagation can take up to 48 hours. During this window, both the old and new domains may need to be accessible.
+
+---
+
+## Security Considerations
+
+1. **Admin-only access** — All domain endpoints require admin authentication. Non-admin users cannot view or modify domain configuration.
+2. **Default domains are protected** — Built-in default domains (Email, Admin Portal, Auth API, AuthKit) cannot be deleted, only edited.
+3. **HTTPS required** — In production, all domain values should resolve to HTTPS endpoints.
+4. **Audit trail** — Domain changes are tracked in the audit log.
+
+---
+
+## Troubleshooting
+
+### "Authentication required"
+
+You must be signed in as an admin to access domain configuration. Check that your session is valid and your user has `role: "admin"`.
+
+### "Domain value not taking effect"
+
+Domain values stored in the dashboard are configuration records — they don't automatically update DNS or SSL certificates. You need to separately configure DNS records and ensure the domain resolves correctly.
+
+### "Default domains missing"
+
+Default domains are seeded on first visit to the Domains page. If they're missing, navigate to **Domains** in the dashboard and the 4 defaults will be created automatically.
+
+---
+
+## What's Next
+
+- **[Redirects](/docs/redirects)** — Configure redirect URIs for authentication flows
+- **[Environment Variables](/docs/env-vars)** — Configure required environment variables
+- **[Deploying to Production](/docs/deploy)** — Full deployment guide

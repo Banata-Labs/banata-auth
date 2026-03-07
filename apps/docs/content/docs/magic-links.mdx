@@ -1,0 +1,368 @@
+---
+title: "Magic Links"
+description: "Passwordless authentication via email — users click a link to sign in without needing a password."
+section: "Authentication"
+order: 6
+---
+
+Magic links provide **passwordless authentication** — users enter their email, receive a link, and click it to sign in. No password to remember, no credentials to manage. This is one of the most user-friendly authentication methods available.
+
+---
+
+## Configuration
+
+Enable magic links in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      magicLink: true,  // Enable magic link authentication
+    },
+
+    email: {
+      sendMagicLink: async ({ email, url, token }) => {
+        // Send the magic link email
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "MyApp <noreply@myapp.com>",
+            to: email,
+            subject: "Sign in to MyApp",
+            html: `
+              <h1>Sign in to MyApp</h1>
+              <p>Click the link below to sign in:</p>
+              <a href="${url}" style="
+                display: inline-block;
+                padding: 12px 24px;
+                background: #000;
+                color: #fff;
+                text-decoration: none;
+                border-radius: 6px;
+              ">Sign In</a>
+              <p style="color: #666; font-size: 14px;">
+                This link expires in 10 minutes. If you didn't request this, ignore this email.
+              </p>
+            `,
+          }),
+        });
+      },
+    },
+  };
+}
+```
+
+### Email Callback Parameters
+
+The `sendMagicLink` callback receives:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `email` | `string` | The recipient's email address |
+| `url` | `string` | The full magic link URL (includes token) |
+| `token` | `string` | The raw verification token |
+
+> **Note:** Unlike `sendVerificationEmail`, the magic link callback receives `email` (a string) instead of `user` (an object). This is because the user may not exist yet — magic links can create new accounts.
+
+---
+
+## Token Lifetime
+
+Magic link tokens expire after **10 minutes** (600 seconds) by default. This is defined in `@banata-auth/shared`:
+
+```typescript
+// @banata-auth/shared/constants.ts
+export const TOKEN_LIFETIMES = {
+  accessToken: 900,      // 15 minutes
+  session: 604800,       // 7 days
+  magicLink: 600,        // 10 minutes
+  invitation: 604800,    // 7 days
+};
+```
+
+After expiration, the user must request a new magic link.
+
+---
+
+## Client-Side API
+
+### Send Magic Link
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+const { error } = await authClient.signIn.magicLink({
+  email: "user@example.com",
+  callbackURL: "/dashboard",  // Where to redirect after sign-in
+});
+
+if (error) {
+  // Handle errors:
+  // - "Rate limit exceeded" (429)
+  // - "Invalid email" (422)
+  console.error(error.message);
+} else {
+  // Show "Check your email" message
+}
+```
+
+### Magic Link Form Example
+
+```tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+
+export default function MagicLinkPage() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const { error } = await authClient.signIn.magicLink({
+      email,
+      callbackURL: "/dashboard",
+    });
+
+    if (error) {
+      setError(error.message ?? "Failed to send magic link");
+    } else {
+      setSent(true);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div>
+        <h1>Check your email</h1>
+        <p>
+          We sent a sign-in link to <strong>{email}</strong>.
+          Click the link in the email to sign in.
+        </p>
+        <p style={{ color: "#666" }}>
+          The link expires in 10 minutes. Check your spam folder if you
+          don't see it.
+        </p>
+        <button onClick={() => setSent(false)}>
+          Try a different email
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1>Sign in with Magic Link</h1>
+      <input
+        type="email"
+        placeholder="your@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">Send Magic Link</button>
+    </form>
+  );
+}
+```
+
+---
+
+## How It Works
+
+Here's the complete magic link flow:
+
+```
+1. User enters email → POST /api/auth/sign-in/magic-link
+2. Server generates a signed token (valid for 10 minutes)
+3. Server calls your sendMagicLink callback with { email, url, token }
+4. Your callback sends the email via Resend/SendGrid/etc.
+5. User clicks the link in their email
+6. Browser navigates to /api/auth/magic-link/verify?token=xxx
+7. Server verifies the token signature and expiration
+8. If no user exists with that email → creates a new user
+9. If user exists → creates a new session
+10. Browser is redirected to callbackURL with session cookie set
+```
+
+### New Users vs. Existing Users
+
+- **New email** — A new user account is created automatically. No separate sign-up step needed.
+- **Existing email** — The existing user is signed in. Their account is unchanged.
+- **Linked accounts** — If the email matches a user who signed up with email/password or social OAuth, they get signed into that existing account.
+
+---
+
+## Combining with Other Methods
+
+Magic links work well alongside other authentication methods. A common pattern is offering magic links as the primary method with email/password as a fallback:
+
+```typescript
+authMethods: {
+  emailPassword: true,   // Traditional sign-in
+  magicLink: true,        // Passwordless sign-in
+  organization: true,     // Organizations
+},
+
+email: {
+  sendVerificationEmail: async ({ user, url }) => { /* ... */ },
+  sendResetPassword: async ({ user, url }) => { /* ... */ },
+  sendMagicLink: async ({ email, url }) => { /* ... */ },
+},
+```
+
+In your UI:
+
+```tsx
+export default function SignInPage() {
+  const [mode, setMode] = useState<"magic" | "password">("magic");
+
+  return (
+    <div>
+      <div>
+        <button onClick={() => setMode("magic")}>Magic Link</button>
+        <button onClick={() => setMode("password")}>Password</button>
+      </div>
+
+      {mode === "magic" ? (
+        <MagicLinkForm />
+      ) : (
+        <PasswordForm />
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Security Considerations
+
+### Token Security
+
+- Tokens are **cryptographically signed** using the `BETTER_AUTH_SECRET`.
+- Tokens are **single-use** — once verified, they cannot be reused.
+- Tokens **expire after 10 minutes** — a narrow window limits exposure.
+- Token verification uses `timingSafeEqual()` to prevent timing attacks.
+
+### Email Security
+
+- Magic links are as secure as the user's email account. If someone has access to the email, they can sign in.
+- For higher-security applications, consider combining magic links with MFA (TOTP) for a passwordless + second-factor experience.
+
+### Rate Limiting
+
+Magic link requests are rate-limited to prevent abuse:
+
+| Endpoint | Limit |
+|---|---|
+| Send magic link | 30 requests per minute (per IP) |
+
+If a user exceeds the rate limit, a `RateLimitError` (429) is returned.
+
+---
+
+## Email OTP Alternative
+
+If you prefer one-time codes instead of links, Banata Auth also supports **Email OTP** (one-time password):
+
+```typescript
+authMethods: {
+  emailOtp: true,  // Enable email OTP
+},
+
+email: {
+  sendOtp: async ({ email, otp }) => {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "MyApp <noreply@myapp.com>",
+        to: email,
+        subject: "Your sign-in code",
+        html: `
+          <h1>Your sign-in code</h1>
+          <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px;">
+            ${otp}
+          </p>
+          <p>Enter this code in the app to sign in. It expires in 10 minutes.</p>
+        `,
+      }),
+    });
+  },
+},
+```
+
+The client-side flow for OTP:
+
+```typescript
+// Step 1: Send the OTP
+await authClient.signIn.emailOtp({
+  email: "user@example.com",
+});
+
+// Step 2: Verify the OTP (user enters the code)
+const { data, error } = await authClient.signIn.emailOtp({
+  email: "user@example.com",
+  otp: "123456",
+});
+```
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `magic_link.sent` | Magic link email sent |
+| `session.created` | User successfully signed in via magic link |
+| `user.created` | New user created via magic link (first-time sign-in) |
+
+---
+
+## Troubleshooting
+
+### "Magic link expired"
+
+The token is only valid for 10 minutes. Ask the user to request a new one. Common causes:
+- User took too long to check their email
+- Email was delayed by the provider
+- User clicked an old link
+
+### "Invalid magic link"
+
+The token signature doesn't match. This can happen if:
+- The `BETTER_AUTH_SECRET` was changed after the link was generated
+- The link URL was modified or truncated (some email clients break long URLs)
+
+### Magic Link Email Not Received
+
+1. Check your `sendMagicLink` callback for errors
+2. Check the spam/junk folder
+3. Verify the email provider API key is correct
+4. In development, check the console for `[DEV]` log output
+
+---
+
+## What's Next
+
+- **[Multi-Factor Auth](/docs/mfa)** — Add TOTP as a second factor
+- **[Email & Password](/docs/email-password)** — Traditional authentication
+- **[Social OAuth](/docs/social-oauth)** — Sign in with Google, GitHub, etc.

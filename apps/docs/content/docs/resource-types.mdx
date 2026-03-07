@@ -1,0 +1,304 @@
+---
+title: "Resource Types"
+description: "Define custom resource types for fine-grained authorization — scope permissions to specific resources in your application."
+section: "Enterprise"
+order: 23
+---
+
+Resource types let you define the **categories of resources** in your application that need authorization. By creating resource types like "Document", "Project", or "Workspace", you establish the vocabulary for your **fine-grained authorization** model — linking permissions to specific kinds of objects rather than broad system-wide actions.
+
+---
+
+## How Resource Types Work
+
+```
+1. Define resource types that represent objects in your app (e.g., "Document", "Project")
+2. Each resource type gets a unique slug (e.g., "document", "project")
+3. Use the slug in permission definitions: "document:read", "document:write"
+4. Assign permissions to roles using the resource:action convention
+5. Check permissions at runtime: "Can this user read this document?"
+```
+
+Resource types are the **building blocks** of Banata Auth's authorization model. They work hand-in-hand with [Roles & Permissions](/docs/roles-permissions) — resource types define _what_ can be protected, and permissions define _who_ can do _what_ to them.
+
+---
+
+## Resource Type Data Model
+
+```typescript
+interface ResourceType {
+  id: string;           // Internal ID
+  name: string;         // Human-readable name (e.g., "Document")
+  slug: string;         // Unique slug (e.g., "document") — used in permission strings
+  description: string;  // What this resource type represents
+  createdAt: string;    // ISO 8601 timestamp
+}
+```
+
+### The `slug` Convention
+
+Resource type slugs are used as the **prefix** in permission strings:
+
+```
+{slug}:{action}
+```
+
+For example, a resource type with slug `document` produces permissions like:
+
+```
+document:read
+document:write
+document:delete
+document:share
+```
+
+This makes permissions self-documenting — you can immediately tell what resource a permission applies to.
+
+---
+
+## Creating Resource Types
+
+### Via the Dashboard
+
+1. Navigate to **Authorization > Resource Types** in the dashboard sidebar
+2. Click **Create resource type**
+3. Enter a **Name** (e.g., "Document") — the slug is auto-generated from the name
+4. Optionally customize the **Slug** (must be unique, lowercase, hyphenated)
+5. Optionally add a **Description**
+6. Click **Create**
+
+The slug auto-generation converts the name to lowercase and replaces non-alphanumeric characters with hyphens. For example:
+
+| Name | Auto-Generated Slug |
+|---|---|
+| Document | `document` |
+| API Key | `api-key` |
+| Project Board | `project-board` |
+| CI/CD Pipeline | `ci-cd-pipeline` |
+
+You can always customize the slug before creating.
+
+### Via the API
+
+```typescript
+// POST /api/auth/banata/config/resource-types/create
+// Body:
+{
+  "name": "Document",
+  "slug": "document",
+  "description": "Files and documents in the workspace"
+}
+// Response: the created ResourceType object
+```
+
+---
+
+## Managing Resource Types
+
+### List All Resource Types
+
+```typescript
+// POST /api/auth/banata/config/resource-types/list
+// Body: {}
+// Response: array of ResourceType objects, sorted by creation date
+```
+
+### Delete a Resource Type
+
+```typescript
+// POST /api/auth/banata/config/resource-types/delete
+// Body:
+{
+  "id": "resource-type-id"
+}
+```
+
+> **Important:** Deleting a resource type does not automatically remove permissions that reference its slug. Ensure you update role definitions after deleting a resource type.
+
+---
+
+## API Endpoints
+
+The `configPlugin` exposes 3 resource type endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/banata/config/resource-types/list` | POST | List all resource types |
+| `/api/auth/banata/config/resource-types/create` | POST | Create a new resource type |
+| `/api/auth/banata/config/resource-types/delete` | POST | Delete a resource type by ID |
+
+All endpoints require **admin authentication**.
+
+### Duplicate Slug Prevention
+
+The create endpoint enforces **unique slugs**. If you attempt to create a resource type with a slug that already exists, the API returns a `CONFLICT` error:
+
+```
+409 Conflict: "A resource type with this slug already exists"
+```
+
+---
+
+## Database Storage
+
+Resource types are stored in the `resourceType` table in Convex:
+
+```typescript
+// Simplified schema
+defineTable({
+  name: v.string(),
+  slug: v.string(),
+  description: v.optional(v.string()),
+  createdAt: v.float64(),
+  updatedAt: v.float64(),
+})
+  .index("slug", ["slug"])
+  .index("createdAt", ["createdAt"])
+```
+
+The `slug` index enforces efficient lookup for duplicate detection.
+
+---
+
+## Using Resource Types Programmatically
+
+### Via the Dashboard API Client
+
+```typescript
+import {
+  listResourceTypes,
+  createResourceType,
+  deleteResourceType,
+} from "@/lib/dashboard-api";
+
+// List all resource types
+const types = await listResourceTypes();
+// [
+//   { id: "...", name: "Document", slug: "document", description: "...", createdAt: "..." },
+//   { id: "...", name: "Project", slug: "project", description: "...", createdAt: "..." },
+// ]
+
+// Create a new resource type
+const newType = await createResourceType({
+  name: "Workspace",
+  slug: "workspace",
+  description: "Top-level container for projects and documents",
+});
+
+// Delete a resource type
+await deleteResourceType("resource-type-id");
+```
+
+---
+
+## Connecting Resource Types to Permissions
+
+Once you've defined resource types, use them to build your permission model:
+
+### Step 1: Define Resource Types
+
+```
+document, project, workspace, billing
+```
+
+### Step 2: Define Actions per Resource
+
+```
+read, write, delete, share, manage
+```
+
+### Step 3: Create Permission Strings
+
+```
+document:read    document:write    document:delete    document:share
+project:read     project:write     project:delete     project:manage
+workspace:read   workspace:manage
+billing:view     billing:manage
+```
+
+### Step 4: Assign Permissions to Roles
+
+```
+Owner:     document:*, project:*, workspace:*, billing:*
+Admin:     document:*, project:*, workspace:manage
+Editor:    document:read, document:write, project:read, project:write
+Viewer:    document:read, project:read
+```
+
+### Step 5: Check Permissions at Runtime
+
+```typescript
+const canEdit = await banata.rbac.checkPermission({
+  userId: "usr_01HXYZ...",
+  permission: { resource: "document", action: "write" },
+  organizationId: "org_01HXYZ...",
+});
+```
+
+See [Roles & Permissions](/docs/roles-permissions) for complete permission checking documentation.
+
+---
+
+## Common Resource Type Patterns
+
+### B2B SaaS
+
+| Name | Slug | Description |
+|---|---|---|
+| Workspace | `workspace` | Top-level tenant container |
+| Project | `project` | Projects within a workspace |
+| Document | `document` | Files and documents |
+| Billing | `billing` | Subscription and payment management |
+| Member | `member` | Team member management |
+
+### Developer Tool
+
+| Name | Slug | Description |
+|---|---|---|
+| Webhook | `webhook` | Webhook endpoint management |
+| API Key | `api-key` | API key management |
+| Deployment | `deployment` | Deployment operations |
+| Log | `log` | Log access and management |
+
+### Content Platform
+
+| Name | Slug | Description |
+|---|---|---|
+| Article | `article` | Blog posts and articles |
+| Media | `media` | Images, videos, and files |
+| Comment | `comment` | User comments and discussions |
+| Category | `category` | Content categorization |
+
+---
+
+## Best Practices
+
+1. **Use singular nouns** — `document` not `documents`. The slug represents a _type_, not a collection.
+2. **Keep slugs short** — They appear in every permission string. `doc` is fine; `documentation-file-resource` is excessive.
+3. **Be consistent** — If you use `kebab-case` for one slug, use it for all. The auto-generator handles this for you.
+4. **Start broad, refine later** — Begin with a few core resource types. Add more as your authorization needs grow.
+5. **Document the mapping** — Keep a reference of which resource types map to which application objects. This helps new team members understand the permission model.
+
+---
+
+## Troubleshooting
+
+### "A resource type with this slug already exists"
+
+Slugs must be unique. Either use a different slug or delete the existing resource type first.
+
+### "Resource types not appearing"
+
+Ensure you're signed in as an admin. The list endpoint requires admin authentication.
+
+### "Deleted resource type still referenced in permissions"
+
+Deleting a resource type doesn't cascade to permission definitions. Manually update any roles that reference permissions with the deleted resource type's slug.
+
+---
+
+## What's Next
+
+- **[Roles & Permissions](/docs/roles-permissions)** — Assign permissions to roles using resource type slugs
+- **[Auth Configuration](/docs/auth-configuration)** — Configure authorization behavior
+- **[Organizations](/docs/organizations-overview)** — Multi-tenant workspaces where authorization is applied

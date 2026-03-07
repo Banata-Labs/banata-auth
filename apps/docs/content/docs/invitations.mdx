@@ -1,0 +1,387 @@
+---
+title: "Invitations"
+description: "Complete invitation lifecycle — sending, accepting, expiring, and revoking organization invitations."
+section: "Enterprise"
+order: 9
+---
+
+Invitations allow organization administrators to invite new members by email. The invitation system handles the full lifecycle: **creation**, **email delivery**, **acceptance**, **expiration**, and **revocation**.
+
+---
+
+## How Invitations Work
+
+```
+1. Admin sends invitation → POST /api/auth/organization/invite
+2. Server creates invitation record (status: "pending")
+3. Server calls sendInvitationEmail callback
+4. Your callback sends the email with an invite link
+5. Recipient clicks the link
+6. If not signed in → redirected to sign-up, then acceptance
+7. If signed in → invitation is accepted immediately
+8. Member record is created with the specified role
+9. Invitation status changes to "accepted"
+```
+
+---
+
+## Invitation Data Model
+
+```typescript
+interface Invitation {
+  id: string;              // e.g., "inv_01HXYZ..."
+  email: string;           // Invitee's email address
+  organizationId: string;  // Target organization
+  role: string;            // Role to assign: "owner", "admin", "member", or custom
+  inviterId: string;       // User who sent the invitation
+  status: "pending" | "accepted" | "expired" | "revoked";
+  expiresAt: string;       // ISO 8601 — 7 days from creation
+  createdAt: string;
+}
+```
+
+### Status Lifecycle
+
+```
+                 ┌──── accepted (user clicked link & joined)
+                 │
+pending ─────────┤
+                 │
+                 ├──── expired (7 days passed, not accepted)
+                 │
+                 └──── revoked (admin cancelled invitation)
+```
+
+| Status | Description | Terminal? |
+|---|---|---|
+| `pending` | Invitation sent, waiting for response | No |
+| `accepted` | Invitee accepted and joined the organization | Yes |
+| `expired` | Invitation passed its 7-day expiration window | Yes |
+| `revoked` | Admin cancelled the invitation before acceptance | Yes |
+
+---
+
+## Configuration
+
+The invitation email callback is part of the `email` configuration:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    // ...other config...
+
+    authMethods: {
+      organization: true,
+    },
+
+    email: {
+      sendInvitationEmail: async ({ invitation }) => {
+        // IMPORTANT: You receive the invitation object, not a URL.
+        // Build the acceptance URL yourself:
+        const inviteUrl = `${process.env.SITE_URL}/invite/${invitation.id}`;
+
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "MyApp <noreply@myapp.com>",
+            to: invitation.email,
+            subject: `You've been invited to join ${invitation.organizationName ?? "an organization"}`,
+            html: `
+              <h1>You're invited!</h1>
+              <p>You've been invited to join as a <strong>${invitation.role}</strong>.</p>
+              <a href="${inviteUrl}" style="
+                display: inline-block;
+                padding: 12px 24px;
+                background: #000;
+                color: #fff;
+                text-decoration: none;
+                border-radius: 6px;
+              ">Accept Invitation</a>
+              <p style="color: #666;">This invitation expires in 7 days.</p>
+            `,
+          }),
+        });
+      },
+    },
+  };
+}
+```
+
+### Callback Parameters
+
+The `sendInvitationEmail` callback receives an object with:
+
+| Field | Type | Description |
+|---|---|---|
+| `invitation.id` | `string` | Unique invitation ID |
+| `invitation.email` | `string` | Invitee's email |
+| `invitation.organizationId` | `string` | Target org ID |
+| `invitation.role` | `string` | Role to be assigned |
+| `invitation.inviterId` | `string` | User ID of the sender |
+
+> **Key difference from other callbacks:** Unlike `sendMagicLink` which gives you a ready-made `url`, the invitation callback only provides the `invitationId`. You must construct the acceptance URL yourself using your `SITE_URL`.
+
+---
+
+## Client-Side API
+
+### Send an Invitation
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+const { error } = await authClient.organization.inviteMember({
+  organizationId: "org_01HXYZ...",
+  email: "newuser@example.com",
+  role: "member",   // "owner", "admin", "member", or custom role
+});
+
+if (error) {
+  // Possible errors:
+  // - "User is already a member" (409)
+  // - "Invitation already pending for this email" (409)
+  // - "Organization membership limit reached" (422)
+  // - "Forbidden" (403) — user doesn't have permission to invite
+  console.error(error.message);
+}
+```
+
+### List Pending Invitations
+
+```typescript
+const { data: invitations } = await authClient.organization.listInvitations({
+  organizationId: "org_01HXYZ...",
+});
+// invitations = [{ id, email, role, status, expiresAt, ... }, ...]
+```
+
+### Accept an Invitation
+
+```typescript
+const { error } = await authClient.organization.acceptInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+
+if (error) {
+  // - "Invitation expired" (410)
+  // - "Invitation already accepted" (409)
+  // - "Invitation revoked" (410)
+  console.error(error.message);
+} else {
+  // User is now a member of the organization
+  // Set it as the active organization
+  await authClient.organization.setActive({
+    organizationId: invitation.organizationId,
+  });
+}
+```
+
+### Revoke an Invitation
+
+```typescript
+const { error } = await authClient.organization.revokeInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+---
+
+## Invitation Acceptance Page
+
+Build a page at `/invite/[id]` that handles invitation acceptance:
+
+```tsx
+// src/app/invite/[id]/page.tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useUser } from "@banata-auth/react";
+import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+
+export default function InvitePage() {
+  const { id } = useParams();
+  const { user, isLoading } = useUser();
+  const [status, setStatus] = useState<"loading" | "accepting" | "success" | "error">("loading");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!user) {
+      // Not signed in — redirect to sign-up with return URL
+      window.location.href = `/sign-up?redirect_url=/invite/${id}`;
+      return;
+    }
+
+    // User is signed in — accept the invitation
+    acceptInvitation();
+  }, [user, isLoading]);
+
+  async function acceptInvitation() {
+    setStatus("accepting");
+
+    const { error } = await authClient.organization.acceptInvitation({
+      invitationId: id as string,
+    });
+
+    if (error) {
+      setStatus("error");
+      setError(error.message ?? "Failed to accept invitation");
+    } else {
+      setStatus("success");
+      // Redirect to the org after a brief delay
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 2000);
+    }
+  }
+
+  switch (status) {
+    case "loading":
+    case "accepting":
+      return <div>Accepting invitation...</div>;
+
+    case "success":
+      return (
+        <div>
+          <h1>Invitation Accepted!</h1>
+          <p>You've joined the organization. Redirecting...</p>
+        </div>
+      );
+
+    case "error":
+      return (
+        <div>
+          <h1>Invitation Error</h1>
+          <p>{error}</p>
+          <a href="/dashboard">Go to Dashboard</a>
+        </div>
+      );
+  }
+}
+```
+
+---
+
+## Server-Side Management (Admin SDK)
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth("your-api-key");
+
+// Create an invitation
+await banata.organizations.createInvitation({
+  organizationId: "org_01HXYZ...",
+  email: "user@example.com",
+  role: "admin",
+});
+
+// List invitations for an organization
+const { data: invitations } = await banata.organizations.listInvitations({
+  organizationId: "org_01HXYZ...",
+  status: "pending",  // Filter by status
+});
+
+// Revoke an invitation
+await banata.organizations.revokeInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+---
+
+## Expiration
+
+Invitations expire after **7 days** (604,800 seconds), as defined in `@banata-auth/shared`:
+
+```typescript
+export const TOKEN_LIFETIMES = {
+  invitation: 604800,  // 7 days in seconds
+};
+```
+
+Once expired, the invitation's status changes to `"expired"` and cannot be accepted. The admin must send a new invitation.
+
+---
+
+## Bulk Invitations
+
+To invite multiple users at once, iterate over the emails:
+
+```typescript
+const emails = [
+  { email: "alice@example.com", role: "admin" },
+  { email: "bob@example.com", role: "member" },
+  { email: "charlie@example.com", role: "member" },
+];
+
+const results = await Promise.allSettled(
+  emails.map(({ email, role }) =>
+    authClient.organization.inviteMember({
+      organizationId: "org_01HXYZ...",
+      email,
+      role,
+    })
+  )
+);
+
+// Check which invitations succeeded/failed
+results.forEach((result, i) => {
+  if (result.status === "rejected" || result.value?.error) {
+    console.error(`Failed to invite ${emails[i].email}`);
+  }
+});
+```
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `invitation.created` | New invitation sent |
+| `invitation.accepted` | Invitation accepted, member added |
+| `invitation.revoked` | Invitation revoked by admin |
+| `invitation.expired` | Invitation expired without being accepted |
+| `member.added` | New member joined via invitation |
+
+---
+
+## Troubleshooting
+
+### Invitation Email Not Sent
+
+1. Check that `sendInvitationEmail` is configured in your `email` callbacks
+2. Check the Convex function logs for errors in the email sending
+3. Make sure `authMethods.organization` is `true`
+
+### "Invitation Already Pending"
+
+An invitation with the same email already exists for this organization. Either:
+- Wait for it to expire (7 days)
+- Revoke the existing invitation first, then send a new one
+
+### "Organization Membership Limit Reached"
+
+The organization has reached the `membershipLimit` (default: 100). Increase it in your config:
+
+```typescript
+organizationConfig: {
+  membershipLimit: 500,
+},
+```
+
+---
+
+## What's Next
+
+- **[Roles & Permissions](/docs/roles-permissions)** — Control what members can do within an organization
+- **[Organizations](/docs/organizations-overview)** — Full organization management guide
+- **[Webhooks](/docs/webhooks)** — Get notified about invitation events

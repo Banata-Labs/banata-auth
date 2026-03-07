@@ -1,0 +1,462 @@
+---
+title: "Multi-Factor Authentication"
+description: "Add TOTP-based two-factor authentication with authenticator apps, backup codes, and recovery flows."
+section: "Authentication"
+order: 7
+---
+
+Multi-factor authentication (MFA) adds a second layer of security by requiring users to provide a **time-based one-time password (TOTP)** from an authenticator app in addition to their primary credentials.
+
+Banata Auth supports TOTP via the `twoFactor` plugin, which is compatible with any TOTP authenticator app — Google Authenticator, Authy, 1Password, Bitwarden, etc.
+
+---
+
+## Configuration
+
+Enable two-factor authentication in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      emailPassword: true,
+      twoFactor: true,     // Enable TOTP-based MFA
+    },
+  };
+}
+```
+
+That's it — no additional email callbacks or configuration needed for basic TOTP. The `twoFactor` plugin is conditionally enabled when `authMethods.twoFactor` is `true`.
+
+---
+
+## How It Works
+
+### Setup Flow
+
+```
+1. User signs in normally (email/password, social, etc.)
+2. User navigates to security settings
+3. User clicks "Enable Two-Factor Authentication"
+4. Client calls authClient.twoFactor.enable()
+5. Server generates a TOTP secret and returns a QR code URI
+6. User scans the QR code with their authenticator app
+7. User enters the 6-digit code from the app to verify
+8. Client calls authClient.twoFactor.verifyTotp({ code })
+9. Server confirms the code and enables MFA on the account
+10. Server generates backup codes and returns them
+11. User saves the backup codes somewhere safe
+```
+
+### Sign-In Flow (with MFA enabled)
+
+```
+1. User enters email + password
+2. Server validates credentials
+3. Server detects MFA is enabled → returns a challenge
+4. Client shows TOTP input screen
+5. User enters 6-digit code from authenticator app
+6. Client calls authClient.twoFactor.verifyTotp({ code })
+7. Server validates the TOTP code
+8. Session is created → user is signed in
+```
+
+---
+
+## Client-Side API
+
+### Enable Two-Factor Auth
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// Step 1: Enable 2FA — returns TOTP URI for QR code
+const { data, error } = await authClient.twoFactor.enable({
+  password: "currentPassword", // Re-authenticate before enabling
+});
+
+if (data) {
+  // data.totpURI — Use this to generate a QR code
+  // data.backupCodes — Array of backup codes (show once!)
+  console.log(data.totpURI);
+  console.log(data.backupCodes);
+}
+```
+
+### Generate QR Code
+
+Use a QR code library to render the TOTP URI:
+
+```tsx
+import QRCode from "qrcode.react"; // or any QR code library
+
+function TwoFactorSetup({ totpURI }: { totpURI: string }) {
+  return (
+    <div>
+      <h2>Scan this QR code with your authenticator app</h2>
+      <QRCode value={totpURI} size={200} />
+      <p>
+        Or enter this code manually:{" "}
+        <code>{new URL(totpURI).searchParams.get("secret")}</code>
+      </p>
+    </div>
+  );
+}
+```
+
+### Verify TOTP Code
+
+After setup, verify the user can generate valid codes:
+
+```typescript
+// Step 2: Verify the TOTP code from the authenticator app
+const { error } = await authClient.twoFactor.verifyTotp({
+  code: "123456", // 6-digit code from authenticator app
+});
+
+if (error) {
+  console.error("Invalid code. Try again.");
+} else {
+  console.log("Two-factor authentication enabled!");
+}
+```
+
+### Disable Two-Factor Auth
+
+```typescript
+const { error } = await authClient.twoFactor.disable({
+  password: "currentPassword", // Re-authenticate before disabling
+});
+
+if (!error) {
+  console.log("Two-factor authentication disabled.");
+}
+```
+
+---
+
+## Backup Codes
+
+When a user enables MFA, backup codes are automatically generated. These are **one-time use** codes that allow sign-in if the user loses access to their authenticator app.
+
+### Backup Code Format
+
+| Property | Value |
+|---|---|
+| Length | **8 characters** per code |
+| Character set | **A-Z, 0-9** (uppercase alphanumeric) |
+| Count | Typically **10 codes** generated |
+| Usage | **Single-use** — each code can only be used once |
+
+### Displaying Backup Codes
+
+```tsx
+function BackupCodes({ codes }: { codes: string[] }) {
+  return (
+    <div>
+      <h2>Save your backup codes</h2>
+      <p>
+        Store these codes in a safe place. Each code can only be used
+        once to sign in if you lose access to your authenticator app.
+      </p>
+      <div style={{
+        fontFamily: "monospace",
+        backgroundColor: "#f5f5f5",
+        padding: "16px",
+        borderRadius: "8px",
+      }}>
+        {codes.map((code, i) => (
+          <div key={i}>{code}</div>
+        ))}
+      </div>
+      <button onClick={() => {
+        navigator.clipboard.writeText(codes.join("\n"));
+      }}>
+        Copy to Clipboard
+      </button>
+    </div>
+  );
+}
+```
+
+> **Important:** Backup codes should only be shown once — when MFA is first enabled. If the user loses them, they'll need to disable and re-enable MFA to get new codes (or use an admin account recovery flow).
+
+### Using a Backup Code to Sign In
+
+```typescript
+// During the MFA challenge, if user can't access authenticator app:
+const { error } = await authClient.twoFactor.verifyBackupCode({
+  code: "AB12CD34", // One of the backup codes
+});
+
+if (!error) {
+  // Signed in successfully. This backup code is now consumed.
+}
+```
+
+---
+
+## Complete MFA Setup Component
+
+```tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+
+type Step = "start" | "scan" | "verify" | "backup" | "done";
+
+export function MFASetup() {
+  const [step, setStep] = useState<Step>("start");
+  const [totpURI, setTotpURI] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleEnable() {
+    setError("");
+    const { data, error } = await authClient.twoFactor.enable({
+      password,
+    });
+
+    if (error) {
+      setError(error.message ?? "Failed to enable 2FA");
+      return;
+    }
+
+    setTotpURI(data.totpURI);
+    setBackupCodes(data.backupCodes ?? []);
+    setStep("scan");
+  }
+
+  async function handleVerify() {
+    setError("");
+    const { error } = await authClient.twoFactor.verifyTotp({ code });
+
+    if (error) {
+      setError("Invalid code. Make sure the code is correct and try again.");
+      return;
+    }
+
+    setStep("backup");
+  }
+
+  switch (step) {
+    case "start":
+      return (
+        <div>
+          <h2>Enable Two-Factor Authentication</h2>
+          <p>Enter your password to get started.</p>
+          <input
+            type="password"
+            placeholder="Current password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <p style={{ color: "red" }}>{error}</p>}
+          <button onClick={handleEnable}>Continue</button>
+        </div>
+      );
+
+    case "scan":
+      return (
+        <div>
+          <h2>Scan QR Code</h2>
+          <p>Scan this code with your authenticator app:</p>
+          {/* Render QR code from totpURI */}
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpURI)}`}
+            alt="TOTP QR Code"
+          />
+          <button onClick={() => setStep("verify")}>
+            I've scanned the code
+          </button>
+        </div>
+      );
+
+    case "verify":
+      return (
+        <div>
+          <h2>Verify Code</h2>
+          <p>Enter the 6-digit code from your authenticator app:</p>
+          <input
+            type="text"
+            maxLength={6}
+            placeholder="000000"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            style={{ fontSize: "24px", letterSpacing: "8px", textAlign: "center" }}
+          />
+          {error && <p style={{ color: "red" }}>{error}</p>}
+          <button onClick={handleVerify}>Verify</button>
+        </div>
+      );
+
+    case "backup":
+      return (
+        <div>
+          <h2>Save Your Backup Codes</h2>
+          <p>
+            These codes can be used to sign in if you lose access to your
+            authenticator app. Each code can only be used once.
+          </p>
+          <pre>{backupCodes.join("\n")}</pre>
+          <button onClick={() => {
+            navigator.clipboard.writeText(backupCodes.join("\n"));
+          }}>
+            Copy Codes
+          </button>
+          <button onClick={() => setStep("done")}>
+            I've saved my codes
+          </button>
+        </div>
+      );
+
+    case "done":
+      return (
+        <div>
+          <h2>Two-Factor Authentication Enabled</h2>
+          <p>Your account is now protected with two-factor authentication.</p>
+        </div>
+      );
+  }
+}
+```
+
+---
+
+## MFA Challenge During Sign-In
+
+When a user with MFA enabled signs in, the sign-in response indicates that a TOTP code is required:
+
+```tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+
+export function SignInWithMFA() {
+  const [step, setStep] = useState<"credentials" | "totp">("credentials");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSignIn() {
+    setError("");
+    const { data, error } = await authClient.signIn.email({
+      email,
+      password,
+    });
+
+    if (error) {
+      // Check if MFA is required
+      if (error.status === 403 && error.message?.includes("two-factor")) {
+        setStep("totp");
+        return;
+      }
+      setError(error.message ?? "Sign in failed");
+      return;
+    }
+
+    window.location.href = "/dashboard";
+  }
+
+  async function handleTOTP() {
+    setError("");
+    const { error } = await authClient.twoFactor.verifyTotp({ code });
+
+    if (error) {
+      setError("Invalid code");
+      return;
+    }
+
+    window.location.href = "/dashboard";
+  }
+
+  if (step === "totp") {
+    return (
+      <div>
+        <h2>Two-Factor Authentication</h2>
+        <p>Enter the 6-digit code from your authenticator app.</p>
+        <input
+          type="text"
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="000000"
+        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <button onClick={handleTOTP}>Verify</button>
+        <button onClick={() => setStep("credentials")}>
+          Use backup code instead
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); handleSignIn(); }}>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">Sign In</button>
+    </form>
+  );
+}
+```
+
+---
+
+## Passkeys (WebAuthn)
+
+In addition to TOTP, Banata Auth also supports **passkeys** (WebAuthn) for passwordless biometric/hardware key authentication:
+
+```typescript
+authMethods: {
+  passkey: true,
+},
+
+passkey: {
+  rpId: process.env.PASSKEY_RP_ID ?? "localhost",
+  rpName: "My App",
+  origin: process.env.PASSKEY_ORIGIN ?? "http://localhost:3000",
+},
+```
+
+Passkeys use the device's biometric sensor (Face ID, Touch ID, Windows Hello) or a hardware security key (YubiKey) for authentication. They provide the strongest form of authentication without passwords.
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `two_factor.enabled` | User enables TOTP MFA |
+| `two_factor.disabled` | User disables TOTP MFA |
+| `two_factor.verified` | Successful TOTP verification during sign-in |
+| `session.created` | Session created after successful MFA challenge |
+
+---
+
+## Security Considerations
+
+1. **TOTP codes are time-sensitive** — They change every 30 seconds. Make sure your server's clock is accurate.
+2. **Backup codes are critical** — Users who lose both their device and backup codes may be locked out. Consider admin recovery flows.
+3. **Re-authenticate before enabling/disabling** — Always require the current password before changing MFA settings.
+4. **Don't store TOTP secrets client-side** — The TOTP secret is only shown during setup (via QR code). It's stored server-side in the `twoFactor` database table.
+5. **Require MFA for sensitive operations** — Consider requiring a fresh TOTP code for operations like changing email, deleting account, or managing API keys.
+
+---
+
+## What's Next
+
+- **[Organizations](/docs/organizations-overview)** — Multi-tenant workspaces
+- **[Roles & Permissions](/docs/roles-permissions)** — Fine-grained access control
+- **[Webhooks](/docs/webhooks)** — Get notified about auth events

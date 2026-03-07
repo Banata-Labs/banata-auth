@@ -1,0 +1,322 @@
+---
+title: "API Keys"
+description: "Programmatic access with scoped API keys — create, manage, and authenticate server-to-server requests."
+section: "Enterprise"
+order: 13
+---
+
+API keys provide **programmatic, server-to-server authentication** for integrations, scripts, and third-party services that need to access your Banata Auth-powered application without going through the browser-based auth flow.
+
+---
+
+## Configuration
+
+Enable API keys in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      emailPassword: true,
+    },
+
+    // Enable API key authentication
+    apiKeyConfig: {
+      enabled: true,
+      // Optional: customize key behavior
+      expiresIn: 90 * 24 * 60 * 60,  // 90 days (in seconds)
+      prefix: "ba_live",               // Key prefix for identification
+    },
+  };
+}
+```
+
+### API Key Config Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | `boolean` | `false` | Enable/disable API key authentication |
+| `expiresIn` | `number` | `null` (no expiry) | Key lifetime in seconds |
+| `prefix` | `string` | `"ba"` | Prefix for generated keys (e.g., `ba_live_abc123`) |
+
+---
+
+## How API Keys Work
+
+```
+1. User/admin creates an API key via dashboard or API
+2. Banata Auth generates a random key with the configured prefix
+3. A hash of the key is stored in the database (not the raw key)
+4. The raw key is returned ONCE to the user — it cannot be retrieved later
+5. Client includes the key in requests via Authorization header
+6. Server hashes the provided key and looks up the matching record
+7. If found and not expired: request is authenticated as the key's owner
+```
+
+---
+
+## Creating API Keys
+
+### Via the Client SDK (Authenticated User)
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+// Create an API key for the current user
+const { data, error } = await authClient.apiKey.create({
+  name: "CI/CD Pipeline",
+  // Optional: scope the key's permissions
+  permissions: ["users:read", "organizations:read"],
+  // Optional: set an expiration
+  expiresIn: 90 * 24 * 60 * 60, // 90 days in seconds
+});
+
+if (data) {
+  console.log(data.key);   // "ba_live_abc123..." — SHOW ONCE, SAVE SECURELY
+  console.log(data.id);    // "apk_01HXYZ..." — Key ID for management
+  console.log(data.name);  // "CI/CD Pipeline"
+}
+```
+
+> **Critical:** The raw API key is only returned at creation time. It cannot be retrieved later. Instruct users to save it securely (password manager, environment variable, secrets vault).
+
+### Via the Admin SDK (Server-Side)
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "your-admin-api-key",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// Create an API key for a specific user
+const key = await banata.users.createApiKey({
+  userId: "usr_01HXYZ...",
+  name: "Production Integration",
+  permissions: ["users:read", "users:write"],
+});
+
+console.log(key.key); // Raw key — return to user once
+```
+
+### Via the Admin Dashboard
+
+1. Navigate to a **User's detail page**
+2. Go to the **API Keys** tab
+3. Click **Create API Key**
+4. Enter a name and select permissions
+5. Copy the key and save it securely
+
+---
+
+## Using API Keys
+
+### Authorization Header
+
+Include the API key in the `Authorization` header:
+
+```bash
+curl -X POST https://your-app.com/api/auth/... \
+  -H "Authorization: Bearer ba_live_abc123..."  \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+```
+
+### In Application Code
+
+```typescript
+// Server-side — use the API key to authenticate requests
+const response = await fetch("https://your-app.com/api/protected", {
+  method: "GET",
+  headers: {
+    "Authorization": `Bearer ${process.env.BANATA_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+});
+```
+
+### With the Admin SDK
+
+The admin SDK itself uses API keys for authentication:
+
+```typescript
+const banata = new BanataAuth({
+  apiKey: "ba_live_abc123...",  // Your API key
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// All SDK calls are now authenticated with this key
+const users = await banata.users.listUsers();
+```
+
+---
+
+## Managing API Keys
+
+### List Keys
+
+```typescript
+// Client-side: list current user's keys
+const { data: keys } = await authClient.apiKey.list();
+
+// Server-side: list keys for a specific user
+const keys = await banata.users.listApiKeys({
+  userId: "usr_01HXYZ...",
+});
+```
+
+### Revoke a Key
+
+```typescript
+// Client-side
+await authClient.apiKey.revoke({
+  keyId: "apk_01HXYZ...",
+});
+
+// Server-side
+await banata.users.revokeApiKey({
+  keyId: "apk_01HXYZ...",
+});
+```
+
+Revoking a key immediately invalidates it — any subsequent requests using that key will be rejected.
+
+---
+
+## Permission Scoping
+
+API keys can be scoped to specific permissions, limiting what they can do:
+
+```typescript
+// Create a read-only key
+const readOnlyKey = await authClient.apiKey.create({
+  name: "Analytics Dashboard",
+  permissions: ["users:read", "organizations:read", "audit_logs:read"],
+});
+
+// Create a key for user management only
+const userMgmtKey = await authClient.apiKey.create({
+  name: "User Sync Script",
+  permissions: ["users:read", "users:write", "users:delete"],
+});
+
+// Create an unrestricted key (inherits user's full permissions)
+const fullAccessKey = await authClient.apiKey.create({
+  name: "Admin Key",
+  // No permissions specified = full access
+});
+```
+
+When a scoped key makes a request, the system checks:
+1. Is the key valid and not expired?
+2. Does the key have the required permission for this action?
+3. Does the key's owner have the required permission?
+
+All three must be true for the request to succeed.
+
+---
+
+## Client-Side Plugin
+
+To use API key features from the client, import the `apiKeyClient` plugin:
+
+```typescript
+import { createAuthClient } from "better-auth/react";
+import { apiKeyClient } from "@banata-auth/react/plugins";
+
+export const authClient = createAuthClient({
+  baseURL: "/api/auth",
+  plugins: [apiKeyClient()],
+});
+
+// Now authClient.apiKey.create(), .list(), .revoke() are available
+```
+
+---
+
+## Key Storage & Security
+
+### How Keys Are Stored
+
+| What | Where | Format |
+|---|---|---|
+| Key hash | `apikey` table in Convex | SHA-256 hash |
+| Key metadata | `apikey` table | Name, permissions, expiry, userId |
+| Raw key | **Returned once** at creation | `{prefix}_live_{random}` |
+
+The raw key is **never stored** — only its hash. This means:
+- If your database is compromised, the keys cannot be recovered
+- Lost keys cannot be retrieved — they must be revoked and replaced
+- Key comparison is done by hashing the provided key and matching
+
+### Best Practices
+
+1. **Rotate keys regularly** — Create new keys and revoke old ones periodically (e.g., every 90 days).
+2. **Use separate keys per integration** — Don't share a single key across multiple services. If one is compromised, you only need to revoke that one.
+3. **Scope permissions narrowly** — Give each key only the permissions it needs. A read-only dashboard doesn't need write access.
+4. **Store securely** — Use environment variables or a secrets manager (AWS Secrets Manager, HashiCorp Vault, etc.). Never commit keys to source control.
+5. **Monitor usage** — Check audit logs for API key usage. Unusual patterns may indicate a compromised key.
+6. **Set expiration** — Keys without expiration are a security risk. Set a reasonable TTL.
+
+---
+
+## API Key Data Model
+
+```typescript
+interface ApiKey {
+  id: string;              // e.g., "apk_01HXYZ..."
+  name: string;            // Human-readable name
+  userId: string;          // Owner of the key
+  hashedKey: string;       // SHA-256 hash of the raw key
+  permissions?: string[];  // Scoped permissions (empty = full access)
+  expiresAt?: string;      // ISO 8601 expiration (null = no expiry)
+  lastUsedAt?: string;     // Last successful authentication
+  createdAt: string;
+}
+```
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `api_key.created` | New API key generated |
+| `api_key.revoked` | API key revoked |
+| `api_key.used` | API key used for authentication |
+| `api_key.expired` | API key reached its expiration date |
+
+---
+
+## Troubleshooting
+
+### "Invalid API Key"
+
+1. Check that the key hasn't been revoked
+2. Check that the key hasn't expired
+3. Verify you're using the complete key string (including the prefix)
+4. Make sure the `Authorization` header format is `Bearer {key}`
+
+### "Insufficient Permissions"
+
+The API key doesn't have the required permission for this action. Either:
+- Create a new key with the needed permissions
+- Use an unrestricted key (no permissions specified)
+
+### "API Keys Not Enabled"
+
+Make sure `apiKeyConfig.enabled` is `true` in your `BanataAuthConfig`.
+
+---
+
+## What's Next
+
+- **[SDK Reference](/docs/sdk)** — Complete API reference for all SDK methods
+- **[Roles & Permissions](/docs/roles-permissions)** — Configure the permissions that API keys use
+- **[Webhooks](/docs/webhooks)** — Get notified about API key events

@@ -1,0 +1,79 @@
+{
+	"name": "@banata-auth/react",
+	"version": "0.1.0",
+	"private": false,
+	"license": "MIT",
+	"type": "module",
+	"description": "React components, hooks, and providers for Banata Auth — session management, auth forms, and Convex integration",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/banata-auth/banata-auth",
+		"directory": "packages/react"
+	},
+	"homepage": "https://auth-docs.banata.dev/docs/react",
+	"keywords": ["banata-auth", "auth", "react", "hooks", "provider", "convex", "session"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./convex": {
+			"types": "./dist/convex-provider.d.ts",
+			"import": "./dist/convex-provider.js",
+			"default": "./dist/convex-provider.js"
+		},
+		"./plugins": {
+			"types": "./dist/client-plugins.d.ts",
+			"import": "./dist/client-plugins.js",
+			"default": "./dist/client-plugins.js"
+		}
+	},
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/index.js dist/convex-provider.js dist/client-plugins.js",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests",
+		"prepublishOnly": "bun run build",
+		"clean": "rm -rf dist .turbo"
+	},
+	"dependencies": {
+		"@banata-auth/shared": "workspace:*"
+	},
+	"peerDependencies": {
+		"@convex-dev/better-auth": ">=0.10.0",
+		"better-auth": ">=1.4.0",
+		"convex": ">=1.25.0",
+		"react": "^18 || ^19",
+		"react-dom": "^18 || ^19"
+	},
+	"peerDependenciesMeta": {
+		"@convex-dev/better-auth": { "optional": true },
+		"better-auth": { "optional": true },
+		"convex": { "optional": true }
+	},
+	"devDependencies": {
+		"@convex-dev/better-auth": "^0.10.13",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"better-auth": "^1.4.20",
+		"convex": "^1.25.0",
+		"happy-dom": "^20.7.0",
+		"jsdom": "^28.1.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"tsup": "^8.3.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
+}

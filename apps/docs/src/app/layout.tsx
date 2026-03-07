@@ -1,0 +1,31 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+	variable: "--font-geist-sans",
+	subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+	variable: "--font-geist-mono",
+	subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+	title: {
+		default: "Banata Auth - Documentation",
+		template: "%s - Banata Auth Docs",
+	},
+	description:
+		"Open-source authentication infrastructure. Drop-in WorkOS replacement built on Better Auth + Convex + Next.js.",
+	metadataBase: new URL("https://docs.banata.dev"),
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+			<body className="min-h-screen antialiased">{children}</body>
+		</html>
+	);
+}

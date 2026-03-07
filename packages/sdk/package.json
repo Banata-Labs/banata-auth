@@ -1,0 +1,55 @@
+{
+	"name": "@banata-auth/sdk",
+	"version": "0.1.0",
+	"private": false,
+	"license": "MIT",
+	"type": "module",
+	"description": "Server-side SDK for the Banata Auth platform — manage users, organizations, SSO, RBAC, webhooks, and more",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/banata-auth/banata-auth",
+		"directory": "packages/sdk"
+	},
+	"homepage": "https://auth-docs.banata.dev/docs/sdk",
+	"keywords": [
+		"banata-auth",
+		"auth",
+		"sdk",
+		"workos",
+		"user-management",
+		"sso",
+		"rbac",
+		"webhooks"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests",
+		"prepublishOnly": "bun run build",
+		"clean": "rm -rf dist .turbo"
+	},
+	"dependencies": {
+		"@banata-auth/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"tsup": "^8.3.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
+}

@@ -1,0 +1,185 @@
+---
+title: "Roles & Permissions"
+description: "Super-admin-first RBAC with dynamic custom roles, built-in permissions, and project-scoped permission catalogs."
+section: "Enterprise"
+order: 10
+---
+
+Banata Auth uses a **super-admin-first RBAC model** for organizations.
+
+- Every new project is seeded with exactly one visible default role: `super_admin`.
+- Organizations are created explicitly; when an organization is created, its creator is assigned `super_admin`.
+- Customers then create any additional roles and permissions they need.
+
+---
+
+## Role Model
+
+### Visible default role
+
+| Role | Purpose |
+|---|---|
+| `super_admin` | Full access across the project and its organizations. |
+
+### Reserved role slugs
+
+The following role slugs are reserved:
+
+- `super_admin`
+
+Custom roles cannot use these reserved slugs.
+
+---
+
+## Permission Model
+
+Permissions are **project-scoped** and shared by all organizations in that project.
+
+Two categories:
+
+1. **Built-in permissions** (seeded automatically)
+   - examples: `organization.read`, `member.invite`, `role.create`, `api_key.create`, `sandbox.create`, `browser.connect`, `billing.manage`
+2. **Custom permissions** (created by customers)
+   - examples: `document.publish`, `workspace.archive`, `model.deploy`
+
+Built-in permissions are protected and cannot be deleted.
+
+---
+
+## Bootstrap Behavior
+
+When a project is created (or default project is ensured):
+
+1. Built-in permissions are seeded.
+2. `super_admin` role is created (if missing).
+3. `super_admin` is linked to all built-in permissions.
+4. Organizations can then be created explicitly from the dashboard or API.
+5. The creator of each organization is assigned `super_admin` for that organization.
+
+---
+
+## Dashboard Management
+
+Use:
+
+- `/authorization/roles` to create/delete custom roles
+- `/authorization/permissions` to create/delete custom permissions
+- Organization member screens to assign role slugs dynamically
+
+Important protections:
+
+- `super_admin` role cannot be deleted.
+- built-in permissions cannot be deleted.
+
+---
+
+## SDK (`@banata-auth/sdk`)
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "sk_live_...",
+  baseUrl: "https://your-deployment.convex.site",
+});
+```
+
+### Roles
+
+```typescript
+const roles = await banata.rbac.listRoles();
+
+const role = await banata.rbac.createRole({
+  name: "Sandbox Operator",
+  slug: "sandbox_operator",
+  description: "Can manage runtime sandboxes",
+});
+
+await banata.rbac.deleteRole(role.id);
+```
+
+### Permissions
+
+```typescript
+const permissions = await banata.rbac.listPermissions();
+
+const permission = await banata.rbac.createPermission({
+  name: "Terminate browser session",
+  slug: "browser.terminate",
+  description: "Allows terminating running browser sessions",
+});
+
+await banata.rbac.deletePermission(permission.id);
+```
+
+### Assign or Revoke Roles
+
+```typescript
+await banata.rbac.assignRole({
+  organizationId: "org_01...",
+  userId: "usr_01...",
+  role: "sandbox_operator",
+});
+
+await banata.rbac.revokeRole({
+  organizationId: "org_01...",
+  userId: "usr_01...",
+  fallbackRole: "super_admin",
+});
+```
+
+### Permission Checks
+
+Permission checks use `{ resource, action }` shape.
+
+```typescript
+const canLaunch = await banata.rbac.checkPermission({
+  userId: "usr_01...",
+  organizationId: "org_01...",
+  permission: { resource: "sandbox", action: "create" },
+});
+
+const canOperate = await banata.rbac.checkPermissions({
+  userId: "usr_01...",
+  organizationId: "org_01...",
+  permissions: [
+    { resource: "sandbox", action: "create" },
+    { resource: "browser", action: "connect" },
+  ],
+  operator: "all",
+});
+```
+
+---
+
+## API Endpoints
+
+Role and permission management endpoints:
+
+- `POST /api/auth/banata/config/roles/list`
+- `POST /api/auth/banata/config/roles/create`
+- `POST /api/auth/banata/config/roles/delete`
+- `POST /api/auth/banata/config/permissions/list`
+- `POST /api/auth/banata/config/permissions/create`
+- `POST /api/auth/banata/config/permissions/delete`
+
+Role assignment endpoint:
+
+- `POST /api/auth/organization/update-member-role`
+
+---
+
+## Best Practices
+
+1. Keep `super_admin` limited to trusted org owners.
+2. Prefer capability-based roles (for example `sandbox_operator`, `billing_viewer`) over generic titles.
+3. Keep permissions granular and explicit (`resource.action` style slugs).
+4. Use server-side checks for all sensitive actions.
+
+---
+
+## What's Next
+
+- **[Organizations](/docs/organizations-overview)**
+- **[Auth Configuration](/docs/auth-configuration)**
+- **[Resource Types](/docs/resource-types)**

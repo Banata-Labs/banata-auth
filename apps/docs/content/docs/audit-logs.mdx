@@ -1,0 +1,369 @@
+---
+title: "Audit Logs"
+description: "Comprehensive audit logging with 30 auto-tracked events, custom events, actor/target tracking, and export capabilities."
+section: "Enterprise"
+order: 12
+---
+
+Banata Auth automatically logs **30 auth-related events** to a structured audit trail. Every sign-in, user creation, role change, and organization update is recorded with full context — who did it, what they did, what changed, and when.
+
+Audit logs are critical for **compliance** (SOC 2, HIPAA, GDPR), **security monitoring**, and **debugging**.
+
+---
+
+## How It Works
+
+The `auditLog` plugin is one of the 7 **always-on plugins** — it's enabled by default with no configuration needed. Every auth action automatically generates an audit log entry.
+
+### Audit Event Structure
+
+```typescript
+interface AuditEvent {
+  id: string;              // e.g., "aud_01HXYZ..."
+  action: string;          // e.g., "user.created", "session.revoked"
+  timestamp: string;       // ISO 8601
+
+  // Who performed the action
+  actor: {
+    type: "user" | "admin" | "system" | "api_key";
+    id: string;            // User ID, API key ID, or "system"
+    email?: string;
+    name?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  };
+
+  // What was affected
+  target: {
+    type: "user" | "organization" | "session" | "member" | "invitation" | "role" | "api_key" | "webhook" | "sso_connection";
+    id: string;
+    email?: string;
+    name?: string;
+  };
+
+  // Additional context
+  context: {
+    organizationId?: string;
+    requestId?: string;
+    location?: string;
+    [key: string]: unknown;
+  };
+
+  // What changed (for updates)
+  changes?: {
+    before: Record<string, unknown>;
+    after: Record<string, unknown>;
+  };
+}
+```
+
+---
+
+## Auto-Tracked Events (30)
+
+The audit log plugin automatically tracks these events:
+
+### User Events
+
+| Action | Triggered When | Actor | Target |
+|---|---|---|---|
+| `user.created` | New user signs up | System or Admin | User |
+| `user.updated` | User profile updated | User or Admin | User |
+| `user.deleted` | User account deleted | Admin | User |
+| `user.banned` | User account banned | Admin | User |
+| `user.unbanned` | User account unbanned | Admin | User |
+| `user.impersonated` | Admin impersonates user | Admin | User |
+
+### Session Events
+
+| Action | Triggered When | Actor | Target |
+|---|---|---|---|
+| `session.created` | Sign-in (new session) | User | Session |
+| `session.revoked` | Sign-out | User or Admin | Session |
+| `session.refreshed` | Session token refreshed | System | Session |
+
+### Email & Password Events
+
+| Action | Triggered When | Actor | Target |
+|---|---|---|---|
+| `email.verified` | User verifies email | User | User |
+| `email.changed` | User changes email | User | User |
+| `password.changed` | User changes password | User | User |
+| `password.reset` | Password reset completed | User | User |
+| `password.reset_requested` | Password reset requested | User | User |
+
+### Organization Events
+
+| Action | Triggered When | Actor | Target |
+|---|---|---|---|
+| `organization.created` | New org created | User | Organization |
+| `organization.updated` | Org details updated | User or Admin | Organization |
+| `organization.deleted` | Org deleted | Owner or Admin | Organization |
+| `member.added` | Member joined org | User or Admin | Member |
+| `member.removed` | Member removed from org | Admin | Member |
+| `member.role_updated` | Member role changed | Admin | Member |
+| `invitation.created` | Invitation sent | Admin | Invitation |
+| `invitation.accepted` | Invitation accepted | User | Invitation |
+| `invitation.revoked` | Invitation cancelled | Admin | Invitation |
+
+### Security Events
+
+| Action | Triggered When | Actor | Target |
+|---|---|---|---|
+| `two_factor.enabled` | MFA enabled | User | User |
+| `two_factor.disabled` | MFA disabled | User | User |
+| `api_key.created` | API key generated | User or Admin | API Key |
+| `api_key.revoked` | API key revoked | User or Admin | API Key |
+| `sso_connection.created` | SSO connection added | Admin | SSO Connection |
+| `webhook.created` | Webhook endpoint added | Admin | Webhook |
+| `webhook.deleted` | Webhook endpoint removed | Admin | Webhook |
+
+---
+
+## Querying Audit Logs
+
+### Via the Admin SDK
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "your-api-key",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// List recent audit events (paginated)
+const { data: events, listMetadata } = await banata.auditLogs.listEvents({
+  limit: 50,
+});
+
+// Filter by action
+const signIns = await banata.auditLogs.listEvents({
+  action: "session.created",
+  limit: 100,
+});
+
+// Filter by actor (user)
+const userActions = await banata.auditLogs.listEvents({
+  actorId: "usr_01HXYZ...",
+  limit: 50,
+});
+
+// Filter by organization
+const orgEvents = await banata.auditLogs.listEvents({
+  organizationId: "org_01HXYZ...",
+  limit: 50,
+});
+
+// Get a specific event
+const event = await banata.auditLogs.getEvent({
+  eventId: "aud_01HXYZ...",
+});
+```
+
+### Pagination
+
+Audit logs use cursor-based pagination:
+
+```typescript
+// First page
+const page1 = await banata.auditLogs.listEvents({ limit: 20 });
+
+// Next page
+const page2 = await banata.auditLogs.listEvents({
+  limit: 20,
+  cursor: page1.listMetadata.after,
+});
+
+// Previous page
+const prevPage = await banata.auditLogs.listEvents({
+  limit: 20,
+  cursor: page1.listMetadata.before,
+});
+```
+
+### Via the Admin Dashboard
+
+Navigate to **Audit Logs** in the dashboard sidebar to see a searchable, filterable view of all events.
+
+---
+
+## Custom Audit Events
+
+In addition to the 30 auto-tracked events, you can log custom events:
+
+### Via the SDK
+
+```typescript
+await banata.auditLogs.createEvent({
+  action: "document.exported",
+  actor: {
+    type: "user",
+    id: "usr_01HXYZ...",
+    email: "user@example.com",
+  },
+  target: {
+    type: "document",
+    id: "doc_01HXYZ...",
+    name: "Q4 Report",
+  },
+  context: {
+    organizationId: "org_01HXYZ...",
+    format: "pdf",
+    pageCount: 42,
+  },
+});
+```
+
+### Via the `logAuditEvent` Helper (Server-Side)
+
+Inside Convex functions, you can use the `logAuditEvent` helper directly:
+
+```typescript
+import { logAuditEvent } from "@banata-auth/convex";
+
+// Inside a Convex mutation or action:
+await logAuditEvent(ctx, {
+  action: "report.generated",
+  actor: { type: "system", id: "system" },
+  target: { type: "report", id: reportId },
+  context: { type: "monthly", month: "2025-01" },
+});
+```
+
+---
+
+## Exporting Audit Logs
+
+Export audit logs for compliance reporting or external analysis:
+
+```typescript
+// Export events as JSON
+const exportData = await banata.auditLogs.exportEvents({
+  startDate: "2025-01-01T00:00:00.000Z",
+  endDate: "2025-01-31T23:59:59.999Z",
+  format: "json",
+});
+
+// Export filtered events
+const securityExport = await banata.auditLogs.exportEvents({
+  startDate: "2025-01-01T00:00:00.000Z",
+  endDate: "2025-01-31T23:59:59.999Z",
+  actions: ["session.created", "password.reset", "two_factor.enabled"],
+  format: "json",
+});
+```
+
+---
+
+## Change Tracking
+
+For update events, audit logs capture what changed:
+
+```json
+{
+  "action": "user.updated",
+  "actor": { "type": "admin", "id": "usr_01ADMIN..." },
+  "target": { "type": "user", "id": "usr_01HXYZ..." },
+  "changes": {
+    "before": {
+      "name": "Jane Doe",
+      "role": "member"
+    },
+    "after": {
+      "name": "Jane Smith",
+      "role": "admin"
+    }
+  }
+}
+```
+
+This makes it easy to answer "what exactly changed?" for any update event.
+
+---
+
+## Audit Log Endpoints (API)
+
+The `auditLog` plugin exposes 3 endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/audit/list` | POST | List audit events with filters and pagination |
+| `/api/auth/audit/create` | POST | Create a custom audit event |
+| `/api/auth/audit/export` | POST | Export events for a date range |
+
+---
+
+## Database Storage
+
+Audit events are stored in the `auditLog` table in Convex:
+
+```typescript
+// Simplified schema
+defineTable({
+  action: v.string(),
+  actor: v.object({
+    type: v.string(),
+    id: v.string(),
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+  }),
+  target: v.object({
+    type: v.string(),
+    id: v.string(),
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
+  }),
+  context: v.optional(v.any()),
+  changes: v.optional(v.object({
+    before: v.any(),
+    after: v.any(),
+  })),
+  timestamp: v.string(),
+})
+```
+
+---
+
+## Compliance Use Cases
+
+### SOC 2
+
+SOC 2 requires logging of:
+- User authentication events (sign-in, sign-out) — **Covered by `session.created` and `session.revoked`**
+- Access control changes (role assignments) — **Covered by `member.role_updated` and `role.assigned`**
+- User account lifecycle (creation, deletion, banning) — **Covered by `user.created`, `user.deleted`, `user.banned`**
+
+### HIPAA
+
+HIPAA requires:
+- Audit trails for electronic health information access — **Use custom events for PHI access**
+- Login monitoring — **Covered by `session.created`**
+- Access control audits — **Covered by RBAC events**
+
+### GDPR
+
+GDPR requires:
+- Records of processing activities — **Custom events for data processing**
+- Account deletion tracking — **Covered by `user.deleted`**
+- Consent changes — **Use custom events**
+
+---
+
+## Best Practices
+
+1. **Don't disable audit logging** — It's always-on for a reason. Compliance requirements don't have exceptions.
+2. **Add custom events for business actions** — Supplement the 30 auto-tracked events with custom events for important business operations.
+3. **Set up retention policies** — For large deployments, consider archiving old audit logs to external storage.
+4. **Monitor for anomalies** — Use webhook events to alert on suspicious patterns (many failed sign-ins, mass deletions, etc.).
+5. **Export regularly** — Keep offline copies of audit logs for disaster recovery and legal requirements.
+
+---
+
+## What's Next
+
+- **[Webhooks](/docs/webhooks)** — Get real-time notifications for audit events
+- **[API Keys](/docs/api-keys)** — Programmatic access management
+- **[Deploy](/docs/deploy)** — Production deployment with audit log monitoring

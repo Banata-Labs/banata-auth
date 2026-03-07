@@ -1,0 +1,267 @@
+---
+title: "Vault & Encryption"
+description: "Application-level encryption for sensitive data with key management and field-level encryption support."
+section: "Enterprise"
+order: 19
+---
+
+> **Preview** — The Vault is under active development. Backend endpoints for encrypt, decrypt, and key rotation are not yet available. APIs may change before stable release.
+
+The Vault provides an **application-level encryption layer** for sensitive data such as PII, tokens, certificates, and secrets. Rather than relying solely on database-level encryption, the Vault encrypts values before they reach storage, ensuring that even with direct database access, secret data remains unreadable without the correct key.
+
+---
+
+## How It Works
+
+The Vault uses **AES-256-GCM** (Galois/Counter Mode) authenticated encryption with the following process:
+
+```
+1. An encryption key is derived from BETTER_AUTH_SECRET using HKDF
+2. A unique initialization vector (IV) is generated per secret
+3. The plaintext is encrypted with AES-256-GCM, producing ciphertext + auth tag
+4. The encrypted value, IV, and metadata are stored in the vaultSecret table
+5. On decryption, the IV and derived key reconstruct the plaintext
+6. The GCM auth tag guarantees integrity — tampered ciphertext is rejected
+```
+
+Each secret is stored with:
+
+| Field | Description |
+|---|---|
+| `name` | Human-readable identifier for the secret |
+| `encryptedValue` | AES-256-GCM ciphertext (base64-encoded) |
+| `iv` | Unique initialization vector for this secret |
+| `context` | Optional context string for key derivation separation |
+| `organizationId` | Optional org scope for multi-tenant isolation |
+| `version` | Key version for rotation tracking |
+| `metadata` | Optional key-value metadata |
+
+---
+
+## What Gets Encrypted
+
+The Vault automatically encrypts sensitive data stored by Banata Auth's internal subsystems:
+
+| Data | Subsystem | Why |
+|---|---|---|
+| SAML IdP certificates | SSO | X.509 certificates are long-lived credentials |
+| OIDC client secrets | SSO | OAuth client secrets for OIDC connections |
+| SCIM bearer tokens | Directory Sync | Tokens used for SCIM provisioning API calls |
+| Webhook signing secrets | Webhooks | HMAC secrets used to sign outbound webhook payloads |
+| Email provider API keys | Email | Credentials for SendGrid, Resend, Postmark, etc. |
+| Custom secrets | Your application | Any sensitive data you encrypt via the SDK |
+
+---
+
+## Configuration
+
+The Vault is **enabled by default** when `BETTER_AUTH_SECRET` is set in your environment. No additional configuration is required.
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+
+    // This secret is used to derive the Vault encryption key.
+    // Must be at least 32 characters. Keep it safe — losing it means
+    // losing access to all encrypted Vault data.
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    // ... other config
+  };
+}
+```
+
+> **Critical:** The `BETTER_AUTH_SECRET` is used to derive the encryption key. If you lose or change this secret without rotating Vault keys first, all encrypted data becomes permanently unrecoverable.
+
+### Requirements
+
+- `BETTER_AUTH_SECRET` must be at least 32 characters
+- Use a cryptographically random value (e.g., `openssl rand -base64 48`)
+- Store it in your deployment's environment variables, not in source control
+
+---
+
+## SDK Usage
+
+### Encrypting Data
+
+Store a secret in the Vault:
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "sk_live_...",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// Encrypt and store a secret
+const { id } = await banata.vault.encrypt({
+  name: "stripe-api-key",
+  data: "sk_live_abc123...",
+  // Optional: bind to a context for key separation
+  context: "payment-processing",
+  // Optional: scope to an organization
+  organizationId: "org_01HXYZ...",
+  // Optional: attach metadata
+  metadata: { provider: "stripe", environment: "production" },
+});
+
+console.log(id); // "vsec_01HXYZ..."
+```
+
+The `context` parameter provides **cryptographic context binding** — secrets encrypted with one context cannot be decrypted with a different context, even though the same master key is used. Use this to isolate secrets by purpose.
+
+### Decrypting Data
+
+Retrieve and decrypt a stored secret:
+
+```typescript
+const { data } = await banata.vault.decrypt({
+  secretId: "vsec_01HXYZ...",
+  // Must match the context used during encryption
+  context: "payment-processing",
+});
+
+console.log(data); // "sk_live_abc123..."
+```
+
+### Listing Secrets
+
+List Vault secrets (metadata only — encrypted values are never returned in list responses):
+
+```typescript
+const result = await banata.vault.list({
+  organizationId: "org_01HXYZ...", // Optional: filter by org
+  limit: 25,
+});
+
+for (const secret of result.data) {
+  console.log(secret.id);             // "vsec_01HXYZ..."
+  console.log(secret.name);           // "stripe-api-key"
+  console.log(secret.context);        // "payment-processing"
+  console.log(secret.organizationId); // "org_01HXYZ..."
+  console.log(secret.metadata);       // { provider: "stripe", ... }
+  console.log(secret.createdAt);      // Date
+}
+```
+
+### Deleting a Secret
+
+Permanently remove a secret from the Vault:
+
+```typescript
+await banata.vault.delete({
+  secretId: "vsec_01HXYZ...",
+});
+```
+
+This is irreversible. The encrypted data is permanently deleted.
+
+### Key Rotation
+
+Rotate the Vault encryption key. This re-encrypts all existing secrets with a new key derived from the current `BETTER_AUTH_SECRET`:
+
+```typescript
+const result = await banata.vault.rotateKey();
+console.log(result.status); // "completed"
+```
+
+Key rotation increments the `version` field on all re-encrypted secrets. It is recommended to rotate keys periodically (e.g., every 90 days) or immediately if a key compromise is suspected.
+
+---
+
+## Data Model
+
+```typescript
+interface VaultSecret {
+  id: string;               // e.g., "vsec_01HXYZ..."
+  name: string;             // Human-readable name
+  context: string | null;   // Cryptographic context binding
+  organizationId: string | null; // Org scope (multi-tenant)
+  metadata: Record<string, string> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+The `encryptedValue` and `iv` fields are stored in the database but are never exposed through the SDK list/get responses. Only the `decrypt` method returns the plaintext.
+
+---
+
+## Envelope Encryption
+
+The Vault uses **envelope encryption** to balance security and performance:
+
+```
+                    BETTER_AUTH_SECRET
+                           |
+                     HKDF derivation
+                           |
+                    Data Encryption Key (DEK)
+                           |
+                ┌──────────┴──────────┐
+                |                     |
+          AES-256-GCM           AES-256-GCM
+          encrypt(secret1)      encrypt(secret2)
+                |                     |
+          encryptedValue +      encryptedValue +
+          IV stored in DB       IV stored in DB
+```
+
+- **HKDF** (HMAC-based Key Derivation Function) derives a unique DEK from the master secret and optional context
+- **AES-256-GCM** provides authenticated encryption (confidentiality + integrity)
+- Each secret gets a unique **IV** (initialization vector), ensuring identical plaintexts produce different ciphertexts
+- The **GCM authentication tag** detects any tampering with the ciphertext
+
+---
+
+## Security Best Practices
+
+1. **Protect `BETTER_AUTH_SECRET`** — This is the root of all Vault encryption. Use a secrets manager (AWS Secrets Manager, Vercel env vars, etc.) and never commit it to source control.
+2. **Use context strings** — Bind secrets to their intended purpose. A secret encrypted with `context: "email"` cannot be decrypted with `context: "payments"`.
+3. **Rotate keys regularly** — Call `vault.rotateKey()` periodically. This re-encrypts all secrets without downtime.
+4. **Scope to organizations** — In multi-tenant applications, use `organizationId` to ensure secrets are isolated per tenant.
+5. **Audit access** — Vault operations generate audit events. Monitor `vault.encrypt`, `vault.decrypt`, and `vault.rotate_key` events for anomalous access patterns.
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `vault.encrypted` | A new secret is stored in the Vault |
+| `vault.decrypted` | A secret is decrypted and read |
+| `vault.deleted` | A secret is permanently removed |
+| `vault.key_rotated` | Vault encryption key was rotated |
+
+---
+
+## Troubleshooting
+
+### "Decryption failed"
+
+1. Verify the `context` parameter matches the value used during encryption
+2. Ensure `BETTER_AUTH_SECRET` has not been changed since encryption
+3. Check that the secret has not been corrupted (GCM will reject tampered data)
+
+### "Vault secret not found"
+
+1. Confirm the `secretId` is correct (should start with `vsec_`)
+2. The secret may have been deleted
+3. Check organization scoping — secrets scoped to one org are not visible to another
+
+### "BETTER_AUTH_SECRET is required"
+
+Set the `BETTER_AUTH_SECRET` environment variable in your deployment. It must be at least 32 characters.
+
+---
+
+## What's Next
+
+- **[SDK Reference](/docs/sdk)** — Complete API reference for all Vault methods
+- **[Audit Logs](/docs/audit-logs)** — Monitor Vault access events
+- **[Environment Variables](/docs/env-vars)** — Configure `BETTER_AUTH_SECRET` and other secrets

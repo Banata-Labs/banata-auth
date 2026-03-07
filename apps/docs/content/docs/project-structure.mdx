@@ -1,0 +1,423 @@
+---
+title: "Project Structure"
+description: "Detailed walkthrough of the Banata Auth monorepo — every package, every app, and how they fit together."
+section: "Getting Started"
+order: 3
+---
+
+Banata Auth is organized as a **Turborepo monorepo** with 5 npm packages, 4 applications, and shared tooling configurations. This page explains every directory, the dependency graph between packages, and how the build system works.
+
+---
+
+## Top-Level Structure
+
+```
+banata-auth/
+├── apps/
+│   ├── dashboard/         # Admin dashboard (Next.js)
+│   ├── example-app/       # Reference integration showing how to use Banata Auth
+│   ├── auth-ui/           # Hosted auth pages (sign-in, sign-up, etc.)
+│   ├── admin-portal/      # End-user admin portal for org management
+│   └── docs/              # This documentation site
+├── packages/
+│   ├── shared/            # Types, validation schemas, errors, constants, ID generators
+│   ├── sdk/               # TypeScript admin SDK (server-side user/org management)
+│   ├── react/             # React provider, hooks, UI components, Convex integration
+│   ├── nextjs/            # Next.js route handler, middleware, server utilities
+│   ├── convex/            # Convex backend — auth factory, plugins, triggers, schema
+│   └── ui/                # Reusable UI components (shadcn/ui based)
+├── tooling/
+│   ├── typescript/        # Shared tsconfig presets
+│   ├── tailwind/          # Shared Tailwind CSS configuration
+│   └── biome/             # Shared Biome linter/formatter config
+├── prd/                   # Product Requirements Documents (14 phase docs)
+├── turbo.json             # Turborepo pipeline configuration
+├── package.json           # Root workspace configuration
+├── bun.lock               # Bun lockfile
+└── README.md              # Project overview
+```
+
+---
+
+## Packages
+
+### `@banata-auth/shared` (packages/shared)
+
+The **foundation package** — every other package depends on it. Contains no runtime dependencies on any framework.
+
+```
+packages/shared/src/
+├── index.ts          # Re-exports everything (87 total exports)
+├── types.ts          # 21 interfaces + 12 type aliases
+├── validation.ts     # 16 Zod validation schemas
+├── errors.ts         # 8 error classes with HTTP status codes
+├── constants.ts      # 7 constants (rate limits, token lifetimes, defaults)
+└── id.ts             # ULID-based ID generator with 22 resource-type prefixes
+```
+
+**Key exports:**
+
+| Category | Count | Examples |
+|---|---|---|
+| Interfaces | 21 | `User`, `Session`, `Organization`, `SSOConnection`, `AuditEvent`, `WebhookEndpoint` |
+| Type aliases | 12+ | `AuthMethod`, `SocialProvider`, `PermissionCheck`, `PaginatedResult<T>` |
+| Zod schemas | 16 | `emailSchema`, `passwordSchema` (8-128 chars), `nameSchema`, `slugSchema`, `urlSchema`, `domainSchema`, `metadataSchema` (16KB max), `createUserSchema`, `createOrganizationSchema` |
+| Error classes | 8 | `BanataAuthError` (base) ← `AuthenticationError` (401), `ForbiddenError` (403), `NotFoundError` (404), `ConflictError` (409), `ValidationError` (422), `RateLimitError` (429), `InternalError` (500) |
+| Constants | 7 | `RATE_LIMITS` (general: 600/min, signIn: 30/min, signUp: 10/min), `TOKEN_LIFETIMES` (access: 15min, session: 7d, magicLink: 10min, invitation: 7d), `DEFAULTS` |
+| Functions | 7 | `generateId(type)`, `createErrorFromStatus()`, `isValidEmail()`, etc. |
+
+---
+
+### `@banata-auth/sdk` (packages/sdk)
+
+The **server-side admin SDK** for managing your auth system programmatically. Used in backend services, admin scripts, and CI/CD pipelines.
+
+```
+packages/sdk/src/
+├── index.ts               # Main export: BanataAuth class
+├── client.ts              # BanataAuth client class with constructor
+├── http.ts                # HttpClient with retry logic, timeout, error handling
+├── types.ts               # SDK-specific types (BanataAuthOptions, etc.)
+└── resources/
+    ├── user-management.ts # User CRUD, ban, sessions, impersonation
+    ├── organizations.ts   # Org CRUD, members, invitations
+    ├── sso.ts             # SSO connection management
+    ├── directory-sync.ts  # SCIM directory sync management
+    ├── audit-logs.ts      # Audit log listing, creation, export
+    ├── events.ts          # Event listing and retrieval
+    ├── webhooks.ts        # Webhook endpoint CRUD + signature verification
+    ├── portal.ts          # Portal session creation
+    ├── vault.ts           # Secret storage (encrypt/decrypt)
+    ├── domains.ts         # Domain verification
+    └── rbac.ts            # Role/permission management
+```
+
+**14 resource classes** with methods that all use POST requests (Convex HTTP actions accept POST bodies):
+
+| Resource | Key Methods |
+|---|---|
+| `UserManagement` | `listUsers`, `getUser`, `createUser`, `updateUser`, `deleteUser`, `banUser`, `unbanUser`, `listUserSessions`, `impersonateUser`, `stopImpersonating`, `revokeSession`, `revokeAllSessions`, `setRole`, `setUserPassword`, `hasPermission` |
+| `Organizations` | `listOrganizations`, `getOrganization`, `createOrganization`, `updateOrganization`, `deleteOrganization`, `listMembers`, `removeMember`, `updateMemberRole`, `listInvitations`, `createInvitation`, `revokeInvitation` |
+| `SSO` | `listConnections`, `getConnection`, `createConnection`, `updateConnection`, `deleteConnection`, `getAuthorizationUrl` |
+| `DirectorySync` | `listDirectories`, `getDirectory`, `createDirectory`, `deleteDirectory`, `listUsers`, `listGroups` |
+| `AuditLogs` | `listEvents`, `createEvent`, `exportEvents` |
+| `Events` | `listEvents` |
+| `Webhooks` | `listEndpoints`, `createEndpoint`, `updateEndpoint`, `deleteEndpoint`, `constructEvent`, `verifySignature` |
+| `Portal` | `generateLink` |
+| `Vault` | `encrypt`, `decrypt`, `list`, `delete`, `rotateKey` |
+| `Domains` | `createVerification`, `getVerification`, `verifyDomain`, `listVerifications`, `deleteVerification` |
+| `Rbac` | `listRoles`, `checkPermission`, `checkPermissions`, `assignRole`, `revokeRole`, `hasPermission` |
+| `ApiKeys` | `list`, `create`, `revoke`, `verify` |
+| `Emails` | `send`, `preview`, `listTemplates`, `getTemplate`, `createTemplate`, `updateTemplate`, `deleteTemplate` |
+| `Projects` | `list`, `get`, `create`, `update`, `delete` |
+
+---
+
+### `@banata-auth/react` (packages/react)
+
+React integration with **3 entry points**: main, `/convex`, and `/plugins`.
+
+```
+packages/react/src/
+├── index.ts                    # Main entry: provider, hooks, components
+├── provider.tsx                # BanataAuthProvider (adapter + controlled modes)
+├── convex-provider.tsx         # BanataConvexProvider (JWT token exchange)
+├── client-plugins.ts           # Re-exported client plugins
+├── hooks/
+│   ├── use-banata-auth.ts      # Full auth context hook
+│   ├── use-user.ts             # User-only hook
+│   ├── use-session.ts          # Session-only hook
+│   └── use-organization.ts     # Organization-only hook
+└── components/auth/
+    ├── auth-boundary.tsx        # Renders children only when authenticated
+    ├── auth-card.tsx            # Card wrapper for auth forms
+    ├── sign-in-form.tsx         # Pre-built sign-in form
+    ├── sign-up-form.tsx         # Pre-built sign-up form
+    └── social-buttons.tsx       # Social provider OAuth buttons
+```
+
+**Entry points:**
+
+| Import | What it provides |
+|---|---|
+| `@banata-auth/react` | `BanataAuthProvider`, `useUser`, `useSession`, `useOrganization`, `useBanataAuth`, `AuthBoundary`, `AuthCard`, `SignInForm`, `SignUpForm`, `SocialButtons` |
+| `@banata-auth/react/convex` | `BanataConvexProvider` (wraps `ConvexBetterAuthProvider` for JWT exchange) |
+| `@banata-auth/react/plugins` | `createAuthClient`, `convexClient`, `crossDomainClient`, `organizationClient`, `apiKeyClient` |
+
+---
+
+### `@banata-auth/nextjs` (packages/nextjs)
+
+Next.js integration with **4 entry points**: main, `/server`, `/client`, `/middleware`.
+
+```
+packages/nextjs/src/
+├── index.ts            # Main entry: createRouteHandler
+├── route-handler.ts    # Reverse proxy from Next.js to Convex .site URL
+├── middleware.ts        # Route protection middleware (banataAuthProxy, banataAuthMiddleware)
+├── server.ts           # Server utilities factory (createBanataAuthServer)
+└── client.ts           # Client hook (usePreloadedAuthQuery)
+```
+
+**Key exports:**
+
+| Export | Purpose |
+|---|---|
+| `createRouteHandler` | Reverse proxy that forwards all 5 HTTP methods to Convex `.site` URL. Preserves headers/body, overrides `host` header, uses `redirect: "manual"` for OAuth flows. Returns 502 on network errors. |
+| `banataAuthProxy` | Next.js middleware that checks for Better Auth session cookie. Route matching uses regex with `^...$` anchoring. Sets `x-pathname` header. Redirects to `signInUrl` (default `/sign-in`) with `redirect_url` param. |
+| `banataAuthMiddleware` | Alias for `banataAuthProxy`. |
+| `createBanataAuthServer` | Factory returning `{ handler, isAuthenticated, getToken, preloadAuthQuery, fetchAuthQuery, fetchAuthMutation, fetchAuthAction }`. Token flow: reads cookies ← calls `/api/auth/convex/token` on Convex site ← returns JWT. |
+| `usePreloadedAuthQuery` | Client hook for consuming preloaded auth queries from server components. |
+
+---
+
+### `@banata-auth/convex` (packages/convex)
+
+The **Convex backend** — the heart of the system. This is where Better Auth runs.
+
+```
+packages/convex/src/
+├── index.ts              # Main entry: createBanataAuth, createBanataAuthComponent, createBanataAuthOptions
+├── auth.ts               # Auth factory that assembles Better Auth with all plugins
+├── http.ts               # HTTP route registration helpers
+├── triggers.ts           # 14 trigger hook definitions
+├── hooks.ts              # Better Auth databaseHooks wiring (6 of 14 connected)
+├── plugins/
+│   ├── audit-log.ts      # 30 auto-logged auth events, 3 endpoints
+│   ├── webhook-system.ts # HMAC-SHA256 signing, 5 retries, endpoint CRUD
+│   └── config-plugin.ts  # 11 endpoints for dashboard config management
+└── component/
+    ├── schema.ts          # 26 database tables
+    ├── adapter.ts         # Convex database adapter for Better Auth
+    └── convex.config.ts   # Convex component configuration
+```
+
+**8 entry points:**
+
+| Import | What it provides |
+|---|---|
+| `@banata-auth/convex` | `createBanataAuth`, `createBanataAuthComponent`, `createBanataAuthOptions`, `BanataAuthConfig` type |
+| `@banata-auth/convex/auth-config` | JWT validation config for Convex |
+| `@banata-auth/convex/adapter` | Convex database adapter |
+| `@banata-auth/convex/http` | HTTP route registration |
+| `@banata-auth/convex/triggers` | Trigger hook definitions |
+| `@banata-auth/convex/plugins` | Individual plugin imports |
+| `@banata-auth/convex/convex.config` | Convex component config |
+| `@banata-auth/convex/schema` | 26-table database schema |
+
+**Plugin system (15 total):**
+
+| Always On (7) | Conditionally Enabled (8) |
+|---|---|
+| `convex()` — Database adapter | `magicLink` — When `authMethods.magicLink` |
+| `auditLog()` — 30 auto-tracked events | `emailOTP` — When `authMethods.emailOtp` |
+| `webhookSystem()` — Event delivery | `twoFactor` — When `authMethods.twoFactor` |
+| `configPlugin()` — Dashboard config API | `passkey` — When `authMethods.passkey` |
+| `admin()` — Admin operations | `anonymous` — When `authMethods.anonymous` |
+| `bearer()` — Bearer token auth | `multiSession` — When `authMethods.multiSession` |
+| `username()` — Username/password auth | `organization` — When `authMethods.organization` |
+| | `apiKey` — When `apiKeyConfig` is set |
+
+---
+
+## Applications
+
+### `apps/dashboard`
+
+The **admin dashboard** — a full Next.js application for managing your Banata Auth deployment. This is what end-users (developers) use to manage users, organizations, SSO connections, API keys, branding, webhooks, and more.
+
+```
+apps/dashboard/
+├── convex/
+│   ├── banataAuth/auth.ts    # Auth config with email sending via Resend
+│   └── ...
+├── src/
+│   ├── app/                  # Next.js App Router pages
+│   ├── components/           # UI components (shadcn/ui based)
+│   └── lib/                  # Utilities
+├── .env.local                # Environment variables
+└── package.json              # Dev server runs on port 3000
+```
+
+### `apps/example-app`
+
+A **reference implementation** showing how to integrate Banata Auth into a Next.js + Convex project. This is the same setup described in the [Quick Start](/docs/quickstart) guide.
+
+### `apps/auth-ui`
+
+**Hosted auth pages** — pre-built sign-in, sign-up, forgot password, and other auth-related pages that can be served at a custom domain.
+
+### `apps/docs`
+
+**This documentation site** — built with Next.js, MDX, and the same design system as the dashboard.
+
+---
+
+## Package Dependency Graph
+
+```
+@banata-auth/shared  ← Foundation (no workspace deps)
+    │
+    ├── @banata-auth/sdk        ← Server admin SDK
+    │
+    ├── @banata-auth/ui         ← UI components
+    │
+    ├── @banata-auth/react      ← React integration
+    │       │
+    │       └── @banata-auth/nextjs  ← Next.js integration
+    │
+    └── @banata-auth/convex     ← Convex backend
+```
+
+**Direction of dependencies:**
+
+- `@banata-auth/shared` is the **leaf** — it has zero workspace dependencies. Every other package imports from it.
+- `@banata-auth/sdk` depends only on `shared`.
+- `@banata-auth/react` depends on `shared`.
+- `@banata-auth/nextjs` depends on `shared` and `react`.
+- `@banata-auth/convex` depends on `shared`.
+- `@banata-auth/ui` depends on `shared`.
+
+**External dependencies:**
+
+| Package | Key External Deps |
+|---|---|
+| `shared` | `zod`, `ulid` |
+| `sdk` | `shared` only (uses native `fetch`) |
+| `react` | `react`, `better-auth/react` |
+| `nextjs` | `next`, `@convex-dev/better-auth` |
+| `convex` | `convex`, `better-auth`, `@convex-dev/better-auth` |
+
+---
+
+## Tooling
+
+### `tooling/typescript`
+
+Shared TypeScript configuration presets. All packages and apps extend from these:
+
+```json
+// Example: packages/sdk/tsconfig.json
+{
+  "extends": "../../tooling/typescript/base.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  }
+}
+```
+
+### `tooling/tailwind`
+
+Shared Tailwind CSS configuration with the oklch color system used across dashboard, docs, and UI components.
+
+### `tooling/biome`
+
+Shared [Biome](https://biomejs.dev) configuration for linting and formatting. Biome replaces ESLint + Prettier with a single, fast tool.
+
+---
+
+## Build System
+
+The monorepo uses **Turborepo** for build orchestration with **Bun** as the package manager.
+
+### Turbo Pipeline
+
+```json
+// turbo.json (simplified)
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "lint": {}
+  }
+}
+```
+
+The `^build` dependency means packages build in topological order: `shared` first, then `sdk`/`react`/`convex`, then `nextjs`, then apps.
+
+### Commands
+
+| Command | What It Does |
+|---|---|
+| `bun run dev` | Start all dev servers (dashboard on :3000, Convex dev, etc.) |
+| `bun run build` | Build all packages and apps in dependency order |
+| `bun run test` | Run tests across all packages (Vitest) |
+| `bun run typecheck` | TypeScript type checking across all packages |
+| `bun run check` | Biome lint + format check |
+| `bun run check:fix` | Biome lint + format with auto-fix |
+
+### Package Publishing
+
+Packages are published to npm using [Changesets](https://github.com/changesets/changesets):
+
+```bash
+# Create a changeset (interactive — select packages and bump type)
+npx changeset
+
+# Version packages (updates package.json versions and CHANGELOG.md)
+npx changeset version
+
+# Publish to npm
+npx changeset publish
+```
+
+---
+
+## Database Schema (26 Tables)
+
+The Convex backend uses 26 tables to store all auth data. These are defined in `@banata-auth/convex/schema`:
+
+| Table | Purpose |
+|---|---|
+| `user` | User accounts (email, name, image, metadata, banned status) |
+| `session` | Active sessions (userId, token, expiresAt, ipAddress, userAgent) |
+| `account` | Auth provider links (userId, providerId, accountId, credentials) |
+| `verification` | Email verification tokens |
+| `organization` | Organizations (name, slug, logo, metadata) |
+| `member` | Organization memberships (userId, organizationId, role) |
+| `invitation` | Organization invitations (email, role, status, expiresAt) |
+| `role` | Custom roles (name, description, permissions) |
+| `permission` | Granular permissions (name, description) |
+| `twoFactor` | TOTP secrets and backup codes |
+| `passkey` | WebAuthn credentials |
+| `apikey` | API key records (hashedKey, scopes, expiresAt) |
+| `ssoProvider` | SSO connection configuration |
+| `auditLog` | Audit trail (action, actor, target, context, changes, timestamp) |
+| `webhookEndpoint` | Webhook endpoint URLs and secrets |
+| `webhookDelivery` | Webhook delivery attempts and status |
+| `config` | Runtime configuration (branding, email settings, toggles) |
+| + 9 more | Internal Better Auth tables for OAuth state, anonymous sessions, multi-session, etc. |
+
+---
+
+## CI/CD
+
+The project includes GitHub Actions workflows:
+
+| Workflow | Trigger | What It Does |
+|---|---|---|
+| `ci.yml` | Every PR, push to main | Lint (Biome), type-check (tsc), test (Vitest), build (Turbo) |
+| `release.yml` | Push to main | Publish packages to npm via Changesets |
+| `e2e.yml` | PR to main | End-to-end integration tests |
+
+---
+
+## What's Next
+
+- **[Quick Start](/docs/quickstart)** — Set up Banata Auth in your project
+- **[SDK Reference](/docs/sdk)** — Complete API reference for `@banata-auth/sdk`
+- **[Convex Integration](/docs/convex)** — Deep dive into the backend configuration
+- **[Environment Variables](/docs/env-vars)** — Every variable documented
+

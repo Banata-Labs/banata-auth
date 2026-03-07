@@ -1,0 +1,380 @@
+---
+title: "Email OTP"
+description: "Passwordless authentication using one-time passcodes sent via email."
+section: "Authentication"
+order: 22
+---
+
+Email OTP provides **passwordless authentication** using one-time passcodes. Instead of clicking a link, users receive a **6-digit numeric code** via email and enter it directly in your application. This approach is familiar to most users, works well on mobile devices, and avoids issues with link-based authentication (broken URLs, email client previews consuming tokens, etc.).
+
+---
+
+## How It Works
+
+```
+1. User enters their email address
+2. Client calls authClient.signIn.emailOtp({ email })
+3. Server generates a 6-digit OTP and stores it with an expiry timestamp
+4. Server calls your sendOtp callback to deliver the code via email
+5. User checks their email and enters the 6-digit code in your app
+6. Client calls authClient.signIn.emailOtp({ email, otp })
+7. Server verifies the OTP matches and has not expired
+8. If no user exists with that email, a new user is created
+9. If the user exists, a session is created for the existing account
+10. User is authenticated and redirected
+```
+
+### New Users vs. Existing Users
+
+- **New email** -- A new user account is created automatically. No separate sign-up step is needed.
+- **Existing email** -- The existing user is signed in. Their account data is unchanged.
+- **Linked accounts** -- If the email matches a user who signed up with email/password or social OAuth, they are signed into that existing account.
+
+---
+
+## Configuration
+
+Enable email OTP in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      emailOtp: true,  // Enable email OTP authentication
+    },
+
+    email: {
+      sendOtp: async ({ email, otp }) => {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "MyApp <noreply@myapp.com>",
+            to: email,
+            subject: "Your sign-in code",
+            html: `
+              <h1>Your sign-in code</h1>
+              <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px;">
+                ${otp}
+              </p>
+              <p>Enter this code in the app to sign in. It expires in 10 minutes.</p>
+              <p style="color: #666; font-size: 14px;">
+                If you didn't request this code, you can safely ignore this email.
+              </p>
+            `,
+          }),
+        });
+      },
+    },
+  };
+}
+```
+
+### Email Callback Parameters
+
+The `sendOtp` callback receives:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `email` | `string` | The recipient's email address |
+| `otp` | `string` | The 6-digit one-time passcode |
+
+> **Note:** Like magic links, the OTP callback receives `email` (a string) rather than `user` (an object), because the user may not exist yet -- email OTP can create new accounts on first use.
+
+---
+
+## OTP Properties
+
+| Property | Value |
+|---|---|
+| Length | **6 digits** |
+| Character set | **0-9** (numeric only) |
+| Expiry | **10 minutes** (600 seconds) |
+| Usage | **Single-use** -- consumed on successful verification |
+
+OTP expiry is defined alongside other token lifetimes in `@banata-auth/shared`:
+
+```typescript
+// @banata-auth/shared/constants.ts
+export const TOKEN_LIFETIMES = {
+  accessToken: 900,      // 15 minutes
+  session: 604800,       // 7 days
+  magicLink: 600,        // 10 minutes
+  otp: 600,              // 10 minutes
+  invitation: 604800,    // 7 days
+};
+```
+
+After expiration, the OTP is no longer valid and the user must request a new one.
+
+---
+
+## Client-Side API
+
+### Step 1: Send the OTP
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+const { error } = await authClient.signIn.emailOtp({
+  email: "user@example.com",
+});
+
+if (error) {
+  // Handle errors:
+  // - "Rate limit exceeded" (429)
+  // - "Invalid email" (422)
+  console.error(error.message);
+} else {
+  // Show the OTP input form
+}
+```
+
+### Step 2: Verify the OTP
+
+```typescript
+const { data, error } = await authClient.signIn.emailOtp({
+  email: "user@example.com",
+  otp: "123456",
+});
+
+if (error) {
+  // Handle errors:
+  // - "Invalid or expired OTP" (400)
+  // - "Too many attempts" (429)
+  console.error(error.message);
+} else {
+  // data contains the user and session
+  console.log(data.user);
+  console.log(data.session);
+  window.location.href = "/dashboard";
+}
+```
+
+---
+
+## Complete OTP Form Example
+
+```tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+
+export default function EmailOtpPage() {
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [error, setError] = useState("");
+
+  async function handleSendOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const { error } = await authClient.signIn.emailOtp({ email });
+
+    if (error) {
+      setError(error.message ?? "Failed to send code");
+    } else {
+      setStep("code");
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const { data, error } = await authClient.signIn.emailOtp({
+      email,
+      otp,
+    });
+
+    if (error) {
+      setError(error.message ?? "Invalid code");
+    } else {
+      window.location.href = "/dashboard";
+    }
+  }
+
+  if (step === "code") {
+    return (
+      <form onSubmit={handleVerifyOtp}>
+        <h1>Enter your code</h1>
+        <p>
+          We sent a 6-digit code to <strong>{email}</strong>.
+        </p>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="000000"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          style={{
+            fontSize: "24px",
+            letterSpacing: "8px",
+            textAlign: "center",
+            width: "200px",
+          }}
+          required
+        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <button type="submit">Verify</button>
+        <button type="button" onClick={() => setStep("email")}>
+          Use a different email
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSendOtp}>
+      <h1>Sign in with Email Code</h1>
+      <input
+        type="email"
+        placeholder="your@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button type="submit">Send Code</button>
+    </form>
+  );
+}
+```
+
+---
+
+## Email Template Integration
+
+Email OTP uses the **"magic-auth"** email category in the email configuration system. When you configure email types in the dashboard under **Emails > Configuration**, the "Magic Auth" toggle controls delivery of both magic link and OTP emails.
+
+To use the built-in email template system instead of a custom `sendOtp` callback:
+
+1. Navigate to **Emails > Providers** and configure an active email provider (Resend, SendGrid, etc.)
+2. Ensure the **Magic Auth** email type is enabled under **Emails > Configuration**
+3. The system will use the built-in OTP email template, which includes your app name, the 6-digit code, and an expiry notice
+
+If you provide a custom `sendOtp` callback in your config, it takes precedence over the built-in template.
+
+---
+
+## Rate Limiting
+
+OTP requests are rate-limited to prevent abuse and brute-force attempts:
+
+| Operation | Limit |
+|---|---|
+| Send OTP | 30 requests per minute (per IP) |
+| Verify OTP | 10 attempts per minute (per email) |
+
+If the rate limit is exceeded, a `RateLimitError` (429) is returned. The verify limit is stricter to prevent brute-force guessing of 6-digit codes.
+
+---
+
+## Combining with Other Methods
+
+Email OTP works alongside other authentication methods. A common pattern is offering email OTP as the primary method:
+
+```typescript
+authMethods: {
+  emailPassword: true,   // Traditional sign-in
+  emailOtp: true,         // OTP-based sign-in
+  magicLink: true,        // Link-based sign-in
+  organization: true,     // Organizations
+},
+
+email: {
+  sendVerificationEmail: async ({ user, url }) => { /* ... */ },
+  sendResetPassword: async ({ user, url }) => { /* ... */ },
+  sendMagicLink: async ({ email, url }) => { /* ... */ },
+  sendOtp: async ({ email, otp }) => { /* ... */ },
+},
+```
+
+In your UI:
+
+```tsx
+export default function SignInPage() {
+  const [mode, setMode] = useState<"otp" | "password">("otp");
+
+  return (
+    <div>
+      <div>
+        <button onClick={() => setMode("otp")}>Email Code</button>
+        <button onClick={() => setMode("password")}>Password</button>
+      </div>
+
+      {mode === "otp" ? (
+        <EmailOtpForm />
+      ) : (
+        <PasswordForm />
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `otp.sent` | OTP email sent to user |
+| `otp.verified` | OTP successfully verified |
+| `session.created` | Session created after OTP verification |
+| `user.created` | New user created via OTP (first-time sign-in) |
+
+See the [Audit Logs](/docs/audit-logs) guide for more details.
+
+---
+
+## Security Considerations
+
+1. **Short expiry window** -- OTPs expire after 10 minutes, limiting the window for interception.
+2. **Single-use codes** -- Each OTP is consumed on verification and cannot be reused.
+3. **Rate limiting on verification** -- The verify endpoint has a stricter rate limit (10/min) to prevent brute-force attacks on the 6-digit code space (1,000,000 combinations).
+4. **Email account security** -- Like magic links, OTP security depends on the security of the user's email account. For higher-security applications, combine email OTP with MFA (TOTP).
+5. **No code reuse across requests** -- Each `sendOtp` call generates a new code and invalidates any previously issued code for that email.
+6. **Timing-safe comparison** -- OTP verification uses constant-time comparison to prevent timing attacks.
+
+---
+
+## Troubleshooting
+
+### "Invalid or expired OTP"
+
+The code does not match or has expired. Common causes:
+- User entered the code incorrectly (check for typos)
+- More than 10 minutes passed since the code was sent
+- A newer code was requested, invalidating the previous one
+
+### "OTP email not received"
+
+1. Check your `sendOtp` callback for errors
+2. Check the spam/junk folder
+3. Verify the email provider API key is correct
+4. In development, log the OTP to the console instead of sending an email
+
+### "Rate limit exceeded"
+
+The user has made too many requests. Wait one minute before retrying. If this happens frequently, consider showing a countdown timer in your UI.
+
+---
+
+## What's Next
+
+- **[Magic Links](/docs/magic-links)** -- Link-based passwordless authentication
+- **[Passkeys](/docs/passkeys)** -- WebAuthn-based biometric authentication
+- **[Multi-Factor Auth](/docs/mfa)** -- Add TOTP as a second factor
+- **[Email & Password](/docs/email-password)** -- Traditional authentication

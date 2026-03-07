@@ -1,0 +1,313 @@
+---
+title: "Single Sign-On (SSO)"
+description: "Enterprise SSO with SAML 2.0 and OpenID Connect (OIDC) for organization-level authentication."
+section: "Enterprise"
+order: 17
+---
+
+> **Preview** — SSO is under active development. Management endpoints and dashboard UI are available, but full SAML 2.0 protocol support requires a Node.js sidecar. APIs may change before stable release.
+
+Single Sign-On (SSO) enables enterprise customers to authenticate through their existing identity provider (IdP) — Okta, Azure AD, Google Workspace, OneLogin, PingIdentity, and others. Instead of managing separate credentials in your application, users sign in once through their corporate IdP and are automatically authenticated.
+
+SSO connections in Banata Auth are scoped to **organizations**. Each organization can configure one or more SSO connections, and users with matching email domains are automatically routed to the correct identity provider.
+
+---
+
+## Supported Protocols
+
+Banata Auth supports the two industry-standard SSO protocols:
+
+| Protocol | Description | Common Use Case |
+|---|---|---|
+| **SAML 2.0** | XML-based protocol widely adopted by enterprise identity providers. Exchanges signed XML assertions between the IdP and your application (the Service Provider). | Okta, Azure AD, ADFS, OneLogin, PingIdentity |
+| **OpenID Connect (OIDC)** | OAuth 2.0-based protocol that uses JSON tokens (JWTs). Lighter-weight and more developer-friendly than SAML. | Google Workspace, Auth0, Azure AD (v2), custom IdPs |
+
+Both protocols achieve the same result: the user authenticates at their organization's IdP, and Banata Auth receives a verified identity assertion that maps to a user in your system.
+
+---
+
+## How It Works
+
+### Connection Model
+
+SSO connections are always tied to an organization. This means:
+
+- Each connection belongs to exactly one organization.
+- An organization can have multiple connections (e.g., SAML for the main workforce and OIDC for contractors).
+- Connections are scoped to the project they belong to and cannot be shared across projects.
+
+### Domain-Based Routing
+
+When a user initiates SSO login, Banata Auth uses the email domain to determine which identity provider to route them to:
+
+```
+1. User enters their email address (e.g., alice@acme.com)
+2. Banata Auth extracts the domain (acme.com)
+3. Banata Auth looks up SSO connections with a matching domain
+4. User is redirected to the organization's IdP (e.g., Okta)
+5. User authenticates at the IdP
+6. IdP sends an assertion back to Banata Auth
+7. Banata Auth validates the assertion and creates/updates the user
+8. User is signed into your application
+```
+
+Multiple domains can be associated with a single connection. For example, an organization might own both `acme.com` and `acme.io`.
+
+### Just-in-Time (JIT) Provisioning
+
+When a user authenticates via SSO for the first time and no matching account exists, Banata Auth automatically:
+
+1. Creates a new user record with the identity attributes from the IdP assertion (name, email).
+2. Adds the user as a member of the associated organization.
+3. Assigns the default member role (configurable per organization).
+
+This eliminates the need for administrators to pre-provision user accounts. Users are created on their first successful SSO login.
+
+---
+
+## Dashboard Setup
+
+### Creating an SSO Connection
+
+1. Navigate to the **SSO** section in the Banata Auth dashboard.
+2. Click **Create Connection**.
+3. Select the **organization** that this connection belongs to.
+4. Choose the protocol: **SAML 2.0** or **OIDC**.
+5. Provide a **name** for the connection (e.g., "Acme Corp Okta").
+6. Enter one or more **email domains** that should route to this connection.
+
+### Configuring SAML 2.0
+
+After creating the connection, you need to exchange metadata with the IdP:
+
+**From the IdP (provide to Banata Auth):**
+- **Entity ID** — The IdP's unique identifier (e.g., `http://www.okta.com/exkxxxxxx`)
+- **SSO URL** — The IdP's sign-on endpoint where users are redirected
+- **Certificate** — The X.509 certificate used to verify SAML assertion signatures
+
+**From Banata Auth (provide to the IdP):**
+- **ACS URL** — The Assertion Consumer Service URL where the IdP sends SAML responses
+- **SP Entity ID** — Your application's unique identifier as a Service Provider
+- **Metadata URL** — An XML document containing both values above (some IdPs accept this directly)
+
+### Configuring OIDC
+
+For OIDC connections, provide the following from the IdP:
+
+- **Issuer** — The IdP's issuer URL (e.g., `https://accounts.google.com`)
+- **Client ID** — The OAuth 2.0 client identifier
+- **Client Secret** — The OAuth 2.0 client secret
+- **Authorization URL** — The endpoint where the OAuth flow begins
+- **Token URL** — The endpoint where authorization codes are exchanged for tokens
+
+Most OIDC providers support discovery via `/.well-known/openid-configuration`, which auto-populates the authorization and token URLs from the issuer.
+
+---
+
+## SDK Usage
+
+Use the Banata Auth SDK to manage SSO connections programmatically.
+
+### Initialize the Client
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const client = new BanataAuth({ apiKey: "sk_..." });
+```
+
+### List SSO Connections
+
+Retrieve all SSO connections for your project:
+
+```typescript
+const connections = await client.sso.listConnections();
+
+for (const conn of connections) {
+  console.log(conn.id, conn.type, conn.organizationId, conn.domains);
+}
+```
+
+### Get a Specific Connection
+
+Fetch details for a single connection by ID:
+
+```typescript
+const connection = await client.sso.getConnection("conn_xxx");
+
+console.log(connection.type);           // "saml" | "oidc"
+console.log(connection.organizationId); // "org_xxx"
+console.log(connection.domains);        // ["acme.com", "acme.io"]
+console.log(connection.active);         // true
+```
+
+### Create a Connection
+
+```typescript
+const newConnection = await client.sso.createConnection({
+  organizationId: "org_xxx",
+  type: "saml",
+  name: "Acme Corp Okta",
+  domains: ["acme.com"],
+  samlConfig: {
+    idpEntityId: "http://www.okta.com/exkxxxxxx",
+    idpSsoUrl: "https://acme.okta.com/app/xxxxx/sso/saml",
+    idpCertificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+  },
+});
+```
+
+### Initiate SSO Login
+
+Redirect the user to their IdP for authentication:
+
+```typescript
+const { url } = await client.sso.getAuthorizationUrl({
+  connectionId: "sso_xxx",
+  redirectUri: "https://myapp.com/auth/callback",
+});
+
+// Redirect the user to url
+```
+
+---
+
+## API Endpoints
+
+The following API endpoints are available for SSO operations:
+
+### `POST /sso/register`
+
+Create a new SSO connection for an organization.
+
+**Request Body:**
+
+```json
+{
+  "organizationId": "org_xxx",
+  "type": "saml",
+  "name": "Acme Corp Okta",
+  "domains": ["acme.com"],
+  "saml": {
+    "entityId": "http://www.okta.com/exkxxxxxx",
+    "ssoUrl": "https://acme.okta.com/app/xxxxx/sso/saml",
+    "certificate": "-----BEGIN CERTIFICATE-----..."
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "conn_xxx",
+  "organizationId": "org_xxx",
+  "type": "saml",
+  "name": "Acme Corp Okta",
+  "domains": ["acme.com"],
+  "active": true,
+  "createdAt": "2025-01-15T10:30:00Z"
+}
+```
+
+### `POST /sso/sign-in`
+
+Initiate SSO login for a user. Returns a redirect URL pointing to the appropriate IdP.
+
+**Request Body:**
+
+```json
+{
+  "email": "alice@acme.com",
+  "callbackUrl": "https://myapp.com/auth/callback"
+}
+```
+
+**Response:**
+
+```json
+{
+  "redirectUrl": "https://acme.okta.com/app/xxxxx/sso/saml?SAMLRequest=..."
+}
+```
+
+### `POST /sso/list-providers`
+
+List all SSO connections for the current project.
+
+**Response:**
+
+```json
+{
+  "connections": [
+    {
+      "id": "conn_xxx",
+      "organizationId": "org_xxx",
+      "type": "saml",
+      "name": "Acme Corp Okta",
+      "domains": ["acme.com"],
+      "active": true
+    },
+    {
+      "id": "conn_yyy",
+      "organizationId": "org_yyy",
+      "type": "oidc",
+      "name": "Beta Inc Google",
+      "domains": ["betainc.com"],
+      "active": true
+    }
+  ]
+}
+```
+
+---
+
+## Connection Types
+
+Each protocol requires different configuration fields. The table below summarizes what each type expects:
+
+### SAML 2.0
+
+| Field | Description |
+|---|---|
+| `entityId` | The IdP's unique identifier URI |
+| `ssoUrl` | The IdP's sign-on endpoint for SAML requests |
+| `certificate` | X.509 certificate (PEM format) for verifying assertion signatures |
+| `acsUrl` | Assertion Consumer Service URL — provided by Banata Auth (read-only) |
+| `spEntityId` | Service Provider Entity ID — provided by Banata Auth (read-only) |
+
+### OIDC
+
+| Field | Description |
+|---|---|
+| `issuer` | The IdP's issuer URL, used for discovery and token validation |
+| `clientId` | OAuth 2.0 client identifier registered at the IdP |
+| `clientSecret` | OAuth 2.0 client secret for token exchange |
+| `authorizationUrl` | The authorization endpoint where the OAuth flow begins |
+| `tokenUrl` | The token endpoint where authorization codes are exchanged for tokens |
+
+Fields marked as provided by Banata Auth (`acsUrl`, `spEntityId`) are generated when the connection is created and must be configured in the IdP.
+
+---
+
+## Security
+
+### Project Scoping
+
+SSO connections are scoped to the project they belong to. A connection created in one project cannot be accessed or used by another project, even within the same account. This ensures tenant isolation in multi-project deployments.
+
+### Domain Verification
+
+When domains are associated with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ensures users are directed to the correct IdP.
+
+### Signature Validation
+
+For SAML connections, Banata Auth validates the XML signature on every assertion using the X.509 certificate provided during setup. Assertions with invalid, expired, or missing signatures are rejected.
+
+For OIDC connections, tokens are validated against the IdP's published JWKS (JSON Web Key Set), ensuring that tokens were issued by the expected provider and have not been tampered with.
+
+### Additional Safeguards
+
+- **Replay protection** — SAML assertions include a unique ID and timestamp. Banata Auth rejects assertions that have already been consumed or that fall outside the allowed time window.
+- **Audience restriction** — Assertions are validated to ensure they were intended for your application (matching the SP Entity ID or Client ID).
+- **Encrypted assertions** — Banata Auth supports receiving encrypted SAML assertions for environments that require end-to-end confidentiality of identity attributes.

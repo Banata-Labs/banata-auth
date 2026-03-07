@@ -1,0 +1,58 @@
+{
+	"name": "@banata-auth/ui",
+	"version": "0.1.0",
+	"private": false,
+	"license": "MIT",
+	"type": "module",
+	"description": "Reusable UI components for Banata Auth — built on Radix UI and Tailwind CSS",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/banata-auth/banata-auth",
+		"directory": "packages/ui"
+	},
+	"homepage": "https://auth-docs.banata.dev/docs/ui",
+	"keywords": ["banata-auth", "auth", "ui", "components", "radix", "tailwind"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"prepublishOnly": "bun run build",
+		"clean": "rm -rf dist .turbo"
+	},
+	"dependencies": {
+		"@banata-auth/shared": "workspace:*",
+		"class-variance-authority": "^0.7.0",
+		"clsx": "^2.1.0",
+		"cmdk": "^1.1.1",
+		"lucide-react": "^0.460.0",
+		"radix-ui": "^1.4.3",
+		"tailwind-merge": "^2.6.0"
+	},
+	"peerDependencies": {
+		"react": "^18 || ^19",
+		"react-dom": "^18 || ^19",
+		"tailwindcss": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"tailwindcss": "^4.0.0",
+		"tsup": "^8.3.0",
+		"typescript": "^5.7.0"
+	}
+}

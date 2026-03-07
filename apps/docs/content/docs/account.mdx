@@ -1,0 +1,170 @@
+﻿---
+title: "Account Management"
+description: "Manage your admin profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard."
+section: "Configuration"
+order: 24
+---
+
+The **Account** section lets dashboard administrators manage their own profile, security settings, and active sessions. It follows a Clerk-style layout with sidebar navigation and two sub-pages: **Profile** and **Security**.
+
+---
+
+## Account Sub-Pages
+
+| Page | Path | Description |
+|---|---|---|
+| **Profile** | `/account/profile` | Name, avatar, email, connected accounts, delete account |
+| **Security** | `/account/security` | Password, two-factor authentication, active sessions |
+
+Navigating to `/account` automatically redirects to `/account/profile`.
+
+---
+
+## Profile
+
+The Profile page manages your personal information and connected accounts.
+
+### Personal Information
+
+- **Display name** â€” Editable text field (click "Edit" to enter edit mode)
+- **Avatar** â€” Upload an image (max 2MB, stored as a Data URL). Click the upload button on the avatar to change it, or "Remove" to clear it.
+- **Email** â€” Shown with a verified/unverified badge and your role (if set)
+
+Changes are saved via `authClient.updateUser()` from Better Auth.
+
+### Email Address
+
+Change your email by clicking "Change email", entering a new address, and clicking "Send verification". Better Auth sends a verification email to the new address. Your email does not change until you click the verification link.
+
+```typescript
+await authClient.changeEmail({
+  newEmail: "new@example.com",
+  callbackURL: window.location.href,
+});
+```
+
+### Connected Accounts
+
+Lists all sign-in methods linked to your account:
+
+- **Email & Password** â€” Shows whether a password credential is set
+- **Social accounts** â€” Each linked OAuth provider (GitHub, Google, etc.) with an "Unlink" button
+- **Link new accounts** â€” Buttons to link GitHub or Google if not already connected
+
+Powered by Better Auth's `listAccounts()`, `unlinkAccount()`, and `linkSocial()` methods.
+
+### Delete Account
+
+Permanently deletes your account and all associated data. Requires typing `DELETE` to confirm. Triggers `authClient.deleteUser()` which sends a confirmation email before deletion.
+
+> **Warning:** Account deletion is irreversible. All your data, sessions, and linked accounts will be permanently removed.
+
+---
+
+## Security
+
+The Security page manages authentication credentials and active sessions.
+
+### Password
+
+Change your password by providing your current password and a new one (minimum 8 characters). The confirmation field validates that both entries match before enabling the submit button.
+
+```typescript
+await authClient.changePassword({
+  currentPassword: "old-password",
+  newPassword: "new-password",
+  revokeOtherSessions: false,
+});
+```
+
+### Two-Factor Authentication (TOTP)
+
+TOTP-based two-factor authentication adds an extra layer of security. The setup flow has multiple steps:
+
+**Enabling 2FA:**
+
+1. Click "Enable two-factor authentication"
+2. Enter your password to confirm identity
+3. A TOTP secret is generated â€” copy the secret key into your authenticator app (Google Authenticator, Authy, 1Password, etc.)
+4. Enter the 6-digit code from your authenticator to verify
+5. Save the backup codes displayed after successful verification
+
+**When 2FA is enabled, you can:**
+
+- **Disable 2FA** â€” Requires password confirmation
+- **Regenerate backup codes** â€” Requires password confirmation, generates a new set
+
+**Backup codes** are one-time-use codes for signing in when you lose access to your authenticator app. Copy and store them securely. Each code can only be used once.
+
+### Active Sessions
+
+Lists all devices where you are currently signed in, showing:
+
+- **Browser and OS** â€” Parsed from the user agent (Chrome, Firefox, Edge, Safari on Windows, macOS, Linux, iOS, Android)
+- **IP address** â€” When available
+- **Session start date**
+- **Current session badge** â€” Highlights which session belongs to your current browser
+
+**Session management actions:**
+
+- **Revoke** â€” End a specific session (not available for the current session)
+- **Sign out other devices** â€” Revoke all sessions except the current one
+
+---
+
+## Auth Client Methods
+
+The account pages use the Better Auth client directly. All methods follow the `{ data, error }` response convention.
+
+| Method | Description |
+|---|---|
+| `authClient.updateUser({ name, image })` | Update profile name and avatar |
+| `authClient.changeEmail({ newEmail, callbackURL })` | Initiate email change with verification |
+| `authClient.changePassword({ currentPassword, newPassword })` | Change account password |
+| `authClient.listAccounts()` | List all connected sign-in methods |
+| `authClient.unlinkAccount({ providerId })` | Remove a linked social account |
+| `authClient.linkSocial({ provider, callbackURL })` | Link a new social OAuth provider |
+| `authClient.deleteUser({ callbackURL })` | Initiate account deletion |
+| `authClient.twoFactor.enable({ password })` | Begin TOTP 2FA setup |
+| `authClient.twoFactor.verifyTotp({ code })` | Verify TOTP code to complete setup |
+| `authClient.twoFactor.disable({ password })` | Disable 2FA |
+| `authClient.twoFactor.generateBackupCodes({ password })` | Regenerate backup codes |
+| `authClient.listSessions()` | List all active sessions |
+| `authClient.revokeSession({ token })` | Revoke a specific session |
+| `authClient.revokeOtherSessions()` | Revoke all sessions except current |
+
+---
+
+## Client Plugins
+
+The dashboard auth client includes the `twoFactorClient()` plugin for 2FA methods. If you are building a custom UI, import it from the react package:
+
+```typescript
+import { createAuthClient } from "better-auth/react";
+import { twoFactorClient } from "@banata-auth/react/plugins";
+
+const authClient = createAuthClient({
+  plugins: [twoFactorClient()],
+});
+
+// Now available:
+// authClient.twoFactor.enable()
+// authClient.twoFactor.verifyTotp()
+// authClient.twoFactor.disable()
+// authClient.twoFactor.generateBackupCodes()
+```
+
+Additional client plugins re-exported from `@banata-auth/react/plugins`:
+
+- `adminClient()` - Typed `authClient.admin.*` helpers for user management and impersonation
+- `multiSessionClient()` â€” Multi-session support
+- `usernameClient()` â€” Username-based authentication
+
+---
+
+## What's Next
+
+- **[Settings](/docs/settings)** â€” Configure project name and team
+- **[Authentication](/docs/email-password)** â€” Set up authentication methods
+- **[Radar & Bot Protection](/docs/radar)** â€” Configure bot detection for your auth endpoints
+

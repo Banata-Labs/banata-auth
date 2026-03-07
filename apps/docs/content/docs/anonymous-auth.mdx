@@ -1,0 +1,417 @@
+---
+title: "Anonymous Authentication"
+description: "Allow users to interact with your app without creating an account, with optional upgrade to a full account later."
+section: "Authentication"
+order: 24
+---
+
+Anonymous authentication lets users interact with your application **without providing an email, password, or any credentials**. A temporary user record and session are created automatically, allowing the user to start using your app immediately. Later, the user can **upgrade** to a full account by linking an email/password, social login, or other authentication method -- preserving all data created during the anonymous session.
+
+---
+
+## Use Cases
+
+Anonymous auth is well-suited for scenarios where you want to reduce friction and let users experience your product before committing to an account:
+
+- **Try-before-signup** -- Let users explore features, create content, or configure settings before asking them to register.
+- **Guest checkout** -- Allow purchases or form submissions without requiring an account upfront.
+- **Onboarding flows** -- Capture user preferences or progress during onboarding, then prompt for account creation at a natural breakpoint.
+- **Collaborative tools** -- Let anonymous users join a shared session or document with a link, then optionally claim their identity later.
+- **Mobile-first experiences** -- Reduce drop-off by deferring account creation until the user sees value.
+
+---
+
+## How It Works
+
+```
+1. User lands on your app without an account
+2. Client calls authClient.signIn.anonymous()
+3. Server creates a temporary user record (no email, no password)
+4. Server creates a session for the anonymous user
+5. User interacts with the app normally -- data is tied to their user ID
+6. When ready, user clicks "Create Account" or "Sign Up"
+7. Client calls the upgrade method (e.g., link email/password)
+8. Server links the credentials to the existing anonymous user record
+9. The user ID, session, and all associated data are preserved
+10. User is now a full, authenticated user
+```
+
+### Anonymous User Properties
+
+When an anonymous user is created, the user record has these characteristics:
+
+| Property | Value |
+|---|---|
+| `id` | Generated user ID (same format as regular users) |
+| `email` | `null` |
+| `name` | `null` |
+| `emailVerified` | `false` |
+| `isAnonymous` | `true` |
+| `createdAt` | Timestamp of anonymous session creation |
+
+The `isAnonymous` flag distinguishes anonymous users from regular users and is set to `false` when the user upgrades to a full account.
+
+---
+
+## Configuration
+
+Enable anonymous authentication in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      anonymous: true,       // Enable anonymous authentication
+      emailPassword: true,   // Users need a method to upgrade to
+    },
+  };
+}
+```
+
+> **Note:** Anonymous auth is most useful when combined with at least one other authentication method that users can upgrade to (email/password, social OAuth, magic links, etc.).
+
+---
+
+## Client-Side API
+
+### Create an Anonymous Session
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+const { data, error } = await authClient.signIn.anonymous();
+
+if (error) {
+  console.error(error.message);
+} else {
+  // data contains the anonymous user and session
+  console.log(data.user.id);          // "usr_01HXYZ..."
+  console.log(data.user.isAnonymous); // true
+  console.log(data.session);          // { id, token, expiresAt, ... }
+}
+```
+
+### Check if the Current User is Anonymous
+
+```typescript
+const session = await authClient.getSession();
+
+if (session?.data?.user?.isAnonymous) {
+  // Show upgrade prompt
+} else {
+  // Regular authenticated user
+}
+```
+
+### Upgrade to Email/Password
+
+Link an email and password to the anonymous user, converting them to a full account:
+
+```typescript
+const { data, error } = await authClient.anonymous.upgrade({
+  email: "user@example.com",
+  password: "securePassword123",
+  name: "Jane Doe",  // Optional
+});
+
+if (error) {
+  // Handle errors:
+  // - "Email already in use" (409)
+  // - "Invalid email" (422)
+  // - "Password too short" (422)
+  // - "User is not anonymous" (400)
+  console.error(error.message);
+} else {
+  // data.user.isAnonymous is now false
+  // data.user.email is now "user@example.com"
+  // The user ID and session remain the same
+  console.log(data.user.isAnonymous); // false
+  console.log(data.user.email);       // "user@example.com"
+}
+```
+
+### Upgrade via Social OAuth
+
+Anonymous users can also upgrade by linking a social account:
+
+```typescript
+await authClient.anonymous.upgradeWithSocial({
+  provider: "google",
+  callbackURL: "/dashboard",
+});
+// Redirects to Google OAuth flow
+// On return, the anonymous user is linked to the Google account
+```
+
+---
+
+## Complete Anonymous-to-Upgrade Flow
+
+```tsx
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+import { useState, useEffect } from "react";
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initSession();
+  }, []);
+
+  async function initSession() {
+    const session = await authClient.getSession();
+
+    if (session?.data?.user) {
+      // User has an existing session (anonymous or full)
+      setUser(session.data.user);
+    } else {
+      // No session -- create an anonymous one
+      const { data } = await authClient.signIn.anonymous();
+      if (data) setUser(data.user);
+    }
+
+    setLoading(false);
+  }
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      {user?.isAnonymous && <UpgradeBanner />}
+      {children}
+    </div>
+  );
+}
+
+function UpgradeBanner() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  async function handleUpgrade(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const { data, error } = await authClient.anonymous.upgrade({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message ?? "Upgrade failed");
+    } else {
+      // Refresh to reflect the upgraded account
+      window.location.reload();
+    }
+  }
+
+  if (!showForm) {
+    return (
+      <div style={{
+        padding: "12px 16px",
+        backgroundColor: "#f0f4ff",
+        borderBottom: "1px solid #d0d8f0",
+      }}>
+        <span>
+          You are using a guest account. Your data will be preserved
+          when you create an account.
+        </span>
+        <button onClick={() => setShowForm(true)}>
+          Create Account
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      padding: "16px",
+      backgroundColor: "#f0f4ff",
+      borderBottom: "1px solid #d0d8f0",
+    }}>
+      <form onSubmit={handleUpgrade}>
+        <h3>Create your account</h3>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <button type="submit">Save Account</button>
+        <button type="button" onClick={() => setShowForm(false)}>
+          Later
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+---
+
+## Data Persistence During Upgrade
+
+When an anonymous user upgrades to a full account, the following are preserved:
+
+| Data | Preserved? | Notes |
+|---|---|---|
+| User ID | Yes | The `id` remains the same |
+| Session | Yes | The current session continues, no re-authentication needed |
+| Associated records | Yes | Any data linked to the user ID (posts, preferences, cart items, etc.) |
+| Organization memberships | Yes | If the anonymous user was added to an organization |
+| Metadata | Yes | Any custom metadata set on the user record |
+
+The upgrade is an **in-place mutation** of the existing user record, not a creation of a new user. This means all foreign key relationships to the user ID remain intact.
+
+### What Changes on Upgrade
+
+| Property | Before | After |
+|---|---|---|
+| `isAnonymous` | `true` | `false` |
+| `email` | `null` | Provided email |
+| `name` | `null` | Provided name (if given) |
+| `emailVerified` | `false` | `false` (verification email sent) |
+
+---
+
+## Cleanup of Stale Anonymous Accounts
+
+Anonymous users that never upgrade will accumulate over time. Banata Auth provides mechanisms to clean up stale anonymous accounts.
+
+### Automatic Cleanup
+
+Configure automatic cleanup of anonymous accounts that have been inactive beyond a threshold:
+
+```typescript
+function buildConfig(): BanataAuthConfig {
+  return {
+    // ...
+    authMethods: {
+      anonymous: {
+        enabled: true,
+        maxAge: 30 * 24 * 60 * 60,  // 30 days in seconds
+      },
+    },
+  };
+}
+```
+
+When `maxAge` is set, anonymous user sessions that have not been active within the specified period are eligible for cleanup. The cleanup process runs periodically and:
+
+1. Identifies anonymous users whose last session activity exceeds `maxAge`
+2. Deletes the anonymous user record and associated session data
+3. Logs a `user.deleted` audit event for each cleanup
+
+### Manual Cleanup via Admin SDK
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "your-api-key",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// List anonymous users
+const { data } = await banata.users.listUsers({
+  filter: { isAnonymous: true },
+  limit: 100,
+});
+
+// Delete stale anonymous users
+for (const user of data) {
+  const age = Date.now() - new Date(user.createdAt).getTime();
+  const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+  if (age > thirtyDays) {
+    await banata.users.deleteUser({ userId: user.id });
+  }
+}
+```
+
+> **Warning:** Deleting an anonymous user removes all associated data. If the anonymous user has created content or records in your app that should be preserved, consider reassigning ownership before deletion.
+
+---
+
+## Rate Limiting
+
+Anonymous session creation is rate-limited to prevent abuse:
+
+| Operation | Limit |
+|---|---|
+| Create anonymous session | 30 requests per minute (per IP) |
+
+This prevents automated scripts from creating large numbers of anonymous accounts.
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `user.created` | Anonymous user record created |
+| `session.created` | Anonymous session started |
+| `user.updated` | Anonymous user upgraded to full account |
+| `user.deleted` | Stale anonymous user cleaned up |
+
+See the [Audit Logs](/docs/audit-logs) guide for more details.
+
+---
+
+## Security Considerations
+
+1. **Rate limit anonymous creation** -- Without rate limiting, anonymous auth can be abused to create unlimited user records. The built-in rate limit (30/min per IP) mitigates this.
+2. **Limit anonymous capabilities** -- Consider restricting what anonymous users can do in your application. Use the `isAnonymous` flag to gate sensitive operations (payments, data exports, etc.).
+3. **Set a cleanup policy** -- Always configure `maxAge` or implement manual cleanup to prevent unbounded growth of anonymous records.
+4. **Session expiry still applies** -- Anonymous sessions expire according to the standard session lifetime (7 days by default). After expiry, the anonymous user cannot resume their session.
+5. **Upgrade prompts** -- Display clear upgrade prompts at natural breakpoints (after completing a task, before checkout, etc.) to convert anonymous users to full accounts.
+
+---
+
+## Troubleshooting
+
+### "User is not anonymous"
+
+The upgrade endpoint was called on a user that is already a full account (i.e., `isAnonymous` is `false`). Only anonymous users can be upgraded.
+
+### "Email already in use"
+
+The email provided during upgrade is already registered to another user. The anonymous user cannot claim an email that belongs to an existing account.
+
+### "Anonymous session expired"
+
+The session expired before the user upgraded. The anonymous user record still exists, but a new session must be created. If the user has no way to re-authenticate (no email/password), the data from the previous session may be inaccessible.
+
+### "Too many anonymous accounts"
+
+If you see a large number of anonymous users, check for:
+- Bot traffic creating sessions programmatically
+- Missing cleanup configuration
+- Frontend code that creates anonymous sessions on every page load (should check for existing session first)
+
+---
+
+## What's Next
+
+- **[Email & Password](/docs/email-password)** -- The most common upgrade target for anonymous users
+- **[Social OAuth](/docs/social-oauth)** -- Let anonymous users upgrade via Google, GitHub, etc.
+- **[Username Auth](/docs/username-auth)** -- Upgrade with a username instead of email
+- **[Organizations](/docs/organizations-overview)** -- Multi-tenant workspaces

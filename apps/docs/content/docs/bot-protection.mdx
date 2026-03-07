@@ -1,0 +1,247 @@
+---
+title: "Bot Protection SDK (Next.js)"
+description: "Integrate bot detection providers (Vercel BotID, Cloudflare Turnstile, reCAPTCHA, hCaptcha) into your Next.js app using the @banata-auth/nextjs/bot-protection package."
+section: "Configuration"
+order: 24
+---
+
+The `@banata-auth/nextjs/bot-protection` package provides a unified abstraction for integrating bot detection providers into your Next.js auth routes. It supports **Vercel BotID**, **Cloudflare Turnstile**, **Google reCAPTCHA**, and **hCaptcha** out of the box.
+
+Credentials can be hardcoded in your environment or configured through the Banata Auth dashboard (Radar page) and fetched automatically at runtime.
+
+---
+
+## Installation
+
+The bot protection utilities ship with `@banata-auth/nextjs` — no additional installation needed:
+
+```typescript
+import {
+  withBotProtection,
+  createBotIdVerifier,
+  createConfigAwareVerifier,
+} from "@banata-auth/nextjs/bot-protection";
+```
+
+---
+
+## Quick Start
+
+### Option 1: Direct Provider (Vercel BotID)
+
+Use this when you have `botid` installed and want to wire it up directly:
+
+```typescript
+// app/api/auth/[...all]/route.ts
+import { createRouteHandler } from "@banata-auth/nextjs";
+import { withBotProtection, createBotIdVerifier } from "@banata-auth/nextjs/bot-protection";
+import { checkBotId } from "botid/server";
+
+const handler = createRouteHandler({
+  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+});
+
+const verify = createBotIdVerifier(checkBotId);
+
+export const GET = handler.GET;
+export const POST = withBotProtection(handler.POST, { verify });
+```
+
+### Option 2: Config-Aware (Dashboard-Managed Credentials)
+
+Use this when you want admins to configure bot protection through the Radar dashboard page:
+
+```typescript
+// app/api/auth/[...all]/route.ts
+import { createRouteHandler } from "@banata-auth/nextjs";
+import { withBotProtection, createConfigAwareVerifier } from "@banata-auth/nextjs/bot-protection";
+
+const handler = createRouteHandler({
+  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+});
+
+const verify = createConfigAwareVerifier({
+  configApiUrl: process.env.NEXT_PUBLIC_APP_URL + "/api/auth",
+});
+
+export const GET = handler.GET;
+export const POST = withBotProtection(handler.POST, { verify });
+```
+
+With this approach, the verifier will:
+1. Fetch the Radar config from `/api/auth/banata/config/radar/get`
+2. Read the selected bot provider and credentials
+3. Verify requests against that provider
+4. Cache the config in-memory (default: 1 minute TTL)
+
+---
+
+## Configuring Bot Protection in the Dashboard
+
+1. Navigate to **Radar** in the dashboard sidebar
+2. Click **Enable protection**
+3. Go to the **Configuration** tab
+4. Toggle **Bot detection** on
+5. Under **Bot Detection Provider**, select your provider:
+   - **Vercel BotID** — Requires a BotID API key
+   - **Cloudflare Turnstile** — Requires Site Key + Secret Key
+   - **Google reCAPTCHA** — Requires Site Key + Secret Key
+   - **hCaptcha** — Requires Site Key + Secret Key
+6. Enter your credentials and click **Save credentials**
+
+The credentials are stored in the Radar configuration and read by `createConfigAwareVerifier()` at runtime.
+
+---
+
+## API Reference
+
+### `withBotProtection(handler, config)`
+
+Wraps a Next.js route handler with bot protection. Only requests matching protected paths are verified.
+
+```typescript
+withBotProtection(handler.POST, {
+  verify: async (request) => {
+    return { isBot: false };
+  },
+  protectedPaths: ["/api/auth/sign-in", "/api/auth/sign-up"],
+  failOpen: true,
+  blockedMessage: "Bot detected. Access denied.",
+});
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `verify` | `BotCheckFn` | Required | Function that checks if a request is from a bot |
+| `protectedPaths` | `string[]` | Sign-in, sign-up, forget/reset password | Path prefixes to protect |
+| `failOpen` | `boolean` | `true` | Allow requests through if verification fails |
+| `blockedMessage` | `string` | "Bot detected. Access denied." | Error message for blocked requests |
+
+---
+
+### `createBotIdVerifier(checkBotIdFn)`
+
+Factory for creating a Vercel BotID verifier:
+
+```typescript
+import { checkBotId } from "botid/server";
+const verify = createBotIdVerifier(checkBotId);
+```
+
+Returns a `BotCheckFn` that calls `checkBotId()` and maps the result. If BotID throws (e.g., not on Vercel), it returns `{ isBot: false }`.
+
+---
+
+### `createConfigAwareVerifier(options)`
+
+Factory for creating a verifier that reads credentials from the Banata Auth config API:
+
+```typescript
+const verify = createConfigAwareVerifier({
+  configApiUrl: "http://localhost:3000/api/auth",
+  cacheTtlMs: 60000,
+  failOpen: true,
+});
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `configApiUrl` | `string` | Required | Base URL of the Banata Auth API |
+| `cacheTtlMs` | `number` | `60000` (1 min) | How long to cache the radar config |
+| `cookieHeader` | `string` | From request | Cookie header for authentication |
+| `failOpen` | `boolean` | `true` | Allow requests through on failure |
+
+---
+
+## Supported Providers
+
+### Vercel BotID
+
+- **Fields:** API Key
+- **How it works:** Invisible challenge runs automatically on Vercel deployments. The `checkBotId()` function verifies the challenge server-side.
+- **Requirements:** Must be deployed to Vercel. Install `botid` package. Add `withBotId()` to `next.config.ts` and `<BotIdClient>` to layout.
+
+### Cloudflare Turnstile
+
+- **Fields:** Site Key, Secret Key
+- **How it works:** Client sends a Turnstile token in the `cf-turnstile-response` or `x-turnstile-token` header. Server verifies against Cloudflare's siteverify API.
+- **Requirements:** Add the Turnstile widget to your sign-in/sign-up forms. Works on any hosting provider.
+
+### Google reCAPTCHA
+
+- **Fields:** Site Key, Secret Key
+- **How it works:** Client sends a reCAPTCHA v3 token in the `x-recaptcha-token` or `g-recaptcha-response` header. Server verifies and checks the score (threshold: 0.5).
+- **Requirements:** Add the reCAPTCHA v3 script to your pages. Works on any hosting provider.
+
+### hCaptcha
+
+- **Fields:** Site Key, Secret Key
+- **How it works:** Client sends an hCaptcha token in the `x-hcaptcha-token` or `h-captcha-response` header. Server verifies against hCaptcha's siteverify API.
+- **Requirements:** Add the hCaptcha widget to your forms. Works on any hosting provider.
+
+---
+
+## Server-Side Plugin
+
+For server-side protection at the Better Auth plugin level (before the route handler), use the `banataProtection` plugin:
+
+```typescript
+import { banataProtection } from "@banata-auth/convex/plugins";
+
+// In your BanataAuthConfig:
+{
+  protection: {
+    enabled: true,
+    protectedPaths: ["/sign-in", "/sign-up"],
+    verifyRequest: async (request) => {
+      // Your verification logic
+      return { isBot: false };
+    },
+  },
+}
+```
+
+The `banataProtection` plugin uses Better Auth's `onRequest` hook to intercept requests before any auth processing occurs.
+
+---
+
+## Architecture
+
+```
+Client Request
+    |
+    v
+[Next.js Route Handler]
+    |
+    v
+[withBotProtection wrapper]  <-- Checks protected paths
+    |                              Calls verify() function
+    |                              If bot: returns 403
+    v
+[Better Auth Handler]
+    |
+    v
+[banataProtection plugin]    <-- Optional server-side check
+    |                              Uses onRequest hook
+    v
+[Auth Processing]
+```
+
+Both layers are optional and can be used independently or together for defense in depth.
+
+---
+
+## Security Considerations
+
+1. **Fail-open by default** — If the bot detection service is unavailable, requests are allowed through. This prevents legitimate users from being locked out. Set `failOpen: false` for stricter enforcement.
+2. **Credentials are server-side only** — Bot provider credentials (API keys, secret keys) are stored in the Radar config and never exposed to the client.
+3. **Config caching** — The config-aware verifier caches the radar config for 1 minute by default. Credential changes take up to 1 minute to take effect.
+4. **Token headers** — For Turnstile, reCAPTCHA, and hCaptcha, the client must send the verification token in a request header. The header names are standardized per provider.
+
+---
+
+## What's Next
+
+- **[Radar & Bot Protection](/docs/radar)** — Configure detection rules and provider credentials in the dashboard
+- **[Settings](/docs/settings)** — Project-level configuration
+- **[Domains](/docs/domains)** — Configure custom domains for auth services

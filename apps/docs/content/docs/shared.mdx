@@ -1,0 +1,746 @@
+---
+title: "@banata-auth/shared"
+description: "Shared types, constants, validation utilities, and email block definitions used across all Banata Auth packages."
+section: "Packages"
+order: 21
+---
+
+`@banata-auth/shared` is the foundational package that provides **types, constants, validation schemas, ID generation, error classes, and email block definitions** shared across the entire Banata Auth ecosystem. It is used by `@banata-auth/sdk`, `@banata-auth/convex`, `@banata-auth/react`, and the dashboard.
+
+---
+
+## Installation
+
+```bash
+npm install @banata-auth/shared
+```
+
+```bash
+pnpm add @banata-auth/shared
+```
+
+```bash
+bun add @banata-auth/shared
+```
+
+The package has a single runtime dependency: `zod` for validation schemas.
+
+---
+
+## Package Structure
+
+The shared package exports 6 modules:
+
+| Module | Exports |
+|---|---|
+| `constants` | `ID_PREFIXES`, `RATE_LIMITS`, `TOKEN_LIFETIMES`, `SIZE_LIMITS`, `WEBHOOK_RETRY_DELAYS`, `WEBHOOK_MAX_CONSECUTIVE_FAILURES`, `WEBHOOK_MAX_ATTEMPTS` |
+| `types` | All TypeScript interfaces for Banata Auth resources |
+| `validation` | Zod schemas for input validation |
+| `id` | `generateId`, `ulid`, `getResourceType`, `validateId`, `generateRandomToken`, `generateOtp` |
+| `errors` | `BanataAuthError` and subclasses |
+| `email-blocks` | Block types, template definitions, factory helpers, variable interpolation |
+
+Everything is re-exported from the package root:
+
+```typescript
+import {
+  ID_PREFIXES,
+  generateId,
+  BanataAuthError,
+  createDefaultBlock,
+  emailSchema,
+  // ... everything is available from the top-level import
+} from "@banata-auth/shared";
+```
+
+---
+
+## TypeScript Interfaces
+
+### Core Resources
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  image: string | null;
+  username: string | null;
+  phoneNumber: string | null;
+  phoneNumberVerified: boolean;
+  role: "user" | "admin";
+  banned: boolean;
+  banReason: string | null;
+  banExpires: Date | null;
+  twoFactorEnabled: boolean;
+  metadata: Record<string, unknown> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Session {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: Date;
+  ipAddress: string | null;
+  userAgent: string | null;
+  activeOrganizationId: string | null;
+  impersonatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Account {
+  id: string;
+  userId: string;
+  accountId: string;
+  providerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Organization Resources
+
+```typescript
+interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+  metadata: Record<string, unknown> | null;
+  requireMfa: boolean;
+  ssoEnforced: boolean;
+  allowedEmailDomains: string[] | null;
+  maxMembers: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: string;
+  source: "manual" | "invitation" | "sso" | "scim" | "api";
+  teamIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface OrganizationInvitation {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: string;
+  inviterId: string;
+  status: "pending" | "accepted" | "expired" | "revoked";
+  expiresAt: Date;
+  createdAt: Date;
+}
+
+interface Team {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### SSO Resources
+
+```typescript
+type SsoConnectionType = "saml" | "oidc";
+type SsoConnectionState = "draft" | "active" | "inactive" | "validating";
+
+interface SsoConnection {
+  id: string;
+  organizationId: string;
+  type: SsoConnectionType;
+  state: SsoConnectionState;
+  name: string;
+  domains: string[];
+  samlConfig: SamlConfig | null;
+  oidcConfig: OidcConfig | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface SsoProfile {
+  id: string;
+  connectionId: string;
+  connectionType: SsoConnectionType;
+  organizationId: string;
+  userId: string;
+  idpId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  groups: string[];
+  rawAttributes: Record<string, string>;
+  lastLoginAt: Date;
+  createdAt: Date;
+}
+```
+
+### Directory Sync Resources
+
+```typescript
+type DirectoryProvider =
+  | "okta" | "azure_scim_v2" | "google_workspace"
+  | "onelogin" | "jumpcloud" | "pingfederate"
+  | "generic_scim_v2";
+
+type DirectoryState = "linked" | "unlinked" | "invalid_credentials";
+
+interface Directory {
+  id: string;
+  organizationId: string;
+  type: "scim";
+  state: DirectoryState;
+  name: string;
+  provider: DirectoryProvider;
+  userCount: number;
+  groupCount: number;
+  lastSyncAt: Date | null;
+  lastSyncStatus: "success" | "partial" | "failed" | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface DirectoryUser { /* ... */ }
+interface DirectoryGroup { /* ... */ }
+```
+
+### Other Resources
+
+```typescript
+interface AuditEvent {
+  id: string;
+  action: string;
+  version: number;
+  actor: { type: "user" | "admin" | "system" | "api_key" | "scim"; id: string; /* ... */ };
+  targets: Array<{ type: string; id: string; /* ... */ }>;
+  context: { organizationId?: string; ipAddress?: string; /* ... */ };
+  changes?: { before?: Record<string, unknown>; after?: Record<string, unknown> };
+  occurredAt: Date;
+  createdAt: Date;
+}
+
+interface WebhookEndpoint {
+  id: string;
+  url: string;
+  eventTypes: string[];
+  enabled: boolean;
+  successCount: number;
+  failureCount: number;
+  lastDeliveryAt: Date | null;
+  lastDeliveryStatus: "success" | "failure" | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface VaultSecret {
+  id: string;
+  name: string;
+  context: string | null;
+  organizationId: string | null;
+  metadata: Record<string, string> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  organizationId: string | null;
+  permissions: string[];
+  expiresAt: Date | null;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+}
+
+interface DomainVerification {
+  id: string;
+  organizationId: string;
+  domain: string;
+  state: "pending" | "verified" | "failed" | "expired";
+  method: "dns_txt";
+  txtRecord: { name: string; value: string };
+  verifiedAt: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoUrl: string | null;
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+```
+
+---
+
+## Constants
+
+### ID_PREFIXES
+
+Every Banata Auth resource uses a **prefixed ULID** for its identifier. The prefix makes IDs self-documenting and debuggable:
+
+```typescript
+import { ID_PREFIXES } from "@banata-auth/shared";
+
+const ID_PREFIXES = {
+  user: "usr",
+  session: "ses",
+  account: "acc",
+  organization: "org",
+  organizationMember: "mem",
+  organizationInvitation: "inv",
+  team: "team",
+  ssoConnection: "conn",
+  ssoProfile: "prof",
+  directory: "dir",
+  directoryUser: "diru",
+  directoryGroup: "dirg",
+  auditEvent: "evt",
+  event: "event",
+  webhookEndpoint: "wh",
+  webhookDelivery: "whd",
+  apiKey: "ak",
+  role: "role",
+  vaultSecret: "vsec",
+  domainVerification: "dv",
+  fgaTuple: "fga",
+  radarEvent: "radar",
+  project: "proj",
+  emailTemplate: "etpl",
+} as const;
+```
+
+### Rate Limits
+
+Default rate limits per endpoint category (requests per minute):
+
+```typescript
+import { RATE_LIMITS } from "@banata-auth/shared";
+
+RATE_LIMITS.general;          // 600
+RATE_LIMITS.signIn;           // 30
+RATE_LIMITS.signUp;           // 10
+RATE_LIMITS.passwordReset;    // 10
+RATE_LIMITS.emailOperations;  // 10
+RATE_LIMITS.scim;             // 100
+RATE_LIMITS.admin;            // 120
+RATE_LIMITS.webhookDelivery;  // 0 (no limit — outbound)
+```
+
+### Token Lifetimes
+
+Default token and session lifetimes in seconds:
+
+```typescript
+import { TOKEN_LIFETIMES } from "@banata-auth/shared";
+
+TOKEN_LIFETIMES.accessToken;         // 900 (15 min)
+TOKEN_LIFETIMES.session;             // 604800 (7 days)
+TOKEN_LIFETIMES.sessionAbsoluteMax;  // 2592000 (30 days)
+TOKEN_LIFETIMES.passwordReset;       // 3600 (1 hour)
+TOKEN_LIFETIMES.emailVerification;   // 86400 (24 hours)
+TOKEN_LIFETIMES.magicLink;           // 600 (10 min)
+TOKEN_LIFETIMES.emailOtp;            // 600 (10 min)
+TOKEN_LIFETIMES.invitation;          // 604800 (7 days)
+TOKEN_LIFETIMES.jwksRotation;        // 7776000 (90 days)
+```
+
+### Size Limits
+
+```typescript
+import { SIZE_LIMITS } from "@banata-auth/shared";
+
+SIZE_LIMITS.metadataMaxBytes;    // 16384 (16KB)
+SIZE_LIMITS.samlMaxBytes;        // 262144 (256KB)
+SIZE_LIMITS.samlMaxDepth;        // 50
+SIZE_LIMITS.webhookMaxBytes;     // 262144 (256KB)
+SIZE_LIMITS.webhookResponseMaxBytes; // 10240 (10KB)
+SIZE_LIMITS.scimMaxBytes;        // 1048576 (1MB)
+SIZE_LIMITS.passwordMinLength;   // 8
+SIZE_LIMITS.passwordMaxLength;   // 128
+SIZE_LIMITS.fgaMaxDepth;         // 10
+```
+
+### Webhook Constants
+
+```typescript
+import {
+  WEBHOOK_RETRY_DELAYS,
+  WEBHOOK_MAX_CONSECUTIVE_FAILURES,
+  WEBHOOK_MAX_ATTEMPTS,
+} from "@banata-auth/shared";
+
+// Retry delays in milliseconds: [0, 5min, 30min, 2hr, 24hr]
+WEBHOOK_RETRY_DELAYS;               // [0, 300000, 1800000, 7200000, 86400000]
+WEBHOOK_MAX_CONSECUTIVE_FAILURES;   // 3 (auto-disable after 3 failures)
+WEBHOOK_MAX_ATTEMPTS;               // 5
+```
+
+---
+
+## ID Generation
+
+### generateId
+
+Generate a prefixed ULID for any resource type:
+
+```typescript
+import { generateId } from "@banata-auth/shared";
+
+generateId("user");            // "usr_01H9GBQN5WP3FVJKZ0JGMH3RXE"
+generateId("organization");    // "org_01H9GBQN5WP3FVJKZ0JGMH3RXE"
+generateId("ssoConnection");   // "conn_01H9GBQN5WP3FVJKZ0JGMH3RXE"
+generateId("emailTemplate");   // "etpl_01H9GBQN5WP3FVJKZ0JGMH3RXE"
+```
+
+IDs are **ULID-compatible**: the first 10 characters encode a millisecond timestamp (lexicographically sortable), and the last 16 characters are cryptographically random (80 bits of entropy).
+
+### ulid
+
+Generate a raw ULID without a prefix:
+
+```typescript
+import { ulid } from "@banata-auth/shared";
+
+ulid(); // "01H9GBQN5WP3FVJKZ0JGMH3RXE"
+```
+
+### getResourceType
+
+Extract the resource type from a prefixed ID:
+
+```typescript
+import { getResourceType } from "@banata-auth/shared";
+
+getResourceType("usr_01H9GBQN...");  // "user"
+getResourceType("org_01H9GBQN...");  // "organization"
+getResourceType("invalid");          // null
+```
+
+### validateId
+
+Check if an ID has the correct prefix for a given resource type:
+
+```typescript
+import { validateId } from "@banata-auth/shared";
+
+validateId("usr_01H9...", "user");         // true
+validateId("org_01H9...", "user");         // false
+validateId("conn_01H9...", "ssoConnection"); // true
+```
+
+### generateRandomToken
+
+Generate a URL-safe base64 random token:
+
+```typescript
+import { generateRandomToken } from "@banata-auth/shared";
+
+generateRandomToken();    // 32 bytes (default), URL-safe base64
+generateRandomToken(48);  // 48 bytes, URL-safe base64
+```
+
+### generateOtp
+
+Generate a random numeric OTP:
+
+```typescript
+import { generateOtp } from "@banata-auth/shared";
+
+generateOtp();   // "482917" (6 digits, default)
+generateOtp(8);  // "38291047" (8 digits)
+```
+
+---
+
+## Validation Schemas
+
+All validation schemas are built with [Zod](https://zod.dev) and are used throughout the backend for input validation. They can also be used in client applications for form validation.
+
+### Primitive Schemas
+
+```typescript
+import {
+  emailSchema,
+  passwordSchema,
+  nameSchema,
+  slugSchema,
+  urlSchema,
+  httpsUrlSchema,
+  metadataSchema,
+  domainSchema,
+} from "@banata-auth/shared";
+
+emailSchema.parse("user@example.com");   // Valid
+passwordSchema.parse("mypassword123");   // Valid (8-128 chars)
+nameSchema.parse("Jane Doe");            // Valid (1-255 chars, trimmed)
+slugSchema.parse("my-organization");     // Valid (lowercase, alphanumeric + hyphens)
+urlSchema.parse("https://example.com");  // Valid URL
+httpsUrlSchema.parse("https://...");     // Valid (HTTPS required)
+domainSchema.parse("example.com");       // Valid domain
+metadataSchema.parse({ key: "value" });  // Valid (up to 16KB)
+```
+
+### Resource Schemas
+
+```typescript
+import {
+  createUserSchema,
+  updateUserSchema,
+  createOrganizationSchema,
+  updateOrganizationSchema,
+  inviteMemberSchema,
+  createSsoConnectionSchema,
+  createWebhookEndpointSchema,
+  createAuditEventSchema,
+  paginationSchema,
+} from "@banata-auth/shared";
+
+// Example: validate user creation input
+const input = createUserSchema.parse({
+  email: "jane@example.com",
+  name: "Jane Doe",
+  password: "securepassword123",
+  role: "user",
+});
+
+// Example: validate pagination params
+const pagination = paginationSchema.parse({
+  limit: 25,
+  order: "desc",
+});
+```
+
+### Input Types
+
+Each schema exports a corresponding TypeScript type:
+
+```typescript
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  CreateOrganizationInput,
+  UpdateOrganizationInput,
+  InviteMemberInput,
+  CreateSsoConnectionInput,
+  CreateWebhookEndpointInput,
+  CreateAuditEventInput,
+  PaginationOptions,
+} from "@banata-auth/shared";
+```
+
+---
+
+## Error Classes
+
+All Banata Auth errors extend `BanataAuthError`, which provides structured error information with HTTP status codes, error codes, and request IDs.
+
+### BanataAuthError (Base)
+
+```typescript
+import { BanataAuthError } from "@banata-auth/shared";
+
+class BanataAuthError extends Error {
+  readonly status: number;      // HTTP status code
+  readonly code: string;        // Machine-readable error code
+  readonly requestId: string;   // Request correlation ID
+  readonly retryable: boolean;  // Whether the request can be retried
+
+  toJSON(): object;
+}
+```
+
+### Specialized Error Classes
+
+| Class | Status | Code | Retryable | Description |
+|---|---|---|---|---|
+| `AuthenticationError` | 401 | `authentication_required` | No | Missing or invalid credentials |
+| `ForbiddenError` | 403 | `forbidden` | No | Valid credentials, insufficient permissions |
+| `NotFoundError` | 404 | `not_found` | No | Resource does not exist |
+| `ConflictError` | 409 | `conflict` | No | Duplicate resource |
+| `ValidationError` | 422 | `validation_error` | No | Input validation failed (includes `errors: FieldError[]`) |
+| `RateLimitError` | 429 | `rate_limit_exceeded` | Yes | Rate limit exceeded (includes `retryAfter: number`) |
+| `InternalError` | 500 | `internal_error` | Yes | Server-side error |
+
+### Usage
+
+```typescript
+import {
+  BanataAuthError,
+  ValidationError,
+  NotFoundError,
+  createErrorFromStatus,
+} from "@banata-auth/shared";
+
+// Catch specific error types
+try {
+  await someOperation();
+} catch (err) {
+  if (err instanceof ValidationError) {
+    // Access field-level errors
+    for (const fieldError of err.errors) {
+      console.log(`${fieldError.field}: ${fieldError.message}`);
+    }
+  } else if (err instanceof NotFoundError) {
+    console.log("Resource not found");
+  } else if (err instanceof BanataAuthError && err.retryable) {
+    // Retry the operation
+  }
+}
+
+// Create an error from an HTTP status code
+const error = createErrorFromStatus(422, {
+  message: "Validation failed",
+  errors: [{ field: "email", message: "Invalid email", code: "invalid_format" }],
+}, "req_01HXYZ...");
+```
+
+### FieldError
+
+```typescript
+interface FieldError {
+  field: string;    // Field path (e.g., "email", "name")
+  message: string;  // Human-readable error message
+  code: string;     // Machine-readable error code
+}
+```
+
+---
+
+## Email Block System
+
+The shared package defines the complete **email block type system** used by the template editor, SDK, and backend renderer. See the [Email Templates](/docs/email-templates) documentation for full details.
+
+### Key Exports
+
+```typescript
+import {
+  // Block types
+  type EmailBlock,
+  type EmailBlockType,
+  type HeadingBlock,
+  type TextBlock,
+  type ButtonBlock,
+  type ImageBlock,
+  type DividerBlock,
+  type SpacerBlock,
+  type LinkBlock,
+  type CodeBlock,
+  type ColumnsBlock,
+  type ColumnDef,
+  type EmailBlockStyle,
+
+  // Template types
+  type EmailTemplateDefinition,
+  type EmailTemplateCategory,
+  type EmailTemplateVariable,
+
+  // Editor metadata
+  type BlockPaletteMeta,
+  BLOCK_PALETTE,
+
+  // Factory & utilities
+  createDefaultBlock,
+  interpolateVariables,
+  extractVariables,
+  getBuiltInTemplateBlocks,
+} from "@banata-auth/shared";
+```
+
+### Factory Helpers
+
+```typescript
+import { createDefaultBlock } from "@banata-auth/shared";
+
+// Create a default block of any type
+const heading = createDefaultBlock("heading");
+// { id: "...", type: "heading", as: "h1", text: "Heading" }
+
+const button = createDefaultBlock("button");
+// { id: "...", type: "button", text: "Click Here", href: "https://example.com", variant: "primary" }
+
+const columns = createDefaultBlock("columns");
+// { id: "...", type: "columns", columns: [{ width: "50%", blocks: [] }, { width: "50%", blocks: [] }] }
+```
+
+### Variable Interpolation
+
+```typescript
+import { interpolateVariables, extractVariables } from "@banata-auth/shared";
+
+// Replace variables in a string
+interpolateVariables("Hello {{name}}, welcome to {{app}}!", {
+  name: "Jane",
+  app: "Acme",
+});
+// "Hello Jane, welcome to Acme!"
+
+// Extract all variable names from a block array
+const vars = extractVariables(blocks);
+// ["name", "verificationUrl", "appName"]
+```
+
+### Built-in Template Blocks
+
+```typescript
+import { getBuiltInTemplateBlocks } from "@banata-auth/shared";
+
+// Get the default block array for any built-in template type
+const verificationBlocks = getBuiltInTemplateBlocks("verification");
+const passwordResetBlocks = getBuiltInTemplateBlocks("password-reset");
+const magicLinkBlocks = getBuiltInTemplateBlocks("magic-link");
+const emailOtpBlocks = getBuiltInTemplateBlocks("email-otp");
+const invitationBlocks = getBuiltInTemplateBlocks("invitation");
+const welcomeBlocks = getBuiltInTemplateBlocks("welcome");
+```
+
+---
+
+## Pagination Types
+
+All list endpoints use a cursor-based pagination model:
+
+```typescript
+import type { PaginatedResult, ListMetadata } from "@banata-auth/shared";
+
+interface PaginatedResult<T> {
+  data: T[];
+  listMetadata: ListMetadata;
+}
+
+interface ListMetadata {
+  before: string | null;  // Cursor for the previous page
+  after: string | null;   // Cursor for the next page
+}
+```
+
+---
+
+## What's Next
+
+- **[SDK Reference](/docs/sdk)** — The TypeScript SDK that consumes these shared types
+- **[Email Templates](/docs/email-templates)** — Full documentation on the block-based email system
+- **[Vault & Encryption](/docs/vault)** — Encryption layer using shared VaultSecret types
+- **[Project Structure](/docs/project-structure)** — How the monorepo packages fit together

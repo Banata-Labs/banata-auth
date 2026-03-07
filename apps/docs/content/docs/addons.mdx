@@ -1,0 +1,236 @@
+---
+title: "Add-ons"
+description: "Extend authentication with third-party integrations — Google Analytics, Segment, Stripe, and PostHog."
+section: "Configuration"
+order: 25
+---
+
+Banata Auth's **add-on system** lets you connect third-party services to your authentication pipeline. Enable add-ons to send auth events to analytics platforms, sync subscription data with billing providers, and integrate with product analytics tools — all from the admin dashboard.
+
+---
+
+## Available Add-ons
+
+| Add-on | Description | Use Case |
+|---|---|---|
+| **Google Analytics** | Attribute sign-ups to traffic sources and measure authentication funnel performance | Marketing attribution, conversion tracking |
+| **Segment** | Send AuthKit events to Segment destinations for centralized analytics | Data warehouse integration, multi-tool analytics |
+| **Stripe** | Provision access tokens with entitlements and sync seat counts to Stripe subscriptions | Billing automation, seat-based pricing |
+| **PostHog** | Send AuthKit events to PostHog for product analytics and feature flagging | Product analytics, A/B testing, feature flags |
+
+---
+
+## How Add-ons Work
+
+```
+1. Admin enables an add-on via the dashboard
+2. The add-on's enabled/disabled state is stored in the backend
+3. When an auth event occurs (sign-in, sign-up, etc.):
+   a. The event pipeline checks which add-ons are enabled
+   b. Enabled add-ons receive the event data
+   c. Each add-on forwards the data to its respective service
+4. Add-ons can be toggled on/off at any time without code changes
+```
+
+Add-ons are **configuration-driven** — you enable or disable them from the dashboard, and the system handles the rest. No code changes, no redeployments.
+
+---
+
+## Add-on Configuration Data Model
+
+```typescript
+interface AddonConfig {
+  addons: Record<string, { enabled: boolean }>;
+}
+```
+
+Each add-on is identified by a string key and has an `enabled` boolean:
+
+```json
+{
+  "addons": {
+    "google-analytics": { "enabled": true },
+    "segment": { "enabled": false },
+    "stripe": { "enabled": true },
+    "posthog": { "enabled": false }
+  }
+}
+```
+
+---
+
+## Managing Add-ons via the Dashboard
+
+1. Navigate to **Authentication > Add-ons** in the dashboard sidebar
+2. Each add-on is displayed as a card with its icon, title, description, and current state
+3. A **badge** shows "Enabled" or "Disabled"
+4. Click **Enable** or **Disable** to toggle the add-on
+5. Changes are saved to the backend immediately
+
+### Add-on Cards
+
+Each card displays:
+- **Icon** — Color-coded icon for the service (amber for Google Analytics, green for Segment, violet for Stripe, blue for PostHog)
+- **Title** — The service name
+- **Description** — What the integration does
+- **Status badge** — Current enabled/disabled state
+- **Toggle button** — Enable or disable the add-on
+
+---
+
+## API Endpoints
+
+The `configPlugin` exposes 2 add-on endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/banata/config/addons/get` | POST | Get all add-on states |
+| `/api/auth/banata/config/addons/save` | POST | Update add-on states (partial updates supported) |
+
+All endpoints require **admin authentication**.
+
+### Get Add-on Configuration
+
+```typescript
+// POST /api/auth/banata/config/addons/get
+// Body: {}
+// Response:
+{
+  "addons": {
+    "google-analytics": { "enabled": true },
+    "segment": { "enabled": false },
+    "stripe": { "enabled": false },
+    "posthog": { "enabled": false }
+  }
+}
+```
+
+If no add-ons have been configured yet, returns `{ addons: {} }`.
+
+### Save Add-on Configuration
+
+```typescript
+// POST /api/auth/banata/config/addons/save
+// Body (partial update — only include add-ons you want to change):
+{
+  "addons": {
+    "stripe": { "enabled": true }
+  }
+}
+// Response: the full merged AddonConfig
+```
+
+The save endpoint uses a **merge pattern** — incoming add-on states are spread over existing states. Add-ons not included in the request body are left unchanged.
+
+---
+
+## Database Storage
+
+Add-on configuration is stored as a **singleton row** in the `addonConfig` table:
+
+```typescript
+// Simplified schema
+defineTable({
+  configJson: v.string(),    // JSON-serialized AddonConfig
+  createdAt: v.float64(),
+  updatedAt: v.float64(),
+})
+```
+
+---
+
+## Using Add-ons Programmatically
+
+### Via the Dashboard API Client
+
+```typescript
+import { getAddonConfig, saveAddonConfig } from "@/lib/dashboard-api";
+
+// Get current add-on states
+const config = await getAddonConfig();
+console.log(config.addons["stripe"]?.enabled);   // false
+
+// Enable Stripe add-on
+const updated = await saveAddonConfig({
+  stripe: { enabled: true },
+});
+console.log(updated.addons["stripe"]?.enabled);  // true
+
+// Enable multiple add-ons at once
+const multi = await saveAddonConfig({
+  "google-analytics": { enabled: true },
+  posthog: { enabled: true },
+});
+
+// Disable an add-on
+const disabled = await saveAddonConfig({
+  "google-analytics": { enabled: false },
+});
+```
+
+---
+
+## Setting Up Each Add-on
+
+### Google Analytics
+
+1. Enable the **Google Analytics** add-on in the dashboard
+2. Configure your Google Analytics measurement ID in your application
+3. Auth events (sign-up, sign-in) will be attributed to traffic sources
+4. Use GA4 reports to measure authentication funnel conversion rates
+
+### Segment
+
+1. Enable the **Segment** add-on in the dashboard
+2. Configure your Segment write key in your application
+3. Auth events are sent to Segment as `track` calls
+4. Use Segment destinations to forward events to your data warehouse, CRM, or analytics tools
+
+### Stripe
+
+1. Enable the **Stripe** add-on in the dashboard
+2. Configure your Stripe API keys in your application
+3. User creation events trigger Stripe customer creation
+4. Seat counts are automatically synced when members are added/removed from organizations
+
+### PostHog
+
+1. Enable the **PostHog** add-on in the dashboard
+2. Configure your PostHog API key and host in your application
+3. Auth events are sent to PostHog as custom events
+4. Use PostHog feature flags to gate features based on auth state
+
+---
+
+## Security Considerations
+
+1. **Admin-only access** — Only admin users can enable or disable add-ons.
+2. **API key management** — Third-party service API keys should be stored in environment variables, not in the add-on configuration. The add-on toggle only controls whether the integration is active.
+3. **Data minimization** — Only necessary auth event data is forwarded to third-party services. Sensitive data (passwords, tokens) is never included.
+4. **Audit trail** — Add-on state changes are tracked. Check audit logs if you need to know when an add-on was enabled or disabled.
+
+---
+
+## Troubleshooting
+
+### "Add-on enabled but no data appearing in the service"
+
+1. Check that your third-party service API keys are correctly configured in your environment variables
+2. Verify the add-on is enabled in the dashboard (check the badge)
+3. Trigger a test auth event (e.g., sign in) and check both the audit log and the third-party service
+
+### "Failed to update addon configuration"
+
+The backend save failed. Check that the Convex backend is running and that your user has admin privileges.
+
+### "Add-on states reset"
+
+Add-on configuration is stored in a singleton database row. If the row was deleted (e.g., during a database reset), add-on states will revert to their defaults (all disabled).
+
+---
+
+## What's Next
+
+- **[Radar & Bot Protection](/docs/radar)** — AI-powered bot detection and fraud prevention
+- **[Webhooks](/docs/webhooks)** — Get notified about auth events
+- **[Audit Logs](/docs/audit-logs)** — Track all auth activity

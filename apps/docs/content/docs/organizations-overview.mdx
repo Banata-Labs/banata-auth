@@ -1,0 +1,474 @@
+---
+title: "Organizations"
+description: "Multi-tenant workspaces with members, roles, invitations, and organization switching — the foundation for B2B SaaS."
+section: "Enterprise"
+order: 8
+---
+
+Organizations enable **multi-tenancy** — the ability for users to create and belong to multiple workspaces (teams, companies, projects). This is the foundation for B2B SaaS applications where users collaborate within shared workspaces.
+
+Banata Auth uses an **explicit organization creation model**:
+
+- project bootstrap creates project + RBAC seeds only
+- organizations are created when developers call the create organization endpoint
+- the creator of each organization is assigned `super_admin`
+- role assignment is driven by your project's role catalog
+
+---
+
+## Configuration
+
+Enable organizations in your `BanataAuthConfig`:
+
+```typescript
+// convex/banataAuth/auth.ts
+function buildConfig(): BanataAuthConfig {
+  return {
+    appName: "My App",
+    siteUrl: process.env.SITE_URL!,
+    secret: process.env.BETTER_AUTH_SECRET!,
+
+    authMethods: {
+      emailPassword: true,
+      organization: true,   // Enable organizations
+    },
+
+    // Optional: customize organization behavior
+    organizationConfig: {
+      allowUserToCreateOrg: true,             // Users can create orgs
+      creatorRole: "super_admin",            // Role assigned to creator
+      maxOrganizations: 5,                    // Optional org cap per user
+    },
+
+    email: {
+      sendInvitationEmail: async ({ invitation }) => {
+        // invitation has: id, email, organizationId, role, inviterId
+        // Note: You receive the invitationId, not a URL. Build the URL yourself:
+        const inviteUrl = `${process.env.SITE_URL}/invite/${invitation.id}`;
+
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "MyApp <noreply@myapp.com>",
+            to: invitation.email,
+            subject: "You've been invited to join an organization",
+            html: `
+              <h1>You've been invited!</h1>
+              <p>Click below to accept the invitation:</p>
+              <a href="${inviteUrl}">Accept Invitation</a>
+              <p>This invitation expires in 7 days.</p>
+            `,
+          }),
+        });
+      },
+    },
+  };
+}
+```
+
+### Organization Config Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `allowUserToCreateOrg` | `boolean` | `true` | Whether users can create organizations |
+| `creatorRole` | `string` | `"super_admin"` | Role assigned to the organization creator |
+| `maxOrganizations` | `number` | _(unset)_ | Optional maximum organizations a user can create |
+
+---
+
+## Data Model
+
+### Organization
+
+```typescript
+interface Organization {
+  id: string;          // e.g., "org_01HXYZ..."
+  name: string;        // Display name
+  slug: string;        // URL-friendly identifier (unique)
+  logo?: string;       // Logo URL
+  metadata?: Record<string, unknown>;  // Custom data (max 16KB)
+  createdAt: string;   // ISO 8601 timestamp
+  updatedAt: string;
+}
+```
+
+### Member
+
+```typescript
+interface Member {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: string;            // "super_admin" by default, then custom roles
+  createdAt: string;
+}
+```
+
+### Invitation
+
+```typescript
+interface Invitation {
+  id: string;              // e.g., "inv_01HXYZ..."
+  email: string;           // Invitee's email
+  organizationId: string;
+  role: string;            // Role to assign on acceptance (e.g. "super_admin" or custom)
+  inviterId: string;       // User who sent the invitation
+  status: "pending" | "accepted" | "expired" | "revoked";
+  expiresAt: string;       // 7 days from creation
+  createdAt: string;
+}
+```
+
+---
+
+## Client-Side API
+
+### Create an Organization
+
+```typescript
+import { authClient } from "@/lib/auth-client";
+
+const { data: org, error } = await authClient.organization.create({
+  name: "Acme Corp",
+  slug: "acme-corp",    // Optional — auto-generated from name if omitted
+  logo: "https://example.com/logo.png",  // Optional
+  metadata: { plan: "pro", industry: "tech" },  // Optional
+});
+```
+
+### List User's Organizations
+
+```typescript
+const { data: orgs } = await authClient.organization.list();
+// orgs = [{ id, name, slug, logo, ... }, ...]
+```
+
+### Set Active Organization
+
+When a user belongs to multiple organizations, they switch between them:
+
+```typescript
+await authClient.organization.setActive({
+  organizationId: "org_01HXYZ...",
+});
+// The active organization is now stored in the session
+```
+
+### Get Active Organization
+
+```tsx
+import { useOrganization } from "@banata-auth/react";
+
+function OrgSwitcher() {
+  const { organization, isLoading } = useOrganization();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!organization) return <div>No organization selected</div>;
+
+  return (
+    <div>
+      <h2>{organization.name}</h2>
+      <p>Slug: {organization.slug}</p>
+    </div>
+  );
+}
+```
+
+### Update an Organization
+
+```typescript
+await authClient.organization.update({
+  organizationId: "org_01HXYZ...",
+  data: {
+    name: "Acme Corporation",
+    logo: "https://example.com/new-logo.png",
+    metadata: { plan: "enterprise" },
+  },
+});
+```
+
+### Delete an Organization
+
+```typescript
+await authClient.organization.delete({
+  organizationId: "org_01HXYZ...",
+});
+// All members and invitations are also deleted
+```
+
+---
+
+## React Hooks
+
+### `useOrganization()`
+
+Returns the current active organization:
+
+```typescript
+const {
+  organization,    // Organization | null — the active org
+  isLoading,       // boolean — true while fetching
+} = useOrganization();
+```
+
+### `useBanataAuth()`
+
+The full context includes organization data:
+
+```typescript
+const {
+  user,
+  session,
+  organization,     // Active organization
+  isLoading,
+  setActiveOrganization,  // Function to switch orgs
+} = useBanataAuth();
+```
+
+---
+
+## Member Management
+
+### List Members
+
+```typescript
+const { data: members } = await authClient.organization.listMembers({
+  organizationId: "org_01HXYZ...",
+});
+// members = [{ id, userId, role, user: { name, email, image } }, ...]
+```
+
+### Add a Member
+
+```typescript
+await authClient.organization.addMember({
+  organizationId: "org_01HXYZ...",
+  userId: "usr_01HXYZ...",
+  role: "super_admin",  // or any custom role slug
+});
+```
+
+### Update Member Role
+
+```typescript
+await authClient.organization.updateMemberRole({
+  organizationId: "org_01HXYZ...",
+  memberId: "mem_01HXYZ...",
+  role: "sandbox_operator",
+});
+```
+
+### Remove a Member
+
+```typescript
+await authClient.organization.removeMember({
+  organizationId: "org_01HXYZ...",
+  memberId: "mem_01HXYZ...",
+});
+```
+
+---
+
+## Invitation Management
+
+See the dedicated [Invitations](/docs/invitations) guide for the complete invitation lifecycle.
+
+### Send an Invitation
+
+```typescript
+await authClient.organization.inviteMember({
+  organizationId: "org_01HXYZ...",
+  email: "newuser@example.com",
+  role: "sandbox_viewer",
+});
+// This triggers the sendInvitationEmail callback
+```
+
+### Accept an Invitation
+
+```typescript
+await authClient.organization.acceptInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+### Revoke an Invitation
+
+```typescript
+await authClient.organization.revokeInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+---
+
+## Server-Side Management (Admin SDK)
+
+Use the SDK to manage organizations from your backend:
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "your-api-key",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// Create an organization
+const org = await banata.organizations.createOrganization({
+  name: "Enterprise Corp",
+  slug: "enterprise-corp",
+});
+
+// List all organizations (paginated)
+const { data, listMetadata } = await banata.organizations.listOrganizations({
+  limit: 20,
+});
+
+// Get a specific organization
+const org = await banata.organizations.getOrganization({
+  organizationId: "org_01HXYZ...",
+});
+
+// Update
+await banata.organizations.updateOrganization({
+  organizationId: "org_01HXYZ...",
+  name: "Updated Name",
+});
+
+// Manage members
+const members = await banata.organizations.listMembers({
+  organizationId: "org_01HXYZ...",
+});
+
+await banata.organizations.addMember({
+  organizationId: "org_01HXYZ...",
+  userId: "usr_01HXYZ...",
+  role: "super_admin",
+});
+
+await banata.organizations.removeMember({
+  organizationId: "org_01HXYZ...",
+  memberId: "mem_01HXYZ...",
+});
+
+// Manage invitations
+await banata.organizations.createInvitation({
+  organizationId: "org_01HXYZ...",
+  email: "user@example.com",
+  role: "sandbox_viewer",
+});
+
+await banata.organizations.revokeInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+---
+
+## Organization Switcher Component
+
+A common UI pattern is an organization switcher in the navigation:
+
+```tsx
+"use client";
+
+import { useBanataAuth } from "@banata-auth/react";
+import { authClient } from "@/lib/auth-client";
+import { useState, useEffect } from "react";
+
+export function OrgSwitcher() {
+  const { organization, user } = useBanataAuth();
+  const [orgs, setOrgs] = useState([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    authClient.organization.list().then(({ data }) => {
+      setOrgs(data ?? []);
+    });
+  }, []);
+
+  async function switchOrg(orgId: string) {
+    await authClient.organization.setActive({ organizationId: orgId });
+    setOpen(false);
+    window.location.reload(); // Refresh to load new org data
+  }
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button onClick={() => setOpen(!open)}>
+        {organization?.name ?? "Select Organization"}
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          background: "#fff",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "4px",
+          minWidth: "200px",
+        }}>
+          {orgs.map((org) => (
+            <button
+              key={org.id}
+              onClick={() => switchOrg(org.id)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 12px",
+                background: org.id === organization?.id ? "#f0f0f0" : "transparent",
+              }}
+            >
+              {org.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Database Tables
+
+Organizations use these Convex tables:
+
+| Table | Purpose |
+|---|---|
+| `organization` | Organization records (name, slug, logo, metadata) |
+| `member` | Organization memberships (userId, organizationId, role) |
+| `invitation` | Pending invitations (email, role, status, expiresAt) |
+
+---
+
+## Audit Events
+
+| Event | When |
+|---|---|
+| `organization.created` | New organization created |
+| `organization.updated` | Organization details updated |
+| `organization.deleted` | Organization deleted |
+| `member.added` | Member added to organization |
+| `member.removed` | Member removed from organization |
+| `member.role_updated` | Member's role changed |
+| `invitation.created` | Invitation sent |
+| `invitation.accepted` | Invitation accepted |
+| `invitation.revoked` | Invitation revoked |
+
+---
+
+## What's Next
+
+- **[Invitations](/docs/invitations)** — Complete invitation lifecycle and flows
+- **[Roles & Permissions](/docs/roles-permissions)** — Fine-grained access control within organizations
+- **[Webhooks](/docs/webhooks)** — Get notified about organization events

@@ -1,0 +1,231 @@
+---
+title: "Auth Configuration"
+description: "Configure authorization behavior — role assignment, multiple roles, and API key permissions via the admin dashboard."
+section: "Enterprise"
+order: 24
+---
+
+Banata Auth's **authorization configuration** controls how roles and permissions behave across your application. These settings determine whether users can hold multiple roles, whether organization admins can assign roles via identity provider groups, and whether API keys can be scoped with custom permissions.
+
+---
+
+## Configuration Settings
+
+| Setting | Key | Default | Description |
+|---|---|---|---|
+| Role assignment in Admin Portal | `roleAssignment` | `false` | Allow organization admins to map user roles based on their identity provider groups |
+| Multiple roles | `multipleRoles` | `false` | Allow users to have multiple roles within an organization |
+| Organization API key permissions | `apiKeyPermissions` | `false` | Manage which permissions are available to organization API keys |
+
+### Role Assignment in Admin Portal
+
+When enabled, organization administrators can configure **role mapping rules** based on identity provider (IdP) groups. This is useful for enterprises that manage user roles in their IdP (e.g., Okta, Azure AD) and want those roles to automatically apply in your application.
+
+```
+Example: IdP group "engineering" → Banata Auth role "developer"
+         IdP group "managers"    → Banata Auth role "admin"
+```
+
+### Multiple Roles
+
+By default, a user has exactly one role per organization. Enabling **multiple roles** allows users to hold several roles simultaneously:
+
+```
+User "jane@acme.com" in Acme Corp:
+  - Role: developer  (permissions: code:read, code:write, deploy:staging)
+  - Role: reviewer   (permissions: code:review, deploy:approve)
+  
+Effective permissions: code:read, code:write, code:review, deploy:staging, deploy:approve
+```
+
+When checking permissions for a user with multiple roles, all permissions from all assigned roles are combined (union).
+
+### Organization API Key Permissions
+
+When enabled, you can control which **specific permissions** are available to organization-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within an organization.
+
+```
+Organization API key "CI Pipeline":
+  - Allowed: deploy:create, deploy:read
+  - Not allowed: members:manage, billing:manage
+```
+
+---
+
+## Auth Configuration Data Model
+
+```typescript
+interface AuthConfigSettings {
+  roleAssignment: boolean;      // IdP group → role mapping
+  multipleRoles: boolean;       // Users can hold multiple roles
+  apiKeyPermissions: boolean;   // Scoped API key permissions
+}
+```
+
+---
+
+## Managing Auth Configuration via the Dashboard
+
+1. Navigate to **Authorization > Configuration** in the dashboard sidebar
+2. Each setting is displayed as a card with a title, description, and toggle switch
+3. A **badge** shows the current state: "Enabled" or "Disabled"
+4. Toggle any switch to change the setting
+5. Changes are saved to the backend immediately with optimistic updates
+6. If a save fails, the toggle reverts to its previous state and shows an error toast
+
+---
+
+## API Endpoints
+
+The `configPlugin` exposes 2 auth configuration endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/banata/config/auth-config/get` | POST | Get current authorization configuration |
+| `/api/auth/banata/config/auth-config/save` | POST | Update authorization configuration (partial updates supported) |
+
+All endpoints require **admin authentication**.
+
+### Get Auth Configuration
+
+```typescript
+// POST /api/auth/banata/config/auth-config/get
+// Body: {}
+// Response:
+{
+  "roleAssignment": false,
+  "multipleRoles": false,
+  "apiKeyPermissions": false
+}
+```
+
+### Save Auth Configuration
+
+```typescript
+// POST /api/auth/banata/config/auth-config/save
+// Body (partial update — only include fields you want to change):
+{
+  "multipleRoles": true
+}
+// Response: the full merged AuthConfigSettings
+```
+
+The save endpoint uses a **merge pattern** — incoming fields overwrite existing values. Fields not included in the request body are left unchanged.
+
+---
+
+## Database Storage
+
+Auth configuration is stored inside the `dashboardConfig` singleton row — the same row that stores branding and other dashboard settings. The `authConfiguration` key holds the configuration object:
+
+```json
+{
+  "authConfiguration": {
+    "roleAssignment": false,
+    "multipleRoles": true,
+    "apiKeyPermissions": false
+  },
+  // ... other dashboard config fields
+}
+```
+
+This means auth configuration shares storage with the broader dashboard configuration and doesn't require its own table.
+
+---
+
+## Using Auth Configuration Programmatically
+
+### Via the Dashboard API Client
+
+```typescript
+import {
+  getAuthConfiguration,
+  saveAuthConfiguration,
+} from "@/lib/dashboard-api";
+
+// Get current settings
+const config = await getAuthConfiguration();
+console.log(config.multipleRoles);      // false
+console.log(config.roleAssignment);     // false
+console.log(config.apiKeyPermissions);  // false
+
+// Enable multiple roles
+const updated = await saveAuthConfiguration({ multipleRoles: true });
+console.log(updated.multipleRoles);     // true
+
+// Enable all settings
+const all = await saveAuthConfiguration({
+  roleAssignment: true,
+  multipleRoles: true,
+  apiKeyPermissions: true,
+});
+```
+
+---
+
+## How Settings Affect Behavior
+
+### Multiple Roles Disabled (Default)
+
+```typescript
+// Assigning a role replaces the current role
+await banata.rbac.assignRole({
+  userId: "usr_01...",
+  role: "admin",
+  organizationId: "org_01...",
+});
+// User now has role: "admin" (previous role removed)
+```
+
+### Multiple Roles Enabled
+
+```typescript
+// Assigning a role adds to existing roles
+await banata.rbac.assignRole({
+  userId: "usr_01...",
+  role: "reviewer",
+  organizationId: "org_01...",
+});
+// User now has roles: ["admin", "reviewer"]
+
+// Permission checks consider ALL roles
+const canReview = await banata.rbac.checkPermission({
+  userId: "usr_01...",
+  permission: { resource: "code", action: "review" },
+  organizationId: "org_01...",
+});
+// true — permission exists in one of the user's roles
+```
+
+---
+
+## Security Considerations
+
+1. **Principle of least privilege** — Only enable settings that your application needs. Multiple roles and API key permissions expand the authorization surface.
+2. **Admin-only access** — Auth configuration can only be changed by admin users.
+3. **Role assignment implications** — Enabling IdP role assignment means your identity provider configuration directly affects user permissions. Ensure your IdP group mappings are correct before enabling.
+4. **API key scoping** — When API key permissions are enabled, ensure you regularly audit which permissions are assigned to organization API keys.
+
+---
+
+## Troubleshooting
+
+### "Configuration not persisting"
+
+Auth configuration is stored in the `dashboardConfig` singleton. If changes aren't persisting, check that the Convex backend is running and that your user has admin privileges.
+
+### "Multiple roles not working"
+
+Ensure the `multipleRoles` setting is enabled. When disabled, assigning a new role replaces the existing one.
+
+### "Toggle reverted unexpectedly"
+
+The dashboard uses optimistic updates — if the backend save fails, the toggle reverts. Check the browser console for error details and ensure the Convex backend is reachable.
+
+---
+
+## What's Next
+
+- **[Roles & Permissions](/docs/roles-permissions)** — Define roles and check permissions
+- **[Resource Types](/docs/resource-types)** — Define what can be protected
+- **[API Keys](/docs/api-keys)** — Programmatic access with scoped permissions

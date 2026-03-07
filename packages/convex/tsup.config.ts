@@ -1,0 +1,48 @@
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+	entry: [
+		"src/index.ts",
+		"src/auth-config.ts",
+		"src/http.ts",
+		"src/node.ts",
+		"src/triggers.ts",
+		"src/plugins/index.ts",
+		"src/component/adapter.ts",
+	],
+	format: ["esm"],
+	// Use tsc for declaration generation (tsup's DTS rollup hangs on
+	// complex better-auth types). Build script runs tsc --emitDeclarationOnly.
+	dts: false,
+	splitting: false,
+	sourcemap: true,
+	clean: true,
+	treeshake: true,
+	external: [
+		"@banata-auth/shared",
+		"@better-auth/passkey",
+		"@better-auth/scim",
+		"@better-auth/sso",
+		"@convex-dev/better-auth",
+		"@convex-dev/better-auth/plugins",
+		"@convex-dev/better-auth/utils",
+		"@convex-dev/better-auth/auth-config",
+		"better-auth",
+		"better-auth/api",
+		"better-auth/plugins",
+		"better-auth/plugins/admin",
+		"better-auth/plugins/anonymous",
+		"better-auth/plugins/bearer",
+		"better-auth/plugins/email-otp",
+		"better-auth/plugins/jwt",
+		"better-auth/plugins/magic-link",
+		"better-auth/plugins/multi-session",
+		"better-auth/plugins/organization",
+		"better-auth/plugins/two-factor",
+		"better-auth/plugins/username",
+		"convex",
+		"convex/server",
+		"convex/values",
+		"zod",
+	],
+});
