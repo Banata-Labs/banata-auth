@@ -60,16 +60,37 @@ When a project is created (or default project is ensured):
 
 ## Dashboard Management
 
-Use:
+Use the dashboard in this order:
 
-- `/authorization/roles` to create/delete custom roles
-- `/authorization/permissions` to create/delete custom permissions
-- Organization member screens to assign role slugs dynamically
+1. Open `/authorization/permissions`
+2. Create the permission slugs your app will check, for example:
+   - `employee.read`
+   - `employee.manage`
+   - `leave.approve`
+   - `payroll.read`
+3. Open `/authorization/roles`
+4. Create a custom role such as `hr_admin` or `manager`
+5. From the role row, click **Manage permissions**
+6. On `/authorization/permissions?role=<role-slug>`, toggle the permission slugs that role should grant
+7. Save the role-permission assignment
+8. Open the organization member screen and assign that role slug to members
+
+What is editable:
+
+- custom roles can be created, updated, and deleted
+- custom permissions can be created, updated, and deleted
+- custom roles can have permission slugs assigned directly from the permissions screen
+
+What stays protected:
+
+- `super_admin` role cannot be deleted or edited
+- built-in permissions cannot be deleted or edited
 
 Important protections:
 
-- `super_admin` role cannot be deleted.
-- built-in permissions cannot be deleted.
+- role assignment is organization-scoped
+- role and permission catalogs are project-scoped
+- permission checks should still be enforced on your server for sensitive actions
 
 ---
 
@@ -93,6 +114,12 @@ const role = await banata.rbac.createRole({
   name: "Sandbox Operator",
   slug: "sandbox_operator",
   description: "Can manage runtime sandboxes",
+  permissions: ["sandbox.create", "browser.connect"],
+});
+
+const updatedRole = await banata.rbac.updateRole({
+  id: role.id,
+  permissions: ["sandbox.create", "browser.connect", "browser.launch"],
 });
 
 await banata.rbac.deleteRole(role.id);
@@ -105,6 +132,13 @@ const permissions = await banata.rbac.listPermissions();
 
 const permission = await banata.rbac.createPermission({
   name: "Terminate browser session",
+  slug: "browser.terminate",
+  description: "Allows terminating running browser sessions",
+});
+
+const updatedPermission = await banata.rbac.updatePermission({
+  id: permission.id,
+  name: "Terminate browser",
   slug: "browser.terminate",
   description: "Allows terminating running browser sessions",
 });
@@ -130,18 +164,16 @@ await banata.rbac.revokeRole({
 
 ### Permission Checks
 
-Permission checks use `{ resource, action }` shape.
+Permission checks are project-scoped. You can pass a full slug string or `{ resource, action }`.
 
 ```typescript
 const canLaunch = await banata.rbac.checkPermission({
-  userId: "usr_01...",
-  organizationId: "org_01...",
+  projectId: "proj_01...",
   permission: { resource: "sandbox", action: "create" },
 });
 
 const canOperate = await banata.rbac.checkPermissions({
-  userId: "usr_01...",
-  organizationId: "org_01...",
+  projectId: "proj_01...",
   permissions: [
     { resource: "sandbox", action: "create" },
     { resource: "browser", action: "connect" },
@@ -158,9 +190,11 @@ Role and permission management endpoints:
 
 - `POST /api/auth/banata/config/roles/list`
 - `POST /api/auth/banata/config/roles/create`
+- `POST /api/auth/banata/config/roles/update`
 - `POST /api/auth/banata/config/roles/delete`
 - `POST /api/auth/banata/config/permissions/list`
 - `POST /api/auth/banata/config/permissions/create`
+- `POST /api/auth/banata/config/permissions/update`
 - `POST /api/auth/banata/config/permissions/delete`
 
 Role assignment endpoint:

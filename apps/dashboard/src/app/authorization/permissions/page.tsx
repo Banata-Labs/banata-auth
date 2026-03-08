@@ -3,7 +3,7 @@
 import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -23,6 +23,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -32,12 +40,17 @@ import {
 } from "@/components/ui/table";
 import {
 	type PermissionItem,
+	type RoleItem,
 	createPermission,
-	deletePermission,
 	listPermissions,
+	listRoles,
+	updatePermission,
+	updateRole,
+	deletePermission,
 } from "@/lib/dashboard-api";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 function slugify(name: string): string {
 	return name
@@ -46,9 +59,17 @@ function slugify(name: string): string {
 		.replace(/^-|-$/g, "");
 }
 
+function sortStrings(values: string[]): string[] {
+	return [...values].sort((a, b) => a.localeCompare(b));
+}
+
 export default function PermissionsPage() {
 	const activeProjectId = useActiveProjectId();
+	const searchParams = useSearchParams();
+	const roleQuery = searchParams.get("role");
+
 	const [permissions, setPermissions] = useState<PermissionItem[]>([]);
+	const [roles, setRoles] = useState<RoleItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [query, setQuery] = useState("");
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -57,18 +78,23 @@ export default function PermissionsPage() {
 	const [newSlug, setNewSlug] = useState("");
 	const [creating, setCreating] = useState(false);
 
-	// Edit permission dialog state
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [editingPerm, setEditingPerm] = useState<PermissionItem | null>(null);
 	const [editName, setEditName] = useState("");
 	const [editDescription, setEditDescription] = useState("");
 	const [editSlug, setEditSlug] = useState("");
-	const [saving, setSaving] = useState(false);
+	const [savingPermission, setSavingPermission] = useState(false);
 
-	async function fetchPermissions() {
+	const [selectedRoleSlug, setSelectedRoleSlug] = useState<string>("");
+	const [assignedPermissions, setAssignedPermissions] = useState<string[]>([]);
+	const [savingAssignments, setSavingAssignments] = useState(false);
+
+	async function loadData() {
 		try {
 			setIsLoading(true);
-			setPermissions(await listPermissions());
+			const [permissionItems, roleItems] = await Promise.all([listPermissions(), listRoles()]);
+			setPermissions(permissionItems);
+			setRoles(roleItems);
 		} catch {
 			// graceful degradation
 		} finally {
@@ -77,18 +103,62 @@ export default function PermissionsPage() {
 	}
 
 	useEffect(() => {
-		void fetchPermissions();
+		void loadData();
 	}, [activeProjectId]);
 
-	const filtered = permissions.filter(
-		(p) =>
-			p.name.toLowerCase().includes(query.toLowerCase()) ||
-			p.slug.toLowerCase().includes(query.toLowerCase()),
+	useEffect(() => {
+		if (roleQuery && roles.some((role) => role.slug === roleQuery)) {
+			setSelectedRoleSlug(roleQuery);
+			return;
+		}
+		setSelectedRoleSlug((current) => {
+			if (current && roles.some((role) => role.slug === current)) {
+				return current;
+			}
+			return "";
+		});
+	}, [roleQuery, roles]);
+
+	const selectedRole = useMemo(
+		() => roles.find((role) => role.slug === selectedRoleSlug) ?? null,
+		[roles, selectedRoleSlug],
 	);
+
+	useEffect(() => {
+		setAssignedPermissions(sortStrings(selectedRole?.permissions ?? []));
+	}, [selectedRole]);
+
+	const filtered = permissions.filter(
+		(permission) =>
+			permission.name.toLowerCase().includes(query.toLowerCase()) ||
+			permission.slug.toLowerCase().includes(query.toLowerCase()),
+	);
+
+	const hasAssignmentChanges =
+		selectedRole !== null &&
+		JSON.stringify(sortStrings(selectedRole.permissions)) !==
+			JSON.stringify(sortStrings(assignedPermissions));
 
 	function handleNameChange(value: string) {
 		setNewName(value);
 		setNewSlug(slugify(value));
+	}
+
+	function openEditDialog(permission: PermissionItem) {
+		setEditingPerm(permission);
+		setEditName(permission.name);
+		setEditDescription(permission.description);
+		setEditSlug(permission.slug);
+		setEditDialogOpen(true);
+	}
+
+	function toggleAssignedPermission(permissionSlug: string, enabled: boolean) {
+		setAssignedPermissions((current) => {
+			if (enabled) {
+				return sortStrings([...current, permissionSlug]);
+			}
+			return current.filter((permission) => permission !== permissionSlug);
+		});
 	}
 
 	async function handleCreate() {
@@ -104,9 +174,7 @@ export default function PermissionsPage() {
 			setNewDescription("");
 			setNewSlug("");
 			setDialogOpen(false);
-			await fetchPermissions();
-		} catch {
-			// handle error
+			await loadData();
 		} finally {
 			setCreating(false);
 		}
@@ -115,39 +183,43 @@ export default function PermissionsPage() {
 	async function handleDelete(id: string) {
 		try {
 			await deletePermission(id);
-			await fetchPermissions();
+			await loadData();
 		} catch {
-			// handle error
+			// graceful degradation
 		}
-	}
-
-	function openEditDialog(perm: PermissionItem) {
-		setEditingPerm(perm);
-		setEditName(perm.name);
-		setEditDescription(perm.description);
-		setEditSlug(perm.slug);
-		setEditDialogOpen(true);
 	}
 
 	async function handleEditSave() {
 		if (!editingPerm || !editName.trim() || !editSlug.trim()) return;
 		try {
-			setSaving(true);
-			// Update via delete + recreate
-			await deletePermission(editingPerm.id);
-			await createPermission({
+			setSavingPermission(true);
+			await updatePermission({
+				id: editingPerm.id,
 				name: editName.trim(),
 				slug: editSlug.trim(),
 				description: editDescription.trim(),
 			});
 			setEditDialogOpen(false);
 			setEditingPerm(null);
-			await fetchPermissions();
+			await loadData();
 		} catch {
-			// If recreate fails, refetch to show current state
-			await fetchPermissions();
+			await loadData();
 		} finally {
-			setSaving(false);
+			setSavingPermission(false);
+		}
+	}
+
+	async function handleAssignmentSave() {
+		if (!selectedRole) return;
+		try {
+			setSavingAssignments(true);
+			await updateRole({
+				id: selectedRole.id,
+				permissions: assignedPermissions,
+			});
+			await loadData();
+		} finally {
+			setSavingAssignments(false);
 		}
 	}
 
@@ -161,15 +233,93 @@ export default function PermissionsPage() {
 
 	return (
 		<div className="grid gap-6">
-			{/* Header */}
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">Permissions</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Define and manage permissions that can gate features within your applications.
+					Define your permission catalog, then assign permission slugs directly to each custom
+					role.
 				</p>
 			</div>
 
-			{/* Toolbar */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-sm">Role Assignment</CardTitle>
+					<CardDescription>
+						Choose a role to control which permission slugs it grants. Default system roles stay
+						read-only.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="grid gap-4">
+					<div className="grid gap-2 md:max-w-sm">
+						<Label htmlFor="role-selector">Role</Label>
+						<Select value={selectedRoleSlug || undefined} onValueChange={setSelectedRoleSlug}>
+							<SelectTrigger id="role-selector">
+								<SelectValue placeholder="Choose a role to manage" />
+							</SelectTrigger>
+							<SelectContent>
+								{roles.map((role) => (
+									<SelectItem key={role.id} value={role.slug}>
+										{role.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+
+					{selectedRole ? (
+						<div className="grid gap-3 rounded-lg border border-border p-4">
+							<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+								<div>
+									<div className="flex items-center gap-2">
+										<span className="font-medium">{selectedRole.name}</span>
+										<Badge variant="secondary" className="font-mono text-xs">
+											{selectedRole.slug}
+										</Badge>
+										{selectedRole.isDefault ? (
+											<Badge variant="outline" className="text-[10px]">
+												Default
+											</Badge>
+										) : null}
+									</div>
+									<p className="text-sm text-muted-foreground">
+										{selectedRole.description || "No role description provided."}
+									</p>
+								</div>
+								<div className="flex items-center gap-2">
+									<Button
+										variant="outline"
+										onClick={() => setAssignedPermissions(sortStrings(selectedRole.permissions))}
+										disabled={!hasAssignmentChanges || savingAssignments}
+									>
+										Reset
+									</Button>
+									<Button
+										onClick={handleAssignmentSave}
+										disabled={!hasAssignmentChanges || savingAssignments || selectedRole.isDefault}
+									>
+										{savingAssignments ? "Saving..." : "Save role permissions"}
+									</Button>
+								</div>
+							</div>
+							{selectedRole.isDefault ? (
+								<p className="text-xs text-muted-foreground">
+									System roles are managed by Banata. You can inspect their permission set here,
+									but you cannot change it from the dashboard.
+								</p>
+							) : (
+								<p className="text-xs text-muted-foreground">
+									Toggle each permission below, then save to update the selected role.
+								</p>
+							)}
+						</div>
+					) : (
+						<p className="text-sm text-muted-foreground">
+							Select a role to manage its permission assignments.
+						</p>
+					)}
+				</CardContent>
+			</Card>
+
 			<div className="flex items-center justify-between gap-4">
 				<div className="relative max-w-sm flex-1">
 					<Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -177,7 +327,7 @@ export default function PermissionsPage() {
 						type="search"
 						placeholder="Search permissions..."
 						value={query}
-						onChange={(e) => setQuery(e.target.value)}
+						onChange={(event) => setQuery(event.target.value)}
 						className="pl-9"
 					/>
 				</div>
@@ -192,7 +342,7 @@ export default function PermissionsPage() {
 						<DialogHeader>
 							<DialogTitle>Create permission</DialogTitle>
 							<DialogDescription>
-								Create a new permission to gate features within your applications.
+								Create a permission slug that can be assigned to one or more custom roles.
 							</DialogDescription>
 						</DialogHeader>
 						<div className="grid gap-4 py-2">
@@ -200,31 +350,31 @@ export default function PermissionsPage() {
 								<Label htmlFor="perm-name">Name</Label>
 								<Input
 									id="perm-name"
-									placeholder="e.g. Edit posts"
+									placeholder="e.g. Approve leave requests"
 									value={newName}
-									onChange={(e) => handleNameChange(e.target.value)}
+									onChange={(event) => handleNameChange(event.target.value)}
 								/>
 							</div>
 							<div className="grid gap-2">
 								<Label htmlFor="perm-description">Description</Label>
 								<Input
 									id="perm-description"
-									placeholder="Describe this permission..."
+									placeholder="Describe what this permission unlocks..."
 									value={newDescription}
-									onChange={(e) => setNewDescription(e.target.value)}
+									onChange={(event) => setNewDescription(event.target.value)}
 								/>
 							</div>
 							<div className="grid gap-2">
 								<Label htmlFor="perm-slug">Slug</Label>
 								<Input
 									id="perm-slug"
-									placeholder="auto-generated-slug"
+									placeholder="leave.approve"
 									value={newSlug}
-									onChange={(e) => setNewSlug(e.target.value)}
+									onChange={(event) => setNewSlug(event.target.value)}
 									className="font-mono text-xs"
 								/>
 								<p className="text-xs text-muted-foreground">
-									Auto-generated from the name. You can customize it.
+									Use the same `resource.action` slug you will check from your app.
 								</p>
 							</div>
 						</div>
@@ -243,13 +393,12 @@ export default function PermissionsPage() {
 				</Dialog>
 			</div>
 
-			{/* Edit Permission Dialog */}
 			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Edit permission</DialogTitle>
 						<DialogDescription>
-							Update the permission details. The permission will be recreated with the new values.
+							Update the permission catalog entry and keep existing role assignments in sync.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="grid gap-4 py-2">
@@ -258,9 +407,9 @@ export default function PermissionsPage() {
 							<Input
 								id="edit-perm-name"
 								value={editName}
-								onChange={(e) => {
-									setEditName(e.target.value);
-									setEditSlug(slugify(e.target.value));
+								onChange={(event) => {
+									setEditName(event.target.value);
+									setEditSlug(slugify(event.target.value));
 								}}
 							/>
 						</div>
@@ -269,7 +418,7 @@ export default function PermissionsPage() {
 							<Input
 								id="edit-perm-description"
 								value={editDescription}
-								onChange={(e) => setEditDescription(e.target.value)}
+								onChange={(event) => setEditDescription(event.target.value)}
 							/>
 						</div>
 						<div className="grid gap-2">
@@ -277,7 +426,7 @@ export default function PermissionsPage() {
 							<Input
 								id="edit-perm-slug"
 								value={editSlug}
-								onChange={(e) => setEditSlug(e.target.value)}
+								onChange={(event) => setEditSlug(event.target.value)}
 								className="font-mono text-xs"
 							/>
 						</div>
@@ -288,15 +437,14 @@ export default function PermissionsPage() {
 						</Button>
 						<Button
 							onClick={handleEditSave}
-							disabled={saving || !editName.trim() || !editSlug.trim()}
+							disabled={savingPermission || !editName.trim() || !editSlug.trim()}
 						>
-							{saving ? "Saving..." : "Save changes"}
+							{savingPermission ? "Saving..." : "Save changes"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 
-			{/* Table */}
 			<Card className="gap-0 overflow-hidden py-0">
 				<CardContent className="px-0">
 					<Table>
@@ -304,53 +452,84 @@ export default function PermissionsPage() {
 							<TableRow>
 								<TableHead>Name</TableHead>
 								<TableHead>Slug</TableHead>
+								<TableHead>{selectedRole ? "Assigned" : "Status"}</TableHead>
 								<TableHead className="w-10" />
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{filtered.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={3} className="text-center text-muted-foreground">
+									<TableCell colSpan={4} className="text-center text-muted-foreground">
 										No permissions found.
 									</TableCell>
 								</TableRow>
 							) : (
-								filtered.map((perm) => (
-									<TableRow key={perm.id}>
-										<TableCell>
-											<div>
-												<span className="font-medium">{perm.name}</span>
-												<p className="text-xs text-muted-foreground">{perm.description}</p>
-											</div>
-										</TableCell>
-										<TableCell>
-											<Badge variant="secondary" className="font-mono text-xs">
-												{perm.slug}
-											</Badge>
-										</TableCell>
-										<TableCell>
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button variant="ghost" size="icon-xs">
-														<MoreHorizontal className="size-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end">
-													<DropdownMenuItem onSelect={() => openEditDialog(perm)}>
-														Edit
-													</DropdownMenuItem>
-													<DropdownMenuSeparator />
-													<DropdownMenuItem
-														variant="destructive"
-														onSelect={() => handleDelete(perm.id)}
-													>
-														Delete
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</TableCell>
-									</TableRow>
-								))
+								filtered.map((permission) => {
+									const assigned = assignedPermissions.includes(permission.slug);
+									return (
+										<TableRow key={permission.id}>
+											<TableCell>
+												<div>
+													<span className="font-medium">{permission.name}</span>
+													<p className="text-xs text-muted-foreground">{permission.description}</p>
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge variant="secondary" className="font-mono text-xs">
+													{permission.slug}
+												</Badge>
+												{permission.isBuiltIn ? (
+													<Badge variant="outline" className="ml-2 text-[10px]">
+														Built-in
+													</Badge>
+												) : null}
+											</TableCell>
+											<TableCell>
+												{selectedRole ? (
+													<div className="flex items-center gap-3">
+														<Switch
+															checked={assigned}
+															disabled={selectedRole.isDefault || savingAssignments}
+															onCheckedChange={(enabled) =>
+																toggleAssignedPermission(permission.slug, enabled)
+															}
+														/>
+														<span className="text-sm text-muted-foreground">
+															{assigned ? "Assigned" : "Not assigned"}
+														</span>
+													</div>
+												) : (
+													<span className="text-sm text-muted-foreground">Catalog entry</span>
+												)}
+											</TableCell>
+											<TableCell>
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant="ghost" size="icon-xs">
+															<MoreHorizontal className="size-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end">
+														<DropdownMenuItem
+															disabled={permission.isBuiltIn}
+															onSelect={() => openEditDialog(permission)}
+														>
+															Edit
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															variant="destructive"
+															disabled={permission.isBuiltIn}
+															onSelect={() => handleDelete(permission.id)}
+														>
+															Delete
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableCell>
+										</TableRow>
+									);
+								})
 							)}
 						</TableBody>
 					</Table>

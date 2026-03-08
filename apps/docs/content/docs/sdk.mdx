@@ -78,7 +78,32 @@ const webhook = await banata.webhooks.createEndpoint({
   url: "https://example.com/api/webhooks",
   eventTypes: ["user.created"],
 });
+
+const role = await banata.rbac.createRole({
+  name: "HR Admin",
+  slug: "hr_admin",
+  permissions: ["employee.read", "employee.manage", "leave.approve"],
+});
+
+await banata.rbac.updateRole({
+  id: role.id,
+  permissions: ["employee.read", "employee.manage", "leave.approve", "payroll.read"],
+});
 ```
+
+---
+
+## RBAC Workflow
+
+For RBAC, the SDK now supports the complete custom-role flow:
+
+1. Create permission slugs with `banata.rbac.createPermission(...)`
+2. Create a role with an initial `permissions` array, or create it empty
+3. Update that role later with `banata.rbac.updateRole({ id, permissions: [...] })`
+4. Assign the role slug to an organization member with `banata.rbac.assignRole(...)`
+5. Check access with `banata.rbac.checkPermission(...)` or `checkPermissions(...)`
+
+This matches the dashboard flow on `/authorization/roles` and `/authorization/permissions`.
 
 ---
 

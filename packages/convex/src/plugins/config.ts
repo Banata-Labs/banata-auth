@@ -9,9 +9,11 @@
  * - `/banata/config/dashboard/save`     â€” Save partial dashboard config overrides
  * - `/banata/config/roles/list`         â€” List custom role definitions
  * - `/banata/config/roles/create`       â€” Create a role definition
+ * - `/banata/config/roles/update`       â€” Update a role definition and its permissions
  * - `/banata/config/roles/delete`       â€” Delete a role definition
  * - `/banata/config/permissions/list`   â€” List custom permission definitions
  * - `/banata/config/permissions/create` â€” Create a permission definition
+ * - `/banata/config/permissions/update` â€” Update a permission definition
  * - `/banata/config/permissions/delete` â€” Delete a permission definition
  * - `/banata/config/branding/get`       â€” Get branding config
  * - `/banata/config/branding/save`      â€” Upsert branding config
@@ -253,6 +255,11 @@ const BUILT_IN_PERMISSIONS: BuiltInPermissionSeed[] = [
 		description: "Create custom permissions.",
 	},
 	{
+		slug: "permission.update",
+		name: "Update permissions",
+		description: "Edit custom permissions.",
+	},
+	{
 		slug: "permission.read",
 		name: "Read permissions",
 		description: "List and inspect permissions.",
@@ -440,6 +447,47 @@ async function addPermissionToSuperAdmin(
 	});
 }
 
+function parseRolePermissionSlugs(role: { permissions?: string | null }): string[] {
+	if (!role.permissions) {
+		return [];
+	}
+	return Array.from(new Set(JSON.parse(role.permissions) as string[])).sort();
+}
+
+function normalizePermissionSlugs(permissionSlugs: string[] | undefined): string[] {
+	return Array.from(
+		new Set(
+			(permissionSlugs ?? [])
+				.map((permission) => permission.trim())
+				.filter((permission) => permission.length > 0),
+		),
+	).sort();
+}
+
+async function assertPermissionSlugsExist(
+	ctx: any,
+	db: PluginDBAdapter,
+	scopeWhere: WhereClause[],
+	permissionSlugs: string[],
+): Promise<void> {
+	if (permissionSlugs.length === 0) {
+		return;
+	}
+
+	const permissions = await db.findMany<PermissionDefinitionRow>({
+		model: "permissionDefinition",
+		where: [...scopeWhere],
+		limit: 2000,
+	});
+	const available = new Set(permissions.map((permission) => permission.slug));
+	const missing = permissionSlugs.filter((permission) => !available.has(permission));
+	if (missing.length > 0) {
+		throw ctx.error("BAD_REQUEST", {
+			message: `Unknown permission slug(s): ${missing.join(", ")}`,
+		});
+	}
+}
+
 // â”€â”€â”€ CSS Sanitization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
@@ -496,6 +544,17 @@ const createRoleSchema = z
 		name: z.string(),
 		slug: z.string(),
 		description: z.string().optional(),
+		permissions: z.array(z.string().min(1)).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const updateRoleSchema = z
+	.object({
+		id: z.string(),
+		name: z.string().optional(),
+		slug: z.string().optional(),
+		description: z.string().optional(),
+		permissions: z.array(z.string().min(1)).optional(),
 	})
 	.merge(projectScopeSchema);
 
@@ -509,6 +568,15 @@ const createPermissionSchema = z
 	.object({
 		name: z.string(),
 		slug: z.string(),
+		description: z.string().optional(),
+	})
+	.merge(projectScopeSchema);
+
+const updatePermissionSchema = z
+	.object({
+		id: z.string(),
+		name: z.string().optional(),
+		slug: z.string().optional(),
 		description: z.string().optional(),
 	})
 	.merge(projectScopeSchema);
@@ -1477,6 +1545,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							message: `Role slug \"${body.slug}\" is reserved`,
 						});
 					}
+					const normalizedPermissions = normalizePermissionSlugs(body.permissions);
+					await assertPermissionSlugsExist(ctx, db, scope.where, normalizedPermissions);
 
 					// Check for duplicate slug (within project scope)
 					const existing = await db.findMany<RoleDefinitionRow>({
@@ -1497,7 +1567,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							name: body.name,
 							slug: body.slug,
 							description: body.description ?? "",
-							permissions: JSON.stringify([]),
+							permissions: JSON.stringify(normalizedPermissions),
 							isDefault: false,
 							createdAt: now,
 							updatedAt: now,
@@ -1510,9 +1580,88 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							name: role.name,
 							slug: role.slug,
 							description: role.description ?? "",
-							permissions: [] as string[],
+							permissions: normalizedPermissions,
 							isDefault: false,
 							createdAt: new Date(now).toISOString(),
+						},
+					});
+				},
+			),
+
+			updateRole: createAuthEndpoint(
+				"/banata/config/roles/update",
+				{
+					method: "POST", requireHeaders: true,
+					body: updateRoleSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const now = Date.now();
+					const scope = getProjectScope(body as Record<string, unknown>);
+					await requireProjectPermission(ctx, {
+						db,
+						permission: "role.update",
+						projectId: scope.projectId,
+					});
+					await ensureProjectRbacDefaults(db, scope.data.projectId);
+
+					const existingRows = await db.findMany<RoleDefinitionRow>({
+						model: "roleDefinition",
+						where: [{ field: "id", value: body.id }, ...scope.where],
+						limit: 1,
+					});
+					const existing = existingRows[0];
+					if (!existing) {
+						throw ctx.error("NOT_FOUND", { message: "Role not found" });
+					}
+					if (existing.slug === SUPER_ADMIN_ROLE_SLUG || existing.isDefault) {
+						throw ctx.error("FORBIDDEN", {
+							message: "Default system roles cannot be updated",
+						});
+					}
+
+					const nextSlug = body.slug ?? existing.slug;
+					if (nextSlug !== existing.slug) {
+						const duplicateRows = await db.findMany<RoleDefinitionRow>({
+							model: "roleDefinition",
+							where: [{ field: "slug", value: nextSlug }, ...scope.where],
+							limit: 1,
+						});
+						if (duplicateRows.length > 0 && duplicateRows[0]?.id !== existing.id) {
+							throw ctx.error("CONFLICT", {
+								message: "A role with this slug already exists",
+							});
+						}
+					}
+
+					const nextPermissions =
+						body.permissions !== undefined
+							? normalizePermissionSlugs(body.permissions)
+							: parseRolePermissionSlugs(existing);
+					await assertPermissionSlugsExist(ctx, db, scope.where, nextPermissions);
+
+					await db.update<RoleDefinitionRow>({
+						model: "roleDefinition",
+						where: [{ field: "id", value: existing.id }, ...scope.where],
+						update: {
+							name: body.name ?? existing.name,
+							slug: nextSlug,
+							description: body.description ?? existing.description ?? "",
+							permissions: JSON.stringify(nextPermissions),
+							updatedAt: now,
+						},
+					});
+
+					return ctx.json({
+						role: {
+							id: existing.id,
+							name: body.name ?? existing.name,
+							slug: nextSlug,
+							description: body.description ?? existing.description ?? "",
+							permissions: nextPermissions,
+							isDefault: existing.isDefault ?? false,
+							createdAt: new Date(existing.createdAt).toISOString(),
 						},
 					});
 				},
@@ -1584,12 +1733,14 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						limit: 500,
 						sortBy: { field: "createdAt", direction: "asc" },
 					});
+					const builtInSlugs = new Set(BUILT_IN_PERMISSIONS.map((permission) => permission.slug));
 
 					const parsed = permissions.map((p) => ({
 						id: p.id,
 						name: p.name,
 						slug: p.slug,
 						description: p.description ?? "",
+						isBuiltIn: builtInSlugs.has(p.slug),
 						createdAt: new Date(p.createdAt).toISOString(),
 					}));
 
@@ -1646,7 +1797,106 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							name: permission.name,
 							slug: permission.slug,
 							description: permission.description ?? "",
+							isBuiltIn: false,
 							createdAt: new Date(now).toISOString(),
+						},
+					});
+				},
+			),
+
+			updatePermission: createAuthEndpoint(
+				"/banata/config/permissions/update",
+				{
+					method: "POST", requireHeaders: true,
+					body: updatePermissionSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const now = Date.now();
+					const scope = getProjectScope(body as Record<string, unknown>);
+					await ensureProjectRbacDefaults(db, scope.data.projectId);
+					await requireProjectPermission(ctx, {
+						db,
+						permission: "permission.update",
+						projectId: scope.projectId,
+					});
+
+					const existingRows = await db.findMany<PermissionDefinitionRow>({
+						model: "permissionDefinition",
+						where: [{ field: "id", value: body.id }, ...scope.where],
+						limit: 1,
+					});
+					const existing = existingRows[0];
+					if (!existing) {
+						throw ctx.error("NOT_FOUND", { message: "Permission not found" });
+					}
+
+					const builtInSlugs = new Set(BUILT_IN_PERMISSIONS.map((permission) => permission.slug));
+					if (builtInSlugs.has(existing.slug)) {
+						throw ctx.error("FORBIDDEN", {
+							message: "Built-in permissions cannot be updated",
+						});
+					}
+
+					const nextSlug = body.slug ?? existing.slug;
+					if (nextSlug !== existing.slug) {
+						const duplicateRows = await db.findMany<PermissionDefinitionRow>({
+							model: "permissionDefinition",
+							where: [{ field: "slug", value: nextSlug }, ...scope.where],
+							limit: 1,
+						});
+						if (duplicateRows.length > 0 && duplicateRows[0]?.id !== existing.id) {
+							throw ctx.error("CONFLICT", {
+								message: "A permission with this slug already exists",
+							});
+						}
+					}
+
+					await db.update<PermissionDefinitionRow>({
+						model: "permissionDefinition",
+						where: [{ field: "id", value: existing.id }, ...scope.where],
+						update: {
+							name: body.name ?? existing.name,
+							slug: nextSlug,
+							description: body.description ?? existing.description ?? "",
+							updatedAt: now,
+						},
+					});
+
+					if (nextSlug !== existing.slug) {
+						const roles = await db.findMany<RoleDefinitionRow>({
+							model: "roleDefinition",
+							where: [...scope.where],
+							limit: 500,
+						});
+						for (const role of roles) {
+							const rolePermissions = parseRolePermissionSlugs(role);
+							if (!rolePermissions.includes(existing.slug)) {
+								continue;
+							}
+							const nextRolePermissions = rolePermissions.map((permission) =>
+								permission === existing.slug ? nextSlug : permission,
+							);
+							await db.update<RoleDefinitionRow>({
+								model: "roleDefinition",
+								where: [{ field: "id", value: role.id }],
+								update: {
+									permissions: JSON.stringify(Array.from(new Set(nextRolePermissions)).sort()),
+									updatedAt: now,
+								},
+							});
+						}
+					}
+
+					return ctx.json({
+						permission: {
+							id: existing.id,
+							name: body.name ?? existing.name,
+							slug: nextSlug,
+							description: body.description ?? existing.description ?? "",
+							isBuiltIn: false,
+							createdAt: new Date(existing.createdAt).toISOString(),
 						},
 					});
 				},
@@ -1689,7 +1939,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							limit: 500,
 						});
 						for (const role of roles) {
-							const rolePerms = role.permissions ? (JSON.parse(role.permissions) as string[]) : [];
+							const rolePerms = parseRolePermissionSlugs(role);
 							if (!rolePerms.includes(permissionSlug)) continue;
 							await db.update<RoleDefinitionRow>({
 								model: "roleDefinition",

@@ -15,6 +15,7 @@ export interface PermissionDefinition {
 	name: string;
 	slug: string;
 	description: string;
+	isBuiltIn: boolean;
 	createdAt: string;
 }
 
@@ -22,11 +23,27 @@ export interface CreateRoleOptions {
 	name: string;
 	slug: string;
 	description?: string;
+	permissions?: string[];
+}
+
+export interface UpdateRoleOptions {
+	id: string;
+	name?: string;
+	slug?: string;
+	description?: string;
+	permissions?: string[];
 }
 
 export interface CreatePermissionOptions {
 	name: string;
 	slug: string;
+	description?: string;
+}
+
+export interface UpdatePermissionOptions {
+	id: string;
+	name?: string;
+	slug?: string;
 	description?: string;
 }
 
@@ -76,6 +93,14 @@ export class Rbac {
 		return result.role;
 	}
 
+	async updateRole(options: UpdateRoleOptions): Promise<RoleDefinition> {
+		const result = await this.http.post<{ role: RoleDefinition }>(
+			"/api/auth/banata/config/roles/update",
+			options,
+		);
+		return result.role;
+	}
+
 	async deleteRole(id: string): Promise<void> {
 		await this.http.post<void>("/api/auth/banata/config/roles/delete", { id });
 	}
@@ -91,6 +116,14 @@ export class Rbac {
 	async createPermission(options: CreatePermissionOptions): Promise<PermissionDefinition> {
 		const result = await this.http.post<{ permission: PermissionDefinition }>(
 			"/api/auth/banata/config/permissions/create",
+			options,
+		);
+		return result.permission;
+	}
+
+	async updatePermission(options: UpdatePermissionOptions): Promise<PermissionDefinition> {
+		const result = await this.http.post<{ permission: PermissionDefinition }>(
+			"/api/auth/banata/config/permissions/update",
 			options,
 		);
 		return result.permission;

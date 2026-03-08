@@ -92,7 +92,7 @@ All 33 non-project tables have a `projectId` index for efficient filtering.
 On the first dashboard load, the dashboard calls the `ensure-default` endpoint. If no projects exist in the database and `autoCreateDefault` is enabled (the default), Banata Auth automatically creates:
 
 1. A **"Default Project"** with slug `default`.
-2. A `super_admin` role seeded with all built-in permissions (23 permissions).
+2. A `super_admin` role seeded with all built-in permissions.
 
 No default organization is created automatically. Organizations are created explicitly by developers when needed.
 

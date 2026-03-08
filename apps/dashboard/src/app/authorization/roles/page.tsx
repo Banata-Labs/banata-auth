@@ -30,7 +30,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { type RoleItem, createRole, deleteRole, listRoles } from "@/lib/dashboard-api";
+import { type RoleItem, createRole, deleteRole, listRoles, updateRole } from "@/lib/dashboard-api";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -136,12 +136,12 @@ export default function RolesPage() {
 		if (!editingRole || !editName.trim() || !editSlug.trim()) return;
 		try {
 			setSaving(true);
-			// Update via delete + recreate to preserve data
-			await deleteRole(editingRole.id);
-			await createRole({
+			await updateRole({
+				id: editingRole.id,
 				name: editName.trim(),
 				slug: editSlug.trim(),
 				description: editDescription.trim(),
+				permissions: editingRole.permissions,
 			});
 			setEditDialogOpen(false);
 			setEditingRole(null);
@@ -155,7 +155,11 @@ export default function RolesPage() {
 	}
 
 	function openPriorityDialog() {
-		setPriorityOrder(roles.map((r, i) => ({ id: r.id, name: r.name, priority: i + 1 })));
+		setPriorityOrder(
+			roles
+				.filter((role) => !role.isDefault)
+				.map((r, i) => ({ id: r.id, name: r.name, priority: i + 1 })),
+		);
 		setPriorityDialogOpen(true);
 	}
 
@@ -168,10 +172,11 @@ export default function RolesPage() {
 	function handlePrioritySave() {
 		// Sort roles locally based on assigned priority numbers
 		const sorted = [...priorityOrder].sort((a, b) => a.priority - b.priority);
-		const reordered = sorted
+		const customRoles = sorted
 			.map((item) => roles.find((r) => r.id === item.id))
 			.filter(Boolean) as RoleItem[];
-		setRoles(reordered);
+		const defaultRoles = roles.filter((role) => role.isDefault);
+		setRoles([...defaultRoles, ...customRoles]);
 		setPriorityDialogOpen(false);
 	}
 
@@ -410,7 +415,10 @@ export default function RolesPage() {
 													</Button>
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end">
-													<DropdownMenuItem onSelect={() => openEditDialog(role)}>
+													<DropdownMenuItem
+														disabled={role.isDefault}
+														onSelect={() => openEditDialog(role)}
+													>
 														Edit
 													</DropdownMenuItem>
 													<DropdownMenuItem

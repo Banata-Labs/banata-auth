@@ -25,6 +25,11 @@ const banata = new BanataAuth({
 });
 
 const users = await banata.users.listUsers({ limit: 20 });
+
+await banata.rbac.updateRole({
+  id: "role_123",
+  permissions: ["employee.read", "leave.approve"],
+});
 ```
 
 ## Resources

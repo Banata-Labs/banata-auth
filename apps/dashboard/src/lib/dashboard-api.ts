@@ -181,9 +181,11 @@ const PERMISSION_CHECK_TTL = 10_000;
 function resolvePermissionForPath(path: string): string | null {
 	if (path.startsWith("/api/auth/banata/config/roles/list")) return "role.read";
 	if (path.startsWith("/api/auth/banata/config/roles/create")) return "role.create";
+	if (path.startsWith("/api/auth/banata/config/roles/update")) return "role.update";
 	if (path.startsWith("/api/auth/banata/config/roles/delete")) return "role.delete";
 	if (path.startsWith("/api/auth/banata/config/permissions/list")) return "permission.read";
 	if (path.startsWith("/api/auth/banata/config/permissions/create")) return "permission.create";
+	if (path.startsWith("/api/auth/banata/config/permissions/update")) return "permission.update";
 	if (path.startsWith("/api/auth/banata/config/permissions/delete")) return "permission.delete";
 	if (path.startsWith("/api/auth/banata/webhooks/")) return "webhook.manage";
 	if (path.startsWith("/api/auth/banata/audit-logs/")) return "audit.read";
@@ -840,6 +842,7 @@ export interface PermissionItem {
 	name: string;
 	slug: string;
 	description: string;
+	isBuiltIn: boolean;
 	createdAt: string;
 }
 
@@ -854,16 +857,34 @@ export async function createRole(input: {
 	name: string;
 	slug: string;
 	description?: string;
+	permissions?: string[];
 }): Promise<RoleItem> {
 	const payload = await postJson("/api/auth/banata/config/roles/create", input);
 	if (typeof payload !== "object" || payload === null) {
 		throw new Error("Unexpected create role response");
 	}
+	invalidateCache();
+	return (payload as { role: RoleItem }).role;
+}
+
+export async function updateRole(input: {
+	id: string;
+	name?: string;
+	slug?: string;
+	description?: string;
+	permissions?: string[];
+}): Promise<RoleItem> {
+	const payload = await postJson("/api/auth/banata/config/roles/update", input);
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Unexpected update role response");
+	}
+	invalidateCache();
 	return (payload as { role: RoleItem }).role;
 }
 
 export async function deleteRole(id: string): Promise<void> {
 	await postJson("/api/auth/banata/config/roles/delete", { id });
+	invalidateCache();
 }
 
 export async function listPermissions(): Promise<PermissionItem[]> {
@@ -882,11 +903,27 @@ export async function createPermission(input: {
 	if (typeof payload !== "object" || payload === null) {
 		throw new Error("Unexpected create permission response");
 	}
+	invalidateCache();
+	return (payload as { permission: PermissionItem }).permission;
+}
+
+export async function updatePermission(input: {
+	id: string;
+	name?: string;
+	slug?: string;
+	description?: string;
+}): Promise<PermissionItem> {
+	const payload = await postJson("/api/auth/banata/config/permissions/update", input);
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Unexpected update permission response");
+	}
+	invalidateCache();
 	return (payload as { permission: PermissionItem }).permission;
 }
 
 export async function deletePermission(id: string): Promise<void> {
 	await postJson("/api/auth/banata/config/permissions/delete", { id });
+	invalidateCache();
 }
 
 // ── Branding config ──────────────────────────────────────────────────
