@@ -12,6 +12,7 @@
  */
 
 import type { BetterAuthOptions } from "better-auth";
+import { getSessionFromCtx } from "better-auth/api";
 import { z } from "zod";
 
 // â”€â”€â”€ Database Adapter Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -517,11 +518,14 @@ export function isGlobalAdminUser(user: Pick<SessionUser, "role"> | null | undef
  * @throws Error with status "UNAUTHORIZED" if not authenticated
  */
 // biome-ignore lint: ctx type is intentionally loose to match Better Auth's EndpointContext
-export function requireAuthenticated(ctx: any): {
+export async function requireAuthenticated(ctx: any): Promise<{
 	session: SessionRecord;
 	user: SessionUser;
-} {
-	const authSession = ctx.context?.session;
+}> {
+	// Resolve the session from cookies/bearer token via Better Auth's
+	// session resolution pipeline.  ctx.context.session is NOT auto-populated
+	// for custom plugin endpoints — we must call getSessionFromCtx explicitly.
+	const authSession = ctx.context?.session ?? (await getSessionFromCtx(ctx));
 	if (!authSession?.user?.id || !authSession?.session?.id) {
 		throw ctx.error("UNAUTHORIZED", { message: "Authentication required" });
 	}
@@ -535,19 +539,19 @@ export function requireAuthenticated(ctx: any): {
 /**
  * @deprecated Use `requireAuthenticated` or `requireGlobalAdmin` instead.
  */
-export function requireAdmin(ctx: any): {
+export async function requireAdmin(ctx: any): Promise<{
 	session: SessionRecord;
 	user: SessionUser;
-} {
+}> {
 	return requireAuthenticated(ctx);
 }
 
 // biome-ignore lint: ctx type is intentionally loose to match Better Auth's EndpointContext
-export function requireGlobalAdmin(ctx: any): {
+export async function requireGlobalAdmin(ctx: any): Promise<{
 	session: SessionRecord;
 	user: SessionUser;
-} {
-	const auth = requireAuthenticated(ctx);
+}> {
+	const auth = await requireAuthenticated(ctx);
 	if (!isGlobalAdminUser(auth.user)) {
 		throw ctx.error("FORBIDDEN", { message: "Global admin access required" });
 	}
@@ -677,7 +681,7 @@ export async function requireProjectPermission(
 		projectId?: string;
 	},
 ): Promise<void> {
-	const { user } = requireAuthenticated(ctx);
+	const { user } = await requireAuthenticated(ctx);
 	const { db, permission, projectId } = params;
 
 	if (!projectId) {

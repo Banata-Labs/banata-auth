@@ -41,6 +41,7 @@ import {
 	type PermissionDefinitionRow,
 	type PluginDBAdapter,
 	type ProjectConfigRow,
+	type ProjectRow,
 	type RadarConfigRow,
 	type RedirectConfigRow,
 	type ResourceTypeRow,
@@ -52,6 +53,12 @@ import {
 	requireAuthenticated,
 	requireProjectPermission,
 } from "./types";
+import {
+	deleteProjectSocialProviderSecret,
+	listProjectSocialProviderSecrets,
+	readProjectSocialProviderSecret,
+	saveProjectSocialProviderSecret,
+} from "./vault";
 
 // â”€â”€â”€ Plugin Options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -663,6 +670,10 @@ const saveProjectConfigSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const publicConfigScopeSchema = projectScopeSchema.extend({
+	clientId: z.string().optional(),
+});
+
 const saveDashboardConfigSchema = z
 	.object({
 		authMethods: z
@@ -700,6 +711,22 @@ const saveDashboardConfigSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const socialProviderCredentialSchema = z
+	.object({
+		providerId: z.string().min(1).max(64),
+	})
+	.merge(projectScopeSchema);
+
+const saveSocialProviderCredentialSchema = z
+	.object({
+		providerId: z.string().min(1).max(64),
+		clientId: z.string().min(1).max(512),
+		clientSecret: z.string().max(2048).optional(),
+		tenantId: z.string().max(512).optional(),
+		enabled: z.boolean().optional(),
+	})
+	.merge(projectScopeSchema);
+
 // â”€â”€â”€ Static Config Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface StaticDashboardConfig {
@@ -729,19 +756,39 @@ interface StaticDashboardConfig {
 	};
 }
 
-const RUNTIME_MANAGED_CONFIG_MESSAGE =
-	"Auth methods and social providers are managed from your Banata auth config and environment variables.";
+function buildStaticConfig(
+	options?: ConfigPluginOptions,
+	scope: "global" | "project" = "global",
+): StaticDashboardConfig {
+	if (scope === "project") {
+		return {
+			authMethods: {
+				sso: false,
+				emailPassword: false,
+				passkey: false,
+				magicLink: false,
+				emailOtp: false,
+				twoFactor: false,
+				organization: true,
+				anonymous: false,
+				username: false,
+			},
+			socialProviders: {},
+			features: {
+				hostedUi: false,
+				signUp: true,
+				mfa: false,
+				localization: false,
+			},
+			sessions: {
+				maxSessionLength: "7 days",
+				accessTokenDuration: "15 minutes",
+				inactivityTimeout: "2 days",
+				corsOrigins: [],
+			},
+		};
+	}
 
-function stripRuntimeManagedConfig(
-	partial: Record<string, unknown>,
-): Record<string, unknown> {
-	const sanitized = { ...partial };
-	delete sanitized.authMethods;
-	delete sanitized.socialProviders;
-	return sanitized;
-}
-
-function buildStaticConfig(options?: ConfigPluginOptions): StaticDashboardConfig {
 	const socialProviders: Record<string, { enabled: boolean; demo: boolean }> = {};
 	if (options?.socialProviders) {
 		for (const [key, value] of Object.entries(options.socialProviders)) {
@@ -860,10 +907,110 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		const key = cacheKey(projectId);
 		let cfg = configCache.get(key);
 		if (!cfg) {
-			cfg = buildStaticConfig(options);
+			cfg = buildStaticConfig(options, projectId ? "project" : "global");
 			configCache.set(key, cfg);
 		}
 		return cfg;
+	}
+
+	function requireScopedProjectId(ctx: any, scope: { projectId?: string }): string {
+		if (!scope.projectId) {
+			throw ctx.error("BAD_REQUEST", { message: "Project scope is required" });
+		}
+		return scope.projectId;
+	}
+
+	async function persistScopedDashboardConfig(
+		db: PluginDBAdapter,
+		scope: { where: WhereClause[]; data: Record<string, unknown> },
+		config: StaticDashboardConfig,
+		now: number,
+	): Promise<void> {
+		const configJson = JSON.stringify(config);
+		const rows = await db.findMany<DashboardConfigRow>({
+			model: "dashboardConfig",
+			where: scope.where,
+			limit: 1,
+		});
+
+		if (rows.length > 0 && rows[0]) {
+			await db.update<DashboardConfigRow>({
+				model: "dashboardConfig",
+				where: [{ field: "id", operator: "eq", value: rows[0].id }],
+				update: { configJson, updatedAt: now },
+			});
+			return;
+		}
+
+		await db.create<DashboardConfigRow>({
+			model: "dashboardConfig",
+			data: {
+				...scope.data,
+				configJson,
+				createdAt: now,
+				updatedAt: now,
+			},
+		});
+	}
+
+	async function syncConfiguredSocialProviders(
+		db: PluginDBAdapter,
+		projectId: string | undefined,
+		cfg: StaticDashboardConfig,
+	): Promise<StaticDashboardConfig> {
+		if (!projectId) {
+			return cfg;
+		}
+
+		const configuredProviders = await listProjectSocialProviderSecrets(db, projectId).catch(() => []);
+		const nextProviders: Record<string, { enabled: boolean; demo: boolean }> = {};
+		for (const provider of configuredProviders) {
+			nextProviders[provider.name] = {
+				enabled: cfg.socialProviders[provider.name]?.enabled ?? false,
+				demo: false,
+			};
+		}
+		cfg.socialProviders = nextProviders;
+		return cfg;
+	}
+
+	async function getResolvedDashboardConfig(
+		db: PluginDBAdapter,
+		projectId?: string,
+	): Promise<StaticDashboardConfig> {
+		const cfg = await ensurePersistedOverrides(db, projectId);
+		return syncConfiguredSocialProviders(db, projectId, cfg);
+	}
+
+	async function listSocialProviderCredentialSummary(
+		db: PluginDBAdapter,
+		projectId: string,
+		cfg: StaticDashboardConfig,
+	): Promise<
+		Record<
+			string,
+			{
+				clientId: string;
+				tenantId: string | null;
+				hasClientSecret: boolean;
+				enabled: boolean;
+				updatedAt: number;
+			}
+		>
+	> {
+		const providers = await listProjectSocialProviderSecrets(db, projectId);
+		return Object.fromEntries(
+			providers.map((provider) => [
+				provider.name,
+				{
+					clientId: provider.data.clientId,
+					tenantId: provider.data.tenantId ?? null,
+					hasClientSecret: provider.data.clientSecret.length > 0,
+					enabled: cfg.socialProviders[provider.name]?.enabled ?? false,
+					updatedAt: provider.updatedAt,
+				},
+			]),
+		);
 	}
 
 	/**
@@ -889,9 +1036,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 				limit: 1,
 			});
 			if (rows.length > 0 && rows[0]?.configJson) {
-				const overrides = stripRuntimeManagedConfig(
-					JSON.parse(rows[0].configJson) as Record<string, unknown>,
-				);
+				const overrides = JSON.parse(rows[0].configJson) as Record<string, unknown>;
 				deepMergeConfig(cfg, overrides);
 			}
 		} catch {
@@ -913,6 +1058,59 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			projectId: scope.projectId,
 		});
 		return scope;
+	}
+
+	async function findProjectByScope(
+		db: PluginDBAdapter,
+		scope: { projectId?: string; clientId?: string },
+	): Promise<ProjectRow | null> {
+		if (scope.projectId) {
+			const rows = await db.findMany<ProjectRow>({
+				model: "project",
+				where: [{ field: "id", value: scope.projectId }],
+				limit: 1,
+			});
+			return rows[0] ?? null;
+		}
+
+		if (scope.clientId) {
+			const rows = await db.findMany<ProjectRow>({
+				model: "project",
+				where: [{ field: "slug", value: scope.clientId }],
+				limit: 1,
+			});
+			return rows[0] ?? null;
+		}
+
+		return null;
+	}
+
+	async function resolveReadableProjectId(
+		ctx: any,
+		db: PluginDBAdapter,
+		body: Record<string, unknown>,
+	): Promise<string | undefined> {
+		const clientId =
+			typeof body.clientId === "string" && body.clientId.trim().length > 0
+				? body.clientId.trim()
+				: undefined;
+		const scope = getProjectScope(body, { optional: true });
+		const hasExplicitScope = Boolean(scope.projectId || clientId);
+		if (!hasExplicitScope) {
+			return undefined;
+		}
+
+		const project = await findProjectByScope(db, {
+			projectId: scope.projectId,
+			clientId,
+		});
+		if (!project) {
+			throw ctx.error("NOT_FOUND", {
+				message: "Project not found for the supplied Banata scope",
+			});
+		}
+
+		return project.id;
 	}
 
 	return {
@@ -1058,14 +1256,24 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			// Dashboard Config
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-            getPublicConfig: createAuthEndpoint(
-                "/banata/config/public",
-                {
-                    method: "POST", requireHeaders: true,
-                    body: emptySchema,
-                },
-                async (ctx) => ctx.json(buildStaticConfig(options)),
-            ),
+			getPublicConfig: createAuthEndpoint(
+				"/banata/config/public",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: publicConfigScopeSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const projectId = await resolveReadableProjectId(
+						ctx,
+						db,
+						ctx.body as Record<string, unknown>,
+					);
+					const cfg = await getResolvedDashboardConfig(db, projectId);
+					return ctx.json(cfg);
+				},
+			),
 
 			getDashboardConfig: createAuthEndpoint(
 				"/banata/config/dashboard",
@@ -1077,7 +1285,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body as Record<string, unknown>;
 					const scope = await requireScopedPermission(ctx, db, body, "dashboard.read");
-					const cfg = await ensurePersistedOverrides(db, scope.projectId);
+					const cfg = await getResolvedDashboardConfig(db, scope.projectId);
 					return ctx.json(cfg);
 				},
 			),
@@ -1094,53 +1302,114 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					const now = Date.now();
 					const scope = await requireScopedPermission(ctx, db, body, "dashboard.manage");
 
-					if (body.authMethods || body.socialProviders) {
-						throw ctx.error("BAD_REQUEST", {
-							message: RUNTIME_MANAGED_CONFIG_MESSAGE,
-						});
-					}
-
 					// Ensure we have the latest persisted state before merging
-					const cfg = await ensurePersistedOverrides(db, scope.projectId);
-					const persistedBody = stripRuntimeManagedConfig(body);
+					const cfg = await getResolvedDashboardConfig(db, scope.projectId);
 
 					// Deep-merge the incoming partial config into the in-memory config
-					deepMergeConfig(cfg, persistedBody);
+					deepMergeConfig(cfg, body);
+					await syncConfiguredSocialProviders(db, scope.projectId, cfg);
 
 					// Persist the full config to DB (scoped upsert)
 					try {
-						const configJson = JSON.stringify(
-							stripRuntimeManagedConfig(cfg as unknown as Record<string, unknown>),
-						);
-						const rows = await db.findMany<DashboardConfigRow>({
-							model: "dashboardConfig",
-							where: scope.where,
-							limit: 1,
-						});
-
-						if (rows.length > 0 && rows[0]) {
-							await db.update<DashboardConfigRow>({
-								model: "dashboardConfig",
-								where: [{ field: "id", operator: "eq", value: rows[0].id }],
-								update: { configJson, updatedAt: now },
-							});
-						} else {
-							await db.create<DashboardConfigRow>({
-								model: "dashboardConfig",
-								data: {
-									...scope.data,
-									configJson,
-									createdAt: now,
-									updatedAt: now,
-								},
-							});
-						}
+						await persistScopedDashboardConfig(db, scope, cfg, now);
 					} catch {
 						// Persistence failed â€” in-memory config is still updated.
 						// The next GET will return the updated config for this process lifetime.
 					}
 
 					return ctx.json(cfg);
+				},
+			),
+
+			getSocialProviderCredentials: createAuthEndpoint(
+				"/banata/config/social-providers/get",
+				{
+					method: "POST", requireHeaders: true,
+					body: projectScopedEmpty,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "dashboard.read");
+					const projectId = requireScopedProjectId(ctx, scope);
+					const cfg = await getResolvedDashboardConfig(db, projectId);
+					return ctx.json({
+						providers: await listSocialProviderCredentialSummary(db, projectId, cfg),
+					});
+				},
+			),
+
+			saveSocialProviderCredential: createAuthEndpoint(
+				"/banata/config/social-providers/save",
+				{
+					method: "POST", requireHeaders: true,
+					body: saveSocialProviderCredentialSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.manage",
+					);
+					const projectId = requireScopedProjectId(ctx, scope);
+					const providerId = body.providerId.trim().toLowerCase();
+					const existing = await readProjectSocialProviderSecret(db, projectId, providerId);
+					const clientSecret = body.clientSecret?.trim() || existing?.data.clientSecret || "";
+					if (!clientSecret) {
+						throw ctx.error("BAD_REQUEST", {
+							message: "Client secret is required when configuring a social provider",
+						});
+					}
+
+					await saveProjectSocialProviderSecret(db, {
+						projectId,
+						providerId,
+						credentials: {
+							clientId: body.clientId.trim(),
+							clientSecret,
+							...(body.tenantId?.trim() ? { tenantId: body.tenantId.trim() } : {}),
+						},
+					});
+
+					const cfg = await getResolvedDashboardConfig(db, projectId);
+					cfg.socialProviders[providerId] = {
+						enabled: body.enabled ?? cfg.socialProviders[providerId]?.enabled ?? false,
+						demo: false,
+					};
+					await persistScopedDashboardConfig(db, scope, cfg, Date.now());
+
+					return ctx.json({
+						providers: await listSocialProviderCredentialSummary(db, projectId, cfg),
+						config: cfg,
+					});
+				},
+			),
+
+			deleteSocialProviderCredential: createAuthEndpoint(
+				"/banata/config/social-providers/delete",
+				{
+					method: "POST", requireHeaders: true,
+					body: socialProviderCredentialSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "dashboard.manage");
+					const projectId = requireScopedProjectId(ctx, scope);
+					const providerId = String(body.providerId).trim().toLowerCase();
+					await deleteProjectSocialProviderSecret(db, projectId, providerId);
+
+					const cfg = await getResolvedDashboardConfig(db, projectId);
+					delete cfg.socialProviders[providerId];
+					await persistScopedDashboardConfig(db, scope, cfg, Date.now());
+
+					return ctx.json({
+						providers: await listSocialProviderCredentialSummary(db, projectId, cfg),
+						config: cfg,
+					});
 				},
 			),
 
@@ -1453,7 +1722,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 
@@ -1475,7 +1744,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					body: checkPermissionSchema,
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const permissions = await getEffectiveProjectPermissions(db, {
@@ -1496,7 +1765,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					body: checkPermissionsSchema,
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const permissions = await getEffectiveProjectPermissions(db, {
@@ -2565,17 +2834,28 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						ctx.body as Record<string, unknown>,
 						"dashboard.read",
 					);
+					if (!scope.projectId) {
+						throw ctx.error("BAD_REQUEST", {
+							message: "projectId is required for project configuration",
+						});
+					}
 
 					const rows = await db.findMany<ProjectConfigRow>({
 						model: "projectConfig",
 						where: [...scope.where],
 						limit: 1,
 					});
+					const projectRows = await db.findMany<ProjectRow>({
+						model: "project",
+						where: [{ field: "id", value: scope.projectId }],
+						limit: 1,
+					});
+					const project = projectRows[0] ?? null;
 
 					const defaults = {
-						projectName: "My Banata Project",
+						projectName: project?.name ?? "My Banata Project",
 						projectDescription: "",
-						clientId: ctx.context.appName || "banata-auth",
+						clientId: project?.slug ?? "banata-auth",
 					};
 
 					if (rows.length > 0 && rows[0]?.configJson) {
@@ -2608,6 +2888,17 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						body as Record<string, unknown>,
 						"dashboard.manage",
 					);
+					if (!scope.projectId) {
+						throw ctx.error("BAD_REQUEST", {
+							message: "projectId is required for project configuration",
+						});
+					}
+					const projectRows = await db.findMany<ProjectRow>({
+						model: "project",
+						where: [{ field: "id", value: scope.projectId }],
+						limit: 1,
+					});
+					const project = projectRows[0] ?? null;
 
 					// Read existing (scoped)
 					const rows = await db.findMany<ProjectConfigRow>({
@@ -2647,9 +2938,9 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					}
 
 					return ctx.json({
-						projectName: (merged.projectName as string) ?? "My Banata Project",
+						projectName: (merged.projectName as string) ?? project?.name ?? "My Banata Project",
 						projectDescription: (merged.projectDescription as string) ?? "",
-						clientId: ctx.context.appName || "banata-auth",
+						clientId: project?.slug ?? "banata-auth",
 					});
 				},
 			),

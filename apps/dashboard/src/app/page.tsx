@@ -1,6 +1,6 @@
 "use client";
 
-import { useActiveProjectId } from "@/components/project-environment-provider";
+import { useProjectEnvironment } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,8 @@ const quickStartLinks = [
 ];
 
 export default function HomePage() {
-	const activeProjectId = useActiveProjectId();
+	const { activeProject } = useProjectEnvironment();
+	const activeProjectId = activeProject?.id ?? null;
 	const [stats, setStats] = useState({ users: 0, organizations: 0 });
 	const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +65,7 @@ export default function HomePage() {
 		};
 	}, [activeProjectId]);
 
-	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
+	const clientId = activeProject?.slug ?? "";
 
 	return (
 		<div className="grid gap-8">
@@ -166,7 +167,7 @@ export default function HomePage() {
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{/* Left: Environment variables */}
-				<CopyEnvBlock convexUrl={convexUrl} />
+				<CopyEnvBlock clientId={clientId} />
 
 				{/* Right: Quick start docs */}
 				<Card>

@@ -415,7 +415,7 @@ async function requireListPermission(
 ) {
 	const scope = getProjectScope(body, { optional: true });
 	if (!scope.projectId) {
-		requireGlobalAdmin(ctx);
+		await requireGlobalAdmin(ctx);
 		return scope;
 	}
 	await requireProjectPermission(ctx, {
@@ -447,7 +447,7 @@ async function resolveUserAccess(
 
 	const projectId = explicitScope.projectId ?? user.projectId;
 	if (!projectId) {
-		requireGlobalAdmin(ctx);
+		await requireGlobalAdmin(ctx);
 		return { user, scope: explicitScope };
 	}
 
@@ -487,7 +487,7 @@ async function resolveSessionAccess(
 
 	const projectId = explicitScope.projectId ?? session.projectId;
 	if (!projectId) {
-		requireGlobalAdmin(ctx);
+		await requireGlobalAdmin(ctx);
 		return { session, scope: explicitScope };
 	}
 
@@ -529,7 +529,7 @@ async function resolvePermissionCheckSubject(
 		});
 	}
 
-	const auth = requireAuthenticated(ctx);
+	const auth = await requireAuthenticated(ctx);
 	const requestedUserId =
 		typeof body.userId === "string" && body.userId.length > 0 ? body.userId : auth.user.id;
 	const user = await findUserById(db, requestedUserId);
@@ -565,7 +565,7 @@ async function assertImpersonationTargetAllowed(
 		body: Record<string, unknown>;
 	},
 ): Promise<string | undefined> {
-	const auth = requireAuthenticated(ctx);
+	const auth = await requireAuthenticated(ctx);
 	if (auth.user.id === params.targetUser.id) {
 		throw ctx.error("BAD_REQUEST", { message: "You are already signed in as this user" });
 	}
@@ -581,7 +581,7 @@ async function assertImpersonationTargetAllowed(
 
 	const projectId = explicitScope.projectId ?? params.targetUser.projectId;
 	if (!projectId) {
-		requireGlobalAdmin(ctx);
+		await requireGlobalAdmin(ctx);
 		if (isGlobalAdminUser(params.targetUser)) {
 			throw ctx.error("FORBIDDEN", { message: "You cannot impersonate elevated users" });
 		}
@@ -803,7 +803,7 @@ export function userManagementPlugin(): BetterAuthPlugin {
 							projectId: scope.projectId,
 						});
 					} else {
-						requireGlobalAdmin(typedCtx);
+						await requireGlobalAdmin(typedCtx);
 					}
 
 					const existing = await db.findMany<UserRow>({
@@ -923,7 +923,7 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					const typedCtx = ctx as unknown as UserManagementContext;
 					const db = typedCtx.context.adapter as unknown as PluginDBAdapter;
-					const auth = requireAuthenticated(typedCtx);
+					const auth = await requireAuthenticated(typedCtx);
 					if (auth.user.id === ctx.body.userId) {
 						throw typedCtx.error("BAD_REQUEST", { message: "You cannot delete your own user" });
 					}
@@ -947,7 +947,7 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					const typedCtx = ctx as unknown as UserManagementContext;
 					const db = typedCtx.context.adapter as unknown as PluginDBAdapter;
-					const auth = requireAuthenticated(typedCtx);
+					const auth = await requireAuthenticated(typedCtx);
 					if (auth.user.id === ctx.body.userId) {
 						throw typedCtx.error("BAD_REQUEST", { message: "You cannot ban your own user" });
 					}
@@ -1031,7 +1031,7 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					const typedCtx = ctx as unknown as UserManagementContext;
 					const db = typedCtx.context.adapter as unknown as PluginDBAdapter;
-					const auth = requireAuthenticated(typedCtx);
+					const auth = await requireAuthenticated(typedCtx);
 					const targetUser = await findUserById(db, ctx.body.userId);
 					if (!targetUser) {
 						throw typedCtx.error("BAD_REQUEST", { message: "User not found" });

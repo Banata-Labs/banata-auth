@@ -1,8 +1,12 @@
 import {
 	type BanataAuthConfig,
+	type BanataAuthSocialProviders,
+	type PluginDBAdapter,
 	createBanataAuth,
 	createBanataAuthComponent,
 	createBanataAuthOptions,
+	ensureProjectAuthSecret,
+	listProjectSocialProviderSecrets,
 } from "@banata-auth/convex";
 import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import { components } from "../_generated/api";
@@ -10,16 +14,43 @@ import type { DataModel } from "../_generated/dataModel";
 import authConfig from "../auth.config";
 import schema from "./schema";
 
+interface PersistedSocialProviderStatus {
+	enabled?: boolean;
+}
+
+interface PersistedDashboardConfig {
+	authMethods?: NonNullable<BanataAuthConfig["authMethods"]>;
+	socialProviders?: Record<string, PersistedSocialProviderStatus>;
+}
+
+interface DashboardConfigRow {
+	configJson: string;
+	projectId?: string | null;
+}
+
+interface DashboardProjectRow {
+	id: string;
+	slug: string;
+	name?: string | null;
+}
+
+interface RuntimeProjectLookupAdapter {
+	findMany<T = Record<string, unknown>>(data: {
+		model: string;
+		where?: Array<{ field: string; value: string | null }>;
+		limit?: number;
+	}): Promise<T[]>;
+}
+
+export interface RuntimeProjectScope {
+	projectId?: string | null;
+	clientId?: string | null;
+}
+
 export const authComponent = createBanataAuthComponent<DataModel, typeof schema>(
 	components.banataAuth,
 	schema,
 );
-
-// ─── Email Sending ─────────────────────────────────────────────────────
-// Uses Resend API if RESEND_API_KEY is set, otherwise logs to console.
-// In production, set RESEND_API_KEY and RESEND_FROM_EMAIL via:
-//   npx convex env set RESEND_API_KEY re_xxx
-//   npx convex env set RESEND_FROM_EMAIL "Banata Auth <auth@yourdomain.com>"
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
 	const apiKey = process.env.RESEND_API_KEY;
@@ -47,25 +78,40 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
 	}
 }
 
-export function getConfig(): BanataAuthConfig {
+function getTrustedOrigins(): string[] {
+	return [
+		"http://localhost:3000",
+		"http://localhost:3001",
+		"http://localhost:3002",
+		"http://localhost:3003",
+		...(process.env.TRUSTED_ORIGINS
+			? process.env.TRUSTED_ORIGINS.split(",").map((origin) => origin.trim())
+			: []),
+	];
+}
+
+function getPlatformSocialProviders(): BanataAuthSocialProviders | undefined {
+	if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+		return undefined;
+	}
+
+	return {
+		github: {
+			clientId: process.env.GITHUB_CLIENT_ID,
+			clientSecret: process.env.GITHUB_CLIENT_SECRET,
+			enabled: true,
+		},
+	};
+}
+
+function getPlatformConfig(): BanataAuthConfig {
 	const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 	return {
 		appName: "Banata Auth Dashboard",
 		siteUrl,
-		// During Convex module analysis env vars are unavailable, so we fall back
-		// to a placeholder.  At actual request time we enforce a real secret.
-		secret:
-			process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
-		trustedOrigins: [
-			"http://localhost:3000",
-			"http://localhost:3001",
-			"http://localhost:3002",
-			"http://localhost:3003",
-			...(process.env.TRUSTED_ORIGINS
-				? process.env.TRUSTED_ORIGINS.split(",").map((o) => o.trim())
-				: []),
-		],
+		secret: process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
+		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
 			emailPassword: false,
 			magicLink: false,
@@ -121,28 +167,215 @@ export function getConfig(): BanataAuthConfig {
 				);
 			},
 		},
-		socialProviders:
-			process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-				? {
-						github: {
-							clientId: process.env.GITHUB_CLIENT_ID,
-							clientSecret: process.env.GITHUB_CLIENT_SECRET,
-						},
-					}
-				: undefined,
+		socialProviders: getPlatformSocialProviders(),
 	};
+}
+
+export function getConfig(): BanataAuthConfig {
+	return getPlatformConfig();
+}
+
+function buildProjectConfig(projectName: string, secret: string): BanataAuthConfig {
+	return {
+		appName: projectName,
+		siteUrl: process.env.SITE_URL ?? "http://localhost:3000",
+		secret,
+		trustedOrigins: getTrustedOrigins(),
+		authMethods: {
+			emailPassword: false,
+			magicLink: false,
+			emailOtp: false,
+			passkey: false,
+			twoFactor: false,
+			sso: false,
+			username: false,
+			anonymous: false,
+			organization: true,
+		},
+		emailOptions: {
+			appName: projectName,
+		},
+	};
+}
+
+function mergeRuntimeConfig(
+	baseConfig: BanataAuthConfig,
+	overrides: PersistedDashboardConfig | null,
+	socialProviders: BanataAuthSocialProviders | undefined = baseConfig.socialProviders,
+): BanataAuthConfig {
+	if (!overrides) {
+		if (!socialProviders || Object.keys(socialProviders).length === 0) {
+			const config = { ...baseConfig };
+			delete config.socialProviders;
+			return config;
+		}
+		return { ...baseConfig, socialProviders };
+	}
+
+	const authMethods = {
+		...(baseConfig.authMethods ?? {}),
+		...(overrides.authMethods ?? {}),
+	};
+	const config: BanataAuthConfig = {
+		...baseConfig,
+		authMethods,
+	};
+
+	if (socialProviders && Object.keys(socialProviders).length > 0) {
+		config.socialProviders = socialProviders;
+	} else {
+		delete config.socialProviders;
+	}
+
+	return config;
+}
+
+async function loadPersistedDashboardConfig(
+	ctx: GenericCtx<DataModel>,
+	projectId?: string | null,
+): Promise<PersistedDashboardConfig | null> {
+	if (!projectId) {
+		return null;
+	}
+
+	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	try {
+		const scopedRows = await adapter.findMany<DashboardConfigRow>({
+			model: "dashboardConfig",
+			where: [{ field: "projectId", value: projectId }],
+			limit: 1,
+		});
+		const scopedRow = scopedRows[0];
+		if (scopedRow?.configJson) {
+			return JSON.parse(scopedRow.configJson) as PersistedDashboardConfig;
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadProjectById(
+	ctx: GenericCtx<DataModel>,
+	projectId: string,
+): Promise<DashboardProjectRow | null> {
+	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	try {
+		const rows = await adapter.findMany<DashboardProjectRow>({
+			model: "project",
+			where: [{ field: "id", value: projectId }],
+			limit: 1,
+		});
+		return rows[0] ?? null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadProjectSocialProviders(
+	db: PluginDBAdapter,
+	projectId: string,
+	overrides: PersistedDashboardConfig | null,
+): Promise<BanataAuthSocialProviders | undefined> {
+	const storedProviders = await listProjectSocialProviderSecrets(db, projectId).catch(() => []);
+	if (storedProviders.length === 0) {
+		return undefined;
+	}
+
+	const providers = Object.fromEntries(
+		storedProviders.map((provider) => [
+			provider.name,
+			{
+				clientId: provider.data.clientId,
+				clientSecret: provider.data.clientSecret,
+				...(provider.data.tenantId ? { tenantId: provider.data.tenantId } : {}),
+				enabled: overrides?.socialProviders?.[provider.name]?.enabled ?? false,
+			},
+		]),
+	) as BanataAuthSocialProviders;
+
+	return Object.keys(providers).length > 0 ? providers : undefined;
+}
+
+export async function resolveRuntimeProjectId(
+	ctx: GenericCtx<DataModel>,
+	scope: RuntimeProjectScope | null | undefined,
+): Promise<string | null> {
+	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	const projectId =
+		typeof scope?.projectId === "string" && scope.projectId.trim().length > 0
+			? scope.projectId.trim()
+			: null;
+	if (projectId) {
+		try {
+			const rows = await adapter.findMany<DashboardProjectRow>({
+				model: "project",
+				where: [{ field: "id", value: projectId }],
+				limit: 1,
+			});
+			return rows[0]?.id ?? null;
+		} catch {
+			return null;
+		}
+	}
+
+	const clientId =
+		typeof scope?.clientId === "string" && scope.clientId.trim().length > 0
+			? scope.clientId.trim()
+			: null;
+	if (!clientId) {
+		return null;
+	}
+
+	try {
+		const rows = await adapter.findMany<DashboardProjectRow>({
+			model: "project",
+			where: [{ field: "slug", value: clientId }],
+			limit: 1,
+		});
+		return rows[0]?.id ?? null;
+	} catch {
+		return null;
+	}
+}
+
+async function buildProjectRequestConfig(
+	ctx: GenericCtx<DataModel>,
+	projectId: string,
+): Promise<BanataAuthConfig> {
+	const db = authComponent.adapter(ctx) as unknown as PluginDBAdapter;
+	const [project, overrides, secret] = await Promise.all([
+		loadProjectById(ctx, projectId),
+		loadPersistedDashboardConfig(ctx, projectId),
+		ensureProjectAuthSecret(db, projectId),
+	]);
+	const socialProviders = await loadProjectSocialProviders(db, projectId, overrides);
+	const projectName = project?.name?.trim() || "Banata Project";
+	return mergeRuntimeConfig(buildProjectConfig(projectName, secret), overrides, socialProviders);
+}
+
+export async function getRequestConfig(
+	ctx: GenericCtx<DataModel>,
+	scope?: RuntimeProjectScope | null,
+): Promise<BanataAuthConfig> {
+	const projectId = await resolveRuntimeProjectId(ctx, scope);
+	if (!projectId) {
+		return getPlatformConfig();
+	}
+
+	return buildProjectRequestConfig(ctx, projectId);
 }
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
 	createBanataAuthOptions(ctx, {
 		authComponent,
 		authConfig,
-		config: getConfig(),
+		config: getPlatformConfig(),
 	});
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
 	createBanataAuth(ctx, {
 		authComponent,
 		authConfig,
-		config: getConfig(),
+		config: getPlatformConfig(),
 	});

@@ -92,6 +92,14 @@ export class ApiError extends Error {
 	}
 }
 
+function redirectToSignIn(): void {
+	if (typeof window === "undefined") return;
+	const pathname = window.location.pathname;
+	if (pathname === "/sign-in") return;
+	const redirectUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+	window.location.replace(`/sign-in?redirect_url=${encodeURIComponent(redirectUrl)}`);
+}
+
 // ── Client-side in-memory cache ──────────────────────────────────────
 // Caches GET-style (read-only) API responses to eliminate redundant network
 // requests when navigating back to previously visited pages.
@@ -255,6 +263,9 @@ async function ensurePermission(permission: string, projectId: string): Promise<
 
 	if (!response.ok) {
 		const text = await response.text().catch(() => "");
+		if (response.status === 401) {
+			redirectToSignIn();
+		}
 		throw new ApiError(
 			`Permission check failed: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ""}`,
 			{ status: response.status },
@@ -300,6 +311,9 @@ async function postJson(path: string, body: Record<string, unknown>): Promise<un
 	}
 	if (!response.ok) {
 		const text = await response.text().catch(() => "");
+		if (response.status === 401) {
+			redirectToSignIn();
+		}
 		throw new ApiError(
 			`Request failed: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ""}`,
 			{ status: response.status },
@@ -326,6 +340,9 @@ async function getJson(path: string): Promise<unknown> {
 	}
 	if (!response.ok) {
 		const text = await response.text().catch(() => "");
+		if (response.status === 401) {
+			redirectToSignIn();
+		}
 		throw new ApiError(
 			`Request failed: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ""}`,
 			{ status: response.status },
@@ -967,22 +984,79 @@ export async function toggleAuthMethod(
 	method: keyof DashboardConfig["authMethods"],
 	enabled: boolean,
 ): Promise<DashboardConfig> {
-	void method;
-	void enabled;
-	throw new Error(
-		"Auth methods are runtime-managed. Update your Banata auth config and environment variables instead.",
-	);
+	return saveDashboardConfig({
+		authMethods: { [method]: enabled } as Partial<
+			DashboardConfig["authMethods"]
+		> as DashboardConfig["authMethods"],
+	});
 }
 
 export async function toggleSocialProvider(
 	providerId: string,
 	enabled: boolean,
 ): Promise<DashboardConfig> {
-	void providerId;
-	void enabled;
-	throw new Error(
-		"Social providers are runtime-managed. Update your Banata auth config and environment variables instead.",
-	);
+	const currentConfig = await getDashboardConfig();
+	return saveDashboardConfig({
+		socialProviders: {
+			[providerId]: {
+				enabled,
+				demo: currentConfig.socialProviders[providerId]?.demo ?? false,
+			},
+		},
+	});
+}
+
+export interface SocialProviderCredentialRecord {
+	clientId: string;
+	tenantId: string | null;
+	hasClientSecret: boolean;
+	enabled: boolean;
+	updatedAt: number;
+}
+
+export type SocialProviderCredentials = Record<string, SocialProviderCredentialRecord>;
+
+export async function getSocialProviderCredentials(): Promise<SocialProviderCredentials> {
+	const payload = await cachedPostJson("/api/auth/banata/config/social-providers/get", {});
+	if (!isObject(payload) || !isObject((payload as { providers?: unknown }).providers)) {
+		return {};
+	}
+	return (payload as { providers: SocialProviderCredentials }).providers;
+}
+
+export async function saveSocialProviderCredential(data: {
+	providerId: string;
+	clientId: string;
+	clientSecret?: string;
+	tenantId?: string;
+	enabled?: boolean;
+}): Promise<{ providers: SocialProviderCredentials; config: DashboardConfig }> {
+	const payload = await postJson("/api/auth/banata/config/social-providers/save", data);
+	if (
+		!isObject(payload) ||
+		!isObject((payload as { providers?: unknown }).providers) ||
+		!isObject((payload as { config?: unknown }).config)
+	) {
+		throw new Error("Failed to save social provider credentials");
+	}
+	invalidateCache();
+	return payload as { providers: SocialProviderCredentials; config: DashboardConfig };
+}
+
+export async function deleteSocialProviderCredential(providerId: string): Promise<{
+	providers: SocialProviderCredentials;
+	config: DashboardConfig;
+}> {
+	const payload = await postJson("/api/auth/banata/config/social-providers/delete", { providerId });
+	if (
+		!isObject(payload) ||
+		!isObject((payload as { providers?: unknown }).providers) ||
+		!isObject((payload as { config?: unknown }).config)
+	) {
+		throw new Error("Failed to delete social provider credentials");
+	}
+	invalidateCache();
+	return payload as { providers: SocialProviderCredentials; config: DashboardConfig };
 }
 
 export async function toggleFeature(

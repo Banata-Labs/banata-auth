@@ -17,6 +17,7 @@ import type {
 	SessionUser,
 } from "./types";
 import { isGlobalAdminUser, requireAuthenticated } from "./types";
+import { ensureProjectAuthSecret } from "./vault";
 
 // ─── Zod Schemas ──────────────────────────────────────────────────
 
@@ -136,6 +137,17 @@ const BUILT_IN_PERMISSIONS: BuiltInPermissionSeed[] = [
 	{ slug: "browser.connect", name: "Connect browser", description: "Connect to browser CDP." },
 	{ slug: "billing.read", name: "Read billing", description: "View billing details." },
 	{ slug: "billing.manage", name: "Manage billing", description: "Manage billing and plans." },
+	{ slug: "vault.read", name: "Read vault", description: "View project vault metadata and secrets." },
+	{
+		slug: "vault.write",
+		name: "Write vault",
+		description: "Create, update, and delete project vault secrets.",
+	},
+	{
+		slug: "vault.manage",
+		name: "Manage vault",
+		description: "Rotate encryption keys and administer project vault secrets.",
+	},
 ];
 
 async function ensureProjectRbacSeed(
@@ -232,6 +244,51 @@ async function findMemberProjectIds(db: PluginDBAdapter, userId: string): Promis
 
 function sortProjects(projects: ProjectRow[]): ProjectRow[] {
 	return [...projects].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function slugifyProjectValue(value: string): string {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.replace(/-{2,}/g, "-")
+		.slice(0, 72);
+}
+
+async function ensureUniqueProjectSlug(
+	db: PluginDBAdapter,
+	baseSlug: string,
+): Promise<string> {
+	const normalizedBase = slugifyProjectValue(baseSlug) || "project";
+	for (let attempt = 0; attempt < 100; attempt += 1) {
+		const candidate = attempt === 0 ? normalizedBase : `${normalizedBase}-${attempt + 1}`;
+		const existing = await db.findMany<ProjectRow>({
+			model: "project",
+			where: [{ field: "slug", value: candidate }],
+			limit: 1,
+		});
+		if (existing.length === 0) {
+			return candidate;
+		}
+	}
+
+	return `${normalizedBase}-${Date.now()}`;
+}
+
+async function buildDefaultProjectIdentity(
+	db: PluginDBAdapter,
+	user: SessionUser,
+	defaultProjectName: string,
+): Promise<{ name: string; slug: string }> {
+	const displayName = user.name.trim() || user.email.split("@")[0]?.trim() || "My";
+	const projectName =
+		defaultProjectName === "Default Project" ? `${displayName}'s Project` : defaultProjectName;
+	const slugSeed =
+		defaultProjectName === "Default Project"
+			? `${displayName}-project`
+			: defaultProjectName;
+	const slug = await ensureUniqueProjectSlug(db, slugSeed);
+	return { name: projectName, slug };
 }
 
 async function listAccessibleProjects(
@@ -351,7 +408,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 				"/banata/projects/list",
 				{ method: "POST", requireHeaders: true },
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const projects = await listAccessibleProjects(db, user);
 					return ctx.json({ projects });
@@ -369,7 +426,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 					body: z.object({ id: z.string() }),
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const project = await findProjectById(db, ctx.body.id);
 					if (!project) {
@@ -392,7 +449,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 					body: createProjectSchema,
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body;
 
@@ -428,6 +485,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 					});
 
 					await ensureProjectRbacSeed(db, project.id, now);
+					await ensureProjectAuthSecret(db, project.id);
 
 					return ctx.json({ success: true, project });
 				},
@@ -444,7 +502,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 					body: updateProjectSchema,
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body;
 					const project = await findProjectById(db, body.id);
@@ -496,7 +554,7 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 					body: z.object({ id: z.string() }),
 				},
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const project = await findProjectById(db, ctx.body.id);
 					if (!project) {
@@ -525,21 +583,14 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 				"/banata/projects/ensure-default",
 				{ method: "POST", requireHeaders: true },
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-
-					const existingProjects = await db.findMany<ProjectRow>({
-						model: "project",
-						where: [],
-						limit: 1000,
-						sortBy: { field: "createdAt", direction: "desc" },
-					});
-
-					if (existingProjects.length > 0) {
-						const accessibleProjects = await listAccessibleProjects(db, user);
+					const accessibleProjects = await listAccessibleProjects(db, user);
+					if (accessibleProjects.length > 0) {
 						const project = accessibleProjects[0] ?? null;
 						if (project) {
 							await ensureProjectRbacSeed(db, project.id, Date.now());
+							await ensureProjectAuthSecret(db, project.id);
 						}
 
 						return ctx.json({
@@ -552,22 +603,22 @@ export function projectsPlugin(options: ProjectsPluginOptions = {}): BetterAuthP
 						return ctx.json({ created: false, project: null });
 					}
 
-					// Create default project
-					const userId = user.id;
 					const now = Date.now();
+					const identity = await buildDefaultProjectIdentity(db, user, defaultProjectName);
 
 					const project = await db.create<ProjectRow>({
 						model: "project",
 						data: {
-							name: defaultProjectName,
-							slug: "default",
-							ownerId: userId,
+							name: identity.name,
+							slug: identity.slug,
+							ownerId: user.id,
 							createdAt: now,
 							updatedAt: now,
 						} as ProjectRow,
 					});
 
 					await ensureProjectRbacSeed(db, project.id, now);
+					await ensureProjectAuthSecret(db, project.id);
 
 					return ctx.json({ created: true, project });
 				},

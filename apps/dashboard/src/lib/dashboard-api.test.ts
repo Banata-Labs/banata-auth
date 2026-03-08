@@ -4,14 +4,18 @@ import {
 	createOrganization,
 	createSsoConnection,
 	getUser,
+	invalidateCache,
 	inviteOrganizationMember,
 	listUsers,
+	toggleAuthMethod,
+	toggleSocialProvider,
 	unbanUser,
 } from "./dashboard-api";
 
 describe("dashboard api client", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		invalidateCache();
 	});
 
 	it("maps list users from wrapped payload", async () => {
@@ -131,6 +135,72 @@ describe("dashboard api client", () => {
 			3,
 			"/api/auth/banata/sso/register",
 			expect.any(Object),
+		);
+	});
+
+	it("saves auth method toggles through dashboard config", async () => {
+		const fetchMock = vi.fn(async () =>
+			new Response(JSON.stringify({ authMethods: { emailPassword: true } }), {
+				status: 200,
+				headers: { "content-type": "application/json" },
+			}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		await toggleAuthMethod("emailPassword", true);
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			"/api/auth/banata/config/dashboard/save",
+			expect.objectContaining({
+				method: "POST",
+				body: JSON.stringify({ authMethods: { emailPassword: true } }),
+			}),
+		);
+	});
+
+	it("preserves provider metadata when toggling social providers", async () => {
+		const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+			if (input === "/api/auth/banata/config/dashboard") {
+				return new Response(
+					JSON.stringify({
+						authMethods: {},
+						socialProviders: {
+							github: { enabled: true, demo: true },
+						},
+						features: {},
+						sessions: {},
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+
+			return new Response(
+				JSON.stringify({
+					authMethods: {},
+					socialProviders: {
+						github: { enabled: false, demo: true },
+					},
+					features: {},
+					sessions: {},
+				}),
+				{ status: 200, headers: { "content-type": "application/json" } },
+			);
+		});
+		vi.stubGlobal("fetch", fetchMock);
+
+		await toggleSocialProvider("github", false);
+
+		expect(fetchMock).toHaveBeenNthCalledWith(
+			2,
+			"/api/auth/banata/config/dashboard/save",
+			expect.objectContaining({
+				method: "POST",
+				body: JSON.stringify({
+					socialProviders: {
+						github: { enabled: false, demo: true },
+					},
+				}),
+			}),
 		);
 	});
 });

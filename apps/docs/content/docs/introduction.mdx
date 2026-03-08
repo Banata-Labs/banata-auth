@@ -1,189 +1,68 @@
 ---
 title: "Introduction"
-description: "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS, built on Convex and Next.js."
+description: "Banata Auth provides a dashboard-first auth platform and a separate self-hosted Convex integration."
 section: "Getting Started"
 order: 1
 ---
 
-## What is Banata Auth?
+## What Banata Auth Is
 
-Banata Auth is an **open-source authentication infrastructure platform** — a drop-in replacement for [WorkOS](https://workos.com) that gives you everything you need to add enterprise-grade authentication to your application: **user management**, **organizations**, **SSO**, **directory sync**, **RBAC**, **audit logs**, **webhooks**, **API keys**, and more — all fully type-safe and MIT-licensed.
+Banata Auth is auth infrastructure for:
 
----
+- user management
+- organizations
+- SSO and directory sync
+- RBAC
+- audit logs
+- webhooks
+- API keys
 
-## Why Banata Auth?
+There are **two distinct ways** to use it:
 
-### The Problem
+1. **Dashboard-first / API-first**
+   Use the dashboard and `@banata-auth/sdk`. Banata is the system of record and your app talks to Banata over HTTP, similar to WorkOS.
+2. **Self-hosted Convex runtime**
+   Use `@banata-auth/convex`, `@banata-auth/nextjs`, and `@banata-auth/react` to run the auth engine inside your own Convex deployment.
 
-Building authentication for modern SaaS applications means choosing between:
-
-1. **Managed services** (WorkOS, Clerk, Auth0) — Fast to set up, but expensive at scale, vendor-locked, and you don't own your data.
-2. **DIY from scratch** — Full control, but months of engineering work and ongoing security maintenance.
-3. **Auth libraries** (NextAuth, Better Auth alone) — Good starting point, but missing enterprise features like SSO, SCIM, organizations, audit logs, and admin dashboards.
-
-### The Solution
-
-Banata Auth sits in the sweet spot: **enterprise-grade auth infrastructure that you own and control**. You get the developer experience of a managed service with the freedom of open source.
-
-| Capability | WorkOS | Clerk | Auth0 | Banata Auth |
-|---|---|---|---|---|
-| **Open Source** | No | No | No | **Yes (MIT)** |
-| **Self-Hostable** | No | No | Community only | **Yes** |
-| **User Management** | Yes | Yes | Yes | **Yes** |
-| **Organizations & Multi-tenancy** | Yes | Yes | Yes | **Yes** |
-| **SSO (SAML/OIDC)** | Yes | Enterprise only | Yes | **Yes** |
-| **Directory Sync (SCIM)** | Yes | No | Yes | **Yes** |
-| **Role-Based Access Control** | Yes | Yes | Yes | **Yes** |
-| **Audit Logs** | Yes | Enterprise only | Enterprise only | **Yes** |
-| **Webhooks** | Yes | Yes | Yes | **Yes** |
-| **API Keys** | Yes | No | Yes | **Yes** |
-| **Magic Links** | Yes | Yes | Yes | **Yes** |
-| **Email OTP** | No | Yes | Yes | **Yes** |
-| **Multi-Factor Auth (TOTP)** | No | Yes | Yes | **Yes** |
-| **Passkeys (WebAuthn)** | No | Yes | Yes | **Yes** |
-| **Anonymous Auth** | No | No | No | **Yes** |
-| **Multi-Session** | No | Yes | No | **Yes** |
-| **Real-time Updates** | No | Yes | No | **Yes (Convex)** |
-| **Admin Dashboard** | Yes | Yes | Yes | **Yes** |
-| **TypeScript SDK** | Yes | Yes | Partial | **Yes (full)** |
-| **React Components** | No | Yes | Yes | **Yes** |
-| **Pricing** | Per-user | Per-user | Per-user | **Free forever** |
-
-### Key Advantages
-
-- **Open Source (MIT)** — No vendor lock-in. Fork it, modify it, self-host it. No per-user pricing, ever.
-- **Enterprise-grade from Day One** — Organizations, RBAC, audit logs, webhooks, and MFA are built in, not premium add-ons.
-- **Fully Type-safe** — TypeScript from SDK to database. Every API call, every hook, every configuration option is typed.
-- **Real-time Auth State** — Built on Convex, so auth state changes propagate to clients instantly. No polling, no stale data.
-- **Admin Dashboard Included** — A full-featured dashboard for managing users, organizations, SSO connections, API keys, branding, and more.
-- **12 Authentication Methods** — Email/password, social OAuth (10 providers), magic links, email OTP, passkeys, anonymous auth, and more.
+Those are different product shapes. The self-hosted path is more like embedding the auth engine into your stack. The dashboard-first path is closer to a managed auth platform.
 
 ---
 
-## How It Works
+## Recommended Starting Point
 
-Banata Auth integrates into your Next.js + Convex application through a set of npm packages. You install them, configure your auth settings, and you're ready to go.
+If you want the **WorkOS-style developer experience**, start with:
 
-```
-Your Next.js App
-    │
-    ├── @banata-auth/react    → React hooks & UI components
-    ├── @banata-auth/nextjs   → Route handler & middleware
-    └── @banata-auth/convex   → Backend auth engine (runs in Convex)
-```
+- the Banata dashboard
+- API keys
+- `@banata-auth/sdk`
+- thin app-side helpers such as `@banata-auth/nextjs`
 
-The auth engine runs entirely inside **Convex serverless functions**, giving you real-time subscriptions, automatic scaling, and zero cold starts. A reverse proxy in your Next.js app keeps auth cookies on your domain and handles OAuth callbacks.
-
-> For a deep dive into the architecture, see [Self-Hosting](/docs/self-hosting).
+If you need Banata to run inside your own infrastructure, use the self-hosted Convex guides instead.
 
 ---
 
-## Packages
+## Package Roles
 
-| Package | Purpose |
+| Package | Primary Role |
 |---|---|
-| **`@banata-auth/convex`** | Backend auth engine — plugins, triggers, database schema |
-| **`@banata-auth/nextjs`** | Next.js integration — route handler proxy, middleware, server utilities |
-| **`@banata-auth/react`** | React integration — provider, hooks, pre-built UI components |
-| **`@banata-auth/sdk`** | Server-side admin SDK — manage users, orgs, SSO, and more programmatically |
-| **`@banata-auth/shared`** | Shared types, validation schemas, error classes, and constants |
+| `@banata-auth/sdk` | Remote admin API client |
+| `@banata-auth/nextjs` | Next.js proxy and server helpers |
+| `@banata-auth/react` | React provider, hooks, and auth UI |
+| `@banata-auth/convex` | Self-hosting kit for a local Convex deployment |
+| `@banata-auth/shared` | Shared types, errors, and validation |
 
 ---
 
-## Authentication Methods
+## How To Read These Docs
 
-Banata Auth supports **12 authentication methods**, all configurable via the `BanataAuthConfig` object:
-
-| Method | Description |
-|---|---|
-| Email & Password | Traditional signup with email verification |
-| Social OAuth | Google, GitHub, Apple, Microsoft, Facebook, Twitter, Discord, Spotify, Twitch, LinkedIn |
-| Magic Links | Passwordless sign-in via email link |
-| Email OTP | One-time password sent via email |
-| Two-Factor (TOTP) | Authenticator app codes with backup codes |
-| Passkeys | WebAuthn biometric/hardware key authentication |
-| Anonymous | Start without credentials, link account later |
-| Multi-Session | Multiple concurrent sessions per user |
-| API Keys | Programmatic access with scoped permissions |
+- **[SDK Reference](/docs/sdk)** is the dashboard-first API surface.
+- **[Quick Start](/docs/quickstart)** is the self-hosted Convex + Next.js setup.
+- **[Convex Integration](/docs/convex)** explains the self-hosted backend package.
+- **[Project Structure](/docs/project-structure)** shows the real file layout for both models.
 
 ---
 
-## Enterprise Features
+## Important Version Notes
 
-| Feature | Description |
-|---|---|
-| **Organizations** | Multi-tenant workspaces with members, roles, and invitations |
-| **RBAC** | Role-based access control with granular permissions |
-| **Audit Logs** | 30 auto-logged auth events with actor/target/context tracking |
-| **Webhooks** | Event delivery with HMAC-SHA256 signatures and automatic retries |
-| **API Keys** | Scoped programmatic access for integrations |
-| **SSO** | SAML/OIDC single sign-on with enterprise identity providers |
-| **Directory Sync** | SCIM provisioning for user and group synchronization |
-| **Admin Portal** | Self-serve portal links for organization IT admins |
-| **Vault** | Envelope encryption for secrets via AES-256-GCM |
-
----
-
-## Security
-
-Banata Auth implements defense-in-depth security:
-
-- **Session Management** — Server-side sessions stored in Convex. Access tokens expire after 15 minutes; sessions expire after 7 days.
-- **Password Requirements** — Configurable via Zod schema. Default: 8-128 characters.
-- **HMAC-SHA256 Webhooks** — Webhook payloads are signed and verified with timing-safe comparison.
-- **Rate Limiting** — Built-in defaults: 600 requests/minute general, 30/minute for sign-in, 10/minute for sign-up.
-- **Input Validation** — 16 Zod schemas validate all input at the boundary.
-- **Error Hierarchy** — 7 typed error classes with appropriate HTTP status codes prevent information leakage.
-
----
-
-## How It Compares
-
-### vs. WorkOS
-
-WorkOS is the primary inspiration for Banata Auth. Both provide authentication infrastructure with enterprise features. The key differences:
-
-- **Open source vs. proprietary** — Banata Auth is MIT-licensed. WorkOS is closed-source with per-user pricing.
-- **Self-hosted vs. managed** — Banata Auth runs on your Convex deployment. WorkOS runs on their servers.
-- **Real-time vs. request-response** — Banata Auth leverages Convex's real-time subscriptions. WorkOS uses traditional REST APIs.
-- **React components included** — Banata Auth ships pre-built auth UI. WorkOS provides a headless API only.
-
-### vs. Clerk
-
-Clerk excels at developer experience with polished pre-built UI components. Banata Auth differs in:
-
-- **Ownership** — You own your auth data and can self-host. Clerk is fully managed.
-- **Audit logs** — Built-in with 30 auto-tracked events. Clerk offers audit logs only on enterprise plans.
-- **Pricing** — Banata Auth is free forever. Clerk charges per monthly active user.
-
-### vs. Auth0
-
-Auth0 is the incumbent enterprise auth platform. Banata Auth differs in:
-
-- **Simplicity** — Banata Auth is a focused TypeScript library, not a sprawling platform with its own scripting language.
-- **Modern stack** — Built for the React/Next.js ecosystem from day one.
-- **Cost** — Auth0's enterprise features require expensive tiers. Banata Auth includes everything.
-- **Type safety** — Banata Auth is TypeScript-first with full type coverage.
-
----
-
-## Next Steps
-
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-  <a href="/docs/quickstart" className="block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors">
-    <strong>Quick Start</strong>
-    <p className="text-sm text-muted-foreground mt-1">Get Banata Auth running in your project in under 10 minutes.</p>
-  </a>
-  <a href="/docs/sdk" className="block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors">
-    <strong>SDK Reference</strong>
-    <p className="text-sm text-muted-foreground mt-1">Complete API reference for the TypeScript admin SDK.</p>
-  </a>
-  <a href="/docs/convex" className="block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors">
-    <strong>Convex Integration</strong>
-    <p className="text-sm text-muted-foreground mt-1">Configure the backend with plugins and triggers.</p>
-  </a>
-  <a href="/docs/self-hosting" className="block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors">
-    <strong>Self-Hosting</strong>
-    <p className="text-sm text-muted-foreground mt-1">Architecture deep dive and self-hosting guide.</p>
-  </a>
-</div>
+- The current Convex integration is tested against `better-auth@1.4.x`.
+- Published `@banata-auth/*@0.1.0` packages were released with broken `workspace:*` internal dependencies. The repo has the fix; until the patched release is published, consumers on `0.1.0` need overrides.

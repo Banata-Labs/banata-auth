@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function GeneralSettingsPage() {
-	const { activeProject, isLoading, refresh } = useProjectEnvironment();
+	const { activeProject, isLoading, error, refresh } = useProjectEnvironment();
 	const { reportError } = useBackendStatus();
 
 	const [saving, setSaving] = useState(false);
@@ -83,6 +83,29 @@ export default function GeneralSettingsPage() {
 		);
 	}
 
+	if (!activeProject) {
+		return (
+			<div className="grid gap-6">
+				<div>
+					<h1 className="text-2xl font-semibold tracking-tight">General</h1>
+					<p className="mt-1 text-sm text-muted-foreground">
+						Project settings are unavailable until a project is loaded.
+					</p>
+				</div>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-sm">No active project</CardTitle>
+						<CardDescription>
+							{error ??
+								"Banata could not determine the current project. Reload the dashboard or create a new project from the switcher."}
+						</CardDescription>
+					</CardHeader>
+				</Card>
+			</div>
+		);
+	}
+
 	return (
 		<div className="grid gap-6">
 			<div>
@@ -128,13 +151,44 @@ export default function GeneralSettingsPage() {
 				</CardContent>
 			</Card>
 
+			{/* Client ID */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-sm">Client ID</CardTitle>
+					<CardDescription>
+						This public identifier is what customer apps pass to Banata so hosted auth and
+						runtime config resolve to this project.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="flex items-center gap-2">
+						<Input
+							value={activeProject?.slug ?? ""}
+							readOnly
+							className="font-mono text-sm bg-muted"
+						/>
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={() => activeProject?.slug && copyToClipboard(activeProject.slug, "clientId")}
+							title="Copy client ID"
+						>
+							{copiedField === "clientId" ? (
+								<Check className="size-4 text-emerald-500" />
+							) : (
+								<Copy className="size-4" />
+							)}
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
+
 			{/* Project ID */}
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-sm">Project ID</CardTitle>
 					<CardDescription>
-						A read-only identifier for your project. Used by SDKs to identify which project to
-						connect to.
+						This internal identifier is used inside Banata for permissions and data scoping.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>

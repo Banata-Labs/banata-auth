@@ -666,7 +666,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const { projectId } = getProjectScope(ctx.body);
 					await requireProjectPermission(ctx, {
 						db,
@@ -889,7 +889,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const { projectId } = getProjectScope(ctx.body);
 					await requireProjectPermission(ctx, {
 						db,

@@ -110,14 +110,14 @@ function createCtx(params?: {
 }
 
 describe("RBAC helpers", () => {
-	it("allows global admins through requireGlobalAdmin", () => {
+	it("allows global admins through requireGlobalAdmin", async () => {
 		const ctx = createCtx({ user: { role: "admin" } });
-		expect(requireGlobalAdmin(ctx).user.role).toBe("admin");
+		expect((await requireGlobalAdmin(ctx)).user.role).toBe("admin");
 	});
 
-	it("rejects non-admin users in requireGlobalAdmin", () => {
+	it("rejects non-admin users in requireGlobalAdmin", async () => {
 		const ctx = createCtx({ user: { role: "user" } });
-		expect(() => requireGlobalAdmin(ctx)).toThrowError(/Global admin access required/);
+		await expect(requireGlobalAdmin(ctx)).rejects.toThrowError(/Global admin access required/);
 	});
 
 	it("resolves role permissions from project role definitions", async () => {

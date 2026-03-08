@@ -1,6 +1,12 @@
 # @banata-auth/sdk
 
-Server-side SDK for the Banata Auth platform — manage users, organizations, SSO, RBAC, webhooks, and more.
+Dashboard-first Banata Auth API client.
+
+This package is the public product surface that should feel closest to WorkOS:
+
+- it authenticates with an API key
+- it talks to Banata HTTP endpoints
+- it does not access your database directly
 
 ## Installation
 
@@ -8,64 +14,37 @@ Server-side SDK for the Banata Auth platform — manage users, organizations, SS
 npm install @banata-auth/sdk
 ```
 
-## Quick start
+## Usage
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
 
-const banataAuth = new BanataAuth({
-  apiKey: "sk_live_...",
-  baseUrl: "https://your-convex-site.convex.site",
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_AUTH_API_KEY!,
+  baseUrl: process.env.BANATA_AUTH_BASE_URL!,
 });
 
-// List users
-const users = await banataAuth.userManagement.listUsers();
-
-// Create organization
-const org = await banataAuth.organizations.createOrganization({
-  name: "Acme Corp",
-});
-
-// Manage webhooks
-const endpoint = await banataAuth.webhooks.createEndpoint({
-  url: "https://example.com/webhooks",
-  eventTypes: ["user.created"],
-});
-
-// Verify webhook signatures
-const event = await banataAuth.webhooks.constructEvent({
-  payload: body,
-  sigHeader: headers["webhook-signature"],
-  secret: webhookSecret,
-});
+const users = await banata.users.listUsers({ limit: 20 });
 ```
 
 ## Resources
 
-| Resource | Description |
-|----------|-------------|
-| `userManagement` | CRUD users, list sessions, ban/unban |
-| `organizations` | Create/manage organizations and members |
-| `sso` | SSO connection management |
-| `directorySync` | SCIM directory sync |
-| `rbac` | Role-based access control |
-| `apiKeys` | API key lifecycle management |
-| `webhooks` | Webhook endpoints and signature verification |
-| `emails` | Send emails and manage templates (`emails.send()`, `emails.templates.list()`) |
-| `auditLogs` | Audit event creation and querying |
-| `events` | Event streaming |
-| `portal` | Admin portal link generation |
-| `vault` | Secret storage |
-| `domains` | Domain verification |
-| `projects` | Multi-tenant project management |
+- `users`
+- `organizations`
+- `sso`
+- `directories`
+- `webhooks`
+- `rbac`
+- `projects`
+- `vault`
+- `auditLogs`
+- `events`
+- `emails`
+- `domains`
+- `portal`
+- `apiKeys`
 
-## Features
+## Notes
 
-- Automatic retry with exponential backoff (5xx and 429)
-- `Retry-After` header support for rate limiting
-- Typed error classes (`AuthenticationError`, `RateLimitError`, etc.)
-- Configurable timeout and retry count
-
-## License
-
-MIT
+- Pass `baseUrl` explicitly. This is the Banata API origin your app should call.
+- For self-hosting, use the repo's self-hosting docs instead of this package README.

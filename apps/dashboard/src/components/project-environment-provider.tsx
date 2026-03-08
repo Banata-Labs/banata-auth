@@ -44,6 +44,11 @@ function storeId(key: string, value: string) {
 	localStorage.setItem(key, value);
 }
 
+function clearStoredId(key: string) {
+	if (typeof window === "undefined") return;
+	localStorage.removeItem(key);
+}
+
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
@@ -114,8 +119,14 @@ export function ProjectEnvironmentProvider({
 
 				setActiveProjectIdState(targetProject.id);
 				storeId(PROJECT_STORAGE_KEY, targetProject.id);
+			} else {
+				setActiveProjectIdState(null);
+				clearStoredId(PROJECT_STORAGE_KEY);
 			}
 		} catch (err) {
+			setProjects([]);
+			setActiveProjectIdState(null);
+			clearStoredId(PROJECT_STORAGE_KEY);
 			setError(err instanceof Error ? err.message : "Failed to load projects");
 		} finally {
 			setIsLoading(false);

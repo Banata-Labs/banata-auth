@@ -36,3 +36,16 @@ export type {
 
 // ─── Hooks (Trigger → Better Auth bridge) ───────────────────────
 export { createDatabaseHooks } from "./hooks";
+
+export {
+	ensureProjectAuthSecret,
+	readProjectSocialProviderSecret,
+	listProjectSocialProviderSecrets,
+	saveProjectSocialProviderSecret,
+	deleteProjectSocialProviderSecret,
+	PROJECT_AUTH_SECRET_CONTEXT,
+	PROJECT_AUTH_SECRET_NAME,
+	SOCIAL_PROVIDER_SECRET_CONTEXT,
+	type SocialProviderVaultSecret,
+	type PluginDBAdapter,
+} from "./plugins";

@@ -170,6 +170,70 @@ describe("createRouteHandler", () => {
 			);
 		});
 
+		it("injects a configured Banata client ID header", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+				project: { clientId: "customer-app" },
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
+				"customer-app",
+			);
+		});
+
+		it("resolves Banata scope from query parameters", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+			});
+
+			const request = createMockRequest(
+				"http://localhost:3000/api/auth/session?client_id=customer-app&project_id=project_123",
+			);
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
+				"customer-app",
+			);
+			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe(
+				"project_123",
+			);
+		});
+
+		it("resolves Banata scope from cookies", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+			});
+
+			const request = createMockRequest(
+				"http://localhost:3000/api/auth/session",
+				{
+					headers: {
+						cookie: "banata_client_id=customer-app; banata_project_id=project_123",
+					},
+				},
+			);
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
+				"customer-app",
+			);
+			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe(
+				"project_123",
+			);
+		});
+
 		it("sets host header to the Convex site host", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 

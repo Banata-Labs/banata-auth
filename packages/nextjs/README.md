@@ -1,6 +1,12 @@
 # @banata-auth/nextjs
 
-Next.js integration for Banata Auth -- route handler proxy, middleware, and server-side utilities.
+Next.js helpers for Banata Auth.
+
+Use this package when your Next.js app needs to:
+
+- proxy `/api/auth/*` requests to Banata auth endpoints
+- read auth state on the server
+- fetch authenticated Convex data in server components
 
 ## Installation
 
@@ -8,41 +14,33 @@ Next.js integration for Banata Auth -- route handler proxy, middleware, and serv
 npm install @banata-auth/nextjs
 ```
 
-## Quick start
-
-### Route handler
-
-```ts
-// app/api/auth/[...all]/route.ts
-import { createRouteHandler } from "@banata-auth/nextjs";
-
-const handler = createRouteHandler({
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
-
-export const { GET, POST } = handler;
-```
-
-### Server-side auth
+## Server Helpers
 
 ```ts
 import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 
-const { handler, isAuthenticated, getToken } = createBanataAuthServer({
+export const {
+  handler,
+  isAuthenticated,
+  getToken,
+  preloadAuthQuery,
+  fetchAuthQuery,
+  fetchAuthMutation,
+  fetchAuthAction,
+} = createBanataAuthServer({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
 });
-
-// In a Server Component or API route
-const authenticated = await isAuthenticated();
 ```
 
-## Features
+## Route Handler
 
-- Secure proxy route handler with header allowlisting
-- Server-side session and auth token retrieval
-- Middleware helpers for auth-gated routes
+```ts
+import { handler } from "@/lib/auth-server";
 
-## License
+export const { GET, POST } = handler;
+```
 
-MIT
+## Note
+
+This package is a thin app-side helper. It should be used with Banata's public auth surface, not as a reason to expose the full self-hosted runtime by default.

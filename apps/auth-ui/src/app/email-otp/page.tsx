@@ -2,14 +2,45 @@
 
 import { useState } from "react";
 import { AuthCard } from "@banata-auth/react";
+import {
+	DisabledAuthMethodCard,
+	LoadingProjectAuthCard,
+	MissingProjectScopeCard,
+	ProjectAuthErrorCard,
+} from "@/components/project-auth-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useProjectAuthConfig } from "@/lib/project-auth";
 
 export default function EmailOtpPage() {
 	const [email, setEmail] = useState("");
 	const [otp, setOtp] = useState("");
 	const [step, setStep] = useState<"request" | "verify">("request");
+	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } =
+		useProjectAuthConfig();
+
+	if (!hasScope) {
+		return <MissingProjectScopeCard />;
+	}
+
+	if (isLoading) {
+		return <LoadingProjectAuthCard title="Email OTP" />;
+	}
+
+	if (error) {
+		return <ProjectAuthErrorCard title="Email OTP" message={error} />;
+	}
+
+	if (!(config?.authMethods.emailOtp ?? false)) {
+		return (
+			<DisabledAuthMethodCard
+				title="Email OTP"
+				description="Use a one-time code sent to your email."
+				backHref={scopedPath("/sign-in")}
+			/>
+		);
+	}
 
 	return (
 		<AuthCard title="Email OTP" description="Use a one-time code sent to your email.">
@@ -17,7 +48,7 @@ export default function EmailOtpPage() {
 				<form
 					onSubmit={async (event) => {
 						event.preventDefault();
-						await fetch("/api/auth/email-otp/send-verification-otp", {
+						await fetch(scopedApiPath("/api/auth/email-otp/send-verification-otp"), {
 							method: "POST",
 							headers: { "content-type": "application/json" },
 							body: JSON.stringify({ email, type: "sign-in" }),
@@ -34,12 +65,16 @@ export default function EmailOtpPage() {
 				<form
 					onSubmit={async (event) => {
 						event.preventDefault();
-						await fetch("/api/auth/sign-in/email-otp", {
+						await fetch(scopedApiPath("/api/auth/sign-in/email-otp"), {
 							method: "POST",
 							headers: { "content-type": "application/json" },
-							body: JSON.stringify({ email, otp, callbackURL: "/org-selector" }),
+							body: JSON.stringify({
+								email,
+								otp,
+								callbackURL: scopedPath("/org-selector"),
+							}),
 						});
-						window.location.href = "/org-selector";
+						window.location.href = scopedPath("/org-selector");
 					}}
 					className="grid gap-3"
 				>

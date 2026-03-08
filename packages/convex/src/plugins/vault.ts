@@ -48,12 +48,50 @@ interface VaultSecretRow extends Record<string, unknown> {
 	updatedAt: number;
 }
 
+export interface VaultSecretMetadata {
+	[key: string]: unknown;
+}
+
+export interface VaultSecretRecord<TData = string> {
+	id: string;
+	name: string;
+	data: TData;
+	projectId?: string;
+	context?: string;
+	organizationId?: string;
+	version: number;
+	metadata: VaultSecretMetadata | null;
+	createdAt: number;
+	updatedAt: number;
+}
+
+export const PROJECT_AUTH_SECRET_CONTEXT = "project-auth";
+export const PROJECT_AUTH_SECRET_NAME = "better_auth_secret";
+export const SOCIAL_PROVIDER_SECRET_CONTEXT = "social-provider";
+
+export interface SocialProviderVaultSecret {
+	clientId: string;
+	clientSecret: string;
+	tenantId?: string;
+}
+
 // ─── Crypto Helpers ─────────────────────────────────────────────────
 
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96-bit IV for AES-GCM
 const INITIAL_VERSION = 1;
+
+function resolveMasterSecret(masterSecret?: string): string {
+	const secret = masterSecret ?? process.env.BETTER_AUTH_SECRET;
+	if (!secret) {
+		throw new Error(
+			"[BanataAuth Vault] BETTER_AUTH_SECRET is required for vault operations. " +
+				"Set it as an environment variable or pass masterSecret in vault plugin options.",
+		);
+	}
+	return secret;
+}
 
 /**
  * Derive an AES-256 key from the master secret using HKDF.
@@ -146,6 +184,291 @@ async function getCurrentVersion(db: PluginDBAdapter, scopeWhere: WhereClause[])
 	return rows[0] ? rows[0].version : INITIAL_VERSION;
 }
 
+function buildVaultWhere(scope: {
+	projectId?: string;
+	context?: string;
+	organizationId?: string;
+	name?: string;
+}): WhereClause[] {
+	const where: WhereClause[] = [];
+	if (scope.projectId) where.push({ field: "projectId", value: scope.projectId });
+	if (scope.context) where.push({ field: "context", value: scope.context });
+	if (scope.organizationId) where.push({ field: "organizationId", value: scope.organizationId });
+	if (scope.name) where.push({ field: "name", value: scope.name });
+	return where;
+}
+
+function parseMetadata(metadata: unknown): VaultSecretMetadata | null {
+	if (!metadata) return null;
+	if (typeof metadata === "string") {
+		const parsed = safeJsonParse(metadata);
+		return typeof parsed === "object" && parsed !== null ? (parsed as VaultSecretMetadata) : null;
+	}
+	return typeof metadata === "object" && metadata !== null ? (metadata as VaultSecretMetadata) : null;
+}
+
+function toVaultRecord<TData>(row: VaultSecretRow, data: TData): VaultSecretRecord<TData> {
+	return {
+		id: row.id,
+		name: row.name,
+		data,
+		projectId: row.projectId,
+		context: row.context,
+		organizationId: row.organizationId,
+		version: row.version,
+		metadata: parseMetadata(row.metadata),
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
+	};
+}
+
+export function generateSecureSecret(byteLength = 48): string {
+	const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function readVaultSecretByName<TData = string>(
+	db: PluginDBAdapter,
+	scope: {
+		projectId?: string;
+		context?: string;
+		organizationId?: string;
+		name: string;
+	},
+	options?: { masterSecret?: string; parse?: (value: string) => TData },
+): Promise<VaultSecretRecord<TData> | null> {
+	const rows = await db.findMany<VaultSecretRow>({
+		model: "vaultSecret",
+		where: buildVaultWhere(scope),
+		limit: 1,
+	});
+	const row = rows[0];
+	if (!row) {
+		return null;
+	}
+
+	const plaintext = await decryptValue(
+		row.encryptedValue,
+		row.iv,
+		resolveMasterSecret(options?.masterSecret),
+		row.version,
+	);
+	const data = options?.parse ? options.parse(plaintext) : (plaintext as TData);
+	return toVaultRecord(row, data);
+}
+
+export async function listVaultSecretsByContext(
+	db: PluginDBAdapter,
+	scope: {
+		projectId?: string;
+		context?: string;
+		organizationId?: string;
+	},
+	options?: { masterSecret?: string },
+): Promise<Array<VaultSecretRecord<string>>> {
+	const rows = await db.findMany<VaultSecretRow>({
+		model: "vaultSecret",
+		where: buildVaultWhere(scope),
+		limit: 500,
+		sortBy: { field: "updatedAt", direction: "desc" },
+	});
+
+	const masterSecret = resolveMasterSecret(options?.masterSecret);
+	return Promise.all(
+		rows.map(async (row) =>
+			toVaultRecord(
+				row,
+				await decryptValue(row.encryptedValue, row.iv, masterSecret, row.version),
+			),
+		),
+	);
+}
+
+export async function upsertVaultSecret(
+	db: PluginDBAdapter,
+	input: {
+		projectId?: string;
+		context?: string;
+		organizationId?: string;
+		name: string;
+		data: string;
+		metadata?: VaultSecretMetadata;
+	},
+	options?: { masterSecret?: string },
+): Promise<VaultSecretRow> {
+	const now = Date.now();
+	const version = await getCurrentVersion(
+		db,
+		buildVaultWhere({
+			projectId: input.projectId,
+			organizationId: input.organizationId,
+		}),
+	);
+	const { encryptedValue, iv } = await encryptValue(
+		input.data,
+		resolveMasterSecret(options?.masterSecret),
+		version,
+	);
+	const existingRows = await db.findMany<VaultSecretRow>({
+		model: "vaultSecret",
+		where: buildVaultWhere({
+			projectId: input.projectId,
+			context: input.context,
+			organizationId: input.organizationId,
+			name: input.name,
+		}),
+		limit: 1,
+	});
+	const metadata = input.metadata ? JSON.stringify(input.metadata) : undefined;
+	if (existingRows[0]) {
+		return (await db.update<VaultSecretRow>({
+			model: "vaultSecret",
+			where: [{ field: "id", value: existingRows[0].id }],
+			update: {
+				encryptedValue,
+				iv,
+				version,
+				...(metadata !== undefined ? { metadata } : {}),
+				updatedAt: now,
+			},
+		})) as VaultSecretRow;
+	}
+
+	return db.create<VaultSecretRow>({
+		model: "vaultSecret",
+		data: {
+			name: input.name,
+			encryptedValue,
+			iv,
+			version,
+			...(input.projectId ? { projectId: input.projectId } : {}),
+			...(input.context ? { context: input.context } : {}),
+			...(input.organizationId ? { organizationId: input.organizationId } : {}),
+			...(metadata !== undefined ? { metadata } : {}),
+			createdAt: now,
+			updatedAt: now,
+		},
+	});
+}
+
+export async function deleteVaultSecretByName(
+	db: PluginDBAdapter,
+	scope: {
+		projectId?: string;
+		context?: string;
+		organizationId?: string;
+		name: string;
+	},
+): Promise<void> {
+	await db.delete({
+		model: "vaultSecret",
+		where: buildVaultWhere(scope),
+	});
+}
+
+export async function ensureProjectAuthSecret(
+	db: PluginDBAdapter,
+	projectId: string,
+	options?: { masterSecret?: string },
+): Promise<string> {
+	const existing = await readVaultSecretByName(db, {
+		projectId,
+		context: PROJECT_AUTH_SECRET_CONTEXT,
+		name: PROJECT_AUTH_SECRET_NAME,
+	}, options);
+	if (existing) {
+		return existing.data;
+	}
+
+	const secret = generateSecureSecret();
+	await upsertVaultSecret(
+		db,
+		{
+			projectId,
+			context: PROJECT_AUTH_SECRET_CONTEXT,
+			name: PROJECT_AUTH_SECRET_NAME,
+			data: secret,
+			metadata: { kind: "better_auth_secret" },
+		},
+		options,
+	);
+	return secret;
+}
+
+export async function readProjectSocialProviderSecret(
+	db: PluginDBAdapter,
+	projectId: string,
+	providerId: string,
+	options?: { masterSecret?: string },
+): Promise<VaultSecretRecord<SocialProviderVaultSecret> | null> {
+	return readVaultSecretByName(
+		db,
+		{
+			projectId,
+			context: SOCIAL_PROVIDER_SECRET_CONTEXT,
+			name: providerId,
+		},
+		{
+			...options,
+			parse: (value) => JSON.parse(value) as SocialProviderVaultSecret,
+		},
+	);
+}
+
+export async function listProjectSocialProviderSecrets(
+	db: PluginDBAdapter,
+	projectId: string,
+	options?: { masterSecret?: string },
+): Promise<Array<VaultSecretRecord<SocialProviderVaultSecret>>> {
+	const rows = await listVaultSecretsByContext(
+		db,
+		{ projectId, context: SOCIAL_PROVIDER_SECRET_CONTEXT },
+		options,
+	);
+	return rows.map((row) => ({
+		...row,
+		data: JSON.parse(row.data) as SocialProviderVaultSecret,
+	}));
+}
+
+export async function saveProjectSocialProviderSecret(
+	db: PluginDBAdapter,
+	input: {
+		projectId: string;
+		providerId: string;
+		credentials: SocialProviderVaultSecret;
+	},
+	options?: { masterSecret?: string },
+): Promise<void> {
+	await upsertVaultSecret(
+		db,
+		{
+			projectId: input.projectId,
+			context: SOCIAL_PROVIDER_SECRET_CONTEXT,
+			name: input.providerId,
+			data: JSON.stringify(input.credentials),
+			metadata: {
+				providerId: input.providerId,
+				clientId: input.credentials.clientId,
+				hasTenantId: Boolean(input.credentials.tenantId),
+			},
+		},
+		options,
+	);
+}
+
+export async function deleteProjectSocialProviderSecret(
+	db: PluginDBAdapter,
+	projectId: string,
+	providerId: string,
+): Promise<void> {
+	await deleteVaultSecretByName(db, {
+		projectId,
+		context: SOCIAL_PROVIDER_SECRET_CONTEXT,
+		name: providerId,
+	});
+}
+
 /** @internal Exported for testing. */
 export function uint8ToBase64(bytes: Uint8Array): string {
 	let binary = "";
@@ -229,14 +552,7 @@ const rotateKeySchema = z
  */
 export function vaultPlugin(options?: VaultPluginOptions): BetterAuthPlugin {
 	function getMasterSecret(): string {
-		const secret = options?.masterSecret ?? process.env.BETTER_AUTH_SECRET;
-		if (!secret) {
-			throw new Error(
-				"[BanataAuth Vault] BETTER_AUTH_SECRET is required for vault operations. " +
-					"Set it as an environment variable or pass masterSecret in vault plugin options.",
-			);
-		}
-		return secret;
+		return resolveMasterSecret(options?.masterSecret);
 	}
 
 	return {

@@ -1,89 +1,94 @@
 ---
 title: "Project Structure"
-description: "Overview of the Banata Auth monorepo — packages, applications, and how they connect."
+description: "How Banata Auth is organized for dashboard-first usage and for self-hosting."
 section: "Getting Started"
 order: 3
 ---
 
-> For a comprehensive walkthrough of the architecture, monorepo layout, database schema, plugin system, and build tooling, see the [Self-Hosting](/docs/self-hosting) guide.
+Banata Auth now needs to be read in two layers:
+
+1. **Public, dashboard-first surface**
+2. **Self-hosting implementation surface**
+
+The first is what most users should integrate with. The second exists for Banata's own dogfooding and for teams that explicitly want to self-host.
 
 ---
 
-## Packages
+## Public Surface
 
-Banata Auth ships as **5 npm packages** that you install in your application:
+These are the packages that fit a dashboard-first model:
 
-| Package | What It Does |
+| Package | Purpose |
 |---|---|
-| **`@banata-auth/convex`** | The backend auth engine. Runs inside Convex — handles sessions, OAuth, database, and all auth logic. |
-| **`@banata-auth/nextjs`** | Next.js integration. Provides the route handler (reverse proxy), middleware for route protection, and server-side auth utilities. |
-| **`@banata-auth/react`** | React integration. Provider, hooks (`useUser`, `useSession`, `useOrganization`), and pre-built UI components. |
-| **`@banata-auth/sdk`** | Server-side admin SDK. Programmatic management of users, organizations, SSO, webhooks, and more. |
-| **`@banata-auth/shared`** | Shared types, validation schemas, error classes, and constants used across all packages. |
+| `@banata-auth/sdk` | Remote admin API client |
+| `@banata-auth/nextjs` | Next.js proxy and server helpers |
+| `@banata-auth/react` | React provider, hooks, and auth UI |
+| `@banata-auth/shared` | Shared types and errors |
 
-### How They Connect
-
-```
-@banata-auth/shared  ← Foundation (used by all other packages)
-    │
-    ├── @banata-auth/sdk        ← Server admin SDK
-    │
-    ├── @banata-auth/react      ← React hooks & components
-    │       │
-    │       └── @banata-auth/nextjs  ← Next.js route handler & middleware
-    │
-    └── @banata-auth/convex     ← Convex backend engine
-```
+In this model, your app talks to Banata endpoints over HTTP and Banata owns the auth system of record.
 
 ---
 
-## Your Project Structure
+## Self-Hosting Surface
 
-After following the [Quick Start](/docs/quickstart), your project should look like this:
+`@banata-auth/convex` is the self-hosting kit. It exists so Banata can dogfood the runtime and so advanced users can run the auth engine inside their own Convex deployment.
 
+That path requires local backend files in the consumer app:
+
+```text
+convex/
+├── convex.config.ts
+├── auth.config.ts
+├── authNode.ts
+├── http.ts
+└── banataAuth/
+    ├── convex.config.ts
+    ├── schema.ts
+    ├── auth.ts
+    └── adapter.ts
 ```
-my-app/
-├── convex/
-│   ├── banataAuth/
-│   │   ├── auth.ts          # Your auth configuration
-│   │   └── schema.ts        # Auth database schema
-│   ├── auth.config.ts       # JWT validation config
-│   └── http.ts              # HTTP route registration
-├── src/
-│   ├── app/
-│   │   ├── api/auth/[...all]/
-│   │   │   └── route.ts     # Auth proxy route
-│   │   ├── sign-in/page.tsx
-│   │   ├── sign-up/page.tsx
-│   │   └── layout.tsx       # Root layout with provider
-│   ├── components/
-│   │   └── convex-client-provider.tsx
-│   └── lib/
-│       ├── auth-server.ts   # Server auth utilities
-│       └── auth-client.ts   # Client auth instance
-├── .env.local               # Environment variables
-└── package.json
-```
+
+If you are self-hosting, use:
+
+- [Quick Start](/docs/quickstart)
+- [Convex Integration](/docs/convex)
+- [Self-Hosting](/docs/self-hosting)
 
 ---
 
-## Key Files Explained
+## Monorepo Layout
 
-| File | Purpose |
+```text
+banata-auth/
+├── apps/
+│   ├── dashboard/
+│   ├── example-app/
+│   ├── auth-ui/
+│   ├── admin-portal/
+│   └── docs/
+├── packages/
+│   ├── sdk/
+│   ├── nextjs/
+│   ├── react/
+│   ├── convex/
+│   ├── shared/
+│   └── ui/
+└── tooling/
+```
+
+### What Each App Is For
+
+| App | Purpose |
 |---|---|
-| `convex/banataAuth/auth.ts` | Your auth configuration — enable/disable auth methods, configure social providers, set up email callbacks |
-| `convex/banataAuth/schema.ts` | Re-exports the Banata Auth database schema (26 tables) |
-| `convex/auth.config.ts` | Tells Convex how to validate JWTs |
-| `convex/http.ts` | Registers auth HTTP endpoints on your Convex deployment |
-| `src/app/api/auth/[...all]/route.ts` | Reverse proxy — forwards auth requests to Convex, keeps cookies on your domain |
-| `src/lib/auth-server.ts` | Server utilities — `isAuthenticated()`, `getToken()`, `preloadAuthQuery()` |
-| `src/lib/auth-client.ts` | Client-side auth client for sign-in, sign-up, sign-out |
+| `apps/dashboard` | Banata admin dashboard |
+| `apps/example-app` | Reference self-hosted integration |
+| `apps/auth-ui` | Auth UI pages |
+| `apps/admin-portal` | End-user admin portal |
+| `apps/docs` | Documentation site |
 
 ---
 
-## What's Next
+## Practical Rule
 
-- **[Quick Start](/docs/quickstart)** — Step-by-step setup guide
-- **[Convex Integration](/docs/convex)** — Backend configuration details
-- **[Next.js Integration](/docs/nextjs)** — Route handler and middleware
-- **[Self-Hosting](/docs/self-hosting)** — Full architecture and deployment guide
+- If a user only needs Banata as an auth service, point them to the dashboard and SDK.
+- If a user explicitly wants to run auth inside their own Convex deployment, point them to the self-hosting docs and GitHub examples.

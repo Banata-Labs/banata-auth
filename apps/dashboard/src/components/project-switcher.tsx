@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { useProjectEnvironment } from "./project-environment-provider";
 
 export function ProjectSwitcher({ className }: { className?: string }) {
-	const { projects, activeProject, setActiveProjectId, isLoading, refresh } =
+	const { projects, activeProject, setActiveProjectId, isLoading, error, refresh } =
 		useProjectEnvironment();
 	const [createOpen, setCreateOpen] = useState(false);
 	const [creating, setCreating] = useState(false);
@@ -71,7 +71,7 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 		}
 	};
 
-	if (isLoading || !activeProject) {
+	if (isLoading) {
 		return (
 			<div
 				className={cn(
@@ -84,6 +84,10 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 			</div>
 		);
 	}
+
+	const triggerLabel = activeProject?.name ?? (projects.length > 0 ? "Select project" : "No project");
+
+	const emptyState = !activeProject && projects.length === 0;
 
 	return (
 		<>
@@ -99,7 +103,7 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 						)}
 					>
 						<FolderKanban className="size-4 shrink-0 text-sidebar-primary" />
-						<span className="truncate flex-1 text-left">{activeProject.name}</span>
+						<span className="truncate flex-1 text-left">{triggerLabel}</span>
 						<ChevronsUpDown className="size-3.5 shrink-0 text-sidebar-foreground/40" />
 					</button>
 				</DropdownMenuTrigger>
@@ -109,8 +113,27 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 						Projects
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator />
+					{error ? (
+						<>
+							<div className="px-2 py-2 text-xs text-destructive">{error}</div>
+							<DropdownMenuItem
+								className="flex items-center gap-2.5 py-2"
+								onSelect={() => {
+									void refresh();
+								}}
+							>
+								<span className="text-[13px] font-medium">Retry loading projects</span>
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+						</>
+					) : null}
+					{emptyState ? (
+						<div className="px-2 py-2 text-xs text-muted-foreground">
+							No project is active yet. Create one to start configuring auth for an app.
+						</div>
+					) : null}
 					{projects.map((project) => {
-						const isActive = project.id === activeProject.id;
+						const isActive = project.id === activeProject?.id;
 						return (
 							<DropdownMenuItem
 								key={project.id}
@@ -130,7 +153,7 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 							</DropdownMenuItem>
 						);
 					})}
-					<DropdownMenuSeparator />
+					{projects.length > 0 ? <DropdownMenuSeparator /> : null}
 					<DropdownMenuItem
 						className="flex items-center gap-2.5 py-2 text-muted-foreground"
 						onSelect={() => setCreateOpen(true)}

@@ -1,416 +1,92 @@
 ---
 title: "Convex Integration"
-description: "Complete reference for @banata-auth/convex — auth factory, plugin system, triggers, database schema, and HTTP route registration."
+description: "Self-hosting reference for running Banata Auth inside your own Convex deployment."
 section: "Packages"
 order: 17
 ---
 
-The `@banata-auth/convex` package is the **heart of Banata Auth** — it creates the Better Auth instance, configures plugins, wires up database triggers, defines the schema, and registers HTTP routes. All auth logic runs inside Convex functions.
+`@banata-auth/convex` is **not** the dashboard-first integration path. It is the self-hosting package for teams that want the auth engine to run inside their own Convex deployment.
 
-```bash
-npm install @banata-auth/convex
-```
+If you want Banata to behave like WorkOS, start with the dashboard and [`@banata-auth/sdk`](/docs/sdk). Use this page only when you intentionally want self-hosting.
 
 ---
 
-## Entry Points
+## What This Package Does
 
-| Import | What It Provides |
+When you use `@banata-auth/convex`:
+
+- users, sessions, organizations, and auth config live in your Convex deployment
+- Better Auth is instantiated inside your Convex runtime
+- you must register a local Convex component and generate a local adapter
+
+That is why this package belongs in the **self-hosting** section of the docs.
+
+---
+
+## Supported Version Line
+
+Use:
+
+- `better-auth@1.4.21`
+- `@convex-dev/better-auth@0.10.13`
+
+The current package line should be treated as `better-auth 1.4.x` only.
+
+---
+
+## Required Local Files
+
+Using the package requires these local files in the consuming app:
+
+```text
+convex/
+├── convex.config.ts
+├── auth.config.ts
+├── authNode.ts
+├── http.ts
+└── banataAuth/
+    ├── convex.config.ts
+    ├── schema.ts
+    ├── auth.ts
+    └── adapter.ts
+```
+
+The important detail is that **local component registration is required**. A package import alone is not enough because the adapter functions are generated inside the consumer app.
+
+---
+
+## Package Entry Points
+
+| Import | Use |
 |---|---|
-| `@banata-auth/convex` | `createBanataAuth`, `createBanataAuthComponent`, `createBanataAuthOptions`, `BanataAuthConfig` |
-| `@banata-auth/convex/schema` | 26-table database schema |
-| `@banata-auth/convex/auth-config` | JWT validation config for Convex |
-| `@banata-auth/convex/adapter` | Convex database adapter for Better Auth |
-| `@banata-auth/convex/http` | HTTP route registration helpers |
-| `@banata-auth/convex/triggers` | 14 trigger hook definitions |
-| `@banata-auth/convex/plugins` | Individual plugin imports |
-| `@banata-auth/convex/convex.config` | Convex component configuration |
+| `@banata-auth/convex` | Auth factory and route registration helpers |
+| `@banata-auth/convex/schema` | Self-hosted schema re-export |
+| `@banata-auth/convex/auth-config` | Convex JWT auth-config helper |
+| `@banata-auth/convex/adapter` | Helper for generating local adapter CRUD functions |
+| `@banata-auth/convex/node` | Node-side auth handling for the proxy route pattern |
+| `@banata-auth/convex/plugins` | Advanced plugin access |
 
 ---
 
-## Setup
+## Recommended Self-Hosted Flow
 
-You need 4 files in your `convex/` directory to set up the backend:
+1. Register a local Convex component in `convex/banataAuth/convex.config.ts`.
+2. Register that component in `convex/convex.config.ts`.
+3. Re-export the schema in `convex/banataAuth/schema.ts`.
+4. Build the auth factory in `convex/banataAuth/auth.ts`.
+5. Generate the adapter CRUD functions in `convex/banataAuth/adapter.ts`.
+6. Route requests through `convex/authNode.ts` and `convex/http.ts`.
 
-### 1. Auth Config (`convex/auth.config.ts`)
-
-Tells Convex how to validate JWTs issued by Better Auth:
-
-```typescript
-import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
-import type { AuthConfig } from "convex/server";
-
-export default {
-  providers: [getAuthConfigProvider()],
-} satisfies AuthConfig;
-```
-
-### 2. Schema (`convex/banataAuth/schema.ts`)
-
-Re-export the auth database schema:
-
-```typescript
-export { default } from "@banata-auth/convex/schema";
-```
-
-### 3. Auth Factory (`convex/banataAuth/auth.ts`)
-
-Configure and create the auth instance:
-
-```typescript
-import {
-  createBanataAuth,
-  createBanataAuthComponent,
-  createBanataAuthOptions,
-  type BanataAuthConfig,
-} from "@banata-auth/convex";
-import type { GenericCtx } from "@convex-dev/better-auth/utils";
-import { components } from "../_generated/api";
-import type { DataModel } from "../_generated/dataModel";
-import authConfig from "../auth.config";
-import schema from "./schema";
-
-export const authComponent = createBanataAuthComponent<
-  DataModel,
-  typeof schema
->(components.banataAuth, schema);
-
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
-    authMethods: { emailPassword: true },
-  };
-}
-
-export const createAuth = (ctx: GenericCtx<DataModel>) =>
-  createBanataAuth(ctx, {
-    authComponent,
-    authConfig,
-    config: buildConfig(),
-  });
-```
-
-### 4. HTTP Router (`convex/http.ts`)
-
-Register auth routes:
-
-```typescript
-import { httpRouter } from "convex/server";
-import { authComponent, createAuth } from "./banataAuth/auth";
-
-const http = httpRouter();
-authComponent.registerRoutes(http, createAuth);
-
-export default http;
-```
+The full file contents are in [Quick Start](/docs/quickstart).
 
 ---
 
-## `BanataAuthConfig` Reference
+## Why This Is Separate From The Public Story
 
-The complete configuration type:
+The public product goal is dashboard-first. `@banata-auth/convex` exists for:
 
-```typescript
-interface BanataAuthConfig {
-  // Required
-  siteUrl: string;        // Your app's public URL
-  secret: string;         // Auth secret for signing tokens/sessions
+- Banata's own dogfooding
+- GitHub-based self-hosting
+- advanced teams that explicitly want to own the auth runtime
 
-  // Optional
-  appName?: string;       // Display name for your app
-
-  // Authentication methods (all boolean toggles)
-  authMethods?: {
-    emailPassword?: boolean;   // Email & password sign-up/sign-in
-    magicLink?: boolean;       // Passwordless email links
-    emailOtp?: boolean;        // One-time password via email
-    twoFactor?: boolean;       // TOTP-based MFA
-    passkey?: boolean;         // WebAuthn biometric/hardware keys
-    anonymous?: boolean;       // Anonymous sessions
-    multiSession?: boolean;    // Multiple concurrent sessions
-    organization?: boolean;    // Multi-tenant organizations
-  };
-
-  // Social OAuth providers
-  socialProviders?: {
-    google?: { clientId: string; clientSecret: string };
-    github?: { clientId: string; clientSecret: string };
-    apple?: { clientId: string; clientSecret: string };
-    microsoft?: { clientId: string; clientSecret: string; tenantId?: string };
-    facebook?: { clientId: string; clientSecret: string };
-    twitter?: { clientId: string; clientSecret: string };
-    discord?: { clientId: string; clientSecret: string };
-    spotify?: { clientId: string; clientSecret: string };
-    twitch?: { clientId: string; clientSecret: string };
-    linkedin?: { clientId: string; clientSecret: string };
-  };
-
-  // Email callbacks
-  email?: {
-    sendVerificationEmail?: (params: { user: User; url: string; token: string }) => Promise<void>;
-    sendResetPassword?: (params: { user: User; url: string; token: string }) => Promise<void>;
-    sendMagicLink?: (params: { email: string; url: string; token: string }) => Promise<void>;
-    sendOtp?: (params: { email: string; otp: string }) => Promise<void>;
-    sendInvitationEmail?: (params: { invitation: Invitation }) => Promise<void>;
-    sendChangeEmail?: (params: { user: User; url: string; token: string }) => Promise<void>;
-  };
-
-  // Passkey (WebAuthn) configuration
-  passkey?: {
-    rpId: string;     // Relying party ID (e.g., "localhost" or "myapp.com")
-    rpName: string;   // Display name
-    origin: string;   // Origin URL (e.g., "http://localhost:3000")
-  };
-
-  // Organization configuration
-  organizationConfig?: {
-    allowUserToCreateOrganization?: boolean;  // Default: true
-    organizationLimit?: number;                // Default: 5
-    creatorRole?: string;                      // Default: "owner"
-    membershipLimit?: number;                  // Default: 100
-  };
-
-  // SSO configuration (planned)
-  ssoConfig?: {
-    // SAML/OIDC settings — not yet available in Convex runtime
-  };
-
-  // SCIM configuration (planned)
-  scimConfig?: {
-    // Directory sync settings — not yet available in Convex runtime
-  };
-
-  // API key configuration
-  apiKeyConfig?: {
-    enabled: boolean;
-    expiresIn?: number;    // Seconds
-    prefix?: string;       // Key prefix (default: "ba")
-  };
-
-  // Trigger hooks
-  triggers?: BanataAuthTriggers;
-
-  // Trusted origins for CORS
-  trustedOrigins?: string[];
-
-  // Advanced options
-  advanced?: {
-    // Better Auth advanced options pass-through
-  };
-}
-```
-
----
-
-## Plugin System
-
-Banata Auth uses Better Auth's plugin system to add features. Plugins are assembled automatically based on your config.
-
-### Always-On Plugins (7)
-
-These are always enabled — you can't turn them off:
-
-| Plugin | Purpose |
-|---|---|
-| `convex()` | Convex database adapter — connects Better Auth to Convex storage |
-| `auditLog()` | Audit logging — 30 auto-tracked events, 3 API endpoints |
-| `webhookSystem()` | Webhook delivery — HMAC-SHA256 signing, 5 retries, endpoint CRUD |
-| `configPlugin()` | Dashboard config API — 11 endpoints for managing roles, branding, email settings |
-| `admin()` | Admin operations — elevated permissions for admin users |
-| `bearer()` | Bearer token auth — for server-to-server authentication |
-| `username()` | Username/password — sign in with username instead of email |
-
-### Conditionally-Enabled Plugins (8)
-
-These are enabled based on your `BanataAuthConfig`:
-
-| Plugin | Enabled When | What It Adds |
-|---|---|---|
-| Magic Link | `authMethods.magicLink` | Passwordless email sign-in |
-| Email OTP | `authMethods.emailOtp` | One-time password via email |
-| Two-Factor | `authMethods.twoFactor` | TOTP MFA with backup codes |
-| Passkey | `authMethods.passkey` | WebAuthn biometric/hardware key auth |
-| Anonymous | `authMethods.anonymous` | Anonymous sessions, later account linking |
-| Multi-Session | `authMethods.multiSession` | Multiple concurrent sessions per user |
-| Organization | `authMethods.organization` | Multi-tenant orgs, members, invitations |
-| API Key | `apiKeyConfig` set | Scoped programmatic access keys |
-
-### SSO and SCIM (Disabled)
-
-The SSO (SAML/OIDC) and SCIM (directory sync) plugins are **not currently available** because they depend on Node.js built-ins (XML parsing, crypto operations) that aren't available in the Convex runtime. These are planned for future releases.
-
----
-
-## Trigger System
-
-Triggers let you execute custom logic when auth events occur. They're defined in your `BanataAuthConfig`:
-
-```typescript
-function buildConfig(): BanataAuthConfig {
-  return {
-    // ...other config...
-
-    triggers: {
-      onUserCreated: async ({ user }) => {
-        console.log("New user:", user.email);
-        // Sync to CRM, send welcome Slack message, etc.
-      },
-
-      onSessionCreated: async ({ session, user }) => {
-        console.log(`${user.email} signed in`);
-        // Track analytics, update last-seen, etc.
-      },
-
-      onOrganizationCreated: async ({ organization, creator }) => {
-        console.log(`Org created: ${organization.name}`);
-        // Provision default resources for new org
-      },
-    },
-  };
-}
-```
-
-### Available Triggers (14)
-
-| Trigger | Parameters | Wired to DB Hook? |
-|---|---|---|
-| `onUserCreated` | `{ user }` | Yes |
-| `onUserUpdated` | `{ user, changes }` | Yes |
-| `onUserDeleted` | `{ userId }` | Yes |
-| `onSessionCreated` | `{ session, user }` | Yes |
-| `onSessionRevoked` | `{ sessionId }` | Yes |
-| `onSessionRefreshed` | `{ session }` | Yes |
-| `onOrganizationCreated` | `{ organization, creator }` | No |
-| `onOrganizationUpdated` | `{ organization, changes }` | No |
-| `onOrganizationDeleted` | `{ organizationId }` | No |
-| `onMemberAdded` | `{ member, organization }` | No |
-| `onMemberRemoved` | `{ memberId, organization }` | No |
-| `onInvitationCreated` | `{ invitation }` | No |
-| `onInvitationAccepted` | `{ invitation, member }` | No |
-| `onEmailVerified` | `{ user }` | No |
-
-> **Note:** Only 6 of the 14 triggers are currently wired to Better Auth's `databaseHooks` system (the user and session triggers). The remaining 8 are defined but need to be connected to plugin hooks.
-
----
-
-## Database Schema (26 Tables)
-
-The schema is defined at `@banata-auth/convex/schema` and includes these tables:
-
-### Core Auth Tables
-
-| Table | Purpose | Key Fields |
-|---|---|---|
-| `user` | User accounts | email, name, image, role, emailVerified, banned, metadata |
-| `session` | Active sessions | userId, token, expiresAt, ipAddress, userAgent |
-| `account` | Auth provider links | userId, providerId, accountId, accessToken, refreshToken |
-| `verification` | Email/reset tokens | identifier, value, expiresAt |
-
-### Organization Tables
-
-| Table | Purpose | Key Fields |
-|---|---|---|
-| `organization` | Organizations | name, slug, logo, metadata |
-| `member` | Memberships | userId, organizationId, role |
-| `invitation` | Invitations | email, organizationId, role, status, expiresAt |
-
-### RBAC Tables
-
-| Table | Purpose | Key Fields |
-|---|---|---|
-| `role` | Custom roles | name, description, permissions |
-| `permission` | Permissions | name, description |
-
-### Security Tables
-
-| Table | Purpose | Key Fields |
-|---|---|---|
-| `twoFactor` | TOTP secrets | userId, secret, backupCodes |
-| `passkey` | WebAuthn credentials | userId, credentialId, publicKey |
-| `apikey` | API keys | userId, hashedKey, permissions, expiresAt |
-
-### Infrastructure Tables
-
-| Table | Purpose | Key Fields |
-|---|---|---|
-| `auditLog` | Audit trail | action, actor, target, context, changes, timestamp |
-| `webhookEndpoint` | Webhook URLs | url, events, secret |
-| `webhookDelivery` | Delivery tracking | endpointId, event, status, attempts |
-| `ssoProvider` | SSO connections | organizationId, type, config |
-| `config` | Runtime config | key, value |
-
-Plus ~9 additional internal Better Auth tables for OAuth state, anonymous sessions, multi-session management, etc.
-
----
-
-## HTTP Route Registration
-
-`authComponent.registerRoutes(http, createAuth)` registers all Better Auth HTTP routes:
-
-| Route Pattern | Methods | Purpose |
-|---|---|---|
-| `/api/auth/sign-in/*` | POST | Sign-in (email, social, magic link, OTP) |
-| `/api/auth/sign-up/*` | POST | Sign-up (email) |
-| `/api/auth/sign-out` | POST | Sign-out |
-| `/api/auth/callback/*` | GET, POST | OAuth callbacks |
-| `/api/auth/session` | GET | Get current session |
-| `/api/auth/verify-email` | GET | Email verification |
-| `/api/auth/reset-password` | POST | Password reset |
-| `/api/auth/.well-known/jwks.json` | GET | JWKS endpoint for JWT verification |
-| `/api/auth/convex/token` | POST | Convex JWT token exchange |
-| `/api/auth/organization/*` | POST | Organization management |
-| `/api/auth/two-factor/*` | POST | MFA setup and verification |
-| `/api/auth/passkey/*` | POST | WebAuthn registration and authentication |
-| `/api/auth/api-key/*` | POST | API key management |
-| `/api/auth/audit/*` | POST | Audit log endpoints |
-| `/api/auth/config/*` | GET, POST | Dashboard config endpoints |
-
----
-
-## Custom Convex Functions
-
-You can write Convex queries and mutations that access auth data:
-
-```typescript
-// convex/myFunctions.ts
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
-import { createAuth } from "./banataAuth/auth";
-
-export const getMyData = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    // Query your own tables using the authenticated user
-    const userId = identity.subject;
-    return await ctx.db
-      .query("myTable")
-      .filter((q) => q.eq(q.field("userId"), userId))
-      .collect();
-  },
-});
-```
-
----
-
-## Environment Variables
-
-The Convex backend needs these environment variables (set via `npx convex env set`):
-
-| Variable | Required | Description |
-|---|---|---|
-| `BETTER_AUTH_SECRET` | Yes | Secret for signing sessions and tokens |
-| `SITE_URL` | Yes | Your app's public URL |
-| Provider credentials | If using social OAuth | `GITHUB_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, etc. |
-| `RESEND_API_KEY` | If sending emails | Resend API key for email delivery |
-
----
-
-## What's Next
-
-- **[Environment Variables](/docs/env-vars)** — Complete reference for all variables
-- **[SDK Reference](/docs/sdk)** — Server-side admin SDK
-- **[Deploy](/docs/deploy)** — Production deployment guide
+It should not be treated as the default first-run experience for most users.

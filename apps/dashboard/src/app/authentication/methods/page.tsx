@@ -5,9 +5,15 @@ import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SkeletonHeader, SkeletonMethodCard } from "@/components/ui/skeleton";
-import { type DashboardConfig, getDashboardConfig } from "@/lib/dashboard-api";
-import { Fingerprint, KeyRound, Mail, Shield, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import {
+	type DashboardConfig,
+	getDashboardConfig,
+	toggleAuthMethod,
+} from "@/lib/dashboard-api";
+import { Fingerprint, KeyRound, Loader2, Mail, Shield, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface AuthMethod {
 	id: string;
@@ -69,6 +75,7 @@ const methodDefs: AuthMethod[] = [
 export default function MethodsPage() {
 	const [config, setConfig] = useState<DashboardConfig | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [togglingMethods, setTogglingMethods] = useState<Record<string, boolean>>({});
 
 	const { reportError } = useBackendStatus();
 	const activeProjectId = useActiveProjectId();
@@ -81,6 +88,23 @@ export default function MethodsPage() {
 			})
 			.finally(() => setIsLoading(false));
 	}, [activeProjectId, reportError]);
+
+	const handleToggle = useCallback(
+		async (method: keyof DashboardConfig["authMethods"], enabled: boolean) => {
+			setTogglingMethods((prev) => ({ ...prev, [method]: true }));
+			try {
+				const updatedConfig = await toggleAuthMethod(method, !enabled);
+				setConfig(updatedConfig);
+				toast.success("Authentication method updated");
+			} catch (error) {
+				reportError(error);
+				toast.error("Failed to update authentication method");
+			} finally {
+				setTogglingMethods((prev) => ({ ...prev, [method]: false }));
+			}
+		},
+		[reportError],
+	);
 
 	if (isLoading) {
 		return (
@@ -100,8 +124,8 @@ export default function MethodsPage() {
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">Methods</h1>
 				<p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-					Authentication methods are loaded from the current Banata auth runtime. To enable or
-					disable a method, update your auth config and environment variables, then redeploy.
+					Turn authentication methods on or off from the dashboard. Changes are persisted
+					immediately and applied on the next auth request.
 				</p>
 			</div>
 
@@ -133,7 +157,14 @@ export default function MethodsPage() {
 										<Badge variant={enabled ? "default" : "secondary"}>
 											{enabled ? "Enabled" : "Disabled"}
 										</Badge>
-										<Badge variant="outline">Managed in runtime</Badge>
+										{togglingMethods[method.configKey] ? (
+											<Loader2 className="size-4 animate-spin text-muted-foreground" />
+										) : null}
+										<Switch
+											checked={enabled}
+											disabled={!!togglingMethods[method.configKey]}
+											onCheckedChange={() => handleToggle(method.configKey, enabled)}
+										/>
 									</div>
 								</div>
 							</CardHeader>

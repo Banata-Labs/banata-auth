@@ -7,13 +7,13 @@ import Link from "next/link";
 import { useState } from "react";
 
 interface CopyEnvBlockProps {
-	convexUrl: string;
+	clientId: string;
 }
 
-export function CopyEnvBlock({ convexUrl }: CopyEnvBlockProps) {
+export function CopyEnvBlock({ clientId }: CopyEnvBlockProps) {
 	const [copied, setCopied] = useState(false);
 
-	const clientIdValue = convexUrl || "<your-convex-url>";
+	const clientIdValue = clientId || "<your-project-client-id>";
 
 	const envBlock = [
 		`BANATA_CLIENT_ID="${clientIdValue}"`,

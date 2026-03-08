@@ -34,7 +34,16 @@ export { domainsPlugin } from "./domains";
 export { eventsPlugin } from "./events";
 export {
 	vaultPlugin,
+	ensureProjectAuthSecret,
+	readProjectSocialProviderSecret,
+	listProjectSocialProviderSecrets,
+	saveProjectSocialProviderSecret,
+	deleteProjectSocialProviderSecret,
+	PROJECT_AUTH_SECRET_CONTEXT,
+	PROJECT_AUTH_SECRET_NAME,
+	SOCIAL_PROVIDER_SECRET_CONTEXT,
 	type VaultPluginOptions,
+	type SocialProviderVaultSecret,
 } from "./vault";
 export {
 	projectsPlugin,

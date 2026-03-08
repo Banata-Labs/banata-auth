@@ -1,215 +1,91 @@
 # Banata Auth
 
-An open-source, drop-in WorkOS replacement built on [Better Auth](https://better-auth.com) + [Convex](https://convex.dev) + [Next.js](https://nextjs.org).
+Open-source auth infrastructure with two integration modes:
 
-## What is Banata Auth?
+- Dashboard-first API access via `@banata-auth/sdk`
+- Self-hosted Convex runtime via `@banata-auth/convex`, `@banata-auth/nextjs`, and `@banata-auth/react`
 
-Banata Auth gives you enterprise-grade authentication infrastructure -- SSO, organizations, RBAC, audit logs, webhooks, and more -- as a set of npm packages you drop into your Convex + Next.js project. No vendor lock-in, MIT licensed, self-hostable.
+## Product Shape
 
-### Packages
+If you want a WorkOS-style experience, treat Banata as the system of record:
 
-| Package | Description |
-|---------|-------------|
-| `@banata-auth/sdk` | TypeScript SDK for managing users, orgs, SSO, webhooks, and more |
-| `@banata-auth/react` | React provider, hooks, and pre-built auth UI components |
-| `@banata-auth/nextjs` | Next.js middleware, route handler, and server utilities |
-| `@banata-auth/convex` | Convex integration -- auth factory, plugins, triggers, schema |
-| `@banata-auth/shared` | Shared types, validation schemas, error classes, and constants |
-| `@banata-auth/ui` | Reusable UI components (shadcn/ui based) |
+- Users, organizations, SSO connections, webhooks, and config live behind Banata HTTP endpoints
+- Your application talks to Banata through API keys, the dashboard, and thin client/server helpers
 
-### Apps
+If you want to run the auth engine inside your own Convex deployment, use the self-hosted packages. That path is more flexible, but it is not the same product shape as a dashboard-first managed service.
 
-| App | Description |
-|-----|-------------|
-| `apps/dashboard` | Admin dashboard for managing auth configuration |
-| `apps/example-app` | Reference implementation showing how to integrate Banata Auth |
-| `apps/auth-ui` | Hosted auth UI pages (sign-in, sign-up, MFA, etc.) |
-| `apps/admin-portal` | Self-serve admin portal for end-user organizations |
-| `apps/docs` | Documentation site |
+## Packages
 
-## Quick Start
+| Package | Role |
+|---------|------|
+| `@banata-auth/sdk` | Remote admin API client for users, organizations, SSO, RBAC, webhooks, projects, and more |
+| `@banata-auth/nextjs` | Next.js proxy and server helpers for Banata auth endpoints |
+| `@banata-auth/react` | React provider, hooks, and auth UI components |
+| `@banata-auth/convex` | Self-hosting kit for running Banata auth inside your own Convex deployment |
+| `@banata-auth/shared` | Shared types, errors, constants, and validation |
+| `@banata-auth/ui` | Reusable UI primitives |
 
-### Prerequisites
-
-- [Bun](https://bun.sh) >= 1.2
-- [Node.js](https://nodejs.org) >= 20
-- A [Convex](https://convex.dev) account
-
-### 1. Install Banata Auth in your project
-
-```bash
-npm install @banata-auth/convex @banata-auth/nextjs @banata-auth/react @banata-auth/shared
-```
-
-### 2. Set up Convex
-
-```bash
-npx convex init
-```
-
-### 3. Configure your auth
-
-Create `convex/banataAuth/auth.ts`:
+## Dashboard-First Quick Start
 
 ```ts
-import {
-  createBanataAuth,
-  createBanataAuthComponent,
-  createBanataAuthOptions,
-  type BanataAuthConfig,
-} from "@banata-auth/convex";
-import type { GenericCtx } from "@convex-dev/better-auth/utils";
-import { components } from "../_generated/api";
-import type { DataModel } from "../_generated/dataModel";
-import authConfig from "../auth.config";
-import schema from "./schema";
+import { BanataAuth } from "@banata-auth/sdk";
 
-export const authComponent = createBanataAuthComponent(components.banataAuth, schema);
-
-function getConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
-    authMethods: {
-      emailPassword: true,
-      organization: true,
-    },
-    email: {
-      // Wire up your email provider here
-      sendVerificationEmail: async ({ email, url }) => { /* ... */ },
-      sendResetPassword: async ({ email, url }) => { /* ... */ },
-    },
-  };
-}
-
-export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
-  createBanataAuthOptions(ctx, {
-    authComponent,
-    authConfig,
-    config: getConfig(),
-  });
-
-export const createAuth = (ctx: GenericCtx<DataModel>) =>
-  createBanataAuth(ctx, {
-    authComponent,
-    authConfig,
-    config: getConfig(),
-  });
-```
-
-### 4. Set up your Next.js API route
-
-Create `app/api/auth/[...all]/route.ts`:
-
-```ts
-import { createRouteHandler } from "@banata-auth/nextjs";
-
-export const { GET, POST } = createRouteHandler({
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_AUTH_API_KEY!,
+  baseUrl: process.env.BANATA_AUTH_BASE_URL!,
 });
+
+const users = await banata.users.listUsers({ limit: 20 });
 ```
 
-### 5. Add the auth provider
+The SDK talks to Banata HTTP endpoints. It does not query your database directly.
 
-Wrap your app in `layout.tsx`:
+## Self-Hosted Quick Start
 
-```tsx
-import { BanataAuthProvider } from "@banata-auth/react";
+The self-hosted path is documented separately because it requires local Convex component registration, adapter generation, and HTTP wiring inside your app:
 
-export default function RootLayout({ children }) {
-  return (
-    <BanataAuthProvider>
-      {children}
-    </BanataAuthProvider>
-  );
-}
-```
+- `convex/convex.config.ts`
+- `convex/banataAuth/convex.config.ts`
+- `convex/auth.config.ts`
+- `convex/banataAuth/schema.ts`
+- `convex/banataAuth/auth.ts`
+- `convex/banataAuth/adapter.ts`
+- `convex/authNode.ts`
+- `convex/http.ts`
 
-### 6. Set environment variables
+Use [docs/quickstart](./apps/docs/content/docs/quickstart.mdx) for that flow.
 
-```bash
-npx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
-npx convex env set SITE_URL "http://localhost:3000"
-```
+## Notes
 
-### 7. Run your app
+- `better-auth@1.4.x` is the supported line for the current Convex integration.
+- `@banata-auth/*@0.1.0` was published with broken `workspace:*` internal dependencies. This repo includes the manifest fix for the next release.
 
-```bash
-npx convex dev &
-npm run dev
-```
+## Apps
 
-## Features
-
-### Stable
-
-- **Email + Password** -- Sign up, sign in, email verification, password reset
-- **Social OAuth** -- GitHub, Google, Microsoft, Apple, Discord, and more
-- **Magic Links** -- Passwordless email sign-in
-- **Passkeys** -- WebAuthn/FIDO2 support
-- **Multi-Factor Auth** -- TOTP-based 2FA
-- **Organizations** -- Multi-tenant org management with invitations
-- **RBAC** -- Role-based access control with custom roles and permissions
-- **API Keys** -- Generate and manage API keys for programmatic access
-- **Webhooks** -- Real-time event notifications with signature verification
-- **Email Templates** -- Block-based email template editor with live preview and 6 built-in auth templates
-- **Audit Logs** -- Structured event logging for compliance
-- **Admin Dashboard** -- Visual management of all auth configuration
-- **Pre-built UI** -- Drop-in sign-in/sign-up forms and auth components
-
-### Preview
-
-These features are functional but under active development. APIs may change.
-
-- **Enterprise SSO** -- SAML 2.0 and OIDC federation (requires Node.js sidecar for SAML XML processing)
-- **Directory Sync (SCIM)** -- Automated user/group provisioning via SCIM 2.0
+| App | Purpose |
+|-----|---------|
+| `apps/dashboard` | Admin dashboard |
+| `apps/example-app` | Reference self-hosted integration |
+| `apps/auth-ui` | Auth UI pages |
+| `apps/admin-portal` | End-user admin portal |
+| `apps/docs` | Documentation site |
 
 ## Development
 
-### Setup
-
 ```bash
-git clone https://github.com/banata-auth/banata-auth.git
-cd banata-auth
 bun install
+bun run dev
 ```
 
-### Commands
+Useful commands:
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start all apps and packages in development mode |
-| `bun run build` | Build all packages and apps |
-| `bun run test` | Run all tests |
-| `bun run lint` | Lint all packages |
-| `bun run typecheck` | Type-check all packages |
-| `bun run clean` | Clean all build artifacts |
-| `bun run format` | Format code with Biome |
-
-### Project Structure
-
-```
-banata-auth/
-  apps/
-    dashboard/       # Admin dashboard (Next.js)
-    example-app/     # Reference integration
-    auth-ui/         # Hosted auth pages
-    admin-portal/    # End-user admin portal
-    docs/            # Documentation site
-  packages/
-    shared/          # Types, validation, errors, constants
-    sdk/             # TypeScript SDK
-    react/           # React provider, hooks, UI components
-    nextjs/          # Next.js middleware and utilities
-    convex/          # Convex integration and plugins
-    ui/              # Reusable UI components
-  tooling/
-    typescript/      # Shared tsconfig presets
-    tailwind/        # Shared Tailwind config
-    biome/           # Shared Biome config
-```
+| Command | Purpose |
+|---------|---------|
+| `bun run build` | Build packages and apps |
+| `bun run test` | Run tests |
+| `bun run typecheck` | Type-check the repo |
+| `bun run check` | Run Biome checks |
 
 ## License
 
-MIT -- see [LICENSE](./LICENSE).
+MIT

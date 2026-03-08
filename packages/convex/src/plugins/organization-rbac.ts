@@ -127,13 +127,13 @@ const listUserInvitationsSchema = z
 	})
 	.merge(projectScopeSchema);
 
-function getSessionOrThrow(ctx: any): {
+async function getSessionOrThrow(ctx: any): Promise<{
 	userId: string;
 	activeOrganizationId?: string;
 	token?: string;
 	userRole?: string;
-} {
-	const { session, user } = requireAuthenticated(ctx);
+}> {
+	const { session, user } = await requireAuthenticated(ctx);
 	return {
 		userId: user.id,
 		userRole: user.role,
@@ -436,7 +436,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/create",
 				{ method: "POST", body: createOrganizationSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, token } = getSessionOrThrow(ctx);
+					const { userId, token } = await getSessionOrThrow(ctx);
 					const body = ctx.body;
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(body as Record<string, unknown>);
@@ -489,7 +489,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/list",
 				{ method: "POST", body: projectScopeSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, userRole } = getSessionOrThrow(ctx);
+					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 
@@ -554,7 +554,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/get-full-organization",
 				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 
@@ -600,7 +600,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/set-active",
 				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, token, userRole } = getSessionOrThrow(ctx);
+					const { userId, token, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const org = await resolveOrganization(db, {
@@ -631,7 +631,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/invite-member",
 				{ method: "POST", body: inviteMemberSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body;
 					const scope = getProjectScope(body as Record<string, unknown>);
@@ -704,7 +704,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/accept-invitation",
 				{ method: "POST", body: acceptRejectInviteSchema, requireHeaders: true },
 				async (ctx) => {
-					const { session, user } = requireAuthenticated(ctx);
+					const { session, user } = await requireAuthenticated(ctx);
 					const userId = user.id;
 					const token = session.token;
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -765,7 +765,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				{ method: "POST", body: acceptRejectInviteSchema, requireHeaders: true },
 				async (ctx) => {
 					// Verify the caller is the invitation target
-					const { session, user } = requireAuthenticated(ctx);
+					const { session, user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const inviteRows = await db.findMany<InvitationRow>({
@@ -796,7 +796,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/cancel-invitation",
 				{ method: "POST", body: cancelInviteSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, userRole } = getSessionOrThrow(ctx);
+					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const inviteRows = await db.findMany<InvitationRow>({
@@ -827,7 +827,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/get-invitation",
 				{ method: "POST", body: getInvitationSchema, requireHeaders: true },
 				async (ctx) => {
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const rows = await db.findMany<InvitationRow>({
@@ -862,7 +862,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/list-invitations",
 				{ method: "POST", body: listInvitationsSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const orgId = ctx.body.organizationId ?? activeOrganizationId;
@@ -892,7 +892,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				{ method: "POST", body: listUserInvitationsSchema, requireHeaders: true },
 				async (ctx) => {
 					// Always use the authenticated user's own email to prevent enumeration (S9)
-					const { user } = requireAuthenticated(ctx);
+					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const targetEmail = user.email?.toLowerCase();
@@ -915,7 +915,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/list-members",
 				{ method: "POST", body: listInvitationsSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const orgId = ctx.body.organizationId ?? activeOrganizationId;
@@ -944,7 +944,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/update-member-role",
 				{ method: "POST", body: updateMemberRoleSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body;
 					const scope = getProjectScope(body as Record<string, unknown>);
@@ -1018,7 +1018,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/remove-member",
 				{ method: "POST", body: removeMemberSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId, token, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, token, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const body = ctx.body;
 					const scope = getProjectScope(body as Record<string, unknown>);
@@ -1108,7 +1108,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/leave",
 				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, token, activeOrganizationId } = getSessionOrThrow(ctx);
+					const { userId, token, activeOrganizationId } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const orgId = ctx.body.organizationId ?? activeOrganizationId;
@@ -1136,7 +1136,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/delete",
 				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, userRole } = getSessionOrThrow(ctx);
+					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const org = await resolveOrganization(db, {
@@ -1190,7 +1190,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					requireHeaders: true,
 				},
 				async (ctx) => {
-					const { userId, activeOrganizationId, userRole } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const orgId = ctx.body.organizationId ?? activeOrganizationId;
@@ -1237,7 +1237,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				},
 				async (ctx) => {
 					// Require authentication to prevent unauthenticated slug enumeration
-					requireAuthenticated(ctx);
+					await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const existing = await db.findMany<OrganizationRow>({
@@ -1256,7 +1256,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				"/organization/get-active-member",
 				{ method: "POST", body: projectScopeSchema, requireHeaders: true },
 				async (ctx) => {
-					const { userId, activeOrganizationId } = getSessionOrThrow(ctx);
+					const { userId, activeOrganizationId } = await getSessionOrThrow(ctx);
 					if (!activeOrganizationId) {
 						throw ctx.error("BAD_REQUEST", { message: "No active organization" });
 					}
@@ -1287,7 +1287,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					requireHeaders: true,
 				},
 				async (ctx) => {
-					const session = getSessionOrThrow(ctx);
+					const session = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const scope = getProjectScope(ctx.body as Record<string, unknown>);
 					const org = await resolveOrganization(db, {

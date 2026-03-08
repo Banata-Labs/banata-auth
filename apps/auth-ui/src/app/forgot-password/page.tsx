@@ -2,23 +2,57 @@
 
 import { useState } from "react";
 import { AuthCard } from "@banata-auth/react";
+import {
+	DisabledAuthMethodCard,
+	LoadingProjectAuthCard,
+	MissingProjectScopeCard,
+	ProjectAuthErrorCard,
+} from "@/components/project-auth-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useProjectAuthConfig } from "@/lib/project-auth";
 
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
+	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } =
+		useProjectAuthConfig();
+
+	if (!hasScope) {
+		return <MissingProjectScopeCard />;
+	}
+
+	if (isLoading) {
+		return <LoadingProjectAuthCard title="Reset password" />;
+	}
+
+	if (error) {
+		return <ProjectAuthErrorCard title="Reset password" message={error} />;
+	}
+
+	if (!(config?.authMethods.emailPassword ?? false)) {
+		return (
+			<DisabledAuthMethodCard
+				title="Reset password"
+				description="Send a secure reset link by email."
+				backHref={scopedPath("/sign-in")}
+			/>
+		);
+	}
 
 	return (
 		<AuthCard title="Reset password" description="Send a secure reset link by email.">
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
-					await fetch("/api/auth/forget-password", {
+					await fetch(scopedApiPath("/api/auth/forget-password"), {
 						method: "POST",
 						headers: { "content-type": "application/json" },
-						body: JSON.stringify({ email, redirectTo: "/reset-password" }),
+						body: JSON.stringify({
+							email,
+							redirectTo: scopedPath("/reset-password"),
+						}),
 					});
 					setSent(true);
 				}}

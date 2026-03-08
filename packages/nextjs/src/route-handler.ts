@@ -32,13 +32,81 @@ const FORWARDED_HEADERS = new Set([
 	"referer",
 	"user-agent",
 	"x-requested-with",
+	"x-banata-client-id",
+	"x-banata-project-id",
 ]);
+
+const PROJECT_ID_COOKIE = "banata_project_id";
+const CLIENT_ID_COOKIE = "banata_client_id";
+
+export interface BanataProjectRouteScope {
+	projectId?: string;
+	clientId?: string;
+	resolve?: (
+		request: Request,
+	) =>
+		| { projectId?: string; clientId?: string }
+		| Promise<{ projectId?: string; clientId?: string }>;
+}
+
+function normalizeScopeValue(value: string | null | undefined): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readCookie(cookieHeader: string | null, name: string): string | null {
+	if (!cookieHeader) {
+		return null;
+	}
+
+	for (const pair of cookieHeader.split(";")) {
+		const [rawKey, ...rest] = pair.trim().split("=");
+		if (rawKey !== name) {
+			continue;
+		}
+		return normalizeScopeValue(decodeURIComponent(rest.join("=")));
+	}
+
+	return null;
+}
+
+async function resolveProjectScope(
+	request: Request,
+	scope: BanataProjectRouteScope | undefined,
+): Promise<{ projectId?: string; clientId?: string }> {
+	const resolved = scope?.resolve ? await scope.resolve(request) : {};
+	const url = new URL(request.url);
+	const cookieHeader = request.headers.get("cookie");
+
+	const projectId =
+		normalizeScopeValue(scope?.projectId) ??
+		normalizeScopeValue(resolved.projectId) ??
+		normalizeScopeValue(request.headers.get("x-banata-project-id")) ??
+		normalizeScopeValue(url.searchParams.get("projectId")) ??
+		normalizeScopeValue(url.searchParams.get("project_id")) ??
+		readCookie(cookieHeader, PROJECT_ID_COOKIE) ??
+		undefined;
+	const clientId =
+		normalizeScopeValue(scope?.clientId) ??
+		normalizeScopeValue(resolved.clientId) ??
+		normalizeScopeValue(request.headers.get("x-banata-client-id")) ??
+		normalizeScopeValue(url.searchParams.get("clientId")) ??
+		normalizeScopeValue(url.searchParams.get("client_id")) ??
+		readCookie(cookieHeader, CLIENT_ID_COOKIE) ??
+		undefined;
+
+	return {
+		...(projectId ? { projectId } : {}),
+		...(clientId ? { clientId } : {}),
+	};
+}
 
 export function createRouteHandler(options: {
 	/** The Convex .site URL where HTTP actions are hosted. */
 	convexSiteUrl: string;
+	/** Optional explicit or request-resolved Banata project scope. */
+	project?: BanataProjectRouteScope;
 }) {
-	const { convexSiteUrl } = options;
+	const { convexSiteUrl, project } = options;
 	const siteUrl = convexSiteUrl.replace(/\/$/, "");
 
 	async function handler(request: Request): Promise<Response> {
@@ -51,6 +119,13 @@ export function createRouteHandler(options: {
 			if (FORWARDED_HEADERS.has(key.toLowerCase())) {
 				forwardedHeaders.set(key, value);
 			}
+		}
+		const resolvedScope = await resolveProjectScope(request, project);
+		if (resolvedScope.projectId) {
+			forwardedHeaders.set("x-banata-project-id", resolvedScope.projectId);
+		}
+		if (resolvedScope.clientId) {
+			forwardedHeaders.set("x-banata-client-id", resolvedScope.clientId);
 		}
 
 		const newRequest = new Request(targetUrl, {
