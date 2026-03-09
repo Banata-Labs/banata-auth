@@ -25,45 +25,51 @@ function buildConfig(): BanataAuthConfig {
       magicLink: true,  // Enable magic link authentication
     },
 
-    email: {
-      sendMagicLink: async ({ email, url, token }) => {
-        // Send the magic link email
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "MyApp <noreply@myapp.com>",
-            to: email,
-            subject: "Sign in to MyApp",
-            html: `
-              <h1>Sign in to MyApp</h1>
-              <p>Click the link below to sign in:</p>
-              <a href="${url}" style="
-                display: inline-block;
-                padding: 12px 24px;
-                background: #000;
-                color: #fff;
-                text-decoration: none;
-                border-radius: 6px;
-              ">Sign In</a>
-              <p style="color: #666; font-size: 14px;">
-                This link expires in 10 minutes. If you didn't request this, ignore this email.
-              </p>
-            `,
-          }),
-        });
-      },
+    emailOptions: {
+      fromAddress: "MyApp <noreply@myapp.com>",
     },
   };
 }
 ```
 
-### Email Callback Parameters
+### Default Delivery Model
 
-The `sendMagicLink` callback receives:
+Banata's normal magic-link setup is:
+
+1. Configure an active provider in **Emails > Providers**
+2. Ensure **Magic Auth** is enabled in **Emails > Configuration**
+3. Customize the `magic-link` template in **Email Templates**
+4. Call `authClient.signIn.magicLink(...)` from your frontend
+
+Banata then generates the token, renders the template, and sends the email automatically.
+
+### Optional Code Override
+
+If you want to deliver magic links through your own provider code, add `email.sendMagicLink`:
+
+```typescript
+email: {
+  sendMagicLink: async ({ email, url, token }) => {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "MyApp <noreply@myapp.com>",
+        to: email,
+        subject: "Sign in to MyApp",
+        html: `<a href="${url}">Sign In</a>`,
+      }),
+    });
+  },
+},
+```
+
+### Override Callback Parameters
+
+The `sendMagicLink` override receives:
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -71,7 +77,7 @@ The `sendMagicLink` callback receives:
 | `url` | `string` | The full magic link URL (includes token) |
 | `token` | `string` | The raw verification token |
 
-> **Note:** Unlike `sendVerificationEmail`, the magic link callback receives `email` (a string) instead of `user` (an object). This is because the user may not exist yet — magic links can create new accounts.
+> **Note:** Unlike `sendVerificationEmail`, the magic-link override receives `email` (a string) instead of `user` (an object). This is because the user may not exist yet — magic links can create new accounts.
 
 ---
 
@@ -189,9 +195,8 @@ Here's the complete magic link flow:
 ```
 1. User enters email → POST /api/auth/sign-in/magic-link
 2. Server generates a signed token (valid for 10 minutes)
-3. Server calls your sendMagicLink callback with { email, url, token }
-4. Your callback sends the email via Resend/SendGrid/etc.
-5. User clicks the link in their email
+3. Server uses Banata's configured provider and the `magic-link` template to send the email
+4. User receives the email and clicks the sign-in link
 6. Browser navigates to /api/auth/magic-link/verify?token=xxx
 7. Server verifies the token signature and expiration
 8. If no user exists with that email → creates a new user
@@ -218,10 +223,8 @@ authMethods: {
   organization: true,     // Organizations
 },
 
-email: {
-  sendVerificationEmail: async ({ user, url }) => { /* ... */ },
-  sendResetPassword: async ({ user, url }) => { /* ... */ },
-  sendMagicLink: async ({ email, url }) => { /* ... */ },
+emailOptions: {
+  fromAddress: "MyApp <noreply@myapp.com>",
 },
 ```
 
@@ -285,28 +288,8 @@ authMethods: {
   emailOtp: true,  // Enable email OTP
 },
 
-email: {
-  sendOtp: async ({ email, otp }) => {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "MyApp <noreply@myapp.com>",
-        to: email,
-        subject: "Your sign-in code",
-        html: `
-          <h1>Your sign-in code</h1>
-          <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px;">
-            ${otp}
-          </p>
-          <p>Enter this code in the app to sign in. It expires in 10 minutes.</p>
-        `,
-      }),
-    });
-  },
+emailOptions: {
+  fromAddress: "MyApp <noreply@myapp.com>",
 },
 ```
 
@@ -354,10 +337,11 @@ The token signature doesn't match. This can happen if:
 
 ### Magic Link Email Not Received
 
-1. Check your `sendMagicLink` callback for errors
-2. Check the spam/junk folder
-3. Verify the email provider API key is correct
-4. In development, check the console for `[DEV]` log output
+1. Check **Emails > Providers** for an active provider
+2. Check **Emails > Configuration** and make sure **Magic Auth** is enabled
+3. Check the `magic-link` template in **Email Templates**
+4. If you overrode delivery in code, check your `sendMagicLink` callback for errors
+5. Check the spam/junk folder
 
 ---
 

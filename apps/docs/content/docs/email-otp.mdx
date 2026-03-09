@@ -15,7 +15,7 @@ Email OTP provides **passwordless authentication** using one-time passcodes. Ins
 1. User enters their email address
 2. Client calls authClient.signIn.emailOtp({ email })
 3. Server generates a 6-digit OTP and stores it with an expiry timestamp
-4. Server calls your sendOtp callback to deliver the code via email
+4. Server sends the OTP using the provider and template configured in Banata
 5. User checks their email and enters the 6-digit code in your app
 6. Client calls authClient.signIn.emailOtp({ email, otp })
 7. Server verifies the OTP matches and has not expired
@@ -48,46 +48,58 @@ function buildConfig(): BanataAuthConfig {
       emailOtp: true,  // Enable email OTP authentication
     },
 
-    email: {
-      sendOtp: async ({ email, otp }) => {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "MyApp <noreply@myapp.com>",
-            to: email,
-            subject: "Your sign-in code",
-            html: `
-              <h1>Your sign-in code</h1>
-              <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px;">
-                ${otp}
-              </p>
-              <p>Enter this code in the app to sign in. It expires in 10 minutes.</p>
-              <p style="color: #666; font-size: 14px;">
-                If you didn't request this code, you can safely ignore this email.
-              </p>
-            `,
-          }),
-        });
-      },
+    emailOptions: {
+      fromAddress: "MyApp <noreply@myapp.com>",
     },
   };
 }
 ```
 
-### Email Callback Parameters
+### Default Delivery Model
 
-The `sendOtp` callback receives:
+By default, Banata sends OTP emails automatically:
+
+1. Configure an active provider in **Emails > Providers**
+2. Ensure **Magic Auth** is enabled in **Emails > Configuration**
+3. Customize the `email-otp` template in **Email Templates**
+4. Call `authClient.signIn.emailOtp(...)` from your frontend
+
+That is the normal setup. Your frontend starts the OTP flow, but the actual email delivery stays inside Banata.
+
+### Optional Code Override
+
+If you want to send OTP emails through your own code path instead of the dashboard-managed provider, add `email.sendOtp`:
+
+```typescript
+email: {
+  sendOtp: async ({ email, otp }) => {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "MyApp <noreply@myapp.com>",
+        to: email,
+        subject: "Your sign-in code",
+        html: `<p>${otp}</p>`,
+      }),
+    });
+  },
+},
+```
+
+### Override Callback Parameters
+
+The `sendOtp` override receives:
 
 | Parameter | Type | Description |
 |---|---|---|
 | `email` | `string` | The recipient's email address |
 | `otp` | `string` | The 6-digit one-time passcode |
 
-> **Note:** Like magic links, the OTP callback receives `email` (a string) rather than `user` (an object), because the user may not exist yet -- email OTP can create new accounts on first use.
+> **Note:** Like magic links, the OTP override receives `email` (a string) rather than `user` (an object), because the user may not exist yet -- email OTP can create new accounts on first use.
 
 ---
 
@@ -264,7 +276,7 @@ To use the built-in email template system instead of a custom `sendOtp` callback
 2. Ensure the **Magic Auth** email type is enabled under **Emails > Configuration**
 3. The system will use the built-in OTP email template, which includes your app name, the 6-digit code, and an expiry notice
 
-If you provide a custom `sendOtp` callback in your config, it takes precedence over the built-in template.
+If you provide a custom `sendOtp` callback in your config, it takes precedence over the built-in delivery path.
 
 ---
 
@@ -293,11 +305,8 @@ authMethods: {
   organization: true,     // Organizations
 },
 
-email: {
-  sendVerificationEmail: async ({ user, url }) => { /* ... */ },
-  sendResetPassword: async ({ user, url }) => { /* ... */ },
-  sendMagicLink: async ({ email, url }) => { /* ... */ },
-  sendOtp: async ({ email, otp }) => { /* ... */ },
+emailOptions: {
+  fromAddress: "MyApp <noreply@myapp.com>",
 },
 ```
 
@@ -361,10 +370,11 @@ The code does not match or has expired. Common causes:
 
 ### "OTP email not received"
 
-1. Check your `sendOtp` callback for errors
-2. Check the spam/junk folder
-3. Verify the email provider API key is correct
-4. In development, log the OTP to the console instead of sending an email
+1. Check **Emails > Providers** for an active provider
+2. Check **Emails > Configuration** and make sure **Magic Auth** is enabled
+3. Check the `email-otp` template in **Email Templates**
+4. If you overrode delivery in code, check your `sendOtp` callback for errors
+5. Check the spam/junk folder
 
 ### "Rate limit exceeded"
 

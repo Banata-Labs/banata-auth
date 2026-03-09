@@ -7,6 +7,8 @@ order: 20
 
 Banata Auth includes a **block-based email template system** for building, customizing, and sending transactional emails. Templates are composed of ordered arrays of typed blocks, edited visually in the dashboard, and rendered to HTML at send time using React Email. All templates inherit your project's branding configuration (colors, fonts, logo).
 
+For auth flows, these templates are the default runtime path. Once a provider is active, Banata automatically uses the built-in auth templates for verification, password reset, magic-link, OTP, invitation, and welcome emails. The SDK email helpers are for programmatic sends and custom workflows, not for the baseline auth wiring.
+
 ---
 
 ## Block Types

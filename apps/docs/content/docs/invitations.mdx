@@ -14,8 +14,8 @@ Invitations allow organization administrators to invite new members by email. Th
 ```
 1. Admin sends invitation → POST /api/auth/organization/invite
 2. Server creates invitation record (status: "pending")
-3. Server calls sendInvitationEmail callback
-4. Your callback sends the email with an invite link
+3. Server sends the invitation email using Banata's configured provider and template
+4. Recipient receives the invitation email
 5. Recipient clicks the link
 6. If not signed in → redirected to sign-up, then acceptance
 7. If signed in → invitation is accepted immediately
@@ -63,7 +63,7 @@ pending ─────────┤
 
 ## Configuration
 
-The invitation email callback is part of the `email` configuration:
+Enable organizations, then configure invitation delivery in the dashboard:
 
 ```typescript
 // convex/banataAuth/auth.ts
@@ -75,51 +75,58 @@ function buildConfig(): BanataAuthConfig {
       organization: true,
     },
 
-    email: {
-      sendInvitationEmail: async ({
-        email,
-        invitationId,
-        organizationName,
-        inviterName,
-      }) => {
-        // IMPORTANT: You receive the invitation ID, not a URL.
-        // Build the acceptance URL yourself:
-        const inviteUrl = `${process.env.SITE_URL}/invite/${invitationId}`;
-
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "MyApp <noreply@myapp.com>",
-            to: email,
-            subject: `You've been invited to join ${organizationName}`,
-            html: `
-              <h1>You're invited!</h1>
-              <p>${inviterName} invited you to join <strong>${organizationName}</strong>.</p>
-              <a href="${inviteUrl}" style="
-                display: inline-block;
-                padding: 12px 24px;
-                background: #000;
-                color: #fff;
-                text-decoration: none;
-                border-radius: 6px;
-              ">Accept Invitation</a>
-              <p style="color: #666;">This invitation expires in 7 days.</p>
-            `,
-          }),
-        });
-      },
+    emailOptions: {
+      fromAddress: "MyApp <noreply@myapp.com>",
     },
   };
 }
 ```
 
-### Callback Parameters
+### Default Delivery Model
 
-The `sendInvitationEmail` callback receives an object with:
+The default invitation flow is dashboard-first:
+
+1. Configure an active provider in **Emails > Providers**
+2. Keep invitation emails enabled in **Emails > Configuration**
+3. Customize the built-in `invitation` template in **Email Templates**
+4. Call `authClient.organization.inviteMember(...)`
+
+Banata then renders and sends the invitation email automatically.
+
+### Optional Code Override
+
+If you want your app to own invitation delivery, add `email.sendInvitationEmail`:
+
+```typescript
+email: {
+  sendInvitationEmail: async ({
+    email,
+    invitationId,
+    organizationName,
+    inviterName,
+  }) => {
+    const inviteUrl = `${process.env.SITE_URL}/invite/${invitationId}`;
+
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "MyApp <noreply@myapp.com>",
+        to: email,
+        subject: `You've been invited to join ${organizationName}`,
+        html: `<a href="${inviteUrl}">Accept Invitation</a>`,
+      }),
+    });
+  },
+},
+```
+
+### Override Callback Parameters
+
+The `sendInvitationEmail` override receives an object with:
 
 | Field | Type | Description |
 |---|---|---|
@@ -128,7 +135,7 @@ The `sendInvitationEmail` callback receives an object with:
 | `organizationName` | `string` | Display name of the organization |
 | `inviterName` | `string` | Name of the user who sent the invitation |
 
-> **Key difference from other callbacks:** Unlike `sendMagicLink` which gives you a ready-made `url`, the invitation callback provides the `invitationId`. You must construct the acceptance URL yourself using your `SITE_URL`.
+> **Key difference from other callbacks:** Unlike `sendMagicLink` which gives you a ready-made `url`, the invitation override provides the `invitationId`. You must construct the acceptance URL yourself using your `SITE_URL`.
 
 ---
 
@@ -362,9 +369,11 @@ results.forEach((result, i) => {
 
 ### Invitation Email Not Sent
 
-1. Check that `sendInvitationEmail` is configured in your `email` callbacks
-2. Check the Convex function logs for errors in the email sending
-3. Make sure `authMethods.organization` is `true`
+1. Check **Emails > Providers** for an active provider
+2. Check **Emails > Configuration** and make sure invitation emails are enabled
+3. Check the `invitation` template in **Email Templates**
+4. If you overrode delivery in code, check the Convex logs for errors in `sendInvitationEmail`
+5. Make sure `authMethods.organization` is `true`
 
 ### "Invitation Already Pending"
 

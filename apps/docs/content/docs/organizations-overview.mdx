@@ -40,38 +40,14 @@ function buildConfig(): BanataAuthConfig {
       maxOrganizations: 5,                    // Optional org cap per user
     },
 
-    email: {
-      sendInvitationEmail: async ({
-        email,
-        invitationId,
-        organizationName,
-      }) => {
-        // You receive the invitation ID, not a URL. Build the URL yourself:
-        const inviteUrl = `${process.env.SITE_URL}/invite/${invitationId}`;
-
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "MyApp <noreply@myapp.com>",
-            to: email,
-            subject: `You've been invited to join ${organizationName}`,
-            html: `
-              <h1>You've been invited!</h1>
-              <p>Click below to accept the invitation:</p>
-              <a href="${inviteUrl}">Accept Invitation</a>
-              <p>This invitation expires in 7 days.</p>
-            `,
-          }),
-        });
-      },
+    emailOptions: {
+      fromAddress: "MyApp <noreply@myapp.com>",
     },
   };
 }
 ```
+
+Invitation emails are dashboard-managed by default. Configure the provider in **Emails > Providers**, customize the `invitation` template in **Email Templates**, and Banata will send invitations automatically. Use `email.sendInvitationEmail` only if you intentionally want to override delivery in code.
 
 ### Organization Config Options
 
@@ -288,7 +264,7 @@ await authClient.organization.inviteMember({
   email: "newuser@example.com",
   role: "sandbox_viewer",
 });
-// This triggers the sendInvitationEmail callback
+// Banata sends the invitation automatically using the configured provider/template
 ```
 
 ### Accept an Invitation

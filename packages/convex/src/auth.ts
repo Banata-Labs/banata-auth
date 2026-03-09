@@ -97,38 +97,42 @@ interface BanataAuthComponentApi {
 // ─── Types ──────────────────────────────────────────────────────────
 
 /**
- * Configuration for email callbacks used by various auth methods.
+ * Optional email delivery overrides used by various auth methods.
+ *
+ * Banata's default behavior is to send auth emails automatically using
+ * the provider and templates configured in the dashboard. These callbacks
+ * exist only for projects that intentionally want to override that path.
  */
 export interface BanataAuthEmailConfig {
-	/** Send email verification link to new users. */
+	/** Override verification email delivery. */
 	sendVerificationEmail?: (params: {
 		user: { email: string; name: string };
 		url: string;
 		token: string;
 	}) => Promise<void>;
 
-	/** Send password reset link. */
+	/** Override password reset email delivery. */
 	sendResetPassword?: (params: {
 		user: { email: string; name: string };
 		url: string;
 		token: string;
 	}) => Promise<void>;
 
-	/** Send magic link for passwordless sign-in. */
+	/** Override magic-link delivery for passwordless sign-in. */
 	sendMagicLink?: (params: {
 		email: string;
 		url: string;
 		token: string;
 	}) => Promise<void>;
 
-	/** Send one-time password for email OTP auth. */
+	/** Override one-time-password delivery for email OTP auth. */
 	sendOtp?: (params: {
 		email: string;
 		otp: string;
 	}) => Promise<void>;
 
 	/**
-	 * Send organization invitation email.
+	 * Override organization invitation delivery.
 	 * Note: The invitation ID is provided instead of a URL.
 	 * The consumer constructs the accept URL from the ID.
 	 */

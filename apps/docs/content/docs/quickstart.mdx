@@ -132,14 +132,6 @@ export function buildConfig(): BanataAuthConfig {
       emailPassword: true,
       organization: true,
     },
-    email: {
-      sendVerificationEmail: async ({ user, url }) => {
-        console.log(`[DEV] verification email for ${user.email}: ${url}`);
-      },
-      sendResetPassword: async ({ user, url }) => {
-        console.log(`[DEV] reset password email for ${user.email}: ${url}`);
-      },
-    },
   };
 }
 
@@ -157,6 +149,8 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
     config: buildConfig(),
   });
 ```
+
+> Email delivery is dashboard-managed by default. In self-hosted mode, configure your provider in **Emails > Providers** and customize the built-in templates in **Email Templates**. Verification, password-reset, magic-link, OTP, and invitation emails send automatically once a provider is active. Only add `config.email.sendVerificationEmail`, `sendResetPassword`, `sendMagicLink`, `sendOtp`, or `sendInvitationEmail` if you intentionally want to override Banata's built-in delivery path in code.
 
 ### 6. `convex/banataAuth/adapter.ts`
 
