@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "banata-auth/banata-auth"
+      "repo": "Banata-Labs/banata-auth"
     }
   ],
   "commit": false,

@@ -7,7 +7,7 @@
 	"description": "Convex backend integration for Banata Auth — auth factory, plugins, triggers, and database schema",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/banata-auth/banata-auth",
+		"url": "https://github.com/Banata-Labs/banata-auth",
 		"directory": "packages/convex"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/convex",

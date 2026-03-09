@@ -7,7 +7,7 @@
 	"description": "Shared types, schemas, constants, and utilities for the Banata Auth ecosystem",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/banata-auth/banata-auth",
+		"url": "https://github.com/Banata-Labs/banata-auth",
 		"directory": "packages/shared"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/packages/shared",

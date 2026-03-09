@@ -7,7 +7,7 @@
 	"description": "Server-side SDK for the Banata Auth platform — manage users, organizations, SSO, RBAC, webhooks, and more",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/banata-auth/banata-auth",
+		"url": "https://github.com/Banata-Labs/banata-auth",
 		"directory": "packages/sdk"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/sdk",

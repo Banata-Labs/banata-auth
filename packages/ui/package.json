@@ -7,7 +7,7 @@
 	"description": "Reusable UI components for Banata Auth — built on Radix UI and Tailwind CSS",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/banata-auth/banata-auth",
+		"url": "https://github.com/Banata-Labs/banata-auth",
 		"directory": "packages/ui"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/ui",
