@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/react",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -11,7 +11,15 @@
 		"directory": "packages/react"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/react",
-	"keywords": ["banata-auth", "auth", "react", "hooks", "provider", "convex", "session"],
+	"keywords": [
+		"banata-auth",
+		"auth",
+		"react",
+		"hooks",
+		"provider",
+		"convex",
+		"session"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -36,7 +44,9 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/index.js dist/convex-provider.js dist/client-plugins.js",
 		"dev": "tsup --watch",
@@ -56,9 +66,15 @@
 		"react-dom": "^18 || ^19"
 	},
 	"peerDependenciesMeta": {
-		"@convex-dev/better-auth": { "optional": true },
-		"better-auth": { "optional": true },
-		"convex": { "optional": true }
+		"@convex-dev/better-auth": {
+			"optional": true
+		},
+		"better-auth": {
+			"optional": true
+		},
+		"convex": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@convex-dev/better-auth": "^0.10.13",

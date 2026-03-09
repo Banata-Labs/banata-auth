@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/nextjs",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -11,7 +11,14 @@
 		"directory": "packages/nextjs"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/nextjs",
-	"keywords": ["banata-auth", "auth", "nextjs", "middleware", "route-handler", "server"],
+	"keywords": [
+		"banata-auth",
+		"auth",
+		"nextjs",
+		"middleware",
+		"route-handler",
+		"server"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -46,7 +53,9 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/client.js",
 		"dev": "tsup --watch",
@@ -56,7 +65,7 @@
 		"clean": "rm -rf dist .turbo"
 	},
 	"dependencies": {
-		"@banata-auth/react": "^0.1.0",
+		"@banata-auth/react": "^0.1.1",
 		"@banata-auth/shared": "^0.1.0"
 	},
 	"peerDependencies": {
@@ -67,9 +76,15 @@
 		"react": "^18 || ^19"
 	},
 	"peerDependenciesMeta": {
-		"@convex-dev/better-auth": { "optional": true },
-		"better-auth": { "optional": true },
-		"convex": { "optional": true }
+		"@convex-dev/better-auth": {
+			"optional": true
+		},
+		"better-auth": {
+			"optional": true
+		},
+		"convex": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@convex-dev/better-auth": "^0.10.13",
