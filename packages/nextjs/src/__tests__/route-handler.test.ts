@@ -375,6 +375,33 @@ describe("createRouteHandler", () => {
 
 			expect(response.headers.get("x-custom")).toBe("value");
 		});
+
+		it("strips decompression-sensitive transport headers from proxied responses", async () => {
+			mockFetch.mockResolvedValue(
+				createMockResponse('{"url":"https://github.com/login/oauth/authorize","redirect":true}', {
+					headers: {
+						"content-encoding": "gzip",
+						"content-length": "123",
+						"transfer-encoding": "chunked",
+						"set-cookie": "session=abc; Path=/; HttpOnly",
+						"x-custom": "value",
+					},
+				}),
+			);
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in/social");
+			const response = await handler.POST(request);
+
+			expect(response.headers.get("content-encoding")).toBeNull();
+			expect(response.headers.get("content-length")).toBeNull();
+			expect(response.headers.get("transfer-encoding")).toBeNull();
+			expect(response.headers.get("set-cookie")).toBe("session=abc; Path=/; HttpOnly");
+			expect(response.headers.get("x-custom")).toBe("value");
+		});
 	});
 
 	describe("error handling", () => {

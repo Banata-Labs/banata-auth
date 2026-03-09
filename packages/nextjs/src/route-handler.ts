@@ -36,6 +36,12 @@ const FORWARDED_HEADERS = new Set([
 	"x-banata-project-id",
 ]);
 
+const STRIPPED_RESPONSE_HEADERS = new Set([
+	"content-encoding",
+	"content-length",
+	"transfer-encoding",
+]);
+
 const PROJECT_ID_COOKIE = "banata_project_id";
 const CLIENT_ID_COOKIE = "banata_client_id";
 
@@ -121,6 +127,14 @@ async function resolveProjectScope(
 	};
 }
 
+function sanitizeUpstreamResponseHeaders(headers: Headers): Headers {
+	const sanitized = new Headers(headers);
+	for (const name of STRIPPED_RESPONSE_HEADERS) {
+		sanitized.delete(name);
+	}
+	return sanitized;
+}
+
 export function createRouteHandler(options: {
 	/** The Convex .site URL where HTTP actions are hosted. */
 	convexSiteUrl: string;
@@ -177,11 +191,12 @@ export function createRouteHandler(options: {
 				redirect: "manual",
 			});
 
-			// Forward the response including cookies
+			// Undici transparently decompresses upstream bodies. Strip encoding
+			// headers so Next/browser clients do not try to decode again.
 			return new Response(response.body, {
 				status: response.status,
 				statusText: response.statusText,
-				headers: response.headers,
+				headers: sanitizeUpstreamResponseHeaders(response.headers),
 			});
 		} catch (error) {
 			console.error("[banata-auth] Proxy error:", error);
