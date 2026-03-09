@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { isAuthenticated } from "@/lib/auth-server";
+import Link from "next/link";
 
 export default async function Home() {
 	const hasToken = await isAuthenticated();

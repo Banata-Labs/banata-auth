@@ -13,9 +13,7 @@ export default async function RootLayout({
 	return (
 		<html lang="en">
 			<body>
-				<ConvexClientProvider>
-					{children}
-				</ConvexClientProvider>
+				<ConvexClientProvider>{children}</ConvexClientProvider>
 			</body>
 		</html>
 	);
