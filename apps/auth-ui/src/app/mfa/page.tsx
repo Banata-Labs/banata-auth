@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { AuthCard } from "@banata-auth/react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { AuthCard } from "@banata-auth/react";
+import { useState } from "react";
 
 export default function MfaPage() {
 	const [code, setCode] = useState("");
@@ -28,7 +28,15 @@ export default function MfaPage() {
 				className="grid gap-3"
 			>
 				<Label htmlFor="code">Verification code</Label>
-				<Input id="code" value={code} onChange={(event) => setCode(event.target.value)} placeholder="123456" inputMode="numeric" maxLength={6} required />
+				<Input
+					id="code"
+					value={code}
+					onChange={(event) => setCode(event.target.value)}
+					placeholder="123456"
+					inputMode="numeric"
+					maxLength={6}
+					required
+				/>
 				<Button type="submit">Verify</Button>
 			</form>
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}

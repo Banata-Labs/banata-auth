@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { AuthCard, SignUpForm, SocialButtons } from "@banata-auth/react";
 import {
 	DisabledAuthMethodCard,
 	LoadingProjectAuthCard,
@@ -10,16 +8,12 @@ import {
 } from "@/components/project-auth-state";
 import { authClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
+import { AuthCard, SignUpForm, SocialButtons } from "@banata-auth/react";
+import Link from "next/link";
 
 export default function SignUpPage() {
-	const {
-		config,
-		error,
-		enabledSocialProviders,
-		hasScope,
-		isLoading,
-		scopedPath,
-	} = useProjectAuthConfig();
+	const { config, error, enabledSocialProviders, hasScope, isLoading, scopedPath } =
+		useProjectAuthConfig();
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;

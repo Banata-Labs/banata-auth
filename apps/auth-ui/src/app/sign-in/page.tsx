@@ -1,20 +1,81 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { AuthCard, SocialButtons } from "@banata-auth/react";
 import { PasskeyButton } from "@/components/passkey-button";
 import {
 	LoadingProjectAuthCard,
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
-import { authClient } from "@/lib/auth-client";
-import { useProjectAuthConfig } from "@/lib/project-auth";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { authClient } from "@/lib/auth-client";
+import { useProjectAuthConfig } from "@/lib/project-auth";
+import { AuthCard, SocialButtons } from "@banata-auth/react";
+import Link from "next/link";
+import { useState } from "react";
+
+type SignInViewModel = {
+	emailPasswordEnabled: boolean;
+	passkeyEnabled: boolean;
+	magicLinkEnabled: boolean;
+	emailOtpEnabled: boolean;
+	signUpEnabled: boolean;
+	showDivider: boolean;
+	hasAnyMethod: boolean;
+	callbackURL: string;
+};
+
+function getSignInViewModel(
+	config: ReturnType<typeof useProjectAuthConfig>["config"],
+	socialProviderCount: number,
+	scopedPath: (path: string) => string,
+): SignInViewModel {
+	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
+	const passkeyEnabled = config?.authMethods.passkey ?? false;
+	const magicLinkEnabled = config?.authMethods.magicLink ?? false;
+	const emailOtpEnabled = config?.authMethods.emailOtp ?? false;
+
+	return {
+		emailPasswordEnabled,
+		passkeyEnabled,
+		magicLinkEnabled,
+		emailOtpEnabled,
+		signUpEnabled: emailPasswordEnabled || socialProviderCount > 0,
+		showDivider: passkeyEnabled || socialProviderCount > 0,
+		hasAnyMethod:
+			emailPasswordEnabled ||
+			passkeyEnabled ||
+			magicLinkEnabled ||
+			emailOtpEnabled ||
+			socialProviderCount > 0,
+		callbackURL: scopedPath("/org-selector"),
+	};
+}
+
+function PasswordlessLinks({
+	emailOtpEnabled,
+	magicLinkEnabled,
+	scopedPath,
+}: {
+	emailOtpEnabled: boolean;
+	magicLinkEnabled: boolean;
+	scopedPath: (path: string) => string;
+}) {
+	if (!magicLinkEnabled && !emailOtpEnabled) {
+		return null;
+	}
+
+	return (
+		<p className="text-sm text-muted-foreground">
+			Prefer passwordless?{" "}
+			{magicLinkEnabled ? <Link href={scopedPath("/magic-link")}>Magic link</Link> : null}
+			{magicLinkEnabled && emailOtpEnabled ? " or " : null}
+			{emailOtpEnabled ? <Link href={scopedPath("/email-otp")}>Email OTP</Link> : null}
+		</p>
+	);
+}
 
 export default function SignInPage() {
 	const [email, setEmail] = useState("");
@@ -41,29 +102,17 @@ export default function SignInPage() {
 		return <ProjectAuthErrorCard title="Sign in" message={configError} />;
 	}
 
-	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
-	const passkeyEnabled = config?.authMethods.passkey ?? false;
-	const magicLinkEnabled = config?.authMethods.magicLink ?? false;
-	const emailOtpEnabled = config?.authMethods.emailOtp ?? false;
-	const signUpEnabled = emailPasswordEnabled || enabledSocialProviders.length > 0;
-	const showDivider = passkeyEnabled || enabledSocialProviders.length > 0;
-	const callbackURL = scopedPath("/org-selector");
-	const hasAnyMethod =
-		emailPasswordEnabled ||
-		passkeyEnabled ||
-		magicLinkEnabled ||
-		emailOtpEnabled ||
-		enabledSocialProviders.length > 0;
+	const viewModel = getSignInViewModel(config, enabledSocialProviders.length, scopedPath);
 
 	return (
 		<div className="mt-14">
 			<AuthCard title="Sign in" description="Use the methods enabled for this Banata project.">
-				{!hasAnyMethod ? (
+				{!viewModel.hasAnyMethod ? (
 					<p className="text-sm text-muted-foreground">
 						No sign-in methods are enabled for this project yet.
 					</p>
 				) : null}
-				{emailPasswordEnabled ? (
+				{viewModel.emailPasswordEnabled ? (
 					<form
 						onSubmit={async (event) => {
 							event.preventDefault();
@@ -71,54 +120,64 @@ export default function SignInPage() {
 							const result = await authClient.signIn.email({
 								email,
 								password,
-								callbackURL,
+								callbackURL: viewModel.callbackURL,
 							});
 							if (result.error) {
 								setError(result.error.message ?? "Unable to sign in");
 								return;
 							}
-							window.location.href = callbackURL;
+							window.location.href = viewModel.callbackURL;
 						}}
 						className="grid gap-3"
 					>
 						<div className="grid gap-2">
 							<Label htmlFor="email">Email</Label>
-							<Input id="email" placeholder="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+							<Input
+								id="email"
+								placeholder="Email"
+								type="email"
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								required
+							/>
 						</div>
 						<div className="grid gap-2">
 							<Label htmlFor="password">Password</Label>
-							<Input id="password" placeholder="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+							<Input
+								id="password"
+								placeholder="Password"
+								type="password"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+								required
+							/>
 						</div>
 						<Button type="submit">Continue</Button>
 					</form>
 				) : null}
 				{error ? <p className="text-sm text-destructive">{error}</p> : null}
-				{showDivider && emailPasswordEnabled ? <Separator /> : null}
-				{passkeyEnabled ? <PasskeyButton callbackURL={callbackURL} /> : null}
+				{viewModel.showDivider && viewModel.emailPasswordEnabled ? <Separator /> : null}
+				{viewModel.passkeyEnabled ? <PasskeyButton callbackURL={viewModel.callbackURL} /> : null}
 				{enabledSocialProviders.length > 0 ? (
 					<SocialButtons
 						authClient={authClient}
 						providers={enabledSocialProviders}
-						callbackURL={callbackURL}
+						callbackURL={viewModel.callbackURL}
 					/>
 				) : null}
-				{signUpEnabled ? (
+				{viewModel.signUpEnabled ? (
 					<p className="text-sm text-muted-foreground">
 						Need an account? <Link href={scopedPath("/sign-up")}>Create one</Link>
 					</p>
 				) : null}
-				{magicLinkEnabled || emailOtpEnabled ? (
+				<PasswordlessLinks
+					emailOtpEnabled={viewModel.emailOtpEnabled}
+					magicLinkEnabled={viewModel.magicLinkEnabled}
+					scopedPath={scopedPath}
+				/>
+				{viewModel.emailPasswordEnabled ? (
 					<p className="text-sm text-muted-foreground">
-						Prefer passwordless?{" "}
-						{magicLinkEnabled ? <Link href={scopedPath("/magic-link")}>Magic link</Link> : null}
-						{magicLinkEnabled && emailOtpEnabled ? " or " : null}
-						{emailOtpEnabled ? <Link href={scopedPath("/email-otp")}>Email OTP</Link> : null}
-					</p>
-				) : null}
-				{emailPasswordEnabled ? (
-					<p className="text-sm text-muted-foreground">
-						Forgot your password?{" "}
-						<Link href={scopedPath("/forgot-password")}>Reset it</Link>
+						Forgot your password? <Link href={scopedPath("/forgot-password")}>Reset it</Link>
 					</p>
 				) : null}
 			</AuthCard>

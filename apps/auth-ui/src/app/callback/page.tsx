@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { AuthCard } from "@banata-auth/react";
 import { Badge } from "@/components/ui/badge";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
+import { AuthCard } from "@banata-auth/react";
+import { useEffect } from "react";
 
 export default function CallbackPage() {
 	const { data: session, isPending } = authClient.useSession();
@@ -24,9 +24,20 @@ export default function CallbackPage() {
 
 	return (
 		<AuthCard title="Auth callback" description="Finalizing authentication.">
-			<p className="text-sm text-muted-foreground">Authorization code: <Badge variant={code ? "default" : "destructive"}>{code ? "received" : "missing"}</Badge></p>
+			<p className="text-sm text-muted-foreground">
+				Authorization code:{" "}
+				<Badge variant={code ? "default" : "destructive"}>{code ? "received" : "missing"}</Badge>
+			</p>
 			<p className="text-sm text-muted-foreground">State: {state ?? "not provided"}</p>
-			<Button type="button" variant="outline" onClick={() => window.location.href = "/sign-in"}>Back to sign in</Button>
+			<Button
+				type="button"
+				variant="outline"
+				onClick={() => {
+					window.location.href = "/sign-in";
+				}}
+			>
+				Back to sign in
+			</Button>
 		</AuthCard>
 	);
 }

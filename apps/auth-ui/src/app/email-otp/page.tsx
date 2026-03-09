@@ -1,24 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { AuthCard } from "@banata-auth/react";
 import {
 	DisabledAuthMethodCard,
 	LoadingProjectAuthCard,
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { useProjectAuthConfig } from "@/lib/project-auth";
+import { AuthCard } from "@banata-auth/react";
+import { useState } from "react";
 
 export default function EmailOtpPage() {
 	const [email, setEmail] = useState("");
 	const [otp, setOtp] = useState("");
 	const [step, setStep] = useState<"request" | "verify">("request");
-	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } =
-		useProjectAuthConfig();
+	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } = useProjectAuthConfig();
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;
@@ -58,7 +57,14 @@ export default function EmailOtpPage() {
 					className="grid gap-3"
 				>
 					<Label htmlFor="email">Email</Label>
-					<Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" required />
+					<Input
+						id="email"
+						type="email"
+						value={email}
+						onChange={(event) => setEmail(event.target.value)}
+						placeholder="you@company.com"
+						required
+					/>
 					<Button type="submit">Send code</Button>
 				</form>
 			) : (
@@ -79,7 +85,15 @@ export default function EmailOtpPage() {
 					className="grid gap-3"
 				>
 					<Label htmlFor="otp">Verification code</Label>
-					<Input id="otp" value={otp} onChange={(event) => setOtp(event.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" required />
+					<Input
+						id="otp"
+						value={otp}
+						onChange={(event) => setOtp(event.target.value)}
+						inputMode="numeric"
+						maxLength={6}
+						placeholder="123456"
+						required
+					/>
 					<Button type="submit">Verify code</Button>
 				</form>
 			)}

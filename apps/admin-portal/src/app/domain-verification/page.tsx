@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Copy, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type DomainVerification = {
 	id: string;
@@ -42,6 +42,19 @@ function formatTimestamp(value: number | null) {
 	return new Date(value).toLocaleString();
 }
 
+async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
+	const response = await fetch(path, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(body),
+	});
+	if (!response.ok) {
+		const text = await response.text().catch(() => "");
+		throw new Error(text || `Request failed: ${response.status}`);
+	}
+	return (await response.json()) as T;
+}
+
 export default function DomainVerificationPage() {
 	const [projectId, setProjectId] = useState("");
 	const [organizationId, setOrganizationId] = useState("");
@@ -51,19 +64,6 @@ export default function DomainVerificationPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [busyId, setBusyId] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
-
-	async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
-		const response = await fetch(path, {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify(body),
-		});
-		if (!response.ok) {
-			const text = await response.text().catch(() => "");
-			throw new Error(text || `Request failed: ${response.status}`);
-		}
-		return (await response.json()) as T;
-	}
 
 	async function refreshRecords() {
 		if (!projectId || !organizationId) {
@@ -87,7 +87,21 @@ export default function DomainVerificationPage() {
 
 	useEffect(() => {
 		if (!projectId || !organizationId) return;
-		void refreshRecords();
+		void (async () => {
+			try {
+				setIsLoading(true);
+				setError(null);
+				const payload = await request<{ data?: DomainVerification[] }>(
+					"/api/auth/banata/domains/list",
+					{ projectId, organizationId },
+				);
+				setRecords(Array.isArray(payload.data) ? payload.data : []);
+			} catch (caught) {
+				setError(caught instanceof Error ? caught.message : "Unable to load domain verifications.");
+			} finally {
+				setIsLoading(false);
+			}
+		})();
 	}, [projectId, organizationId]);
 
 	async function handleCreate() {
@@ -163,21 +177,41 @@ export default function DomainVerificationPage() {
 				<CardContent className="grid gap-4 md:grid-cols-2">
 					<div className="grid gap-2">
 						<Label htmlFor="project-id">Project ID</Label>
-						<Input id="project-id" placeholder="proj_123" value={projectId} onChange={(event) => setProjectId(event.target.value)} />
+						<Input
+							id="project-id"
+							placeholder="proj_123"
+							value={projectId}
+							onChange={(event) => setProjectId(event.target.value)}
+						/>
 					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="organization-id">Organization ID</Label>
-						<Input id="organization-id" placeholder="org_123" value={organizationId} onChange={(event) => setOrganizationId(event.target.value)} />
+						<Input
+							id="organization-id"
+							placeholder="org_123"
+							value={organizationId}
+							onChange={(event) => setOrganizationId(event.target.value)}
+						/>
 					</div>
 					<div className="grid gap-2 md:col-span-2">
 						<Label htmlFor="domain">Domain</Label>
-						<Input id="domain" placeholder="acme.com" value={domain} onChange={(event) => setDomain(event.target.value)} />
+						<Input
+							id="domain"
+							placeholder="acme.com"
+							value={domain}
+							onChange={(event) => setDomain(event.target.value)}
+						/>
 					</div>
 					<div className="md:col-span-2 flex flex-wrap gap-2">
 						<Button type="button" onClick={() => void handleCreate()} disabled={isSubmitting}>
 							{isSubmitting ? "Creating..." : "Create verification"}
 						</Button>
-						<Button type="button" variant="secondary" onClick={() => void refreshRecords()} disabled={isLoading}>
+						<Button
+							type="button"
+							variant="secondary"
+							onClick={() => void refreshRecords()}
+							disabled={isLoading}
+						>
 							<RefreshCw className="mr-2 size-4" />
 							Refresh
 						</Button>
@@ -207,10 +241,17 @@ export default function DomainVerificationPage() {
 								<div className="rounded-md border px-3 py-2">
 									<div className="flex items-start justify-between gap-3">
 										<div className="min-w-0">
-											<p className="text-xs uppercase tracking-wide text-muted-foreground">TXT name</p>
+											<p className="text-xs uppercase tracking-wide text-muted-foreground">
+												TXT name
+											</p>
 											<p className="mt-1 break-all font-mono text-xs">{record.txtRecord.name}</p>
 										</div>
-										<Button type="button" size="sm" variant="outline" onClick={() => void copyValue(record.txtRecord.name)}>
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											onClick={() => void copyValue(record.txtRecord.name)}
+										>
 											<Copy className="size-4" />
 										</Button>
 									</div>
@@ -218,10 +259,17 @@ export default function DomainVerificationPage() {
 								<div className="rounded-md border px-3 py-2">
 									<div className="flex items-start justify-between gap-3">
 										<div className="min-w-0">
-											<p className="text-xs uppercase tracking-wide text-muted-foreground">TXT value</p>
+											<p className="text-xs uppercase tracking-wide text-muted-foreground">
+												TXT value
+											</p>
 											<p className="mt-1 break-all font-mono text-xs">{record.txtRecord.value}</p>
 										</div>
-										<Button type="button" size="sm" variant="outline" onClick={() => void copyValue(record.txtRecord.value)}>
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											onClick={() => void copyValue(record.txtRecord.value)}
+										>
 											<Copy className="size-4" />
 										</Button>
 									</div>
@@ -281,14 +329,30 @@ export default function DomainVerificationPage() {
 												<Badge variant={stateVariant(record.state)}>{record.state}</Badge>
 											</TableCell>
 											<TableCell>{record.checkCount}</TableCell>
-											<TableCell className="text-xs text-muted-foreground">{formatTimestamp(record.verifiedAt)}</TableCell>
-											<TableCell className="text-xs text-muted-foreground">{formatTimestamp(record.expiresAt)}</TableCell>
+											<TableCell className="text-xs text-muted-foreground">
+												{formatTimestamp(record.verifiedAt)}
+											</TableCell>
+											<TableCell className="text-xs text-muted-foreground">
+												{formatTimestamp(record.expiresAt)}
+											</TableCell>
 											<TableCell className="text-right">
 												<div className="flex justify-end gap-2">
-													<Button type="button" size="sm" variant="outline" disabled={isBusy} onClick={() => void handleVerify(record.id)}>
+													<Button
+														type="button"
+														size="sm"
+														variant="outline"
+														disabled={isBusy}
+														onClick={() => void handleVerify(record.id)}
+													>
 														Verify
 													</Button>
-													<Button type="button" size="sm" variant="outline" disabled={isBusy} onClick={() => void handleDelete(record.id)}>
+													<Button
+														type="button"
+														size="sm"
+														variant="outline"
+														disabled={isBusy}
+														onClick={() => void handleDelete(record.id)}
+													>
 														<Trash2 className="size-4" />
 													</Button>
 												</div>

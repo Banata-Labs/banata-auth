@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { AuthCard } from "@banata-auth/react";
 import { Button } from "@/components/ui/button";
+import { AuthCard } from "@banata-auth/react";
+import Link from "next/link";
 
 export default function ErrorPage() {
 	const params =

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,6 +10,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
 type PortalUser = {
 	id: string;
@@ -56,13 +56,17 @@ export default function UsersPage() {
 		<section className="grid gap-6">
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">User Access</h1>
-				<p className="mt-1 text-sm text-muted-foreground">Manage JIT-provisioned users and grant scoped access to the admin portal.</p>
+				<p className="mt-1 text-sm text-muted-foreground">
+					Manage JIT-provisioned users and grant scoped access to the admin portal.
+				</p>
 			</div>
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}
 			<Card className="gap-0 overflow-hidden py-0">
 				<CardHeader>
 					<CardTitle className="text-base">Portal users</CardTitle>
-					<CardDescription>Invite IT admins, reset MFA enrollment, and disable suspended users.</CardDescription>
+					<CardDescription>
+						Invite IT admins, reset MFA enrollment, and disable suspended users.
+					</CardDescription>
 				</CardHeader>
 				<CardContent className="px-0">
 					<Table>
@@ -77,9 +81,13 @@ export default function UsersPage() {
 							{users.map((user) => (
 								<TableRow key={user.email}>
 									<TableCell className="font-mono text-xs">{user.email}</TableCell>
-									<TableCell><Badge variant="secondary">{user.role}</Badge></TableCell>
 									<TableCell>
-										<Badge variant={user.banned ? "destructive" : "default"}>{user.banned ? "banned" : "active"}</Badge>
+										<Badge variant="secondary">{user.role}</Badge>
+									</TableCell>
+									<TableCell>
+										<Badge variant={user.banned ? "destructive" : "default"}>
+											{user.banned ? "banned" : "active"}
+										</Badge>
 									</TableCell>
 								</TableRow>
 							))}

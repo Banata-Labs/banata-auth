@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { AuthCard } from "@banata-auth/react";
+import Link from "next/link";
 
 export function MissingProjectScopeCard() {
 	return (
@@ -10,8 +10,8 @@ export function MissingProjectScopeCard() {
 			description="This hosted auth UI only works when a Banata project is selected."
 		>
 			<p className="text-sm text-muted-foreground">
-				Open this page with a <code>client_id</code> or <code>project_id</code> query
-				parameter so Banata can load the correct customer configuration.
+				Open this page with a <code>client_id</code> or <code>project_id</code> query parameter so
+				Banata can load the correct customer configuration.
 			</p>
 		</AuthCard>
 	);

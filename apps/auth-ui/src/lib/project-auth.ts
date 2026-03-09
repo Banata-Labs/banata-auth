@@ -64,13 +64,9 @@ function readScopeFromWindow(): ProjectAuthScope {
 
 	const params = new URLSearchParams(window.location.search);
 	const clientId =
-		params.get("client_id") ??
-		params.get("clientId") ??
-		readCookie(BANATA_CLIENT_ID_COOKIE);
+		params.get("client_id") ?? params.get("clientId") ?? readCookie(BANATA_CLIENT_ID_COOKIE);
 	const projectId =
-		params.get("project_id") ??
-		params.get("projectId") ??
-		readCookie(BANATA_PROJECT_ID_COOKIE);
+		params.get("project_id") ?? params.get("projectId") ?? readCookie(BANATA_PROJECT_ID_COOKIE);
 
 	if (clientId) writeCookie(BANATA_CLIENT_ID_COOKIE, clientId);
 	if (projectId) writeCookie(BANATA_PROJECT_ID_COOKIE, projectId);
@@ -105,6 +101,31 @@ function toProviderLabel(providerId: string): string {
 		.join(" ");
 }
 
+function hasProjectAuthScope(scope: ProjectAuthScope) {
+	return Boolean(scope.clientId || scope.projectId);
+}
+
+function toPublicConfigRequestBody(scope: ProjectAuthScope) {
+	return {
+		...(scope.clientId ? { clientId: scope.clientId } : {}),
+		...(scope.projectId ? { projectId: scope.projectId } : {}),
+	};
+}
+
+async function fetchPublicAuthConfig(scope: ProjectAuthScope): Promise<PublicAuthConfig> {
+	const response = await fetch("/api/auth/banata/config/public", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(toPublicConfigRequestBody(scope)),
+	});
+
+	if (!response.ok) {
+		throw new Error("Unable to load project auth settings");
+	}
+
+	return (await response.json()) as PublicAuthConfig;
+}
+
 export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 	const [scope, setScope] = useState<ProjectAuthScope>({ clientId: null, projectId: null });
 	const [config, setConfig] = useState<PublicAuthConfig | null>(null);
@@ -115,7 +136,7 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		const nextScope = readScopeFromWindow();
 		setScope(nextScope);
 
-		if (!nextScope.clientId && !nextScope.projectId) {
+		if (!hasProjectAuthScope(nextScope)) {
 			setConfig(null);
 			setError(null);
 			setIsLoading(false);
@@ -123,45 +144,26 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		}
 
 		let cancelled = false;
+		setIsLoading(true);
+		setError(null);
 
-		async function loadConfig() {
-			setIsLoading(true);
-			setError(null);
-			try {
-				const response = await fetch("/api/auth/banata/config/public", {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({
-						...(nextScope.clientId ? { clientId: nextScope.clientId } : {}),
-						...(nextScope.projectId ? { projectId: nextScope.projectId } : {}),
-					}),
-				});
-
-				if (!response.ok) {
-					throw new Error("Unable to load project auth settings");
-				}
-
-				const payload = (await response.json()) as PublicAuthConfig;
-				if (!cancelled) {
-					setConfig(payload);
-				}
-			} catch (loadError) {
-				if (!cancelled) {
-					setConfig(null);
-					setError(
-						loadError instanceof Error
-							? loadError.message
-							: "Unable to load project auth settings",
-					);
-				}
-			} finally {
+		void fetchPublicAuthConfig(nextScope)
+			.then((payload) => {
+				if (cancelled) return;
+				setConfig(payload);
+			})
+			.catch((loadError) => {
+				if (cancelled) return;
+				setConfig(null);
+				setError(
+					loadError instanceof Error ? loadError.message : "Unable to load project auth settings",
+				);
+			})
+			.finally(() => {
 				if (!cancelled) {
 					setIsLoading(false);
 				}
-			}
-		}
-
-		void loadConfig();
+			});
 
 		return () => {
 			cancelled = true;
@@ -184,7 +186,7 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		config,
 		error,
 		isLoading,
-		hasScope: Boolean(scope.clientId || scope.projectId),
+		hasScope: hasProjectAuthScope(scope),
 		scopedPath: (path) => appendScope(path, scope),
 		scopedApiPath: (path) => appendScope(path, scope),
 		enabledSocialProviders,
