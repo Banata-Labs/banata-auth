@@ -1,5 +1,11 @@
 # @banata-auth/nextjs
 
+## 0.1.3
+
+### Patch Changes
+
+- [`ee8a9d1`](https://github.com/Banata-Labs/banata-auth/commit/ee8a9d12c750619155735fafef49304731253d94) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Strip decompression headers from proxied auth responses so social sign-in redirects work reliably in Next.js apps.
+
 ## 0.1.2
 
 ### Patch Changes
