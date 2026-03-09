@@ -1,5 +1,5 @@
 ---
-title: "Deploy"
+title: "Deploying the Self-Hosted Stack"
 description: "Production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for Banata Auth."
 section: "Configuration"
 order: 19
@@ -10,6 +10,9 @@ This guide covers everything you need to deploy Banata Auth to production — en
 ---
 
 ## Deployment Architecture
+This page applies only to the **self-hosted Convex + Next.js** architecture.
+
+If you are using Banata as a managed service, create the project and API keys in the dashboard and integrate over HTTP with [`@banata-auth/sdk`](/docs/sdk). You do not deploy the Convex auth runtime yourself in that model.
 
 In production, Banata Auth has two main components:
 

@@ -1,13 +1,19 @@
 ---
-title: "Quick Start"
-description: "Self-hosted Banata Auth setup for Next.js + Convex."
+title: "Self-Hosted Quick Start"
+description: "Self-hosted setup for teams intentionally running Banata Auth inside their own Convex deployment."
 section: "Getting Started"
 order: 2
 ---
 
 This guide is the **self-hosted** setup for Banata Auth.
 
-If you want a **dashboard-first / WorkOS-style** integration, start with the dashboard and [`@banata-auth/sdk`](/docs/sdk) instead. This guide is specifically for running the auth engine inside your own Convex deployment.
+If you want a **dashboard-first / WorkOS-style** integration, start in the Banata dashboard:
+
+1. Create a project
+2. Create a project-scoped API key
+3. Use [`@banata-auth/sdk`](/docs/sdk) against Banata's HTTP API
+
+Use this guide only if you intentionally want to run the auth engine inside your own Convex deployment.
 
 ---
 
@@ -118,17 +124,10 @@ export const authComponent = createBanataAuthComponent<DataModel, typeof schema>
 );
 
 export function buildConfig(): BanataAuthConfig {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) {
-    throw new Error(
-      "BETTER_AUTH_SECRET is required. Set it with: npx convex env set BETTER_AUTH_SECRET <value>",
-    );
-  }
-
   return {
     appName: "My App",
     siteUrl: process.env.SITE_URL ?? "http://localhost:3000",
-    secret,
+    secret: process.env.BETTER_AUTH_SECRET ?? "",
     authMethods: {
       emailPassword: true,
       organization: true,

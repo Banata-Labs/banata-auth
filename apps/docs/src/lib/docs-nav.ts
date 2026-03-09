@@ -13,7 +13,7 @@ export const docsNav: DocNavSection[] = [
 		section: "Getting Started",
 		items: [
 			{ slug: "introduction", title: "Introduction" },
-			{ slug: "quickstart", title: "Quick Start" },
+			{ slug: "quickstart", title: "Self-Hosted Quick Start" },
 			{ slug: "project-structure", title: "Project Structure" },
 		],
 	},
@@ -85,8 +85,8 @@ export const docsNav: DocNavSection[] = [
 	{
 		section: "Deployment",
 		items: [
-			{ slug: "env-vars", title: "Environment Variables" },
-			{ slug: "deploy", title: "Deploying to Production" },
+			{ slug: "env-vars", title: "Self-Hosted Environment Variables" },
+			{ slug: "deploy", title: "Deploying the Self-Hosted Stack" },
 			{ slug: "self-hosting", title: "Self-Hosting" },
 		],
 	},

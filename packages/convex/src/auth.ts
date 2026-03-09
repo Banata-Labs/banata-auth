@@ -157,6 +157,23 @@ export interface SocialProviderConfig {
 }
 
 /**
+ * Email/password-specific configuration.
+ */
+export interface BanataEmailPasswordConfig {
+	/**
+	 * Require users to verify their email before they can sign in.
+	 * Defaults to `true`.
+	 */
+	requireEmailVerification?: boolean;
+	/** Minimum password length. Defaults to `8`. */
+	minPasswordLength?: number;
+	/** Maximum password length. Defaults to `128`. */
+	maxPasswordLength?: number;
+	/** Automatically sign users in after sign-up. Defaults to `true`. */
+	autoSignIn?: boolean;
+}
+
+/**
  * Supported social providers and their config shapes.
  * Matches a subset of BetterAuthOptions["socialProviders"] keys.
  */
@@ -202,6 +219,9 @@ export interface BanataAuthConfig {
 
 	/** Email callback configuration (optional overrides). */
 	email?: BanataAuthEmailConfig;
+
+	/** Email/password auth behavior overrides. */
+	emailPassword?: BanataEmailPasswordConfig;
 
 	/**
 	 * Built-in email sending options.
@@ -340,6 +360,73 @@ export type { AuthConfig as BanataAuthConvexAuthConfig } from "convex/server";
 /** The return type of `createClient` with GenericDataModel defaults. */
 type ComponentClient = ReturnType<typeof createClient>;
 
+const MODULE_ANALYSIS_SECRET = "placeholder-for-module-analysis";
+let warnedAboutMissingSecret = false;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return Object.prototype.toString.call(value) === "[object Object]";
+}
+
+function mergeOptionValues(base: unknown, override: unknown, key?: string): unknown {
+	if (override === undefined) {
+		return base;
+	}
+
+	if (Array.isArray(base) && Array.isArray(override)) {
+		if (key === "plugins") {
+			return [...base, ...override];
+		}
+
+		if (
+			base.every((item) => typeof item === "string") &&
+			override.every((item) => typeof item === "string")
+		) {
+			return Array.from(new Set([...base, ...override]));
+		}
+
+		return [...base, ...override];
+	}
+
+	if (isPlainObject(base) && isPlainObject(override)) {
+		const merged: Record<string, unknown> = { ...base };
+		for (const [childKey, childValue] of Object.entries(override)) {
+			merged[childKey] = mergeOptionValues(merged[childKey], childValue, childKey);
+		}
+		return merged;
+	}
+
+	return override;
+}
+
+function mergeBetterAuthOptions(
+	base: BetterAuthOptions,
+	override: Partial<BetterAuthOptions> | undefined,
+): BetterAuthOptions {
+	if (!override) {
+		return base;
+	}
+
+	return mergeOptionValues(base, override) as BetterAuthOptions;
+}
+
+function resolveConfiguredSecret(secret: string | undefined): string {
+	const normalized = typeof secret === "string" ? secret.trim() : "";
+	if (normalized.length > 0) {
+		return secret as string;
+	}
+
+	if (!warnedAboutMissingSecret) {
+		warnedAboutMissingSecret = true;
+		console.warn(
+			"[BanataAuth] BETTER_AUTH_SECRET is not available during config evaluation. " +
+				"Using a placeholder so Convex module analysis can complete. " +
+				"Set a real BETTER_AUTH_SECRET in your deployment before serving auth traffic.",
+		);
+	}
+
+	return MODULE_ANALYSIS_SECRET;
+}
+
 // ─── Factory Functions ──────────────────────────────────────────────
 
 /**
@@ -410,6 +497,8 @@ export function createBanataAuthOptions(
 ): BetterAuthOptions {
 	const { authComponent, authConfig, config } = params;
 	const methods = config.authMethods ?? {};
+	const emailPassword = config.emailPassword ?? {};
+	const resolvedSecret = resolveConfiguredSecret(config.secret);
 
 	// Build social providers object — Better Auth expects { github?: {...}, google?: {...} }
 	const socialProviders = buildSocialProviders(config.socialProviders);
@@ -447,14 +536,14 @@ export function createBanataAuthOptions(
 	const options: BetterAuthOptions = {
 		appName: config.appName ?? "Banata Auth",
 		baseURL: config.siteUrl,
-		secret: config.secret,
+		secret: resolvedSecret,
 		trustedOrigins,
 		database: dbAdapter,
 		emailAndPassword: {
 			enabled: methods.emailPassword !== false,
-			requireEmailVerification: true,
-			minPasswordLength: 8,
-			maxPasswordLength: 128,
+			requireEmailVerification: emailPassword.requireEmailVerification ?? true,
+			minPasswordLength: emailPassword.minPasswordLength ?? 8,
+			maxPasswordLength: emailPassword.maxPasswordLength ?? 128,
 			sendResetPassword: async ({
 				user,
 				url,
@@ -462,7 +551,7 @@ export function createBanataAuthOptions(
 			}: { user: { email: string; name: string }; url: string; token: string }) => {
 				await resolvedSendReset({ user, url, token });
 			},
-			autoSignIn: true,
+			autoSignIn: emailPassword.autoSignIn ?? true,
 		},
 		// Rate limiting — protects sign-in, sign-up, password reset, and OTP endpoints
 		// from brute-force and credential-stuffing attacks.
@@ -513,11 +602,9 @@ export function createBanataAuthOptions(
 		],
 		// Wire lifecycle triggers into Better Auth's database hooks
 		databaseHooks: createDatabaseHooks(ctx, config.triggers),
-		// Merge any advanced config
-		...config.advanced,
 	};
 
-	return options;
+	return mergeBetterAuthOptions(options, config.advanced);
 }
 
 /**
@@ -592,14 +679,23 @@ function buildSocialProviders(
 	// Each key is a provider name, value is { clientId, clientSecret, enabled? }.
 	const result: Record<string, SocialProviderConfig> = {};
 	for (const [key, value] of entries) {
-		if (value != null) {
-			result[key] = value;
-		}
+		if (value == null) continue;
+		const clientId = typeof value.clientId === "string" ? value.clientId.trim() : "";
+		const clientSecret =
+			typeof value.clientSecret === "string" ? value.clientSecret.trim() : "";
+		if (!clientId || !clientSecret) continue;
+		result[key] = {
+			...value,
+			clientId,
+			clientSecret,
+		};
 	}
 
 	// Cast to the expected type — we're building the correct shape
 	// but TypeScript can't verify the keys match the mapped type exactly.
-	return result as BetterAuthOptions["socialProviders"];
+	return Object.keys(result).length > 0
+		? (result as BetterAuthOptions["socialProviders"])
+		: undefined;
 }
 
 /**
@@ -775,7 +871,53 @@ function buildPlugins(
 	// Management endpoints stay on the RBAC-backed enterprise provisioning plugin above.
 
 	if (methods.apiKey !== false) {
-		plugins.push(apiKey());
+		plugins.push(
+			apiKey({
+				enableMetadata: true,
+				enableSessionForAPIKeys: true,
+				...(config.apiKeyConfig?.prefix
+					? {
+							defaultPrefix: config.apiKeyConfig.prefix,
+						}
+					: {}),
+				...(config.apiKeyConfig?.defaultExpiresIn
+					? {
+							keyExpiration: {
+								defaultExpiresIn: config.apiKeyConfig.defaultExpiresIn,
+							},
+						}
+					: {}),
+				customAPIKeyGetter: (ctx) => {
+					const path = typeof ctx.path === "string" ? ctx.path : "";
+					const isApiKeyManagedPath =
+						path.startsWith("/admin/") ||
+						path.startsWith("/banata/") ||
+						path.startsWith("/organization/") ||
+						path.startsWith("/api-key/");
+					const directApiKey =
+						ctx.headers?.get("x-api-key") ?? ctx.request?.headers.get("x-api-key") ?? null;
+					if (directApiKey?.trim()) {
+						return directApiKey.trim();
+					}
+					if (!isApiKeyManagedPath) {
+						return undefined;
+					}
+
+					const authorizationHeader =
+						ctx.headers?.get("authorization") ??
+						ctx.request?.headers.get("authorization") ??
+						null;
+					if (authorizationHeader) {
+						const [scheme, token] = authorizationHeader.split(/\s+/, 2);
+						if (scheme?.toLowerCase() === "bearer" && token?.trim()) {
+							return token.trim();
+						}
+					}
+
+					return undefined;
+				},
+			}),
+		);
 	}
 
 	// Bot protection plugin — intercepts requests before auth processing

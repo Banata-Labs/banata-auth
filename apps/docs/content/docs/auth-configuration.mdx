@@ -15,7 +15,7 @@ Banata Auth's **authorization configuration** controls how roles and permissions
 |---|---|---|---|
 | Role assignment in Admin Portal | `roleAssignment` | `false` | Allow organization admins to map user roles based on their identity provider groups |
 | Multiple roles | `multipleRoles` | `false` | Allow users to have multiple roles within an organization |
-| Organization API key permissions | `apiKeyPermissions` | `false` | Manage which permissions are available to organization API keys |
+| Project API key permissions | `apiKeyPermissions` | `false` | Manage which permissions are available to project-scoped API keys |
 
 ### Role Assignment in Admin Portal
 
@@ -40,12 +40,12 @@ Effective permissions: code:read, code:write, code:review, deploy:staging, deplo
 
 When checking permissions for a user with multiple roles, all permissions from all assigned roles are combined (union).
 
-### Organization API Key Permissions
+### Project API Key Permissions
 
-When enabled, you can control which **specific permissions** are available to organization-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within an organization.
+When enabled, you can control which **specific permissions** are available to project-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within the current Banata project.
 
 ```
-Organization API key "CI Pipeline":
+Project API key "CI Pipeline":
   - Allowed: deploy:create, deploy:read
   - Not allowed: members:manage, billing:manage
 ```
@@ -204,7 +204,7 @@ const canReview = await banata.rbac.checkPermission({
 1. **Principle of least privilege** — Only enable settings that your application needs. Multiple roles and API key permissions expand the authorization surface.
 2. **Admin-only access** — Auth configuration can only be changed by admin users.
 3. **Role assignment implications** — Enabling IdP role assignment means your identity provider configuration directly affects user permissions. Ensure your IdP group mappings are correct before enabling.
-4. **API key scoping** — When API key permissions are enabled, ensure you regularly audit which permissions are assigned to organization API keys.
+4. **API key scoping** — When API key permissions are enabled, ensure you regularly audit which permissions are assigned to project-scoped API keys.
 
 ---
 

@@ -28,7 +28,7 @@ const sectionIcons: Record<string, React.ReactNode> = {
 
 const sectionDescriptions: Record<string, string> = {
 	"Getting Started":
-		"Install Banata Auth, learn the architecture, and get running in 5 minutes.",
+		"Choose your integration path: dashboard-first with API keys, or self-hosted on Convex.",
 	Authentication:
 		"Email/password, social OAuth, magic links, and multi-factor authentication.",
 	Organizations:
@@ -36,7 +36,7 @@ const sectionDescriptions: Record<string, string> = {
 	Infrastructure:
 		"Webhooks, audit logging, and API key management for production apps.",
 	Packages:
-		"TypeScript SDK, React hooks, Next.js middleware, and Convex integration.",
+		"Dashboard-first SDK and app helpers, plus separate self-hosted Convex packages.",
 	Deployment:
 		"Environment variables, production deployment, and custom domains.",
 };
@@ -49,8 +49,9 @@ export default function DocsPage() {
 					Documentation
 				</h1>
 				<p className="mt-2 text-muted-foreground text-lg">
-					Everything you need to add enterprise-grade authentication to your
-					application.
+					Start with the dashboard and project-scoped API keys for the managed
+					service path, or use the self-hosted Convex guides if you want to run
+					the auth runtime yourself.
 				</p>
 			</header>
 

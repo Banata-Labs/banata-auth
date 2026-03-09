@@ -23,7 +23,7 @@ export interface BanataAuthOptions {
 	timeout?: number;
 	/** Number of retries on 5xx errors. Default: 3. */
 	retries?: number;
-	/** Project ID to scope all operations to. */
+	/** @deprecated Banata normally resolves project scope from the API key itself. */
 	projectId?: string;
 	/** Environment ID to scope all operations to. */
 	environmentId?: string;
@@ -67,6 +67,8 @@ export class HttpClient {
 	): T & {
 		projectId?: string;
 	} {
+		// Legacy escape hatch for self-hosted or partially migrated deployments.
+		// The managed Banata contract is to derive project scope from the API key.
 		const resolvedProjectId = projectId ?? this.projectId;
 		if (!resolvedProjectId) {
 			return body;

@@ -5,13 +5,40 @@ section: "Enterprise"
 order: 13
 ---
 
-API keys provide **programmatic, server-to-server authentication** for integrations, scripts, and third-party services that need to access your Banata Auth-powered application without going through the browser-based auth flow.
+API keys are the primary authentication mechanism for Banata's **dashboard-first, managed-service** model.
+
+For the public product surface, the intended workflow should feel like WorkOS or Clerk:
+
+1. Create a project in the Banata dashboard
+2. Create a **project-scoped API key** in that project
+3. Use the key with [`@banata-auth/sdk`](/docs/sdk) or direct HTTP requests
+4. Let Banata resolve the target project from the API key itself
+
+Your application should not need direct database access to use Banata. Banata stores and serves the auth data; your app integrates with the platform over HTTP.
 
 ---
 
-## Configuration
+## Managed Service Workflow
 
-Enable API keys in your `BanataAuthConfig`:
+For the managed service path, start in the dashboard:
+
+1. Create the project you want to connect
+2. Open **API Keys** inside that project
+3. Create a project-scoped API key
+4. Initialize [`@banata-auth/sdk`](/docs/sdk) with that key
+
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_AUTH_API_KEY!,
+  baseUrl: process.env.BANATA_AUTH_BASE_URL!,
+});
+```
+
+`BanataAuthConfig` belongs to the **self-hosted Convex runtime**. It is not the starting point for the managed/dashboard-first product.
+
+If you intentionally self-host Banata, you still create projects and API keys from that self-hosted Banata dashboard. The runtime config only tunes how that Banata instance issues and validates keys:
 
 ```typescript
 // convex/banataAuth/auth.ts
@@ -23,14 +50,12 @@ function buildConfig(): BanataAuthConfig {
 
     authMethods: {
       emailPassword: true,
+      apiKey: true,
     },
 
-    // Enable API key authentication
     apiKeyConfig: {
-      enabled: true,
-      // Optional: customize key behavior
-      expiresIn: 90 * 24 * 60 * 60,  // 90 days (in seconds)
-      prefix: "ba_live",               // Key prefix for identification
+      defaultExpiresIn: 90 * 24 * 60 * 60,
+      prefix: "ba_live_",
     },
   };
 }
@@ -40,27 +65,29 @@ function buildConfig(): BanataAuthConfig {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `enabled` | `boolean` | `false` | Enable/disable API key authentication |
-| `expiresIn` | `number` | `null` (no expiry) | Key lifetime in seconds |
-| `prefix` | `string` | `"ba"` | Prefix for generated keys (e.g., `ba_live_abc123`) |
+| `authMethods.apiKey` | `boolean` | `true` | Enable or disable API key authentication |
+| `apiKeyConfig.defaultExpiresIn` | `number` | `null` (no expiry) | Default key lifetime in seconds |
+| `apiKeyConfig.prefix` | `string` | Better Auth default | Prefix for generated keys (for example `ba_live_abc123`) |
 
 ---
 
 ## How API Keys Work
 
 ```
-1. User/admin creates an API key via dashboard or API
+1. Admin creates an API key in the dashboard for a specific project
 2. Banata Auth generates a random key with the configured prefix
 3. A hash of the key is stored in the database (not the raw key)
 4. The raw key is returned ONCE to the user — it cannot be retrieved later
 5. Client includes the key in requests via Authorization header
 6. Server hashes the provided key and looks up the matching record
-7. If found and not expired: request is authenticated as the key's owner
+7. If found and valid: request is authenticated and scoped to that Banata project
 ```
 
 ---
 
 ## Creating API Keys
+
+For the managed-service product, the default path is to create API keys in the Banata dashboard for the target project. The client-side `authClient.apiKey.*` examples below apply to the self-hosted Better Auth runtime, not the primary dashboard-first integration story.
 
 ### Via the Client SDK (Authenticated User)
 
@@ -95,11 +122,9 @@ const banata = new BanataAuth({
   baseUrl: "https://your-deployment.convex.site",
 });
 
-// Create an API key for a specific user
-const key = await banata.users.createApiKey({
-  userId: "usr_01HXYZ...",
+// Create another API key inside the same project as the calling key
+const key = await banata.apiKeys.create({
   name: "Production Integration",
-  permissions: ["users:read", "users:write"],
 });
 
 console.log(key.key); // Raw key — return to user once
@@ -107,10 +132,10 @@ console.log(key.key); // Raw key — return to user once
 
 ### Via the Admin Dashboard
 
-1. Navigate to a **User's detail page**
-2. Go to the **API Keys** tab
+1. Open the target **Project** in the Banata dashboard
+2. Navigate to **API Keys**
 3. Click **Create API Key**
-4. Enter a name and select permissions
+4. Enter a name and configure any policy details
 5. Copy the key and save it securely
 
 ---
@@ -162,13 +187,11 @@ const users = await banata.users.listUsers();
 ### List Keys
 
 ```typescript
-// Client-side: list current user's keys
+// Client-side: list keys for the current self-hosted Better Auth user
 const { data: keys } = await authClient.apiKey.list();
 
-// Server-side: list keys for a specific user
-const keys = await banata.users.listApiKeys({
-  userId: "usr_01HXYZ...",
-});
+// Server-side: list keys for the current Banata project
+const keys = await banata.apiKeys.list();
 ```
 
 ### Revoke a Key
@@ -180,9 +203,7 @@ await authClient.apiKey.revoke({
 });
 
 // Server-side
-await banata.users.revokeApiKey({
-  keyId: "apk_01HXYZ...",
-});
+await banata.apiKeys.delete("apk_01HXYZ...");
 ```
 
 Revoking a key immediately invalidates it — any subsequent requests using that key will be rejected.
@@ -213,12 +234,13 @@ const fullAccessKey = await authClient.apiKey.create({
 });
 ```
 
-When a scoped key makes a request, the system checks:
+When a project-scoped key makes a request, the system checks:
 1. Is the key valid and not expired?
-2. Does the key have the required permission for this action?
-3. Does the key's owner have the required permission?
+2. Which Banata project owns this key?
+3. Does the key have the required permission for this action?
+4. Does the key's owner have the required permission?
 
-All three must be true for the request to succeed.
+All four must be true for the request to succeed.
 
 ---
 
@@ -311,7 +333,7 @@ The API key doesn't have the required permission for this action. Either:
 
 ### "API Keys Not Enabled"
 
-Make sure `apiKeyConfig.enabled` is `true` in your `BanataAuthConfig`.
+In self-hosted Banata, make sure `authMethods.apiKey` is not disabled in your `BanataAuthConfig`.
 
 ---
 

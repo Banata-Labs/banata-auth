@@ -1,5 +1,5 @@
 import type { BetterAuthPlugin } from "better-auth";
-import { createAuthEndpoint } from "better-auth/api";
+import { createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 import { z } from "zod";
 import {
 	type PermissionDefinitionRow,
@@ -434,7 +434,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 		endpoints: {
 			createOrganization: createAuthEndpoint(
 				"/organization/create",
-				{ method: "POST", body: createOrganizationSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: createOrganizationSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, token } = await getSessionOrThrow(ctx);
 					const body = ctx.body;
@@ -487,7 +492,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			listOrganizations: createAuthEndpoint(
 				"/organization/list",
-				{ method: "POST", body: projectScopeSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: projectScopeSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -552,7 +562,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			getFullOrganization: createAuthEndpoint(
 				"/organization/get-full-organization",
-				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: organizationIdSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -598,7 +613,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			setActiveOrganization: createAuthEndpoint(
 				"/organization/set-active",
-				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: organizationIdSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, token, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -629,7 +649,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			inviteMember: createAuthEndpoint(
 				"/organization/invite-member",
-				{ method: "POST", body: inviteMemberSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: inviteMemberSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -702,7 +727,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			acceptInvitation: createAuthEndpoint(
 				"/organization/accept-invitation",
-				{ method: "POST", body: acceptRejectInviteSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: acceptRejectInviteSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { session, user } = await requireAuthenticated(ctx);
 					const userId = user.id;
@@ -762,7 +792,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			rejectInvitation: createAuthEndpoint(
 				"/organization/reject-invitation",
-				{ method: "POST", body: acceptRejectInviteSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: acceptRejectInviteSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					// Verify the caller is the invitation target
 					const { session, user } = await requireAuthenticated(ctx);
@@ -794,7 +829,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			cancelInvitation: createAuthEndpoint(
 				"/organization/cancel-invitation",
-				{ method: "POST", body: cancelInviteSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: cancelInviteSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -825,7 +865,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			getInvitation: createAuthEndpoint(
 				"/organization/get-invitation",
-				{ method: "POST", body: getInvitationSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: getInvitationSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -860,7 +905,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			listInvitations: createAuthEndpoint(
 				"/organization/list-invitations",
-				{ method: "POST", body: listInvitationsSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: listInvitationsSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -889,7 +939,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			listUserInvitations: createAuthEndpoint(
 				"/organization/list-user-invitations",
-				{ method: "POST", body: listUserInvitationsSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: listUserInvitationsSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					// Always use the authenticated user's own email to prevent enumeration (S9)
 					const { user } = await requireAuthenticated(ctx);
@@ -913,7 +968,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			listMembers: createAuthEndpoint(
 				"/organization/list-members",
-				{ method: "POST", body: listInvitationsSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: listInvitationsSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -942,7 +1002,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			updateMemberRole: createAuthEndpoint(
 				"/organization/update-member-role",
-				{ method: "POST", body: updateMemberRoleSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: updateMemberRoleSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1016,7 +1081,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			removeMember: createAuthEndpoint(
 				"/organization/remove-member",
-				{ method: "POST", body: removeMemberSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: removeMemberSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, token, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1106,7 +1176,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			leaveOrganization: createAuthEndpoint(
 				"/organization/leave",
-				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: organizationIdSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, token, activeOrganizationId } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1134,7 +1209,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			deleteOrganization: createAuthEndpoint(
 				"/organization/delete",
-				{ method: "POST", body: organizationIdSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: organizationIdSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1188,6 +1268,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 						})
 						.merge(projectScopeSchema),
 					requireHeaders: true,
+					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
@@ -1234,6 +1315,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					method: "POST",
 					body: z.object({ slug: z.string() }).merge(projectScopeSchema),
 					requireHeaders: true,
+					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					// Require authentication to prevent unauthenticated slug enumeration
@@ -1254,7 +1336,12 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 			getActiveMember: createAuthEndpoint(
 				"/organization/get-active-member",
-				{ method: "POST", body: projectScopeSchema, requireHeaders: true },
+				{
+					method: "POST",
+					body: projectScopeSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
 				async (ctx) => {
 					const { userId, activeOrganizationId } = await getSessionOrThrow(ctx);
 					if (!activeOrganizationId) {
@@ -1285,6 +1372,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 						})
 						.merge(projectScopeSchema),
 					requireHeaders: true,
+					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const session = await getSessionOrThrow(ctx);

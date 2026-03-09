@@ -33,7 +33,7 @@ The General page manages your project identity.
 
 ### Client ID
 
-A read-only identifier for your project. This is derived from the `appName` in your `BanataAuthConfig` and is used by SDKs to identify which Banata Auth instance to connect to. You can copy it to your clipboard with one click.
+A read-only identifier for your project. Banata uses it in callback URLs, public configuration lookups, and internal project metadata. The normal SDK flow does **not** use `clientId` to choose a project; project-scoped API keys do that. You can still copy it from the dashboard when you need it for redirects or public auth flows.
 
 ### Saving
 
@@ -128,7 +128,7 @@ All endpoints require **admin authentication**.
 // Response: the full project config
 ```
 
-> **Note:** The `clientId` field is read-only and derived from the server's `appName` configuration. It cannot be changed via the API.
+> **Note:** The `clientId` field is read-only. It is useful for public/auth flow metadata, but project-scoped API keys are what scope SDK and admin API requests.
 
 ---
 

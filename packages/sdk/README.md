@@ -8,6 +8,9 @@ This package is the public product surface that should feel closest to WorkOS:
 - it talks to Banata HTTP endpoints
 - it does not access your database directly
 
+Start in the Banata dashboard: create a project, issue a project-scoped API key, then initialize the SDK with that key.
+The API key is the project selector. You should not need to pass a separate `projectId` for the normal managed-service flow.
+
 ## Installation
 
 ```bash

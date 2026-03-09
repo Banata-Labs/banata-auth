@@ -9,6 +9,8 @@ order: 14
 
 It is a remote HTTP client for Banata auth endpoints. It does **not** talk to your database directly and it does **not** require self-hosting.
 
+Start by creating a project and a project-scoped API key in the Banata dashboard. The SDK is the app-side client for that dashboard-managed project.
+
 ```bash
 npm install @banata-auth/sdk
 ```
@@ -34,7 +36,7 @@ const banata = new BanataAuth({
 | `baseUrl` | `string` | Yes in practice | Base URL for Banata auth HTTP endpoints |
 | `timeout` | `number` | No | Request timeout in milliseconds |
 | `retries` | `number` | No | Retries for 5xx and `429` responses |
-| `projectId` | `string` | No | Default project scope |
+| `projectId` | `string` | No | Legacy override for self-hosted or partially migrated setups. Managed Banata resolves project scope from the API key. |
 | `environmentId` | `string` | No | Default environment scope |
 
 ---
@@ -68,11 +70,6 @@ const banata = new BanataAuth({
 });
 
 const users = await banata.users.listUsers({ limit: 20 });
-
-const project = await banata.projects.createProject({
-  name: "Acme",
-  slug: "acme",
-});
 
 const webhook = await banata.webhooks.createEndpoint({
   url: "https://example.com/api/webhooks",
@@ -153,4 +150,5 @@ try {
 ## Positioning
 
 - Use `@banata-auth/sdk` for the public, dashboard-first integration story.
+- Create the project and issue the API key in the dashboard first. The SDK then operates inside that API key's project scope.
 - Use `@banata-auth/convex` only when you intentionally want the self-hosted runtime.

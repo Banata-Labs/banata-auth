@@ -48,9 +48,9 @@ export function getActiveScope(): { projectId: string | null } {
 }
 
 // ── Client-side project filter ───────────────────────────────────────
-// Better Auth's built-in endpoints (admin/*, organization/*, api-key/*)
-// don't understand projectId — they return ALL records. We filter
-// client-side to only show records belonging to the active project.
+// The dashboard still filters certain responses client-side as a defense-in-depth
+// layer. The server now scopes managed API-key traffic by project, but this
+// keeps stale or legacy unscoped rows from leaking into the active project UI.
 
 /**
  * Client-side project filter. Only returns records that belong to the
@@ -435,9 +435,8 @@ export async function createApiKey(name: string, prefix?: string): Promise<{ key
 	if (normalizedPrefix) {
 		body.prefix = normalizedPrefix;
 	}
-	// Better Auth's api-key plugin ignores top-level projectId but does
-	// persist `metadata` (the only field with input: true). Stash projectId
-	// inside metadata so we can filter keys by project on list.
+	// API keys are scoped per project. Better Auth persists `metadata`, so we
+	// stamp the active project there and the runtime resolves project scope from it.
 	if (_activeProjectId) {
 		body.metadata = { projectId: _activeProjectId };
 	}

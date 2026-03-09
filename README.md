@@ -27,6 +27,8 @@ If you want to run the auth engine inside your own Convex deployment, use the se
 
 ## Dashboard-First Quick Start
 
+For most teams, start here: create a project in the Banata dashboard, issue a project-scoped API key, and use `@banata-auth/sdk`.
+
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
 
@@ -38,7 +40,7 @@ const banata = new BanataAuth({
 const users = await banata.users.listUsers({ limit: 20 });
 ```
 
-The SDK talks to Banata HTTP endpoints. It does not query your database directly.
+The SDK talks to Banata HTTP endpoints. It does not query your database directly, and it does not need a separate `projectId` when the API key is already project-scoped.
 
 ## Self-Hosted Quick Start
 
@@ -53,7 +55,7 @@ The self-hosted path is documented separately because it requires local Convex c
 - `convex/authNode.ts`
 - `convex/http.ts`
 
-Use [docs/quickstart](./apps/docs/content/docs/quickstart.mdx) for that flow.
+Use [docs/quickstart](./apps/docs/content/docs/quickstart.mdx) for that flow only if you intentionally want to self-host the auth runtime in Convex.
 
 ## Notes
 

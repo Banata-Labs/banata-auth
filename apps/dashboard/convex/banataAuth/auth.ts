@@ -34,6 +34,14 @@ interface DashboardProjectRow {
 	name?: string | null;
 }
 
+interface RuntimeApiKeyRow extends Record<string, unknown> {
+	id: string;
+	key: string;
+	userId: string;
+	projectId?: string | null;
+	metadata?: unknown;
+}
+
 interface RuntimeProjectLookupAdapter {
 	findMany<T = Record<string, unknown>>(data: {
 		model: string;
@@ -45,6 +53,12 @@ interface RuntimeProjectLookupAdapter {
 export interface RuntimeProjectScope {
 	projectId?: string | null;
 	clientId?: string | null;
+}
+
+export interface ResolvedRuntimeProjectScope {
+	projectId: string | null;
+	explicitProjectId: string | null;
+	apiKeyProjectId: string | null;
 }
 
 export const authComponent = createBanataAuthComponent<DataModel, typeof schema>(
@@ -230,6 +244,54 @@ function mergeRuntimeConfig(
 	return config;
 }
 
+function normalizeRuntimeScopeValue(value: unknown): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+	let binary = "";
+	for (const value of bytes) {
+		binary += String.fromCharCode(value);
+	}
+	return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
+}
+
+async function hashApiKeyValue(value: string): Promise<string> {
+	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+	return toBase64Url(new Uint8Array(digest));
+}
+
+function readProjectIdFromApiKeyMetadata(metadata: unknown): string | null {
+	if (!metadata) {
+		return null;
+	}
+
+	if (typeof metadata === "string") {
+		try {
+			return readProjectIdFromApiKeyMetadata(JSON.parse(metadata));
+		} catch {
+			return null;
+		}
+	}
+
+	if (typeof metadata === "object" && metadata !== null) {
+		return normalizeRuntimeScopeValue(
+			(metadata as Record<string, unknown>).projectId ??
+				(metadata as Record<string, unknown>).project_id,
+		);
+	}
+
+	return null;
+}
+
+function readProjectIdFromApiKeyRow(row: RuntimeApiKeyRow | null | undefined): string | null {
+	if (!row) {
+		return null;
+	}
+
+	return normalizeRuntimeScopeValue(row.projectId) ?? readProjectIdFromApiKeyMetadata(row.metadata);
+}
+
 async function loadPersistedDashboardConfig(
 	ctx: GenericCtx<DataModel>,
 	projectId?: string | null,
@@ -302,6 +364,13 @@ export async function resolveRuntimeProjectId(
 	scope: RuntimeProjectScope | null | undefined,
 ): Promise<string | null> {
 	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	return resolveExplicitRuntimeProjectId(adapter, scope);
+}
+
+async function resolveExplicitRuntimeProjectId(
+	adapter: RuntimeProjectLookupAdapter,
+	scope: RuntimeProjectScope | null | undefined,
+): Promise<string | null> {
 	const projectId =
 		typeof scope?.projectId === "string" && scope.projectId.trim().length > 0
 			? scope.projectId.trim()
@@ -339,6 +408,58 @@ export async function resolveRuntimeProjectId(
 	}
 }
 
+async function resolveApiKeyProjectId(
+	adapter: RuntimeProjectLookupAdapter,
+	apiKey: string | null | undefined,
+): Promise<string | null> {
+	const normalizedApiKey = normalizeRuntimeScopeValue(apiKey);
+	if (!normalizedApiKey) {
+		return null;
+	}
+
+	const lookupCandidates = Array.from(
+		new Set([await hashApiKeyValue(normalizedApiKey), normalizedApiKey]),
+	);
+
+	for (const candidate of lookupCandidates) {
+		try {
+			const rows = await adapter.findMany<RuntimeApiKeyRow>({
+				model: "apikey",
+				where: [{ field: "key", value: candidate }],
+				limit: 1,
+			});
+			const projectId = readProjectIdFromApiKeyRow(rows[0]);
+			if (projectId) {
+				return projectId;
+			}
+		} catch {
+			// Keep iterating so older raw-key rows or partially migrated rows still resolve.
+		}
+	}
+
+	return null;
+}
+
+export async function resolveRuntimeProjectScope(
+	ctx: GenericCtx<DataModel>,
+	params: {
+		scope?: RuntimeProjectScope | null;
+		apiKey?: string | null;
+	},
+): Promise<ResolvedRuntimeProjectScope> {
+	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	const [explicitProjectId, apiKeyProjectId] = await Promise.all([
+		resolveExplicitRuntimeProjectId(adapter, params.scope),
+		resolveApiKeyProjectId(adapter, params.apiKey),
+	]);
+
+	return {
+		projectId: apiKeyProjectId ?? explicitProjectId ?? null,
+		explicitProjectId,
+		apiKeyProjectId,
+	};
+}
+
 async function buildProjectRequestConfig(
 	ctx: GenericCtx<DataModel>,
 	projectId: string,
@@ -357,8 +478,15 @@ async function buildProjectRequestConfig(
 export async function getRequestConfig(
 	ctx: GenericCtx<DataModel>,
 	scope?: RuntimeProjectScope | null,
+	options?: {
+		apiKey?: string | null;
+	},
 ): Promise<BanataAuthConfig> {
-	const projectId = await resolveRuntimeProjectId(ctx, scope);
+	const resolvedScope = await resolveRuntimeProjectScope(ctx, {
+		scope,
+		apiKey: options?.apiKey,
+	});
+	const projectId = resolvedScope.projectId;
 	if (!projectId) {
 		return getPlatformConfig();
 	}

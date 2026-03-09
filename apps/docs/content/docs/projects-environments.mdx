@@ -148,6 +148,8 @@ const client = new BanataAuth({
 });
 ```
 
+With the normal managed-service flow, that API key already identifies the project. You do not need to pass a separate `projectId` for routine SDK calls.
+
 ### List All Projects
 
 ```typescript
@@ -158,9 +160,13 @@ for (const project of projects) {
 }
 ```
 
+With a project-scoped API key, this returns the project attached to that key. Broader project lifecycle operations are intended for the dashboard and internal admin tooling.
+
 ### Create a Project
 
 Creating a project seeds RBAC permissions and a `super_admin` role automatically.
+
+For the product's dashboard-first workflow, create projects in the dashboard first. Project-scoped API keys operate inside an existing project; they are not the primary bootstrap path for creating new ones.
 
 ```typescript
 const result = await client.projects.createProject({
@@ -291,7 +297,7 @@ All migrations are batched. If a migration returns `done: false`, re-run with th
 
 2. **Cascade on delete**: Deleting a project removes only the project record. Project-scoped data (users, sessions, organizations, etc.) is not automatically cascade-deleted. Run the `clearAllData` migration or plan data cleanup separately before deleting a project.
 
-3. **Scope injection**: The dashboard automatically injects `projectId` into API calls. Server-side integrations using the SDK should ensure they are calling the correct project's endpoints.
+3. **Scope injection**: The dashboard automatically injects `projectId` into its own API calls. Remote SDK integrations normally rely on project-scoped API keys instead of passing `projectId` manually.
 
 4. **Strict isolation**: Records without `projectId` are excluded from all dashboard views. This prevents legacy/orphaned data from appearing in any project.
 

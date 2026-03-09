@@ -9,6 +9,7 @@ export {
 export type {
 	BanataAuthConfig,
 	BanataAuthEmailConfig,
+	BanataEmailPasswordConfig,
 	BanataAuthSocialProviders,
 	SocialProviderConfig,
 } from "./auth";
