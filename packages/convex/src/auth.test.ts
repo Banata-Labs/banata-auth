@@ -3,7 +3,9 @@ import type { BetterAuthPlugin } from "better-auth";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	type BanataAuthConfig,
+	banataAuthSchema,
 	createBanataAuthOptions,
+	defineBanataAuth,
 	type SocialProviderConfig,
 } from "./auth";
 
@@ -77,6 +79,27 @@ describe("createBanataAuthOptions()", () => {
 		expect(warn).toHaveBeenCalled();
 	});
 
+	it("skips adapter resolution during static module evaluation", () => {
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		expect(() =>
+			createBanataAuthOptions({} as never, {
+				authComponent: {
+					adapter: () => {
+						throw new Error("adapter should not resolve during module analysis");
+					},
+				} as never,
+				authConfig: {
+					providers: [getAuthConfigProvider()],
+				},
+				config: {
+					siteUrl: "http://localhost:3000",
+					secret: "test-secret",
+				},
+			}),
+		).not.toThrow();
+	});
+
 	it("skips social providers with missing credentials", () => {
 		const github = {
 			clientId: "github-client",
@@ -148,5 +171,33 @@ describe("createBanataAuthOptions()", () => {
 				}),
 			}),
 		).toBeUndefined();
+	});
+
+	it("builds a packaged component helper with the bundled schema", () => {
+		const definedAuth = defineBanataAuth({
+			componentRef: {
+				adapter: {
+					create: "create" as never,
+					findOne: "findOne" as never,
+					findMany: "findMany" as never,
+					updateOne: "updateOne" as never,
+					updateMany: "updateMany" as never,
+					deleteOne: "deleteOne" as never,
+					deleteMany: "deleteMany" as never,
+				},
+			},
+			authConfig: {
+				providers: [getAuthConfigProvider()],
+			},
+			config: {
+				siteUrl: "http://localhost:3000",
+				secret: "test-secret",
+			},
+		});
+
+		expect(definedAuth.schema).toBe(banataAuthSchema);
+		expect(typeof definedAuth.createAuth).toBe("function");
+		expect(typeof definedAuth.createAuthOptions).toBe("function");
+		expect(definedAuth.options.baseURL).toBe("http://localhost:3000");
 	});
 });

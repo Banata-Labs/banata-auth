@@ -1,21 +1,31 @@
+import { createApi } from "@convex-dev/better-auth";
+import type { GenericCtx } from "@convex-dev/better-auth/utils";
+import type { BetterAuthOptions } from "better-auth";
+import type { GenericDataModel } from "convex/server";
+import schema from "./schema";
+
+type BanataAuthAdapterApi = ReturnType<typeof createApi<typeof schema>>;
+
 /**
- * Re-export `createApi` from @convex-dev/better-auth for consumers.
+ * Build the local adapter functions needed by the installed Banata component.
  *
- * Per the Convex component pattern, consumers call `createApi` directly
- * in their local `convex/banataAuth/adapter.ts` to generate the CRUD
- * functions (create, findOne, findMany, updateOne, updateMany, deleteOne,
- * deleteMany) needed by the component adapter.
+ * Consumers still need a local `convex/banataAuth/adapter.ts` because the
+ * adapter closes over the app's auth factory. The packaged component provides
+ * the schema so the local file stays minimal.
  *
  * @example
  * ```ts
- * // convex/banataAuth/adapter.ts
- * import { createApi } from "@banata-auth/convex/adapter";
+ * import { createBanataAuthAdapter } from "@banata-auth/convex/adapter";
  * import { createAuthOptions } from "./auth";
- * import schema from "./schema";
  *
- * export const { create, findOne, findMany, updateOne, updateMany, deleteOne, deleteMany }
- *   = createApi(schema, createAuthOptions);
+ * export const { create, findOne, findMany, updateOne, updateMany, deleteOne, deleteMany } =
+ *   createBanataAuthAdapter(createAuthOptions);
  * ```
  */
+export function createBanataAuthAdapter<TDataModel extends GenericDataModel>(
+	createAuthOptions: (ctx: GenericCtx<TDataModel>) => BetterAuthOptions,
+): BanataAuthAdapterApi {
+	return createApi(schema, createAuthOptions);
+}
 
-export { createApi } from "@convex-dev/better-auth";
+export { createApi, schema as banataAuthSchema };

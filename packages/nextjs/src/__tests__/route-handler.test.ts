@@ -187,6 +187,37 @@ describe("createRouteHandler", () => {
 			);
 		});
 
+		it("injects a configured Banata API key as a private upstream header", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+				apiKey: "sk_test_project_key",
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-api-key")).toBe("sk_test_project_key");
+			expect(fetchedRequest.headers.get("authorization")).toBeNull();
+		});
+
+		it("can mark Banata-hosted auth surfaces as trusted internal project resolvers", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				convexSiteUrl: "https://my-site.convex.site",
+				allowInternalProjectScope: true,
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in/email");
+			await handler.POST(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-banata-internal-project-scope")).toBe("1");
+		});
+
 		it("resolves Banata scope from query parameters", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 

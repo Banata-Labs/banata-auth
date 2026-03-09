@@ -2,11 +2,12 @@
 
 Next.js helpers for Banata Auth.
 
-Use this package when your Next.js app needs to:
+Use this package when your app needs to:
 
-- proxy `/api/auth/*` requests to Banata auth endpoints
-- read auth state on the server
-- fetch authenticated Convex data in server components
+- proxy `/api/auth/*` requests to a Banata instance
+- keep auth cookies on your own domain
+- bind auth flows to a Banata project with a server-side API key
+- read auth state in server components and server actions
 
 ## Installation
 
@@ -14,9 +15,10 @@ Use this package when your Next.js app needs to:
 npm install @banata-auth/nextjs
 ```
 
-## Server Helpers
+## Recommended Setup
 
 ```ts
+// src/lib/auth-server.ts
 import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 
 export const {
@@ -30,17 +32,17 @@ export const {
 } = createBanataAuthServer({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  apiKey: process.env.BANATA_API_KEY!,
 });
 ```
 
-## Route Handler
-
 ```ts
+// src/app/api/auth/[...all]/route.ts
 import { handler } from "@/lib/auth-server";
 
-export const { GET, POST } = handler;
+export const { GET, POST, PUT, PATCH, DELETE } = handler;
 ```
 
 ## Note
 
-This package is a thin app-side helper. It should be used with Banata's public auth surface, not as a reason to expose the full self-hosted runtime by default.
+This package is the normal app-side integration for hosted or self-hosted Banata. Self-hosting does not change the app contract: developers still create a project in the Banata dashboard and bind their app with a project-scoped API key.

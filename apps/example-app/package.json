@@ -11,13 +11,10 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"test:once": "vitest run",
-		"test:coverage": "vitest run --coverage",
-		"convex:dev": "convex dev",
-		"convex:deploy": "convex deploy"
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@convex-dev/better-auth": "^0.10.13",
-		"@banata-auth/convex": "workspace:*",
 		"@banata-auth/nextjs": "workspace:*",
 		"@banata-auth/react": "workspace:*",
 		"@banata-auth/shared": "workspace:*",
@@ -34,7 +31,6 @@
 		"@types/react": "^19.0.0",
 		"@types/react-dom": "^19.0.0",
 		"agent-browser": "^0.3.0",
-		"convex-test": "^0.0.25",
 		"vitest": "^3.2.4",
 		"typescript": "^5.7.0"
 	}

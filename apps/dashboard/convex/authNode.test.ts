@@ -3,6 +3,7 @@ import {
 	applyProjectScopeToRequest,
 	extractApiKeyFromRequest,
 	filterProjectScopedResponseBody,
+	shouldRejectExplicitProjectScopeWithoutApiKey,
 } from "./authNode";
 
 describe("authNode helpers", () => {
@@ -81,5 +82,53 @@ describe("authNode helpers", () => {
 		expect(JSON.parse(filtered ?? "{}")).toEqual({
 			keys: [{ id: "key_1", metadata: { projectId: "proj_123" } }],
 		});
+	});
+
+	it("rejects explicit customer project scope when no API key is provided", () => {
+		expect(
+			shouldRejectExplicitProjectScopeWithoutApiKey(
+				{
+					method: "POST",
+					url: "https://example.com/api/auth/sign-in/email",
+					headers: [{ key: "x-banata-client-id", value: "acme-app" }],
+					body: JSON.stringify({ email: "user@example.com" }),
+				},
+				{ hasExplicitScope: true },
+				null,
+			),
+		).toBe(true);
+	});
+
+	it("allows explicit project scope when an API key is present", () => {
+		expect(
+			shouldRejectExplicitProjectScopeWithoutApiKey(
+				{
+					method: "POST",
+					url: "https://example.com/api/auth/sign-in/email",
+					headers: [{ key: "x-banata-client-id", value: "acme-app" }],
+					body: JSON.stringify({ email: "user@example.com" }),
+				},
+				{ hasExplicitScope: true },
+				"sk_test_project_key",
+			),
+		).toBe(false);
+	});
+
+	it("allows explicit project scope for Banata-hosted auth UI requests", () => {
+		expect(
+			shouldRejectExplicitProjectScopeWithoutApiKey(
+				{
+					method: "POST",
+					url: "https://example.com/api/auth/sign-in/email",
+					headers: [
+						{ key: "x-banata-client-id", value: "acme-app" },
+						{ key: "x-banata-internal-project-scope", value: "1" },
+					],
+					body: JSON.stringify({ email: "user@example.com" }),
+				},
+				{ hasExplicitScope: true },
+				null,
+			),
+		).toBe(false);
 	});
 });

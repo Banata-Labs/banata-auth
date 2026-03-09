@@ -152,6 +152,12 @@ function getHeaderValue(
 	return match?.value ?? null;
 }
 
+function hasInternalProjectScopeBypass(
+	headers: Array<{ key: string; value: string }>,
+): boolean {
+	return getHeaderValue(headers, "x-banata-internal-project-scope") === "1";
+}
+
 function upsertHeader(
 	headers: Array<{ key: string; value: string }>,
 	name: string,
@@ -453,6 +459,18 @@ function shouldUseProjectRuntimeConfig(urlValue: string): boolean {
 	}
 }
 
+export function shouldRejectExplicitProjectScopeWithoutApiKey(
+	request: SerializedAuthRequest,
+	scope: { hasExplicitScope: boolean },
+	apiKey: string | null,
+): boolean {
+	if (!scope.hasExplicitScope || apiKey || hasInternalProjectScopeBypass(request.headers)) {
+		return false;
+	}
+
+	return shouldUseProjectRuntimeConfig(request.url);
+}
+
 export const handleAuthRequest = internalAction({
 	args: {
 		request: v.object({
@@ -470,6 +488,13 @@ export const handleAuthRequest = internalAction({
 	handler: async (ctx, args) => {
 		const scope = resolveRequestProjectScope(args.request);
 		const apiKey = extractApiKeyFromRequest(args.request);
+		if (shouldRejectExplicitProjectScopeWithoutApiKey(args.request, scope, apiKey)) {
+			return jsonResponse(403, {
+				error: "PROJECT_API_KEY_REQUIRED",
+				message:
+					"Project-scoped Banata auth requires a project API key. Create one in the dashboard and bind it server-side in your app.",
+			});
+		}
 		const resolvedScope = await resolveRuntimeProjectScope(ctx, {
 			scope,
 			apiKey,

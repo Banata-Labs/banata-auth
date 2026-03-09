@@ -1,29 +1,62 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the upstream dependency before importing the module under test
-vi.mock("@convex-dev/better-auth/nextjs", () => ({
-	convexBetterAuthNextJs: vi.fn((opts: { convexUrl: string; convexSiteUrl: string }) => ({
-		handler: { GET: vi.fn(), POST: vi.fn() },
-		isAuthenticated: vi.fn().mockResolvedValue(true),
-		getToken: vi.fn().mockResolvedValue("mock-token"),
-		preloadAuthQuery: vi.fn(),
-		fetchAuthQuery: vi.fn(),
-		fetchAuthMutation: vi.fn(),
-		fetchAuthAction: vi.fn(),
-		_opts: opts, // expose for assertions
+const mocks = vi.hoisted(() => ({
+	preloadQuery: vi.fn(),
+	fetchQuery: vi.fn(),
+	fetchMutation: vi.fn(),
+	fetchAction: vi.fn(),
+	getToken: vi.fn(),
+	createRouteHandler: vi.fn(() => ({
+		GET: vi.fn(),
+		POST: vi.fn(),
+		PUT: vi.fn(),
+		PATCH: vi.fn(),
+		DELETE: vi.fn(),
 	})),
+}));
+
+vi.mock("convex/nextjs", () => ({
+	preloadQuery: mocks.preloadQuery,
+	fetchQuery: mocks.fetchQuery,
+	fetchMutation: mocks.fetchMutation,
+	fetchAction: mocks.fetchAction,
+}));
+
+vi.mock("@convex-dev/better-auth/utils", () => ({
+	getToken: mocks.getToken,
+}));
+
+vi.mock("next/headers.js", () => ({
+	headers: vi.fn(async () => new Headers({ cookie: "session=abc" })),
+}));
+
+vi.mock("../route-handler", () => ({
+	createRouteHandler: mocks.createRouteHandler,
 }));
 
 import { createBanataAuthServer } from "../server";
 
 describe("createBanataAuthServer()", () => {
-	it("returns an object with handler, isAuthenticated, getToken, and query helpers", () => {
+	beforeEach(() => {
+		mocks.preloadQuery.mockReset();
+		mocks.fetchQuery.mockReset();
+		mocks.fetchMutation.mockReset();
+		mocks.fetchAction.mockReset();
+		mocks.createRouteHandler.mockClear();
+		mocks.getToken.mockReset();
+		mocks.getToken.mockResolvedValue({
+			isFresh: true,
+			token: "jwt_123",
+		});
+	});
+
+	it("returns handler and auth helpers", () => {
 		const result = createBanataAuthServer({
 			convexUrl: "https://test.convex.cloud",
 			convexSiteUrl: "https://test.convex.site",
+			apiKey: "sk_test_project_key",
 		});
 
-		expect(result).toBeDefined();
 		expect(result.handler).toBeDefined();
 		expect(result.isAuthenticated).toBeDefined();
 		expect(result.getToken).toBeDefined();
@@ -32,26 +65,53 @@ describe("createBanataAuthServer()", () => {
 		expect(result.fetchAuthAction).toBeDefined();
 	});
 
-	it("passes convexUrl and convexSiteUrl to convexBetterAuthNextJs", () => {
+	it("creates the route handler with the configured API key", () => {
 		const result = createBanataAuthServer({
-			convexUrl: "https://adjective-animal-123.convex.cloud",
-			convexSiteUrl: "https://adjective-animal-123.convex.site",
-		});
-
-		// The mock exposes _opts so we can verify the options were passed through
-		const opts = (result as unknown as { _opts: { convexUrl: string; convexSiteUrl: string } })
-			._opts;
-		expect(opts.convexUrl).toBe("https://adjective-animal-123.convex.cloud");
-		expect(opts.convexSiteUrl).toBe("https://adjective-animal-123.convex.site");
-	});
-
-	it("handler contains GET and POST methods for route handler", () => {
-		const { handler } = createBanataAuthServer({
 			convexUrl: "https://test.convex.cloud",
 			convexSiteUrl: "https://test.convex.site",
+			apiKey: "sk_test_project_key",
+			project: { clientId: "acme-app" },
 		});
 
-		expect(handler.GET).toBeDefined();
-		expect(handler.POST).toBeDefined();
+		expect(result.handler).toBeDefined();
+		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
+			convexSiteUrl: "https://test.convex.site",
+			apiKey: "sk_test_project_key",
+			project: { clientId: "acme-app" },
+		});
+	});
+
+	it("injects the API key into token refresh requests", async () => {
+		const server = createBanataAuthServer({
+			convexUrl: "https://test.convex.cloud",
+			convexSiteUrl: "https://test.convex.site",
+			apiKey: "sk_test_project_key",
+			project: { clientId: "acme-app", projectId: "project_123" },
+		});
+
+		await server.getToken();
+
+		expect(mocks.getToken).toHaveBeenCalledTimes(1);
+		const [siteUrl, headers] = mocks.getToken.mock.calls[0] as [string, Headers];
+		expect(siteUrl).toBe("https://test.convex.site");
+		expect(headers.get("x-api-key")).toBe("sk_test_project_key");
+		expect(headers.get("x-banata-client-id")).toBe("acme-app");
+		expect(headers.get("x-banata-project-id")).toBe("project_123");
+	});
+
+	it("reports authentication state from the resolved token", async () => {
+		const server = createBanataAuthServer({
+			convexUrl: "https://test.convex.cloud",
+			convexSiteUrl: "https://test.convex.site",
+			apiKey: "sk_test_project_key",
+		});
+
+		await expect(server.isAuthenticated()).resolves.toBe(true);
+
+		mocks.getToken.mockResolvedValueOnce({
+			isFresh: true,
+			token: undefined,
+		});
+		await expect(server.isAuthenticated()).resolves.toBe(false);
 	});
 });

@@ -49,6 +49,27 @@ export interface BanataProjectRouteScope {
 		| Promise<{ projectId?: string; clientId?: string }>;
 }
 
+export interface BanataRouteAuthOptions {
+	/**
+	 * Project-scoped Banata API key.
+	 *
+	 * This is the recommended way to bind a customer app to a Banata project.
+	 * The key is injected server-side into the proxied request and is never
+	 * exposed to the browser.
+	 */
+	apiKey?: string;
+
+	/**
+	 * Banata-internal escape hatch for the hosted auth UI.
+	 *
+	 * This should not be used by customer apps. It allows Banata's own
+	 * first-party hosted auth surfaces to resolve project scope from
+	 * `client_id` / `project_id` without requiring a customer API key in
+	 * the browser.
+	 */
+	allowInternalProjectScope?: boolean;
+}
+
 function normalizeScopeValue(value: string | null | undefined): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
@@ -103,11 +124,16 @@ async function resolveProjectScope(
 export function createRouteHandler(options: {
 	/** The Convex .site URL where HTTP actions are hosted. */
 	convexSiteUrl: string;
+	/** Optional server-side Banata API key used to bind the request to a project. */
+	apiKey?: string;
+	/** Banata-internal escape hatch for hosted auth surfaces. */
+	allowInternalProjectScope?: boolean;
 	/** Optional explicit or request-resolved Banata project scope. */
 	project?: BanataProjectRouteScope;
 }) {
-	const { convexSiteUrl, project } = options;
+	const { allowInternalProjectScope, apiKey, convexSiteUrl, project } = options;
 	const siteUrl = convexSiteUrl.replace(/\/$/, "");
+	const normalizedApiKey = normalizeScopeValue(apiKey);
 
 	async function handler(request: Request): Promise<Response> {
 		const requestUrl = new URL(request.url);
@@ -121,6 +147,12 @@ export function createRouteHandler(options: {
 			}
 		}
 		const resolvedScope = await resolveProjectScope(request, project);
+		if (normalizedApiKey) {
+			forwardedHeaders.set("x-api-key", normalizedApiKey);
+		}
+		if (allowInternalProjectScope) {
+			forwardedHeaders.set("x-banata-internal-project-scope", "1");
+		}
 		if (resolvedScope.projectId) {
 			forwardedHeaders.set("x-banata-project-id", resolvedScope.projectId);
 		}

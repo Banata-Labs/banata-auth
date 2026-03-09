@@ -7,12 +7,12 @@ import {
 	createBanataAuthOptions,
 	ensureProjectAuthSecret,
 	listProjectSocialProviderSecrets,
+	banataAuthSchema,
 } from "@banata-auth/convex";
 import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import { components } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import authConfig from "../auth.config";
-import schema from "./schema";
 
 interface PersistedSocialProviderStatus {
 	enabled?: boolean;
@@ -61,9 +61,9 @@ export interface ResolvedRuntimeProjectScope {
 	apiKeyProjectId: string | null;
 }
 
-export const authComponent = createBanataAuthComponent<DataModel, typeof schema>(
+export const authComponent = createBanataAuthComponent<DataModel, typeof banataAuthSchema>(
 	components.banataAuth,
-	schema,
+	banataAuthSchema,
 );
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {

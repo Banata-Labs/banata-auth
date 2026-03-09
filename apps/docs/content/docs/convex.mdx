@@ -1,92 +1,78 @@
 ---
 title: "Convex Integration"
-description: "Self-hosting reference for running Banata Auth inside your own Convex deployment."
+description: "Platform-runtime reference for self-hosting Banata on Convex."
 section: "Packages"
 order: 17
 ---
 
-`@banata-auth/convex` is **not** the dashboard-first integration path. It is the self-hosting package for teams that want the auth engine to run inside their own Convex deployment.
+`@banata-auth/convex` is the platform-runtime package behind Banata.
 
-If you want Banata to behave like WorkOS, start with the dashboard and [`@banata-auth/sdk`](/docs/sdk). Use this page only when you intentionally want self-hosting.
+Use it when you are:
 
----
+- operating the hosted Banata service
+- self-hosting the Banata platform
+- working on Banata's internal runtime and plugins
 
-## What This Package Does
-
-When you use `@banata-auth/convex`:
-
-- users, sessions, organizations, and auth config live in your Convex deployment
-- Better Auth is instantiated inside your Convex runtime
-- you must register a local Convex component and generate a local adapter
-
-That is why this package belongs in the **self-hosting** section of the docs.
+Do **not** treat it as the default customer-app integration path.
 
 ---
 
-## Supported Version Line
+## What It Is Responsible For
 
-Use:
+Inside a Banata platform deployment, `@banata-auth/convex` provides:
 
-- `better-auth@1.4.21`
-- `@convex-dev/better-auth@0.10.13`
+- the packaged Convex component registration
+- packaged component schema
+- packaged component migrations
+- Better Auth runtime helpers
+- the custom Banata plugins for emails, API keys, projects, RBAC, orgs, vault, and audit logs
 
-The current package line should be treated as `better-auth 1.4.x` only.
+The platform keeps a thin local `convex/banataAuth/` folder only for the pieces that cannot live entirely inside the component environment.
 
 ---
 
-## Required Local Files
-
-Using the package requires these local files in the consuming app:
+## Minimal Local Files
 
 ```text
 convex/
-├── convex.config.ts
-├── auth.config.ts
-├── authNode.ts
-├── http.ts
-└── banataAuth/
-    ├── convex.config.ts
-    ├── schema.ts
-    ├── auth.ts
-    └── adapter.ts
+|-- convex.config.ts
+|-- auth.config.ts
+|-- authNode.ts
+|-- http.ts
+`-- banataAuth/
+    |-- auth.ts
+    |-- adapter.ts
+    `-- schema.ts
 ```
 
-The important detail is that **local component registration is required**. A package import alone is not enough because the adapter functions are generated inside the consumer app.
+Why these remain local:
+
+- `banataAuth/auth.ts` binds deployment env and runtime config
+- `banataAuth/adapter.ts` closes over the local auth factory
+- `banataAuth/schema.ts` is still needed as a local codegen anchor for Convex components
+
+Everything else should come from the package.
 
 ---
 
-## Package Entry Points
+## Product Boundary
 
-| Import | Use |
-|---|---|
-| `@banata-auth/convex` | Auth factory and route registration helpers |
-| `@banata-auth/convex/schema` | Self-hosted schema re-export |
-| `@banata-auth/convex/auth-config` | Convex JWT auth-config helper |
-| `@banata-auth/convex/adapter` | Helper for generating local adapter CRUD functions |
-| `@banata-auth/convex/node` | Node-side auth handling for the proxy route pattern |
-| `@banata-auth/convex/plugins` | Advanced plugin access |
+The important product rule is:
 
----
+- apps authenticate through a Banata dashboard project
+- project scope comes from a project-scoped API key
+- self-hosting still keeps that same dashboard-first flow
 
-## Recommended Self-Hosted Flow
+So `@banata-auth/convex` powers the Banata platform, while customer apps normally use:
 
-1. Register a local Convex component in `convex/banataAuth/convex.config.ts`.
-2. Register that component in `convex/convex.config.ts`.
-3. Re-export the schema in `convex/banataAuth/schema.ts`.
-4. Build the auth factory in `convex/banataAuth/auth.ts`.
-5. Generate the adapter CRUD functions in `convex/banataAuth/adapter.ts`.
-6. Route requests through `convex/authNode.ts` and `convex/http.ts`.
-
-The full file contents are in [Quick Start](/docs/quickstart).
+- [`@banata-auth/sdk`](/docs/sdk)
+- [`@banata-auth/nextjs`](/docs/nextjs)
+- [`@banata-auth/react`](/docs/react)
 
 ---
 
-## Why This Is Separate From The Public Story
+## Related Docs
 
-The public product goal is dashboard-first. `@banata-auth/convex` exists for:
-
-- Banata's own dogfooding
-- GitHub-based self-hosting
-- advanced teams that explicitly want to own the auth runtime
-
-It should not be treated as the default first-run experience for most users.
+- [Self-Hosted Quick Start](/docs/quickstart)
+- [Self-Hosting](/docs/self-hosting)
+- [API Keys](/docs/api-keys)

@@ -457,8 +457,10 @@ const authClient = createAuthClient({
 |---|---|
 | `convexClient()` | Convex token exchange methods |
 | `crossDomainClient()` | Cross-domain auth support |
-| `organizationClient()` | Organization management methods |
+| `organizationClient()` | Organization management methods with Banata role slugs |
 | `apiKeyClient()` | API key CRUD methods |
+
+`organizationClient()` in `@banata-auth/react/plugins` is Banata's wrapper around the Better Auth organization client. It widens role inputs so methods like `inviteMember` and `updateMemberRole` accept your project's custom role slugs instead of the stock `member | admin | owner` set.
 
 ---
 

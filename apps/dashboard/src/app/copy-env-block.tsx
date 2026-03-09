@@ -15,10 +15,7 @@ export function CopyEnvBlock({ clientId }: CopyEnvBlockProps) {
 
 	const clientIdValue = clientId || "<your-project-client-id>";
 
-	const envBlock = [
-		`BANATA_CLIENT_ID="${clientIdValue}"`,
-		`BANATA_API_KEY="<generate in API Keys>"`,
-	].join("\n");
+	const envBlock = [`BANATA_API_KEY="<generate in API Keys>"`].join("\n");
 
 	async function handleCopy() {
 		try {
@@ -35,16 +32,11 @@ export function CopyEnvBlock({ clientId }: CopyEnvBlockProps) {
 			<CardHeader>
 				<CardTitle className="text-sm">Copy environment variables</CardTitle>
 				<CardDescription>
-					Add these to your{" "}
+					Add this required server-side variable to your{" "}
 					<code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.env.local</code> file.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-3">
-				<div className="group relative rounded-md border bg-muted/50 px-3 py-2">
-					<p className="font-mono text-xs text-muted-foreground select-all">
-						BANATA_CLIENT_ID=&quot;{clientIdValue}&quot;
-					</p>
-				</div>
 				<div className="group relative rounded-md border bg-muted/50 px-3 py-2">
 					<p className="font-mono text-xs text-muted-foreground">
 						BANATA_API_KEY=&quot;
@@ -55,6 +47,14 @@ export function CopyEnvBlock({ clientId }: CopyEnvBlockProps) {
 							Generate one in API Keys &rarr;
 						</Link>
 						&quot;
+					</p>
+				</div>
+				<div className="rounded-md border border-dashed bg-muted/30 px-3 py-2">
+					<p className="text-xs text-muted-foreground">
+						Optional legacy scope hint:
+						<span className="ml-1 font-mono select-all">
+							BANATA_CLIENT_ID=&quot;{clientIdValue}&quot;
+						</span>
 					</p>
 				</div>
 				<Button variant="outline" size="sm" className="mt-1 w-fit gap-2" onClick={handleCopy}>

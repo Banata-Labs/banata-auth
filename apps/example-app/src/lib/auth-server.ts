@@ -1,12 +1,14 @@
-/**
- * Server-side auth helpers for Next.js.
- *
- * Provides utilities for:
- * - Route handler proxying (Next.js API routes -> Convex .site)
- * - Preloading authenticated Convex queries in server components
- * - Checking auth state in server components/actions
- */
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+import { createBanataAuthServer } from "@banata-auth/nextjs/server";
+
+const apiKey = process.env.BANATA_API_KEY;
+
+if (!apiKey) {
+	console.warn(
+		"[Banata Auth Example] BANATA_API_KEY is not set. " +
+			"Create a project API key in the Banata dashboard and set it in your app server environment. " +
+			"Project-scoped auth flows will not work until you do.",
+	);
+}
 
 export const {
 	handler,
@@ -16,7 +18,8 @@ export const {
 	fetchAuthQuery,
 	fetchAuthMutation,
 	fetchAuthAction,
-} = convexBetterAuthNextJs({
+} = createBanataAuthServer({
 	convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
 	convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+	apiKey,
 });

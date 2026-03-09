@@ -32,7 +32,7 @@ interface Invitation {
   id: string;              // e.g., "inv_01HXYZ..."
   email: string;           // Invitee's email address
   organizationId: string;  // Target organization
-  role: string;            // Role to assign: "owner", "admin", "member", or custom
+  role: string;            // Role slug to assign (for example "hr_admin")
   inviterId: string;       // User who sent the invitation
   status: "pending" | "accepted" | "expired" | "revoked";
   expiresAt: string;       // ISO 8601 — 7 days from creation
@@ -149,7 +149,7 @@ import { authClient } from "@/lib/auth-client";
 const { error } = await authClient.organization.inviteMember({
   organizationId: "org_01HXYZ...",
   email: "newuser@example.com",
-  role: "member",   // "owner", "admin", "member", or custom role
+  role: "hr_admin",   // Any Banata role slug defined in your project
 });
 
 if (error) {
@@ -328,9 +328,9 @@ To invite multiple users at once, iterate over the emails:
 
 ```typescript
 const emails = [
-  { email: "alice@example.com", role: "admin" },
-  { email: "bob@example.com", role: "member" },
-  { email: "charlie@example.com", role: "member" },
+  { email: "alice@example.com", role: "hr_admin" },
+  { email: "bob@example.com", role: "payroll_viewer" },
+  { email: "charlie@example.com", role: "people_ops" },
 ];
 
 const results = await Promise.allSettled(

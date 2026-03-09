@@ -1,15 +1,33 @@
 ---
 title: "Next.js"
-description: "Complete reference for @banata-auth/nextjs — reverse proxy route handler, middleware, server auth utilities, and preloaded queries."
+description: "Reverse-proxy auth routes and server-side auth helpers for Banata Auth."
 section: "Packages"
 order: 16
 ---
 
-The `@banata-auth/nextjs` package provides everything you need to integrate Banata Auth with a Next.js application — a reverse proxy route handler, route protection middleware, server-side auth utilities, and client hooks for preloaded queries.
+The `@banata-auth/nextjs` package is the normal app-side integration for Next.js.
+
+Use it when your app needs to:
+
+- proxy `/api/auth/*` requests to your Banata instance
+- keep auth cookies on your own domain
+- bind auth flows to a Banata project with a server-side API key
+- read auth state in server components and server actions
 
 ```bash
 npm install @banata-auth/nextjs
 ```
+
+---
+
+## The Recommended Pattern
+
+1. Create a project in the Banata dashboard
+2. Create a project-scoped API key
+3. Store that key in your app's server environment
+4. Point the Next.js auth route at your Banata `.convex.site` URL
+
+The browser never sees the API key. The Next.js server injects it while proxying auth traffic.
 
 ---
 
@@ -24,310 +42,37 @@ npm install @banata-auth/nextjs
 
 ---
 
-## Route Handler (Reverse Proxy)
+## Route Handler
 
-The route handler acts as a **reverse proxy** — it forwards auth requests from your Next.js app to the Convex `.site` URL where Better Auth is running. This keeps session cookies on your domain.
-
-### `createRouteHandler(options)`
-
-```typescript
+```ts
 // src/app/api/auth/[...all]/route.ts
 import { createRouteHandler } from "@banata-auth/nextjs";
 
-export const { GET, POST } = createRouteHandler({
-  // Required: The Convex site URL where HTTP actions are hosted
+export const { GET, POST, PUT, PATCH, DELETE } = createRouteHandler({
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  apiKey: process.env.BANATA_API_KEY!,
 });
 ```
 
-Or use the `convexBetterAuthNextJs` factory (from `@convex-dev/better-auth`) which provides both the handler and server utilities:
+### What `apiKey` Does
 
-```typescript
-// src/lib/auth-server.ts
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+- binds the app to a single Banata project
+- lets Banata resolve project config from the key itself
+- avoids exposing project credentials to the browser
 
-export const {
-  handler,
-  isAuthenticated,
-  getToken,
-  preloadAuthQuery,
-  fetchAuthQuery,
-  fetchAuthMutation,
-  fetchAuthAction,
-} = convexBetterAuthNextJs({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
-
-// src/app/api/auth/[...all]/route.ts
-import { handler } from "@/lib/auth-server";
-export const { GET, POST } = handler;
-```
-
-### How the Proxy Works
-
-1. Browser sends request to `/api/auth/sign-in/email`
-2. Route handler receives the request
-3. Forwards to `{CONVEX_SITE_URL}/api/auth/sign-in/email`
-4. Preserves all headers and body
-5. Overrides the `host` header to match the Convex site
-6. Uses `redirect: "manual"` for OAuth flows
-7. Returns the response (including `Set-Cookie` headers)
-
-**All 5 HTTP methods** are forwarded: GET, POST, PUT, PATCH, DELETE.
-
-On network errors (Convex is unreachable), a **502 Bad Gateway** response is returned.
+`project.clientId` and `project.projectId` are still available as legacy scope hints, but project-scoped apps should prefer the API key.
 
 ---
 
-## Middleware (Route Protection)
+## Server Helpers
 
-The middleware checks for the Better Auth session cookie on incoming requests and redirects unauthenticated users.
+Use `createBanataAuthServer()` when you also need server-side auth utilities:
 
-### `banataAuthProxy(options)` / `banataAuthMiddleware(options)`
-
-These are aliases for the same function:
-
-```typescript
-// middleware.ts
-import { banataAuthProxy } from "@banata-auth/nextjs/middleware";
-
-export default banataAuthProxy({
-  // Routes that don't require authentication
-  publicRoutes: [
-    "/",
-    "/sign-in",
-    "/sign-up",
-    "/forgot-password",
-    "/api/webhooks/(.*)",  // Webhook endpoints
-  ],
-
-  // Where to redirect unauthenticated users
-  signInUrl: "/sign-in",  // Default: "/sign-in"
-});
-
-export const config = {
-  // Match all routes except Next.js internals and static files
-  matcher: ["/((?!_next|static|favicon.ico|.*\\..*).*)"],
-};
-```
-
-### Route Matching
-
-Routes are matched using **regex with `^...$` anchoring**. This means:
-
-| Pattern | Matches | Doesn't Match |
-|---|---|---|
-| `/dashboard` | `/dashboard` only | `/dashboard/settings` |
-| `/dashboard(.*)` | `/dashboard`, `/dashboard/settings`, `/dashboard/users/123` | `/other` |
-| `/api/webhooks/(.*)` | `/api/webhooks/banata`, `/api/webhooks/stripe` | `/api/webhooks` |
-| `/sign-(in\|up)` | `/sign-in`, `/sign-up` | `/sign-out` |
-
-### How Middleware Works
-
-1. Request comes in
-2. Check if the route matches any `publicRoutes` → Allow through
-3. Check for Better Auth session cookie (via `getSessionCookie()`)
-4. **Cookie found** → Set `x-pathname` header and allow through
-5. **No cookie** → Redirect to `signInUrl` with `?redirect_url={original_path}`
-
-### The `x-pathname` Header
-
-The middleware sets an `x-pathname` header on authenticated requests. You can use this in your server components to know the current path:
-
-```typescript
-import { headers } from "next/headers";
-
-export default async function Layout() {
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname");
-  // ...
-}
-```
-
----
-
-## Server Utilities
-
-### `createBanataAuthServer(options)`
-
-A factory that returns server-side auth utilities:
-
-```typescript
+```ts
 // src/lib/auth-server.ts
 import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 
 export const {
-  handler,            // Route handler for /api/auth/[...all]
-  isAuthenticated,    // Check if current request is authenticated
-  getToken,           // Get JWT token for Convex
-  preloadAuthQuery,   // Preload authenticated Convex queries
-  fetchAuthQuery,     // Fetch authenticated query results
-  fetchAuthMutation,  // Execute authenticated mutations
-  fetchAuthAction,    // Execute authenticated actions
-} = createBanataAuthServer({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
-```
-
-> **Note:** In practice, the example app uses `convexBetterAuthNextJs()` from `@convex-dev/better-auth/nextjs` which provides the same interface. Both approaches work.
-
-### `isAuthenticated()`
-
-Check if the current request has a valid session. Use in server components and server actions:
-
-```tsx
-// Server component
-import { isAuthenticated } from "@/lib/auth-server";
-import { redirect } from "next/navigation";
-
-export default async function ProtectedPage() {
-  const authed = await isAuthenticated();
-
-  if (!authed) {
-    redirect("/sign-in");
-  }
-
-  return <div>You are authenticated</div>;
-}
-```
-
-### `getToken()`
-
-Get a Convex-compatible JWT token for making authenticated queries:
-
-```typescript
-import { getToken } from "@/lib/auth-server";
-
-export default async function ServerComponent() {
-  const token = await getToken();
-
-  if (token) {
-    // Use token with Convex client
-    // const result = await fetchQuery(api.myQuery, {}, { token });
-  }
-}
-```
-
-**Token flow:**
-1. Reads session cookies from the request
-2. Calls `/api/auth/convex/token` on the Convex `.site` URL
-3. Returns the JWT token (or null if not authenticated)
-
-### `preloadAuthQuery(query, args)`
-
-Preload an authenticated Convex query in a server component, then consume it client-side without waterfalls:
-
-```tsx
-// Server component (page.tsx)
-import { preloadAuthQuery } from "@/lib/auth-server";
-import { api } from "@/convex/_generated/api";
-import { DashboardClient } from "./dashboard-client";
-
-export default async function DashboardPage() {
-  const preloaded = await preloadAuthQuery(api.dashboard.getData, {});
-
-  return <DashboardClient preloadedData={preloaded} />;
-}
-```
-
-```tsx
-// Client component (dashboard-client.tsx)
-"use client";
-
-import { usePreloadedAuthQuery } from "@banata-auth/nextjs/client";
-
-export function DashboardClient({ preloadedData }) {
-  const data = usePreloadedAuthQuery(preloadedData);
-
-  return <div>{JSON.stringify(data)}</div>;
-}
-```
-
-### `fetchAuthQuery(query, args)` / `fetchAuthMutation(mutation, args)` / `fetchAuthAction(action, args)`
-
-Execute authenticated Convex operations from server components and server actions:
-
-```tsx
-import { fetchAuthQuery, fetchAuthMutation } from "@/lib/auth-server";
-import { api } from "@/convex/_generated/api";
-
-// In a server component
-export default async function SettingsPage() {
-  const settings = await fetchAuthQuery(api.settings.get, {});
-  return <SettingsForm settings={settings} />;
-}
-
-// In a server action
-export async function updateSettings(formData: FormData) {
-  "use server";
-  await fetchAuthMutation(api.settings.update, {
-    name: formData.get("name") as string,
-  });
-}
-```
-
----
-
-## Client Hook
-
-### `usePreloadedAuthQuery(preloadedQuery)`
-
-Consume a preloaded auth query on the client side:
-
-```tsx
-"use client";
-
-import { usePreloadedAuthQuery } from "@banata-auth/nextjs/client";
-import type { Preloaded } from "convex/react";
-import type { api } from "@/convex/_generated/api";
-
-export function DataView({
-  preloaded,
-}: {
-  preloaded: Preloaded<typeof api.myQuery>;
-}) {
-  const data = usePreloadedAuthQuery(preloaded);
-
-  return <div>{data.name}</div>;
-}
-```
-
-This hook:
-1. Uses the preloaded data for the initial render (no loading state)
-2. Subscribes to real-time updates via Convex
-3. Re-renders automatically when data changes
-
----
-
-## Two Route Handler Approaches
-
-There are two ways to set up the auth route handler:
-
-### Approach 1: `createRouteHandler` (from `@banata-auth/nextjs`)
-
-Simple proxy — just forwards requests:
-
-```typescript
-// src/app/api/auth/[...all]/route.ts
-import { createRouteHandler } from "@banata-auth/nextjs";
-export const { GET, POST } = createRouteHandler({
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
-```
-
-**Use when:** You only need the proxy and handle server auth separately.
-
-### Approach 2: `convexBetterAuthNextJs` (from `@convex-dev/better-auth`)
-
-Full-featured — provides the handler plus server utilities:
-
-```typescript
-// src/lib/auth-server.ts
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
-
-export const {
   handler,
   isAuthenticated,
   getToken,
@@ -335,44 +80,88 @@ export const {
   fetchAuthQuery,
   fetchAuthMutation,
   fetchAuthAction,
-} = convexBetterAuthNextJs({
+} = createBanataAuthServer({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  apiKey: process.env.BANATA_API_KEY!,
 });
+```
 
+Then wire your route file to that handler:
+
+```ts
 // src/app/api/auth/[...all]/route.ts
 import { handler } from "@/lib/auth-server";
-export const { GET, POST } = handler;
+
+export const { GET, POST, PUT, PATCH, DELETE } = handler;
 ```
 
-**Use when:** You need server-side auth utilities (recommended for most apps).
+`createBanataAuthServer()` uses the same server-side API-key binding for:
+
+- the route proxy
+- `/api/auth/convex/token`
+- `isAuthenticated()`
+- authenticated Convex query/mutation/action helpers
 
 ---
 
-## Complete Setup Example
+## Middleware
 
+```ts
+// middleware.ts
+import { banataAuthProxy } from "@banata-auth/nextjs/middleware";
+
+export default banataAuthProxy({
+  publicRoutes: ["/", "/sign-in", "/api/webhooks/(.*)"],
+  signInUrl: "/sign-in",
+});
+
+export const config = {
+  matcher: ["/((?!_next|static|favicon.ico|.*\\..*).*)"],
+};
 ```
+
+The middleware checks for the Better Auth session cookie and redirects unauthenticated requests.
+
+---
+
+## Example File Layout
+
+```text
 src/
-├── app/
-│   ├── api/auth/[...all]/route.ts    # Auth proxy
-│   ├── layout.tsx                      # Root layout with provider
-│   ├── sign-in/page.tsx               # Sign-in page
-│   ├── sign-up/page.tsx               # Sign-up page
-│   └── dashboard/
-│       ├── layout.tsx                  # Protected layout
-│       └── page.tsx                    # Dashboard page
-├── components/
-│   └── convex-client-provider.tsx     # Convex + auth provider
-├── lib/
-│   ├── auth-server.ts                 # Server auth utilities
-│   └── auth-client.ts                 # Client auth instance
-└── middleware.ts                       # Route protection
+|-- app/
+|   |-- api/auth/[...all]/route.ts
+|   |-- sign-in/page.tsx
+|   `-- dashboard/page.tsx
+`-- lib/
+    |-- auth-client.ts
+    `-- auth-server.ts
 ```
 
 ---
 
-## What's Next
+## Environment Variables
 
-- **[Convex](/docs/convex)** — Backend configuration and plugin system
-- **[React](/docs/react)** — Client-side hooks and components
-- **[Environment Variables](/docs/env-vars)** — All configuration options
+```bash
+NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+BANATA_API_KEY=sk_test_your_project_key
+```
+
+`BANATA_API_KEY` must stay server-side. Do not expose it with a `NEXT_PUBLIC_` prefix.
+
+---
+
+## Self-Hosting Note
+
+Self-hosting does not change this Next.js integration model.
+
+If you run Banata yourself, your app still:
+
+1. signs in to a Banata dashboard
+2. creates a project
+3. creates a project-scoped API key
+4. uses `@banata-auth/nextjs` exactly the same way
+
+The only thing that changes is which Banata instance the app points to.

@@ -28,11 +28,26 @@ export {
 export { createAuthClient } from "better-auth/react";
 
 // Better Auth client plugins
+import {
+	organizationClient as betterAuthOrganizationClient,
+} from "better-auth/client/plugins";
 export {
 	adminClient,
-	organizationClient,
 	apiKeyClient,
 	twoFactorClient,
 	multiSessionClient,
 	usernameClient,
 } from "better-auth/client/plugins";
+
+type BanataOrganizationClientOptions = NonNullable<
+	Parameters<typeof betterAuthOrganizationClient>[0]
+> & {
+	roles?: Record<string, unknown>;
+};
+
+export const organizationClient = <CO extends BanataOrganizationClientOptions>(
+	options?: CO,
+) =>
+	betterAuthOrganizationClient<CO & { roles: Record<string, unknown> }>(
+		options as (CO & { roles: Record<string, unknown> }) | undefined,
+	);

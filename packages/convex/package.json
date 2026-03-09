@@ -41,6 +41,10 @@
 			"import": "./dist/component/adapter.js",
 			"default": "./dist/component/adapter.js"
 		},
+		"./convex.config": {
+			"import": "./src/component/convex.config.ts",
+			"default": "./src/component/convex.config.ts"
+		},
 		"./http": {
 			"types": "./dist/http.d.ts",
 			"import": "./dist/http.js",

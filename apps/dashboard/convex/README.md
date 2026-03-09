@@ -2,55 +2,32 @@
 
 ## Architecture
 
-All auth data lives inside the `banataAuth` **Convex component** — an isolated namespace with its own 34 tables. The parent app (`convex/`) only has HTTP routes and auth config; it accesses component data through adapter function references (`components.banataAuth.adapter.*`).
+All auth data lives inside the `banataAuth` Convex component. The parent app keeps only app-level wiring: HTTP routes, auth config, Node request handling, and the local auth factory that binds the packaged component to dashboard runtime config.
 
-```
+```text
 convex/
   _generated/        # Auto-generated types (parent app)
-  banataAuth/        # The component (isolated DB namespace)
+  banataAuth/
     _generated/      # Auto-generated types (component)
-    adapter.ts       # CRUD handlers with direct ctx.db access
-    auth.ts          # Better Auth config, email sending, social providers
-    migrations.ts    # Data migrations (ctx.db access to component tables)
-    schema.ts        # Re-exports from @banata-auth/convex/schema
-    convex.config.ts # defineComponent("banataAuth")
+    auth.ts          # Dashboard-aware auth factory and runtime config resolution
+    adapter.ts       # Local adapter functions generated from createAuthOptions
+    schema.ts        # Local schema anchor that re-exports @banata-auth/convex/schema
   auth.config.ts     # Convex auth provider config
-  auth.ts            # (empty)
-  convex.config.ts   # defineApp() + app.use(banataAuth)
+  authNode.ts        # Node proxy for auth requests
+  convex.config.ts   # defineApp() + app.use(@banata-auth/convex/convex.config)
   http.ts            # HTTP router, registers Better Auth routes
 ```
 
 ## Migrations
 
-Migrations run inside the component and have direct `ctx.db` access to all 34 tables. They are `internalMutation` functions defined in `banataAuth/migrations.ts`.
+Component migrations now live in the package at `@banata-auth/convex/src/component/migrations.ts`, so the local dashboard app no longer needs its own `banataAuth/migrations.ts`.
 
-### Available Migrations
+Available migrations:
 
-**Clear all data (nuclear reset):**
 ```bash
 npx convex run --component banataAuth migrations:clearAllData
-```
-
-**Backfill projectId on orphaned records:**
-```bash
-# Auto-detect first project:
 npx convex run --component banataAuth migrations:backfillProjectId
-
-# Specify target project:
-npx convex run --component banataAuth migrations:backfillProjectId '{"targetProjectId": "abc123"}'
-```
-
-**Remove legacy environmentId fields:**
-```bash
 npx convex run --component banataAuth migrations:removeEnvironmentIds
-```
-
-### Batched Execution
-
-All migrations are batched (default 500 records per run). If a migration returns `done: false`, re-run with `startFromTable`:
-
-```bash
-npx convex run --component banataAuth migrations:clearAllData '{"startFromTable": "organization"}'
 ```
 
 ## Development
@@ -61,4 +38,4 @@ Push schema and functions to your Convex deployment:
 npx convex dev
 ```
 
-The Convex bundling is slow (several minutes). Run `convex dev` from your own terminal and let it watch for changes.
+The Convex bundling is slow. Run `convex dev` from your own terminal and let it watch for changes.

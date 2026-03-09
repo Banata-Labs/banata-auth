@@ -1,8 +1,7 @@
-import { createApi } from "@convex-dev/better-auth";
+import { createBanataAuthAdapter } from "@banata-auth/convex/adapter";
 import { createAuthOptions } from "./auth";
-import schema from "./schema";
 
-const adapterApi = createApi(schema, createAuthOptions);
+const adapterApi = createBanataAuthAdapter(createAuthOptions);
 
 export const create: typeof adapterApi.create = adapterApi.create;
 export const findOne: typeof adapterApi.findOne = adapterApi.findOne;

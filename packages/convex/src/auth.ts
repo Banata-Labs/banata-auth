@@ -16,24 +16,21 @@
  *
  * ```ts
  * // convex/banataAuth/auth.ts
- * import { createBanataAuthComponent, createBanataAuthOptions, createBanataAuth } from "@banata-auth/convex";
+ * import { defineBanataAuth } from "@banata-auth/convex";
  * import { components } from "../_generated/api";
  * import type { DataModel } from "../_generated/dataModel";
  * import authConfig from "../auth.config";
- * import schema from "./schema";
  *
- * export const authComponent = createBanataAuthComponent(components.banataAuth, schema);
- *
- * export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
- *   createBanataAuthOptions(ctx, {
- *     authComponent,
- *     authConfig,
+ * const definedAuth = defineBanataAuth<DataModel>({
+ *   componentRef: components.banataAuth,
+ *   authConfig,
+ *   config: {
  *     siteUrl: process.env.SITE_URL!,
  *     secret: process.env.BETTER_AUTH_SECRET!,
- *   });
+ *   },
+ * });
  *
- * export const createAuth = (ctx: GenericCtx<DataModel>) =>
- *   createBanataAuth(ctx, { authComponent, authConfig, config: { ... } });
+ * export const { authComponent, createAuthOptions, createAuth, options } = definedAuth;
  * ```
  */
 
@@ -77,6 +74,9 @@ import { type BanataProtectionOptions, banataProtection } from "./plugins/protec
 import { userManagementPlugin } from "./plugins/user-management";
 import { vaultPlugin } from "./plugins/vault";
 import { webhookSystem } from "./plugins/webhook";
+import banataAuthSchema from "./component/schema";
+
+export { banataAuthSchema };
 
 // ─── Slim Component API ─────────────────────────────────────────────
 // Structural supertype matching @convex-dev/better-auth's internal SlimComponentApi.
@@ -366,6 +366,7 @@ type ComponentClient = ReturnType<typeof createClient>;
 
 const MODULE_ANALYSIS_SECRET = "placeholder-for-module-analysis";
 let warnedAboutMissingSecret = false;
+let warnedAboutStaticAdapterFallback = false;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return Object.prototype.toString.call(value) === "[object Object]";
@@ -431,6 +432,53 @@ function resolveConfiguredSecret(secret: string | undefined): string {
 	return MODULE_ANALYSIS_SECRET;
 }
 
+function createStaticDatabaseAdapter(): BetterAuthOptions["database"] {
+	return {} as BetterAuthOptions["database"];
+}
+
+function canResolveRuntimeAdapter(ctx: unknown): boolean {
+	if (!ctx || typeof ctx !== "object") {
+		return false;
+	}
+
+	const candidate = ctx as Record<string, unknown>;
+	return (
+		typeof candidate.runQuery === "function" ||
+		typeof candidate.runMutation === "function" ||
+		typeof candidate.runAction === "function" ||
+		typeof candidate.auth === "function" ||
+		typeof candidate.db === "object"
+	);
+}
+
+function resolveDatabaseAdapter(
+	authComponent: ComponentClient,
+	ctx: GenericCtx<GenericDataModel>,
+): BetterAuthOptions["database"] {
+	if (!canResolveRuntimeAdapter(ctx)) {
+		if (!warnedAboutStaticAdapterFallback) {
+			warnedAboutStaticAdapterFallback = true;
+			console.warn(
+				"[BanataAuth] Skipping adapter resolution during static module evaluation. " +
+					"This is expected for Convex analysis and route registration.",
+			);
+		}
+		return createStaticDatabaseAdapter();
+	}
+
+	try {
+		return authComponent.adapter(ctx);
+	} catch {
+		if (!warnedAboutStaticAdapterFallback) {
+			warnedAboutStaticAdapterFallback = true;
+			console.warn(
+				"[BanataAuth] Falling back to a static adapter placeholder during module evaluation.",
+			);
+		}
+		return createStaticDatabaseAdapter();
+	}
+}
+
 // ─── Factory Functions ──────────────────────────────────────────────
 
 /**
@@ -448,7 +496,7 @@ function resolveConfiguredSecret(secret: string | undefined): string {
  * ```ts
  * import { createBanataAuthComponent } from "@banata-auth/convex";
  * import { components } from "../_generated/api";
- * import schema from "./schema";
+ * import { default as schema } from "@banata-auth/convex/schema";
  *
  * export const authComponent = createBanataAuthComponent(
  *   components.banataAuth,
@@ -464,6 +512,47 @@ export function createBanataAuthComponent<
 		local: { schema },
 		verbose: options?.verbose ?? false,
 	});
+}
+
+export function defineBanataAuth<TDataModel extends GenericDataModel>(params: {
+	componentRef: BanataAuthComponentApi;
+	authConfig: AuthConfig;
+	config: BanataAuthConfig;
+	verbose?: boolean;
+}) {
+	const authComponent = createBanataAuthComponent<TDataModel, typeof banataAuthSchema>(
+		params.componentRef,
+		banataAuthSchema,
+		{ verbose: params.verbose },
+	) as unknown as ComponentClient;
+
+	const createAuthOptions = (ctx: GenericCtx<TDataModel>) =>
+		createBanataAuthOptions(ctx as unknown as GenericCtx<GenericDataModel>, {
+			authComponent,
+			authConfig: params.authConfig,
+			config: params.config,
+		});
+
+	const createAuth = (ctx: GenericCtx<TDataModel>) =>
+		createBanataAuth(ctx as unknown as GenericCtx<GenericDataModel>, {
+			authComponent,
+			authConfig: params.authConfig,
+			config: params.config,
+		});
+
+	const options = createBanataAuthStaticOptions({
+		authComponent,
+		authConfig: params.authConfig,
+		config: params.config,
+	});
+
+	return {
+		authComponent,
+		createAuthOptions,
+		createAuth,
+		options,
+		schema: banataAuthSchema,
+	};
 }
 
 /**
@@ -510,7 +599,7 @@ export function createBanataAuthOptions(
 	// ── Built-in email system ──
 	// Create auto-email callbacks that read provider config from the DB.
 	// These serve as fallbacks when the consumer doesn't provide their own.
-	const dbAdapter = authComponent.adapter(ctx);
+	const dbAdapter = resolveDatabaseAdapter(authComponent, ctx);
 	const emailOpts: BanataEmailOptions = {
 		appName: config.appName,
 		...config.emailOptions,

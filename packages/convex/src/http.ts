@@ -94,11 +94,11 @@ const ROUTABLE_HTTP_METHODS: RoutableMethod[] = [
  */
 export function registerBanataAuthNodeProxyRoutes(
 	httpRouter: HttpRouter,
-	createAuth: CreateAuthFn,
+	_createAuth: CreateAuthFn,
 	handleNodeAuthRequest: FunctionReference<"action", "internal">,
+	options?: { path?: string },
 ) {
-	const staticAuth = createAuth({} as never);
-	const path = staticAuth.options.basePath ?? "/api/auth";
+	const path = options?.path ?? "/api/auth";
 	const authRequestHandler = httpActionGeneric(async (ctx, request) => {
 		const serializedRequest: SerializedAuthRequest = {
 			method: request.method,

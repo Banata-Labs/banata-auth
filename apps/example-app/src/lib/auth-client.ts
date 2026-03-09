@@ -1,4 +1,4 @@
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from "@banata-auth/react/plugins";
 
 const baseURL =
 	typeof window !== "undefined"

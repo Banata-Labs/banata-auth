@@ -1,264 +1,73 @@
 ---
 title: "Self-Hosting"
-description: "Run Banata Auth on your own infrastructure — architecture overview, project structure, deployment, and configuration."
+description: "Run the full Banata platform on your own infrastructure."
 section: "Deployment"
 order: 30
 ---
 
-This guide is for developers who want to **self-host Banata Auth** on their own infrastructure. It covers the architecture, monorepo structure, package dependencies, database schema, and deployment process.
+Self-hosting means hosting the Banata platform yourself, not embedding a different auth model into your product. The goal is the same product shape as the hosted Banata service:
 
-> If you just want to use Banata Auth in your application, see the [Quick Start](/docs/quickstart) instead.
+- dashboard-first project setup
+- project-scoped API keys
+- Banata-managed emails, templates, organizations, and auth configuration
+- the same SDKs and frontend packages pointed at your self-hosted Banata instance
+
+If you just want to integrate with Banata as a customer, use the hosted dashboard flow instead.
 
 ---
 
-## Architecture
+## Product Shape
 
-Banata Auth follows a **four-layer architecture** where each layer has a clear responsibility:
+The hosted and self-hosted models are intended to match:
 
-```
-┌────────────────────────────────────────────────────────┐
-│                     Your Application                    │
-│                                                         │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │ React Client│  │ Next.js      │  │ Admin SDK     │  │
-│  │ @banata-auth│  │ @banata-auth │  │ @banata-auth  │  │
-│  │ /react      │  │ /nextjs      │  │ /sdk          │  │
-│  └──────┬──────┘  └──────┬───────┘  └───────┬───────┘  │
-│         │                │                   │          │
-│         └────────┬───────┘                   │          │
-│                  │                           │          │
-│         ┌────────▼─────────┐                 │          │
-│         │ /api/auth/[...all]│                │          │
-│         │ (Route Handler /  │                │          │
-│         │  Reverse Proxy)   │                │          │
-│         └────────┬──────────┘                │          │
-│                  │                           │          │
-└──────────────────┼───────────────────────────┼──────────┘
-                   │                           │
-          ┌────────▼───────────────────────────▼──────────┐
-          │              Convex Backend                    │
-          │                                               │
-          │  ┌─────────────────────────────────────────┐  │
-          │  │         Auth Engine                      │  │
-          │  │  @banata-auth/convex                     │  │
-          │  │                                          │  │
-          │  │  ┌──────────┐ ┌───────────┐ ┌────────┐  │  │
-          │  │  │ Plugins  │ │ Triggers  │ │Adapter │  │  │
-          │  │  │ (15)     │ │ (14 hooks)│ │(Convex)│  │  │
-          │  │  └──────────┘ └───────────┘ └────────┘  │  │
-          │  └─────────────────────────────────────────┘  │
-          │                                               │
-          │  ┌─────────────────────────────────────────┐  │
-          │  │         Convex Database                  │  │
-          │  │         (26 tables)                      │  │
-          │  └─────────────────────────────────────────┘  │
-          └───────────────────────────────────────────────┘
+1. An operator deploys Banata
+2. Developers sign in to the Banata dashboard
+3. They create a project
+4. They create a project-scoped API key
+5. Their apps use Banata's SDKs and auth surfaces against that Banata instance
+
+The Convex package exists to power that platform deployment. It is not the primary customer integration surface.
+
+---
+
+## Convex Wiring
+
+The self-hosted platform keeps a small amount of local Convex wiring:
+
+```text
+convex/
+|-- convex.config.ts
+|-- auth.config.ts
+|-- authNode.ts
+|-- http.ts
+`-- banataAuth/
+    |-- auth.ts
+    |-- adapter.ts
+    `-- schema.ts
 ```
 
-### Layer 1: Convex Backend (`@banata-auth/convex`)
+Why these remain:
 
-All authentication logic runs inside **Convex functions**. Better Auth is instantiated server-side with a Convex database adapter, meaning:
+- `auth.ts` binds project runtime config, env, and local auth config
+- `adapter.ts` closes over the local auth factory
+- `schema.ts` remains as a local schema anchor for Convex component codegen
 
-- **Sessions, tokens, OAuth flows, and user data** all live in Convex's 26 auth-specific tables.
-- **15 plugins** extend Better Auth with enterprise features (7 always-on, up to 8 conditionally enabled based on your config).
-- **14 trigger hooks** let you execute custom logic on auth events (user created, session started, organization updated, etc.).
-- **Real-time subscriptions** — because Convex is reactive by design, auth state changes propagate to clients instantly.
+What comes from `@banata-auth/convex`:
 
-The backend exposes HTTP endpoints at your Convex deployment's `.site` URL (e.g., `https://your-app.convex.site/api/auth/*`).
-
-### Layer 2: Next.js Proxy (`@banata-auth/nextjs`)
-
-A **reverse proxy route handler** at `/api/auth/[...all]` forwards browser requests to the Convex backend. This is necessary because:
-
-- **Same-origin cookies** — Auth cookies are set on your domain, not Convex's domain.
-- **OAuth callbacks** — OAuth providers redirect back to your domain, and the proxy forwards these to Convex.
-- **CORS simplicity** — No cross-origin configuration needed.
-
-The proxy forwards all 5 HTTP methods (GET, POST, PUT, PATCH, DELETE), preserves headers and body, and uses `redirect: "manual"` to properly handle OAuth redirect flows.
-
-**Middleware** (`banataAuthProxy` / `banataAuthMiddleware`) protects routes by checking for the Better Auth session cookie. It uses regex-based route matching with `^...$` anchoring for precise control over which routes require authentication.
-
-### Layer 3: React Client (`@banata-auth/react`)
-
-The React layer provides:
-
-- **`BanataAuthProvider`** — Context provider with two modes:
-  - **Adapter mode** — Provide a `BanataAuthAdapter` with `fetchSession`, `signOut`, and `setActiveOrganization` callbacks.
-  - **Controlled mode** — Pass `user`, `session`, `organization`, and `isLoading` as props directly.
-- **4 hooks** — `useBanataAuth()`, `useUser()`, `useSession()`, `useOrganization()` for accessing auth state anywhere in your component tree.
-- **5 pre-built components** — `AuthBoundary`, `AuthCard`, `SignInForm`, `SignUpForm`, `SocialButtons` for rapid UI development.
-- **Convex integration** — `BanataConvexProvider` wraps the Convex client with JWT token exchange for authenticated Convex queries/mutations.
-
-### Layer 4: Admin SDK (`@banata-auth/sdk`)
-
-The TypeScript SDK provides **server-side management** of your entire auth system:
-
-- **14 resource classes** for managing users, organizations, SSO connections, directory sync, audit logs, events, webhooks, portal sessions, vault secrets, domains, RBAC, API keys, emails, and projects.
-- **Automatic retries** with exponential backoff on 5xx errors.
-- **Webhook signature verification** using HMAC-SHA256 with the Web Crypto API.
-- **Cursor-based pagination** across all list endpoints.
+- packaged component registration
+- packaged component schema
+- packaged component migrations
+- auth factory helpers, plugins, triggers, and HTTP route helpers
 
 ---
 
-## Monorepo Structure
+## Infrastructure
 
-Banata Auth is organized as a **Turborepo monorepo** with 5 npm packages, 4 applications, and shared tooling.
+To self-host Banata, you still need:
 
-```
-banata-auth/
-├── apps/
-│   ├── dashboard/         # Admin dashboard (Next.js)
-│   ├── example-app/       # Reference integration
-│   ├── auth-ui/           # Hosted auth pages (sign-in, sign-up, etc.)
-│   ├── admin-portal/      # End-user admin portal for org management
-│   └── docs/              # Documentation site
-├── packages/
-│   ├── shared/            # Types, validation schemas, errors, constants, ID generators
-│   ├── sdk/               # TypeScript admin SDK (server-side user/org management)
-│   ├── react/             # React provider, hooks, UI components, Convex integration
-│   ├── nextjs/            # Next.js route handler, middleware, server utilities
-│   ├── convex/            # Convex backend — auth factory, plugins, triggers, schema
-│   └── ui/                # Reusable UI components (shadcn/ui based)
-├── tooling/
-│   ├── typescript/        # Shared tsconfig presets
-│   ├── tailwind/          # Shared Tailwind CSS configuration
-│   └── biome/             # Shared Biome linter/formatter config
-├── turbo.json             # Turborepo pipeline configuration
-├── package.json           # Root workspace configuration
-└── bun.lock               # Bun lockfile
-```
+- Convex for backend functions and data
+- a Next.js host for dashboard, auth UI, and proxy routes
+- an email provider for delivery
+- your own domains and DNS
 
-### Package Dependency Graph
-
-```
-@banata-auth/shared  ← Foundation (no workspace deps)
-    │
-    ├── @banata-auth/sdk        ← Server admin SDK
-    │
-    ├── @banata-auth/ui         ← UI components
-    │
-    ├── @banata-auth/react      ← React integration
-    │       │
-    │       └── @banata-auth/nextjs  ← Next.js integration
-    │
-    └── @banata-auth/convex     ← Convex backend
-```
-
-### Package Details
-
-| Package | Key External Deps | Exports |
-|---|---|---|
-| `@banata-auth/shared` | `zod`, `ulid` | 87 exports: 21 interfaces, 12+ types, 16 Zod schemas, 8 error classes, 7 constants |
-| `@banata-auth/sdk` | `shared` only (uses native `fetch`) | `BanataAuth` client, 14 resource classes, webhook verification |
-| `@banata-auth/react` | `react`, `better-auth/react` | `BanataAuthProvider`, 4 hooks, 5 UI components, Convex provider |
-| `@banata-auth/nextjs` | `next`, `@convex-dev/better-auth` | Route handler proxy, middleware, server auth utilities |
-| `@banata-auth/convex` | `convex`, `better-auth`, `@convex-dev/better-auth` | Auth factory, 15 plugins, 14 triggers, database adapter, 26-table schema |
-
----
-
-## Database Schema (26 Tables)
-
-The Convex backend uses 26 tables to store all auth data:
-
-| Table | Purpose |
-|---|---|
-| `user` | User accounts (email, name, image, metadata, banned status) |
-| `session` | Active sessions (userId, token, expiresAt, ipAddress, userAgent) |
-| `account` | Auth provider links (userId, providerId, accountId, credentials) |
-| `verification` | Email verification tokens |
-| `organization` | Organizations (name, slug, logo, metadata) |
-| `member` | Organization memberships (userId, organizationId, role) |
-| `invitation` | Organization invitations (email, role, status, expiresAt) |
-| `role` | Custom roles (name, description, permissions) |
-| `permission` | Granular permissions (name, description) |
-| `twoFactor` | TOTP secrets and backup codes |
-| `passkey` | WebAuthn credentials |
-| `apikey` | API key records (hashedKey, scopes, expiresAt) |
-| `ssoProvider` | SSO connection configuration |
-| `auditLog` | Audit trail (action, actor, target, context, changes, timestamp) |
-| `webhookEndpoint` | Webhook endpoint URLs and secrets |
-| `webhookDelivery` | Webhook delivery attempts and status |
-| `config` | Runtime configuration (branding, email settings, toggles) |
-| + 9 more | Internal Better Auth tables for OAuth state, anonymous sessions, multi-session, etc. |
-
----
-
-## Plugin System (15 Plugins)
-
-| Always On (7) | Conditionally Enabled (8) |
-|---|---|
-| `convex()` — Database adapter | `magicLink` — When `authMethods.magicLink` |
-| `auditLog()` — 30 auto-tracked events | `emailOTP` — When `authMethods.emailOtp` |
-| `webhookSystem()` — Event delivery | `twoFactor` — When `authMethods.twoFactor` |
-| `configPlugin()` — Dashboard config API | `passkey` — When `authMethods.passkey` |
-| `admin()` — Admin operations | `anonymous` — When `authMethods.anonymous` |
-| `bearer()` — Bearer token auth | `multiSession` — When `authMethods.multiSession` |
-| `username()` — Username/password auth | `organization` — When `authMethods.organization` |
-| | `apiKey` — When `apiKeyConfig` is set |
-
----
-
-## Build System
-
-The monorepo uses **Turborepo** for build orchestration with **Bun** as the package manager.
-
-### Commands
-
-| Command | What It Does |
-|---|---|
-| `bun run dev` | Start all dev servers (dashboard on :3000, Convex dev, etc.) |
-| `bun run build` | Build all packages and apps in dependency order |
-| `bun run test` | Run tests across all packages (Vitest) |
-| `bun run typecheck` | TypeScript type checking across all packages |
-| `bun run check` | Biome lint + format check |
-| `bun run check:fix` | Biome lint + format with auto-fix |
-
-### Package Publishing
-
-Packages are published to npm using [Changesets](https://github.com/changesets/changesets):
-
-```bash
-npx changeset           # Create a changeset
-npx changeset version   # Version packages
-npx changeset publish   # Publish to npm
-```
-
----
-
-## CI/CD
-
-| Workflow | Trigger | What It Does |
-|---|---|---|
-| `ci.yml` | Every PR, push to main | Lint (Biome), type-check (tsc), test (Vitest), build (Turbo) |
-| `release.yml` | Push to main | Publish packages to npm via Changesets |
-| `e2e.yml` | PR to main | End-to-end integration tests |
-
----
-
-## Self-Hosting Deployment
-
-To self-host Banata Auth, you need:
-
-1. **A Convex account** — Create a project at [convex.dev](https://convex.dev)
-2. **A hosting platform** — Vercel (recommended), Cloudflare Pages, or any Node.js host
-3. **A domain** — For production use with HTTPS
-
-Follow the [Deploy guide](/docs/deploy) for step-by-step production deployment instructions, and the [Quick Start](/docs/quickstart) for initial setup.
-
-### Required Infrastructure
-
-| Component | Purpose | Recommended |
-|---|---|---|
-| Convex | Backend database + serverless functions | Convex Cloud (free tier available) |
-| Next.js host | Frontend + auth proxy | Vercel |
-| Email provider | Transactional emails | Resend |
-| DNS | Domain management | Vercel DNS or Cloudflare |
-
----
-
-## What's Next
-
-- **[Quick Start](/docs/quickstart)** — Set up Banata Auth in your project
-- **[Deploy](/docs/deploy)** — Production deployment guide
-- **[Environment Variables](/docs/env-vars)** — Complete variable reference
-- **[Convex Integration](/docs/convex)** — Backend configuration deep dive
+Follow [Quick Start](/docs/quickstart) for the reference wiring and [Deploy](/docs/deploy) for production deployment.

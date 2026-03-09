@@ -1,8 +1,73 @@
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+import { getToken as getBetterAuthToken, type GetTokenOptions } from "@convex-dev/better-auth/utils";
+import { fetchAction, fetchMutation, fetchQuery, preloadQuery } from "convex/nextjs";
+import type { Preloaded } from "convex/react";
+import type { ArgsAndOptions, FunctionReference, FunctionReturnType } from "convex/server";
+import React from "react";
+import { createRouteHandler, type BanataProjectRouteScope } from "./route-handler";
 
-// ── Types ───────────────────────────────────────────────────────────
+const cache =
+	React.cache ??
+	((fn: (...args: never[]) => unknown) => {
+		return (...args: never[]) => fn(...args);
+	});
 
-export interface BanataAuthServerOptions {
+function parseConvexSiteUrl(url: string): string {
+	if (!url) {
+		throw new Error(
+			"NEXT_PUBLIC_CONVEX_SITE_URL is required. Point it at your Banata instance .convex.site URL.",
+		);
+	}
+	if (url.endsWith(".convex.cloud")) {
+		throw new Error(
+			`convexSiteUrl must point to the Convex site URL (.convex.site), not ${url}.`,
+		);
+	}
+	return url;
+}
+
+type OptionalArgs<FuncRef extends FunctionReference<any, any>> = keyof FuncRef["_args"] extends never
+	? [args?: FuncRef["_args"]]
+	: [args: FuncRef["_args"]];
+
+function getArgsAndOptions<FuncRef extends FunctionReference<any, any>>(
+	args: OptionalArgs<FuncRef>,
+	token?: string,
+): ArgsAndOptions<FuncRef, { token?: string }> {
+	return [args[0], { token }];
+}
+
+function normalizeValue(value: string | null | undefined): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function applyServerAuthHeaders(
+	headers: Headers,
+	options: {
+		apiKey?: string;
+		project?: BanataProjectRouteScope;
+	},
+): void {
+	const apiKey = normalizeValue(options.apiKey);
+	if (apiKey) {
+		headers.set("x-api-key", apiKey);
+	}
+
+	const projectId = normalizeValue(options.project?.projectId);
+	if (projectId) {
+		headers.set("x-banata-project-id", projectId);
+	}
+
+	const clientId = normalizeValue(options.project?.clientId);
+	if (clientId) {
+		headers.set("x-banata-client-id", clientId);
+	}
+}
+
+// The `resolve(request)` callback is route-handler-only because server component
+// utilities do not have a Request object to inspect.
+type StaticProjectScope = Omit<BanataProjectRouteScope, "resolve">;
+
+export interface BanataAuthServerOptions extends GetTokenOptions {
 	/**
 	 * Your Convex cloud URL (e.g. `https://adjective-animal-123.convex.cloud`).
 	 * Typically `process.env.NEXT_PUBLIC_CONVEX_URL`.
@@ -14,63 +79,120 @@ export interface BanataAuthServerOptions {
 	 * Typically `process.env.NEXT_PUBLIC_CONVEX_SITE_URL`.
 	 */
 	convexSiteUrl: string;
+
+	/**
+	 * Project-scoped Banata API key.
+	 *
+	 * This is the default project-binding mechanism for customer apps.
+	 * The browser never sees this key; the Next.js server injects it while
+	 * proxying auth traffic and refreshing Convex auth tokens.
+	 */
+	apiKey?: string;
+
+	/**
+	 * Optional legacy scope hints for partially migrated or self-hosted setups.
+	 * Managed Banata resolves project scope from the API key first.
+	 */
+	project?: StaticProjectScope;
 }
 
 /**
  * Create the Banata Auth server utilities for Next.js.
  *
  * This is the recommended way to configure server-side auth helpers.
- * It wraps `@convex-dev/better-auth/nextjs` so consumers don't need
- * that package as a direct dependency.
- *
- * Returns `handler`, `isAuthenticated`, `getToken`, `preloadAuthQuery`,
- * `fetchAuthQuery`, `fetchAuthMutation`, and `fetchAuthAction`.
- *
- * @example
- * ```ts
- * // lib/auth-server.ts
- * import { createBanataAuthServer } from "@banata-auth/nextjs/server";
- *
- * export const {
- *   handler,
- *   isAuthenticated,
- *   getToken,
- *   preloadAuthQuery,
- *   fetchAuthQuery,
- *   fetchAuthMutation,
- *   fetchAuthAction,
- * } = createBanataAuthServer({
- *   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
- *   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
- * });
- * ```
- *
- * @example
- * ```ts
- * // app/api/auth/[...all]/route.ts
- * import { handler } from "@/lib/auth-server";
- * export const { GET, POST } = handler;
- * ```
- *
- * @example
- * ```ts
- * // app/layout.tsx (server component)
- * import { getToken, isAuthenticated } from "@/lib/auth-server";
- * import { redirect } from "next/navigation";
- *
- * export default async function Layout({ children }) {
- *   if (!(await isAuthenticated())) redirect("/sign-in");
- *   const token = await getToken();
- *   return <Provider initialToken={token}>{children}</Provider>;
- * }
- * ```
+ * It keeps auth cookies on your app's domain while binding the app to a Banata
+ * project with a server-side API key.
  */
 export function createBanataAuthServer(opts: BanataAuthServerOptions) {
-	return convexBetterAuthNextJs({
-		convexUrl: opts.convexUrl,
-		convexSiteUrl: opts.convexSiteUrl,
+	const siteUrl = parseConvexSiteUrl(opts.convexSiteUrl);
+
+	const cachedGetToken = cache(async ({ forceRefresh }: { forceRefresh?: boolean } = {}) => {
+		const requestHeaders = await (await import("next/headers.js")).headers();
+		const mutableHeaders = new Headers(requestHeaders);
+		mutableHeaders.delete("content-length");
+		mutableHeaders.delete("transfer-encoding");
+		applyServerAuthHeaders(mutableHeaders, {
+			apiKey: opts.apiKey,
+			project: opts.project,
+		});
+		return getBetterAuthToken(siteUrl, mutableHeaders, {
+			forceRefresh,
+			cookiePrefix: opts.cookiePrefix,
+			jwtCache: opts.jwtCache,
+		});
 	});
+
+	const handler = createRouteHandler({
+		convexSiteUrl: opts.convexSiteUrl,
+		apiKey: opts.apiKey,
+		project: opts.project,
+	});
+
+	const callWithToken = async <
+		FnType extends "query" | "mutation" | "action",
+		Fn extends FunctionReference<FnType>,
+	>(
+		fn: (token?: string) => Promise<FunctionReturnType<Fn>>,
+	): Promise<FunctionReturnType<Fn>> => {
+		const token = await cachedGetToken();
+		try {
+			return await fn(token?.token);
+		} catch (error) {
+			if (!opts.jwtCache?.enabled || token.isFresh || opts.jwtCache.isAuthError(error)) {
+				throw error;
+			}
+			const newToken = await cachedGetToken({ forceRefresh: true });
+			return await fn(newToken.token);
+		}
+	};
+
+	return {
+		handler,
+		getToken: async () => {
+			const token = await cachedGetToken();
+			return token.token;
+		},
+		isAuthenticated: async () => {
+			const token = await cachedGetToken();
+			return !!token.token;
+		},
+		preloadAuthQuery: async <Query extends FunctionReference<"query">>(
+			query: Query,
+			...args: OptionalArgs<Query>
+		): Promise<Preloaded<Query>> => {
+			return callWithToken((token?: string) => {
+				const argsAndOptions = getArgsAndOptions(args, token);
+				return preloadQuery(query, ...argsAndOptions);
+			});
+		},
+		fetchAuthQuery: async <Query extends FunctionReference<"query">>(
+			query: Query,
+			...args: OptionalArgs<Query>
+		): Promise<FunctionReturnType<Query>> => {
+			return callWithToken((token?: string) => {
+				const argsAndOptions = getArgsAndOptions(args, token);
+				return fetchQuery(query, ...argsAndOptions);
+			});
+		},
+		fetchAuthMutation: async <Mutation extends FunctionReference<"mutation">>(
+			mutation: Mutation,
+			...args: OptionalArgs<Mutation>
+		): Promise<FunctionReturnType<Mutation>> => {
+			return callWithToken((token?: string) => {
+				const argsAndOptions = getArgsAndOptions(args, token);
+				return fetchMutation(mutation, ...argsAndOptions);
+			});
+		},
+		fetchAuthAction: async <Action extends FunctionReference<"action">>(
+			action: Action,
+			...args: OptionalArgs<Action>
+		): Promise<FunctionReturnType<Action>> => {
+			return callWithToken((token?: string) => {
+				const argsAndOptions = getArgsAndOptions(args, token);
+				return fetchAction(action, ...argsAndOptions);
+			});
+		},
+	};
 }
 
-// Re-export the return type so consumers can type their variables if needed
 export type BanataAuthServer = ReturnType<typeof createBanataAuthServer>;

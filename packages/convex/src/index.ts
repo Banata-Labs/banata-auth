@@ -4,6 +4,8 @@ export {
 	createBanataAuthOptions,
 	createBanataAuth,
 	createBanataAuthStaticOptions,
+	defineBanataAuth,
+	banataAuthSchema,
 } from "./auth";
 
 export type {
