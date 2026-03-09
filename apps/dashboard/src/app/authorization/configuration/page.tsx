@@ -53,6 +53,12 @@ export default function ConfigurationPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setLoading(false);
+			return;
+		}
+
+		setLoading(true);
 		let cancelled = false;
 		getAuthConfiguration()
 			.then((remote) => {
@@ -67,7 +73,7 @@ export default function ConfigurationPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const handleToggle = useCallback(
 		async (key: keyof AuthConfigSettings) => {
@@ -98,8 +104,8 @@ export default function ConfigurationPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 3 }, (_, i) => (
-						<SkeletonCard key={i} lines={0} className="py-4">
+					{["config-1", "config-2", "config-3"].map((key) => (
+						<SkeletonCard key={key} lines={0} className="py-4">
 							<SkeletonToggleRow />
 						</SkeletonCard>
 					))}

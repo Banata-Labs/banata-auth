@@ -1,6 +1,5 @@
 "use client";
 
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +27,7 @@ import { formatDate } from "@/lib/utils";
 import type { User } from "@banata-auth/shared";
 import { Eye, EyeOff, Filter, Mail, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 function generatePassword(length = 16): string {
@@ -42,7 +41,6 @@ type TabValue = "users" | "invitations";
 
 export default function UsersPage() {
 	const router = useRouter();
-	const activeProjectId = useActiveProjectId();
 	const [users, setUsers] = useState<User[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [query, setQuery] = useState("");
@@ -57,7 +55,7 @@ export default function UsersPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [creating, setCreating] = useState(false);
 
-	async function refreshUsers() {
+	const refreshUsers = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setUsers(await listUsers());
@@ -66,11 +64,11 @@ export default function UsersPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, []);
 
 	useEffect(() => {
 		void refreshUsers();
-	}, [activeProjectId]);
+	}, [refreshUsers]);
 
 	const filtered = users
 		.filter((u) => {

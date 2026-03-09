@@ -156,8 +156,8 @@ export default function GeneralSettingsPage() {
 				<CardHeader>
 					<CardTitle className="text-sm">Client ID</CardTitle>
 					<CardDescription>
-						This public identifier is what customer apps pass to Banata so hosted auth and
-						runtime config resolve to this project.
+						This public identifier is what customer apps pass to Banata so hosted auth and runtime
+						config resolve to this project.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>

@@ -1,6 +1,5 @@
 "use client";
 
-import type { Directory, Organization } from "@banata-auth/shared";
 import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import {
 	listDirectories,
 	listOrganizations,
 } from "@/lib/dashboard-api";
+import type { Directory, Organization } from "@banata-auth/shared";
 import { Copy, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -66,7 +66,10 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 		setIsLoading(true);
 		setError(null);
 		try {
-			const [orgs, currentDirectories] = await Promise.all([listOrganizations(), listDirectories()]);
+			const [orgs, currentDirectories] = await Promise.all([
+				listOrganizations(),
+				listDirectories(),
+			]);
 			setOrganizations(orgs);
 			setDirectories(currentDirectories);
 			if (!organizationId && !selectedOrganizationId && orgs.length > 0) {
@@ -189,7 +192,10 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 						</div>
 						<div className="grid gap-2 md:col-span-2">
 							<Label htmlFor="directory-provider">Provider</Label>
-							<Select value={provider} onValueChange={(value) => setProvider(value as Directory["provider"])}>
+							<Select
+								value={provider}
+								onValueChange={(value) => setProvider(value as Directory["provider"])}
+							>
 								<SelectTrigger id="directory-provider">
 									<SelectValue />
 								</SelectTrigger>
@@ -206,7 +212,12 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 							<Button type="submit" disabled={isSubmitting || availableOrganizations.length === 0}>
 								{isSubmitting ? "Creating..." : "Create directory"}
 							</Button>
-							<Button type="button" variant="secondary" onClick={() => void loadData()} disabled={isLoading}>
+							<Button
+								type="button"
+								variant="secondary"
+								onClick={() => void loadData()}
+								disabled={isLoading}
+							>
 								<RefreshCw className="mr-2 size-4" />
 								Refresh
 							</Button>
@@ -234,9 +245,16 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 							<div className="flex items-center justify-between gap-3">
 								<div className="min-w-0">
 									<p className="text-xs uppercase tracking-wide text-muted-foreground">Base URL</p>
-									<p className="mt-1 break-all font-mono text-xs">{latestDirectory.scimConfig.baseUrl}</p>
+									<p className="mt-1 break-all font-mono text-xs">
+										{latestDirectory.scimConfig.baseUrl}
+									</p>
 								</div>
-								<Button type="button" variant="outline" size="sm" onClick={() => void copyValue(latestDirectory.scimConfig!.baseUrl)}>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => void copyValue(latestDirectory.scimConfig!.baseUrl)}
+								>
 									<Copy className="size-4" />
 								</Button>
 							</div>
@@ -244,10 +262,19 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 						<div className="rounded-lg border px-3 py-2">
 							<div className="flex items-center justify-between gap-3">
 								<div className="min-w-0">
-									<p className="text-xs uppercase tracking-wide text-muted-foreground">Bearer token</p>
-									<p className="mt-1 break-all font-mono text-xs">{latestDirectory.scimConfig.bearerToken}</p>
+									<p className="text-xs uppercase tracking-wide text-muted-foreground">
+										Bearer token
+									</p>
+									<p className="mt-1 break-all font-mono text-xs">
+										{latestDirectory.scimConfig.bearerToken}
+									</p>
 								</div>
-								<Button type="button" variant="outline" size="sm" onClick={() => void copyValue(latestDirectory.scimConfig!.bearerToken)}>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => void copyValue(latestDirectory.scimConfig!.bearerToken)}
+								>
 									<Copy className="size-4" />
 								</Button>
 							</div>
@@ -294,8 +321,9 @@ export function DirectoriesPanel({ organizationId }: { organizationId?: string }
 							) : (
 								visibleDirectories.map((directory) => {
 									const organizationName =
-										organizations.find((organization) => organization.id === directory.organizationId)?.name ??
-										directory.organizationId;
+										organizations.find(
+											(organization) => organization.id === directory.organizationId,
+										)?.name ?? directory.organizationId;
 									const isBusy = busyDirectoryId === directory.id;
 									return (
 										<TableRow key={directory.id}>

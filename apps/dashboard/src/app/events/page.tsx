@@ -1,6 +1,5 @@
 "use client";
 
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +23,6 @@ function formatTime(date: Date) {
 }
 
 export default function EventsPage() {
-	const activeProjectId = useActiveProjectId();
 	const [events, setEvents] = useState<AuditEvent[]>([]);
 	const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -48,7 +46,7 @@ export default function EventsPage() {
 			}
 		}
 		void fetchEvents();
-	}, [activeProjectId]);
+	}, []);
 
 	const filteredEvents = events.filter((event) =>
 		event.action.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -108,6 +106,7 @@ export default function EventsPage() {
 						<div className="max-h-[520px] overflow-y-auto">
 							{filteredEvents.map((event) => (
 								<button
+									type="button"
 									key={event.id}
 									onClick={() => setSelectedEvent(event)}
 									className={cn(

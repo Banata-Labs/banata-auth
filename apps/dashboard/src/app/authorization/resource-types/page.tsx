@@ -54,6 +54,12 @@ export default function ResourceTypesPage() {
 	const activeProjectId = useActiveProjectId();
 
 	const fetchResourceTypes = useCallback(async () => {
+		if (!activeProjectId) {
+			setResourceTypes([]);
+			setIsLoading(false);
+			return;
+		}
+
 		try {
 			setIsLoading(true);
 			setResourceTypes(await listResourceTypes());
@@ -62,7 +68,7 @@ export default function ResourceTypesPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	useEffect(() => {
 		void fetchResourceTypes();

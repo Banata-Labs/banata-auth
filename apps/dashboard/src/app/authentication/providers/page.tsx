@@ -1,7 +1,6 @@
 "use client";
 
 import { useBackendStatus } from "@/components/backend-status";
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { ProviderIcon, providerMeta } from "@/components/provider-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,6 @@ export default function ProvidersPage() {
 	const [togglingProviders, setTogglingProviders] = useState<Record<string, boolean>>({});
 
 	const { reportError } = useBackendStatus();
-	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
 		let cancelled = false;
@@ -97,28 +95,26 @@ export default function ProvidersPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId, reportError]);
+	}, [reportError]);
 
 	const enabledCount = useMemo(
-		() => Object.values(config?.socialProviders ?? {}).filter((provider) => provider.enabled).length,
+		() =>
+			Object.values(config?.socialProviders ?? {}).filter((provider) => provider.enabled).length,
 		[config],
 	);
 	const configuredCount = useMemo(() => Object.keys(credentials).length, [credentials]);
 
-	const handleDraftChange = useCallback(
-		(providerId: string, patch: Partial<ProviderDraft>) => {
-			setDrafts((prev) => ({
-				...prev,
-				[providerId]: {
-					clientId: prev[providerId]?.clientId ?? "",
-					clientSecret: prev[providerId]?.clientSecret ?? "",
-					tenantId: prev[providerId]?.tenantId ?? "",
-					...patch,
-				},
-			}));
-		},
-		[],
-	);
+	const handleDraftChange = useCallback((providerId: string, patch: Partial<ProviderDraft>) => {
+		setDrafts((prev) => ({
+			...prev,
+			[providerId]: {
+				clientId: prev[providerId]?.clientId ?? "",
+				clientSecret: prev[providerId]?.clientSecret ?? "",
+				tenantId: prev[providerId]?.tenantId ?? "",
+				...patch,
+			},
+		}));
+	}, []);
 
 	const handleSave = useCallback(
 		async (providerId: string) => {
@@ -212,9 +208,11 @@ export default function ProvidersPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="rounded-lg border border-border">
-					{Array.from({ length: 6 }, (_, index) => (
-						<SkeletonProviderRow key={index} />
-					))}
+					{["provider-1", "provider-2", "provider-3", "provider-4", "provider-5", "provider-6"].map(
+						(key) => (
+							<SkeletonProviderRow key={key} />
+						),
+					)}
 				</div>
 			</div>
 		);
@@ -225,8 +223,8 @@ export default function ProvidersPage() {
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">Providers</h1>
 				<p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-					Configure provider credentials for this project, store them securely in the vault,
-					then enable the providers you want to expose on the hosted auth flow for this app.
+					Configure provider credentials for this project, store them securely in the vault, then
+					enable the providers you want to expose on the hosted auth flow for this app.
 				</p>
 				<p className="mt-2 text-xs text-muted-foreground">
 					Configured: {configuredCount} · Enabled: {enabledCount}
@@ -334,8 +332,8 @@ export default function ProvidersPage() {
 												<div className="space-y-1">
 													<p className="text-sm font-medium">Expose on hosted auth</p>
 													<p className="text-xs text-muted-foreground">
-														Users can only sign in with this provider after credentials are
-														saved for this project.
+														Users can only sign in with this provider after credentials are saved
+														for this project.
 													</p>
 												</div>
 												<Switch

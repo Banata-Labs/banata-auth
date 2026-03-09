@@ -85,6 +85,12 @@ export default function ActionsPage() {
 	const activeProjectId = useActiveProjectId();
 
 	const fetchActions = useCallback(async () => {
+		if (!activeProjectId) {
+			setActions([]);
+			setLoading(false);
+			return;
+		}
+
 		try {
 			const items = await listActions();
 			setActions(items.map(mapItem));
@@ -93,7 +99,7 @@ export default function ActionsPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	useEffect(() => {
 		fetchActions();

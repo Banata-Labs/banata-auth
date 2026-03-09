@@ -33,7 +33,7 @@ import {
 import { type RoleItem, createRole, deleteRole, listRoles, updateRole } from "@/lib/dashboard-api";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function slugify(name: string): string {
 	return name
@@ -68,7 +68,13 @@ export default function RolesPage() {
 		{ id: string; name: string; priority: number }[]
 	>([]);
 
-	async function fetchRoles() {
+	const fetchRoles = useCallback(async () => {
+		if (!activeProjectId) {
+			setRoles([]);
+			setIsLoading(false);
+			return;
+		}
+
 		try {
 			setIsLoading(true);
 			setRoles(await listRoles());
@@ -77,11 +83,11 @@ export default function RolesPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, [activeProjectId]);
 
 	useEffect(() => {
 		void fetchRoles();
-	}, [activeProjectId]);
+	}, [fetchRoles]);
 
 	const filtered = roles.filter(
 		(r) =>

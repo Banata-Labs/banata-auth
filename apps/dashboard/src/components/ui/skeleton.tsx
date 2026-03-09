@@ -1,5 +1,9 @@
 import { cn } from "@/lib/utils";
 
+function getSkeletonKeys(prefix: string, count: number) {
+	return Array.from({ length: count }, (_, index) => `${prefix}-${index}`);
+}
+
 /** Animated pulse placeholder block. */
 export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return <div className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />;
@@ -25,8 +29,8 @@ function SkeletonTableRow({ cols }: { cols: number }) {
 	const widths = ["w-24", "w-32", "w-20", "w-28", "w-16", "w-36"];
 	return (
 		<div className="flex items-center gap-4 border-b border-border px-4 py-3">
-			{Array.from({ length: cols }, (_, i) => (
-				<Skeleton key={i} className={cn("h-4", widths[i % widths.length])} />
+			{getSkeletonKeys("cell", cols).map((key, index) => (
+				<Skeleton key={key} className={cn("h-4", widths[index % widths.length])} />
 			))}
 		</div>
 	);
@@ -38,13 +42,13 @@ export function SkeletonTable({ cols = 4, rows = 5 }: { cols?: number; rows?: nu
 		<div className="rounded-lg border border-border">
 			{/* Header */}
 			<div className="flex items-center gap-4 border-b border-border bg-muted/30 px-4 py-2.5">
-				{Array.from({ length: cols }, (_, i) => (
-					<Skeleton key={i} className="h-3 w-20" />
+				{getSkeletonKeys("header", cols).map((key) => (
+					<Skeleton key={key} className="h-3 w-20" />
 				))}
 			</div>
 			{/* Rows */}
-			{Array.from({ length: rows }, (_, i) => (
-				<SkeletonTableRow key={i} cols={cols} />
+			{getSkeletonKeys("row", rows).map((key) => (
+				<SkeletonTableRow key={key} cols={cols} />
 			))}
 		</div>
 	);
@@ -61,8 +65,8 @@ export function SkeletonCard({
 			<Skeleton className="mb-3 h-4 w-32" />
 			{children ?? (
 				<div className="space-y-2">
-					{Array.from({ length: lines }, (_, i) => (
-						<Skeleton key={i} className={cn("h-3", i === 0 ? "w-full" : "w-3/4")} />
+					{getSkeletonKeys("line", lines).map((key, index) => (
+						<Skeleton key={key} className={cn("h-3", index === 0 ? "w-full" : "w-3/4")} />
 					))}
 				</div>
 			)}

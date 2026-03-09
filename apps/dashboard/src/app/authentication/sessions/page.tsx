@@ -23,13 +23,20 @@ export default function SessionsPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setConfig(null);
+			setIsLoading(false);
+			return;
+		}
+
+		setIsLoading(true);
 		getDashboardConfig()
 			.then(setConfig)
 			.catch((err) => {
 				reportError(err);
 			})
 			.finally(() => setIsLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const startEditing = (cardId: string) => {
 		if (cardId === "session-lifetime" && config?.sessions) {
@@ -75,8 +82,8 @@ export default function SessionsPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 3 }, (_, i) => (
-						<SkeletonMethodCard key={i} />
+					{["session-config-1", "session-config-2", "session-config-3"].map((key) => (
+						<SkeletonMethodCard key={key} />
 					))}
 				</div>
 			</div>
@@ -191,10 +198,14 @@ export default function SessionsPage() {
 											{ key: "inactivityTimeout", label: "Inactivity timeout" },
 										].map((field) => (
 											<div key={field.key} className="space-y-1.5">
-												<label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+												<label
+													htmlFor={`session-${field.key}`}
+													className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60"
+												>
 													{field.label}
 												</label>
 												<Input
+													id={`session-${field.key}`}
 													value={editValues[field.key] ?? ""}
 													placeholder="e.g. 7d, 1h, 15m"
 													disabled={isSaving}

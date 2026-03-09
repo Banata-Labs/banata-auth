@@ -71,13 +71,20 @@ export default function FeaturesPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setConfig(null);
+			setIsLoading(false);
+			return;
+		}
+
+		setIsLoading(true);
 		getDashboardConfig()
 			.then(setConfig)
 			.catch((err) => {
 				reportError(err);
 			})
 			.finally(() => setIsLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const handleToggle = useCallback(
 		async (configKey: keyof DashboardConfig["features"], currentlyEnabled: boolean) => {
@@ -100,8 +107,8 @@ export default function FeaturesPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 4 }, (_, i) => (
-						<SkeletonMethodCard key={i} />
+					{["feature-1", "feature-2", "feature-3", "feature-4"].map((key) => (
+						<SkeletonMethodCard key={key} />
 					))}
 				</div>
 			</div>

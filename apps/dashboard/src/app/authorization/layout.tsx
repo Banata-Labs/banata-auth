@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 const subNavItems = [
 	{ label: "Roles", href: "/authorization/roles" },
@@ -23,8 +23,7 @@ export default function AuthorizationLayout({ children }: { children: React.Reac
 				</div>
 				<nav className="flex flex-col gap-0.5">
 					{subNavItems.map((item) => {
-						const isActive =
-							pathname === item.href || pathname.startsWith(item.href + "/");
+						const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 						return (
 							<Link
 								key={item.href}

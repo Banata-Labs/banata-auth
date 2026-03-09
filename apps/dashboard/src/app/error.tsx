@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
+import { useEffect } from "react";
 
 export default function GlobalError({
 	error,
@@ -23,17 +23,13 @@ export default function GlobalError({
 			</div>
 
 			<div className="max-w-md space-y-2">
-				<h2 className="text-xl font-semibold text-foreground">
-					Something went wrong
-				</h2>
+				<h2 className="text-xl font-semibold text-foreground">Something went wrong</h2>
 				<p className="text-sm text-muted-foreground">
-					An unexpected error occurred while rendering this page. This has been
-					logged and we&apos;ll look into it.
+					An unexpected error occurred while rendering this page. This has been logged and
+					we&apos;ll look into it.
 				</p>
 				{error.digest && (
-					<p className="font-mono text-xs text-muted-foreground/60">
-						Error ID: {error.digest}
-					</p>
+					<p className="font-mono text-xs text-muted-foreground/60">Error ID: {error.digest}</p>
 				)}
 			</div>
 

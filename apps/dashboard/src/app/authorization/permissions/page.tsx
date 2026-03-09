@@ -42,15 +42,15 @@ import {
 	type PermissionItem,
 	type RoleItem,
 	createPermission,
+	deletePermission,
 	listPermissions,
 	listRoles,
 	updatePermission,
 	updateRole,
-	deletePermission,
 } from "@/lib/dashboard-api";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 function slugify(name: string): string {
 	return name
@@ -89,7 +89,14 @@ export default function PermissionsPage() {
 	const [assignedPermissions, setAssignedPermissions] = useState<string[]>([]);
 	const [savingAssignments, setSavingAssignments] = useState(false);
 
-	async function loadData() {
+	const loadData = useCallback(async () => {
+		if (!activeProjectId) {
+			setPermissions([]);
+			setRoles([]);
+			setIsLoading(false);
+			return;
+		}
+
 		try {
 			setIsLoading(true);
 			const [permissionItems, roleItems] = await Promise.all([listPermissions(), listRoles()]);
@@ -100,11 +107,11 @@ export default function PermissionsPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, [activeProjectId]);
 
 	useEffect(() => {
 		void loadData();
-	}, [activeProjectId]);
+	}, [loadData]);
 
 	useEffect(() => {
 		if (roleQuery && roles.some((role) => role.slug === roleQuery)) {
@@ -236,8 +243,7 @@ export default function PermissionsPage() {
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">Permissions</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Define your permission catalog, then assign permission slugs directly to each custom
-					role.
+					Define your permission catalog, then assign permission slugs directly to each custom role.
 				</p>
 			</div>
 
@@ -303,8 +309,8 @@ export default function PermissionsPage() {
 							</div>
 							{selectedRole.isDefault ? (
 								<p className="text-xs text-muted-foreground">
-									System roles are managed by Banata. You can inspect their permission set here,
-									but you cannot change it from the dashboard.
+									System roles are managed by Banata. You can inspect their permission set here, but
+									you cannot change it from the dashboard.
 								</p>
 							) : (
 								<p className="text-xs text-muted-foreground">

@@ -40,13 +40,18 @@ export default function AuthOverviewPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setConfig(null);
+			setLoading(false);
+			return;
+		}
 		getDashboardConfig()
 			.then(setConfig)
 			.catch((err) => {
 				reportError(err);
 			})
 			.finally(() => setLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	if (loading) {
 		return (
@@ -59,22 +64,22 @@ export default function AuthOverviewPage() {
 				</div>
 				<SkeletonCard lines={0}>
 					<div className="space-y-3">
-						{Array.from({ length: 5 }, (_, i) => (
-							<SkeletonListRow key={i} />
+						{["method-1", "method-2", "method-3", "method-4", "method-5"].map((key) => (
+							<SkeletonListRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>
 				<SkeletonCard lines={0}>
 					<div className="space-y-3">
-						{Array.from({ length: 3 }, (_, i) => (
-							<SkeletonListRow key={i} />
+						{["social-1", "social-2", "social-3"].map((key) => (
+							<SkeletonListRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>
 				<SkeletonCard lines={0}>
 					<div className="space-y-3">
-						{Array.from({ length: 3 }, (_, i) => (
-							<SkeletonListRow key={i} />
+						{["session-1", "session-2", "session-3"].map((key) => (
+							<SkeletonListRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>

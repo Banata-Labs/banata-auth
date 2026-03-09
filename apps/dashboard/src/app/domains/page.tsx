@@ -70,6 +70,12 @@ export default function DomainsPage() {
 	const { reportError } = useBackendStatus();
 
 	const fetchDomains = useCallback(async () => {
+		if (!activeProjectId) {
+			setDomains([]);
+			setLoading(false);
+			return;
+		}
+
 		try {
 			let items = await listDomains();
 
@@ -85,7 +91,7 @@ export default function DomainsPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	useEffect(() => {
 		fetchDomains();
@@ -177,8 +183,8 @@ export default function DomainsPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader withButton />
 				<div className="grid gap-4">
-					{Array.from({ length: 4 }, (_, i) => (
-						<SkeletonCard key={i} lines={0}>
+					{["domain-1", "domain-2", "domain-3", "domain-4"].map((key) => (
+						<SkeletonCard key={key} lines={0}>
 							<SkeletonInput width="w-64" />
 						</SkeletonCard>
 					))}

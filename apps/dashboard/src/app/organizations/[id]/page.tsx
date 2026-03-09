@@ -57,7 +57,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type TabValue = "members" | "sso" | "domains" | "directory-sync";
 
@@ -91,7 +91,7 @@ export default function OrganizationDetailPage() {
 	const [inviteRole, setInviteRole] = useState("super_admin");
 	const [inviting, setInviting] = useState(false);
 
-	async function fetchData() {
+	const fetchData = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setError(null);
@@ -123,11 +123,11 @@ export default function OrganizationDetailPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, [orgId]);
 
 	useEffect(() => {
 		void fetchData();
-	}, [orgId]);
+	}, [fetchData]);
 
 	async function handleInviteMember(e: React.FormEvent) {
 		e.preventDefault();

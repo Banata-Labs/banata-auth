@@ -31,7 +31,7 @@ import type { User } from "@banata-auth/shared";
 import type { Organization } from "@banata-auth/shared";
 import { ArrowLeft, Calendar, ChevronRight, Clock, Fingerprint, Mail, Shield } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type TabValue = "profile" | "sessions" | "auth-methods" | "organizations";
 
@@ -94,7 +94,7 @@ export default function UserDetailPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<TabValue>("profile");
 
-	async function fetchUser() {
+	const fetchUser = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setError(null);
@@ -108,9 +108,9 @@ export default function UserDetailPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, [userId]);
 
-	async function fetchSessions() {
+	const fetchSessions = useCallback(async () => {
 		try {
 			const data = await listUserSessions(userId);
 			setSessions(data);
@@ -118,9 +118,9 @@ export default function UserDetailPage() {
 			// Sessions may not be available — graceful degradation
 			setSessions([]);
 		}
-	}
+	}, [userId]);
 
-	async function fetchUserOrgs() {
+	const fetchUserOrgs = useCallback(async () => {
 		try {
 			const allOrgs = await listOrganizations();
 			// Fetch members for each org in parallel, then filter to orgs where this user is a member
@@ -146,23 +146,23 @@ export default function UserDetailPage() {
 		} catch {
 			setUserOrgMemberships([]);
 		}
-	}
+	}, [userId]);
 
-	async function fetchUserAccounts() {
+	const fetchUserAccounts = useCallback(async () => {
 		try {
 			const accounts = await listUserAccounts(userId);
 			setUserAccounts(accounts);
 		} catch {
 			setUserAccounts([]);
 		}
-	}
+	}, [userId]);
 
 	useEffect(() => {
 		void fetchUser();
 		void fetchSessions();
 		void fetchUserOrgs();
 		void fetchUserAccounts();
-	}, [userId]);
+	}, [fetchSessions, fetchUser, fetchUserAccounts, fetchUserOrgs]);
 
 	if (isLoading) {
 		return (

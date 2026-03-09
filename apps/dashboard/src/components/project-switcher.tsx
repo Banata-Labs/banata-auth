@@ -85,7 +85,8 @@ export function ProjectSwitcher({ className }: { className?: string }) {
 		);
 	}
 
-	const triggerLabel = activeProject?.name ?? (projects.length > 0 ? "Select project" : "No project");
+	const triggerLabel =
+		activeProject?.name ?? (projects.length > 0 ? "Select project" : "No project");
 
 	const emptyState = !activeProject && projects.length === 0;
 

@@ -32,13 +32,20 @@ export default function AuditLogsPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setEvents([]);
+			setIsLoading(false);
+			return;
+		}
+
+		setIsLoading(true);
 		listAuditEvents()
 			.then(setEvents)
 			.catch((err) => {
 				reportError(err);
 			})
 			.finally(() => setIsLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	if (isLoading) {
 		return (

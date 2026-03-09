@@ -131,6 +131,12 @@ export default function RadarPage() {
 	const { reportError } = useBackendStatus();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setConfig(getDefaultConfig());
+			setEditCredentials({});
+			setLoading(false);
+			return;
+		}
 		getRadarConfig()
 			.then((data) => {
 				setConfig(data);
@@ -140,7 +146,7 @@ export default function RadarPage() {
 				reportError(err);
 			})
 			.finally(() => setLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const updateConfig = useCallback(
 		async (updates: Partial<RadarConfig>) => {

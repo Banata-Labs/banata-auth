@@ -29,19 +29,12 @@ declare module "next/navigation" {
 
 	export function usePathname(): string;
 
-	export function useSelectedLayoutSegment(
-		parallelRoutesKey?: string,
-	): string | null;
+	export function useSelectedLayoutSegment(parallelRoutesKey?: string): string | null;
 
-	export function useSelectedLayoutSegments(
-		parallelRoutesKey?: string,
-	): string[];
+	export function useSelectedLayoutSegments(parallelRoutesKey?: string): string[];
 
 	export function redirect(url: string, type?: "replace" | "push"): never;
-	export function permanentRedirect(
-		url: string,
-		type?: "replace" | "push",
-	): never;
+	export function permanentRedirect(url: string, type?: "replace" | "push"): never;
 	export function notFound(): never;
 
 	export type ReadonlyURLSearchParams = URLSearchParams;

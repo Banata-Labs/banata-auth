@@ -21,15 +21,14 @@ describe("dashboard api client", () => {
 	it("maps list users from wrapped payload", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () =>
-				new Response(
-					JSON.stringify({
-						data: [
-							{ id: "usr_1", email: "owner@example.com", name: "Owner", role: "admin" },
-						],
-					}),
-					{ status: 200, headers: { "content-type": "application/json" } },
-				),
+			vi.fn(
+				async () =>
+					new Response(
+						JSON.stringify({
+							data: [{ id: "usr_1", email: "owner@example.com", name: "Owner", role: "admin" }],
+						}),
+						{ status: 200, headers: { "content-type": "application/json" } },
+					),
 			),
 		);
 
@@ -40,31 +39,26 @@ describe("dashboard api client", () => {
 	});
 
 	it("posts ban and unban actions to expected endpoints", async () => {
-		const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+		const fetchMock = vi.fn(
+			async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+		);
 		vi.stubGlobal("fetch", fetchMock);
 
 		await banUser("usr_11");
 		await unbanUser("usr_11");
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
-		expect(fetchMock).toHaveBeenNthCalledWith(
-			1,
-			"/api/auth/admin/ban-user",
-			expect.any(Object),
-		);
-		expect(fetchMock).toHaveBeenNthCalledWith(
-			2,
-			"/api/auth/admin/unban-user",
-			expect.any(Object),
-		);
+		expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/auth/admin/ban-user", expect.any(Object));
+		expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/auth/admin/unban-user", expect.any(Object));
 	});
 
 	it("uses the dedicated get-user endpoint for user detail lookups", async () => {
-		const fetchMock = vi.fn(async () =>
-			new Response(JSON.stringify({ id: "usr_11", email: "owner@example.com", role: "admin" }), {
-				status: 200,
-				headers: { "content-type": "application/json" },
-			}),
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ id: "usr_11", email: "owner@example.com", role: "admin" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
 		);
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -139,11 +133,12 @@ describe("dashboard api client", () => {
 	});
 
 	it("saves auth method toggles through dashboard config", async () => {
-		const fetchMock = vi.fn(async () =>
-			new Response(JSON.stringify({ authMethods: { emailPassword: true } }), {
-				status: 200,
-				headers: { "content-type": "application/json" },
-			}),
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ authMethods: { emailPassword: true } }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
 		);
 		vi.stubGlobal("fetch", fetchMock);
 

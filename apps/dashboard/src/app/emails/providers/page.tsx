@@ -90,6 +90,15 @@ export default function EmailProvidersPage() {
 	// Load config from backend on mount
 	useEffect(() => {
 		let cancelled = false;
+		if (!activeProjectId) {
+			setConfig({
+				providers: {},
+				activeProvider: null,
+			});
+			setDraftKeys({});
+			setLoading(false);
+			return;
+		}
 		(async () => {
 			try {
 				const remote = await getEmailProviderConfig();
@@ -110,7 +119,7 @@ export default function EmailProvidersPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const isProviderEnabled = useCallback(
 		(id: string) => !!config.providers[id]?.enabled,
@@ -215,8 +224,8 @@ export default function EmailProvidersPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader withButton />
 				<div className="grid gap-4">
-					{Array.from({ length: 5 }, (_, i) => (
-						<SkeletonMethodCard key={i} />
+					{["provider-1", "provider-2", "provider-3", "provider-4", "provider-5"].map((key) => (
+						<SkeletonMethodCard key={key} />
 					))}
 				</div>
 			</div>

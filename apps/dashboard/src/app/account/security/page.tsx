@@ -100,7 +100,7 @@ export default function SecurityPage() {
 				reportError(err);
 			})
 			.finally(() => setLoadingSessions(false));
-	}, []);
+	}, [reportError]);
 
 	// ── Password Change ──
 
@@ -658,8 +658,8 @@ export default function SecurityPage() {
 				<CardContent>
 					{loadingSessions ? (
 						<div className="space-y-3">
-							{Array.from({ length: 3 }, (_, i) => (
-								<SkeletonListRow key={i} />
+							{["session-1", "session-2", "session-3"].map((key) => (
+								<SkeletonListRow key={key} />
 							))}
 						</div>
 					) : sessions.length === 0 ? (

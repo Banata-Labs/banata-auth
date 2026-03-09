@@ -40,6 +40,11 @@ export default function NotificationsPage() {
 	const { reportError } = useBackendStatus();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setNotifications([]);
+			setLoading(false);
+			return;
+		}
 		listAuditEvents()
 			.then((events) => {
 				setNotifications(events.filter(isImportantEvent));
@@ -50,7 +55,7 @@ export default function NotificationsPage() {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	return (
 		<div className="grid gap-6">
@@ -62,8 +67,15 @@ export default function NotificationsPage() {
 			{loading ? (
 				<SkeletonCard lines={0}>
 					<div className="space-y-3">
-						{Array.from({ length: 6 }, (_, i) => (
-							<SkeletonListRow key={i} />
+						{[
+							"notification-1",
+							"notification-2",
+							"notification-3",
+							"notification-4",
+							"notification-5",
+							"notification-6",
+						].map((key) => (
+							<SkeletonListRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>

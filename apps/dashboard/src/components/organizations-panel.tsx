@@ -51,12 +51,14 @@ export function OrganizationsPanel({ initial }: { initial: Organization[] }) {
 				available.some((r) => r.slug === current) ? current : (available[0]?.slug ?? "super_admin"),
 			);
 		}
-		// biome-ignore lint/correctness/useExhaustiveDependencies: activeProjectId triggers re-fetch on project switch
-	}, [activeProjectId]);
+	}, []);
 
 	useEffect(() => {
+		if (activeProjectId === undefined) {
+			return;
+		}
 		void refreshRoles();
-	}, [refreshRoles]);
+	}, [activeProjectId, refreshRoles]);
 
 	// Sync organizations when parent provides new initial data (project switch)
 	useEffect(() => {

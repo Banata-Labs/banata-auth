@@ -36,6 +36,10 @@ export default function ApiKeysPage() {
 	const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
 	const refreshKeys = useCallback(async () => {
+		if (!activeProjectId) {
+			setKeys([]);
+			return;
+		}
 		setKeys(await listApiKeys());
 	}, [activeProjectId]);
 

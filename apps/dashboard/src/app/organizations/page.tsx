@@ -1,13 +1,11 @@
 "use client";
 
 import { OrganizationsPanel } from "@/components/organizations-panel";
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { listOrganizations } from "@/lib/dashboard-api";
 import type { Organization } from "@banata-auth/shared";
 import { useEffect, useState } from "react";
 
 export default function OrganizationsPage() {
-	const activeProjectId = useActiveProjectId();
 	const [organizations, setOrganizations] = useState<Organization[]>([]);
 	const [loading, setLoading] = useState(true);
 
@@ -30,7 +28,7 @@ export default function OrganizationsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId]);
+	}, []);
 
 	return (
 		<div className="grid gap-6">

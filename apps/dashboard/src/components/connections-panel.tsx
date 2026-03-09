@@ -1,6 +1,5 @@
 "use client";
 
-import type { Organization, SsoConnection } from "@banata-auth/shared";
 import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +31,7 @@ import {
 	listOrganizations,
 	setSsoConnectionActive,
 } from "@/lib/dashboard-api";
+import type { Organization, SsoConnection } from "@banata-auth/shared";
 import { ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -90,7 +90,10 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 		setIsLoading(true);
 		setError(null);
 		try {
-			const [orgs, currentConnections] = await Promise.all([listOrganizations(), listConnections()]);
+			const [orgs, currentConnections] = await Promise.all([
+				listOrganizations(),
+				listConnections(),
+			]);
 			setOrganizations(orgs);
 			setConnections(currentConnections);
 			if (!organizationId && !selectedOrganizationId && orgs.length > 0) {
@@ -142,32 +145,32 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 			const createdConnection =
 				type === "oidc"
 					? await createSsoConnection({
-						organizationId: effectiveOrganizationId,
-						type: "oidc",
-						name: name.trim(),
-						domains: normalizedDomains,
-						oidcConfig: {
-							issuer: oidcIssuer.trim(),
-							clientId: oidcClientId.trim(),
-							clientSecret: oidcClientSecret,
-							scopes: toScopes(oidcScopes),
-							discoveryUrl: oidcDiscoveryUrl.trim() || undefined,
-						},
-					})
+							organizationId: effectiveOrganizationId,
+							type: "oidc",
+							name: name.trim(),
+							domains: normalizedDomains,
+							oidcConfig: {
+								issuer: oidcIssuer.trim(),
+								clientId: oidcClientId.trim(),
+								clientSecret: oidcClientSecret,
+								scopes: toScopes(oidcScopes),
+								discoveryUrl: oidcDiscoveryUrl.trim() || undefined,
+							},
+						})
 					: await createSsoConnection({
-						organizationId: effectiveOrganizationId,
-						type: "saml",
-						name: name.trim(),
-						domains: normalizedDomains,
-						samlConfig: {
-							idpEntityId: samlEntityId.trim(),
-							idpSsoUrl: samlSsoUrl.trim(),
-							idpCertificate: samlCertificate.trim(),
-							spEntityId: samlSpEntityId.trim() || undefined,
-							nameIdFormat: samlNameIdFormat.trim() || undefined,
-							signRequest,
-						},
-					});
+							organizationId: effectiveOrganizationId,
+							type: "saml",
+							name: name.trim(),
+							domains: normalizedDomains,
+							samlConfig: {
+								idpEntityId: samlEntityId.trim(),
+								idpSsoUrl: samlSsoUrl.trim(),
+								idpCertificate: samlCertificate.trim(),
+								spEntityId: samlSpEntityId.trim() || undefined,
+								nameIdFormat: samlNameIdFormat.trim() || undefined,
+								signRequest,
+							},
+						});
 
 			setLastCreated(createdConnection);
 			setName("");
@@ -198,7 +201,9 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 			await setSsoConnectionActive(connectionId, active);
 			await loadData();
 		} catch {
-			setError(active ? "Unable to activate SSO connection." : "Unable to deactivate SSO connection.");
+			setError(
+				active ? "Unable to activate SSO connection." : "Unable to deactivate SSO connection.",
+			);
 		} finally {
 			setBusyConnectionId(null);
 		}
@@ -286,7 +291,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 							</div>
 						</div>
 
-						<Tabs value={type} onValueChange={(value) => setType(value as "oidc" | "saml")}> 
+						<Tabs value={type} onValueChange={(value) => setType(value as "oidc" | "saml")}>
 							<TabsList className="grid w-full grid-cols-2">
 								<TabsTrigger value="oidc">OIDC</TabsTrigger>
 								<TabsTrigger value="saml">SAML</TabsTrigger>
@@ -412,7 +417,12 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 							<Button type="submit" disabled={isSubmitting || availableOrganizations.length === 0}>
 								{isSubmitting ? "Creating..." : "Create connection"}
 							</Button>
-							<Button type="button" variant="secondary" onClick={() => void loadData()} disabled={isLoading}>
+							<Button
+								type="button"
+								variant="secondary"
+								onClick={() => void loadData()}
+								disabled={isLoading}
+							>
 								<RefreshCw className="mr-2 size-4" />
 								Refresh
 							</Button>
@@ -442,7 +452,9 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 						</div>
 						{lastCreated.type === "saml" && lastCreated.spMetadataUrl ? (
 							<div className="rounded-lg border px-3 py-2">
-								<p className="text-xs uppercase tracking-wide text-muted-foreground">SP metadata URL</p>
+								<p className="text-xs uppercase tracking-wide text-muted-foreground">
+									SP metadata URL
+								</p>
 								<a
 									href={lastCreated.spMetadataUrl}
 									target="_blank"
@@ -507,8 +519,9 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 							) : (
 								visibleConnections.map((connection) => {
 									const organizationName =
-										organizations.find((organization) => organization.id === connection.organizationId)?.name ??
-										connection.organizationId;
+										organizations.find(
+											(organization) => organization.id === connection.organizationId,
+										)?.name ?? connection.organizationId;
 									const isBusy = busyConnectionId === connection.id;
 									return (
 										<TableRow key={connection.id}>
@@ -529,7 +542,9 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 											</TableCell>
 											<TableCell>
 												<div className="flex flex-wrap gap-2">
-													<Badge variant={connectionStatusVariant(connection)}>{connection.state}</Badge>
+													<Badge variant={connectionStatusVariant(connection)}>
+														{connection.state}
+													</Badge>
 													<Badge variant={connection.domainVerified ? "default" : "secondary"}>
 														{connection.domainVerified ? "domain verified" : "domain pending"}
 													</Badge>
@@ -538,12 +553,18 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 											<TableCell>
 												{connection.type === "oidc" ? (
 													<div className="grid gap-1 text-xs">
-														<p className="font-mono text-muted-foreground">{connection.oidcConfig?.issuer || "Issuer missing"}</p>
-														<p className="text-muted-foreground">Client ID: {connection.oidcConfig?.clientId || "-"}</p>
+														<p className="font-mono text-muted-foreground">
+															{connection.oidcConfig?.issuer || "Issuer missing"}
+														</p>
+														<p className="text-muted-foreground">
+															Client ID: {connection.oidcConfig?.clientId || "-"}
+														</p>
 													</div>
 												) : (
 													<div className="grid gap-1 text-xs">
-														<p className="font-mono text-muted-foreground">{connection.samlConfig?.idpEntityId || "Entity ID missing"}</p>
+														<p className="font-mono text-muted-foreground">
+															{connection.samlConfig?.idpEntityId || "Entity ID missing"}
+														</p>
 														{connection.spMetadataUrl ? (
 															<a
 																href={connection.spMetadataUrl}
@@ -564,7 +585,9 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 														variant="outline"
 														size="sm"
 														disabled={isBusy}
-														onClick={() => void handleSetActive(connection.id, connection.state !== "active")}
+														onClick={() =>
+															void handleSetActive(connection.id, connection.state !== "active")
+														}
 													>
 														{connection.state === "active" ? "Disable" : "Activate"}
 													</Button>

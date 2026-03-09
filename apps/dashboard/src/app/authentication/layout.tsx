@@ -1,20 +1,20 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
-	KeyRound,
-	Users,
-	ToggleLeft,
 	Clock,
+	Globe,
+	KeyRound,
+	Link2,
+	Paintbrush,
 	Puzzle,
 	Shield,
-	Paintbrush,
-	Globe,
-	Link2,
+	ToggleLeft,
+	Users,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface SubNavItem {
 	label: string;
@@ -45,7 +45,7 @@ export default function AuthenticationLayout({
 	const pathname = usePathname();
 
 	const isActive = (href: string) => {
-		return pathname === href || pathname.startsWith(href + "/");
+		return pathname === href || pathname.startsWith(`${href}/`);
 	};
 
 	return (

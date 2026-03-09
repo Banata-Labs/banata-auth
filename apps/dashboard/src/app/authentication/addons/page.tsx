@@ -66,11 +66,18 @@ export default function AddonsPage() {
 
 	// Fetch addon config on mount
 	useEffect(() => {
+		if (!activeProjectId) {
+			setAddonStates({});
+			setLoading(false);
+			return;
+		}
+
+		setLoading(true);
 		getAddonConfig()
 			.then((config) => setAddonStates(config.addons ?? {}))
 			.catch((err) => reportError(err))
 			.finally(() => setLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const handleToggle = useCallback(
 		async (addonId: string) => {
@@ -102,8 +109,8 @@ export default function AddonsPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 4 }, (_, i) => (
-						<SkeletonMethodCard key={i} />
+					{["addon-1", "addon-2", "addon-3", "addon-4"].map((key) => (
+						<SkeletonMethodCard key={key} />
 					))}
 				</div>
 			</div>

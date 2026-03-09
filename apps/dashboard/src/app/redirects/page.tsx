@@ -1,7 +1,6 @@
 "use client";
 
 import { useBackendStatus } from "@/components/backend-status";
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -216,7 +215,7 @@ function MultiRedirectCard({
 				{values.length > 0 && (
 					<div className="space-y-2">
 						{values.map((uri, index) => (
-							<div key={index} className="flex items-center gap-2">
+							<div key={uri} className="flex items-center gap-2">
 								{editingIndex === index ? (
 									<>
 										<Input
@@ -296,7 +295,6 @@ function MultiRedirectCard({
 }
 
 export default function RedirectsPage() {
-	const activeProjectId = useActiveProjectId();
 	const [data, setData] = useState<RedirectsData>(getDefaultData);
 	const [loading, setLoading] = useState(true);
 	const [editingAdmin, setEditingAdmin] = useState(false);
@@ -315,7 +313,7 @@ export default function RedirectsPage() {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [activeProjectId]);
+	}, [reportError]);
 
 	const updateField = async (key: string, value: string | string[]) => {
 		const updated = { ...data, [key]: value };
@@ -357,8 +355,16 @@ export default function RedirectsPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 7 }, (_, i) => (
-						<SkeletonCard key={i} lines={0}>
+					{[
+						"redirect-1",
+						"redirect-2",
+						"redirect-3",
+						"redirect-4",
+						"redirect-5",
+						"redirect-6",
+						"redirect-7",
+					].map((key) => (
+						<SkeletonCard key={key} lines={0}>
 							<SkeletonInput />
 						</SkeletonCard>
 					))}

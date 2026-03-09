@@ -39,7 +39,6 @@ const quickStartLinks = [
 
 export default function HomePage() {
 	const { activeProject } = useProjectEnvironment();
-	const activeProjectId = activeProject?.id ?? null;
 	const [stats, setStats] = useState({ users: 0, organizations: 0 });
 	const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +62,7 @@ export default function HomePage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId]);
+	}, []);
 
 	const clientId = activeProject?.slug ?? "";
 

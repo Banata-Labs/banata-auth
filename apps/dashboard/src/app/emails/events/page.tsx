@@ -40,6 +40,13 @@ export default function EmailEventsPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setEvents([]);
+			setLoading(false);
+			return;
+		}
+
+		setLoading(true);
 		listAuditEvents()
 			.then((allEvents) => {
 				setEvents(allEvents.filter(isEmailEvent));
@@ -48,7 +55,7 @@ export default function EmailEventsPage() {
 				reportError(err);
 			})
 			.finally(() => setLoading(false));
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	return (
 		<div className="grid gap-6">

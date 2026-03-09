@@ -1,6 +1,5 @@
 "use client";
 
-import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +49,6 @@ const AVAILABLE_WEBHOOK_EVENTS = [
 ] as const;
 
 export default function WebhooksPage() {
-	const activeProjectId = useActiveProjectId();
 	const [url, setUrl] = useState("");
 	const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
 	const [endpoints, setEndpoints] = useState<WebhookEndpoint[]>([]);
@@ -61,7 +59,7 @@ export default function WebhooksPage() {
 
 	const refreshEndpoints = useCallback(async () => {
 		setEndpoints(await listWebhookEndpoints());
-	}, [activeProjectId]);
+	}, []);
 
 	useEffect(() => {
 		void refreshEndpoints().catch(() => {

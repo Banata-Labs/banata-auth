@@ -6,11 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SkeletonHeader, SkeletonMethodCard } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import {
-	type DashboardConfig,
-	getDashboardConfig,
-	toggleAuthMethod,
-} from "@/lib/dashboard-api";
+import { type DashboardConfig, getDashboardConfig, toggleAuthMethod } from "@/lib/dashboard-api";
 import { Fingerprint, KeyRound, Loader2, Mail, Shield, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -81,6 +77,13 @@ export default function MethodsPage() {
 	const activeProjectId = useActiveProjectId();
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setConfig(null);
+			setIsLoading(false);
+			return;
+		}
+
+		setIsLoading(true);
 		getDashboardConfig()
 			.then(setConfig)
 			.catch((err) => {
@@ -111,8 +114,8 @@ export default function MethodsPage() {
 			<div className="grid gap-6">
 				<SkeletonHeader />
 				<div className="grid gap-4">
-					{Array.from({ length: 5 }, (_, i) => (
-						<SkeletonMethodCard key={i} />
+					{["method-1", "method-2", "method-3", "method-4", "method-5"].map((key) => (
+						<SkeletonMethodCard key={key} />
 					))}
 				</div>
 			</div>

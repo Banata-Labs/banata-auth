@@ -1,17 +1,10 @@
 "use client";
 
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { Activity, Globe, Languages, Paintbrush, Server, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-	Activity,
-	Server,
-	Settings2,
-	Paintbrush,
-	Globe,
-	Languages,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 
 interface SubNavItem {
 	label: string;
@@ -39,7 +32,7 @@ export default function EmailsLayout({
 	const pathname = usePathname();
 
 	const isActive = (href: string) => {
-		return pathname === href || pathname.startsWith(href + "/");
+		return pathname === href || pathname.startsWith(`${href}/`);
 	};
 
 	return (

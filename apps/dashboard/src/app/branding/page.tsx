@@ -198,6 +198,11 @@ export default function BrandingPage() {
 	// ── Load branding + templates ──────────────────────────────────
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			setIsLoading(false);
+			return;
+		}
+
 		async function load() {
 			try {
 				const [brandingResult, templatesResult] = await Promise.allSettled([

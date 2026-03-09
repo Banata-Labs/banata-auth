@@ -79,6 +79,11 @@ export default function EmailConfigurationPage() {
 
 	// Load persisted config on mount
 	useEffect(() => {
+		if (!activeProjectId) {
+			setLoaded(true);
+			return;
+		}
+
 		let cancelled = false;
 		getEmailConfig()
 			.then((remote) => {
@@ -97,7 +102,7 @@ export default function EmailConfigurationPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeProjectId]);
+	}, [activeProjectId, reportError]);
 
 	const handleToggle = useCallback(
 		async (
@@ -138,15 +143,15 @@ export default function EmailConfigurationPage() {
 				<SkeletonHeader />
 				<SkeletonCard lines={0}>
 					<div className="space-y-1">
-						{Array.from({ length: 4 }, (_, i) => (
-							<SkeletonToggleRow key={i} />
+						{["auth-email-1", "auth-email-2", "auth-email-3", "auth-email-4"].map((key) => (
+							<SkeletonToggleRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>
 				<SkeletonCard lines={0}>
 					<div className="space-y-1">
-						{Array.from({ length: 2 }, (_, i) => (
-							<SkeletonToggleRow key={i} />
+						{["org-email-1", "org-email-2"].map((key) => (
+							<SkeletonToggleRow key={key} />
 						))}
 					</div>
 				</SkeletonCard>
