@@ -138,6 +138,33 @@
 	}
 }
 
+/* ── Cross-browser scrollbar styling ──
+   Thin, subtle scrollbars that match the dark/light theme.
+   - Firefox: scrollbar-width + scrollbar-color
+   - Chrome / Edge / Safari: ::-webkit-scrollbar pseudo-elements
+*/
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+	background-color: var(--border);
+	border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+	background-color: var(--muted-foreground);
+}
+*::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
 /* Noise texture overlay — adapted from browser-infra (Banata) */
 body::after {
 	content: "";
