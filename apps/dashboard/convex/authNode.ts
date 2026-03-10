@@ -1,6 +1,7 @@
 "use node";
 
 import { createBanataNodeAuth, handleBanataNodeAuthRequest } from "@banata-auth/convex/node";
+import { getEffectiveProjectPermissions, type PluginDBAdapter } from "@banata-auth/convex/plugins";
 import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import { v } from "convex/values";
 import type { DataModel } from "./_generated/dataModel";
@@ -8,6 +9,7 @@ import { internalAction } from "./_generated/server";
 import authConfig from "./auth.config";
 import {
 	authComponent,
+	getPluginDb,
 	getRequestConfig,
 	resolveRuntimeProjectScope,
 	type RuntimeProjectScope,
@@ -25,22 +27,21 @@ type SerializedAuthRequest = {
 	body: string | null;
 };
 
-interface RuntimeLookupAdapter {
-	findMany<T = Record<string, unknown>>(data: {
-		model: string;
-		where?: Array<{
-			field: string;
-			value: string | null;
-			operator?: "eq" | "in";
-		}>;
-		limit?: number;
-	}): Promise<T[]>;
+interface RuntimeUserRow extends Record<string, unknown> {
+	id: string;
+	role?: string | null;
 }
 
 interface RuntimeApiKeyRow extends Record<string, unknown> {
 	id: string;
 	projectId?: string | null;
 	metadata?: unknown;
+}
+
+interface ConvexJwtClaims extends Record<string, unknown> {
+	sub?: string;
+	sessionId?: string;
+	exp?: number;
 }
 
 function parseScopeUrl(urlValue: string | null | undefined): RuntimeProjectScope {
@@ -152,10 +153,68 @@ function getHeaderValue(
 	return match?.value ?? null;
 }
 
+function readCookieValue(cookieHeader: string | null, name: string): string | null {
+	if (!cookieHeader) {
+		return null;
+	}
+
+	for (const part of cookieHeader.split(";")) {
+		const [rawName, ...rest] = part.trim().split("=");
+		if (rawName !== name) {
+			continue;
+		}
+		const joined = rest.join("=");
+		try {
+			return normalizeScopeValue(decodeURIComponent(joined));
+		} catch {
+			return normalizeScopeValue(joined);
+		}
+	}
+
+	return null;
+}
+
 function hasInternalProjectScopeBypass(
 	headers: Array<{ key: string; value: string }>,
 ): boolean {
 	return getHeaderValue(headers, "x-banata-internal-project-scope") === "1";
+}
+
+function decodeBase64Url(value: string): string | null {
+	try {
+		const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+		const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+		return atob(`${normalized}${padding}`);
+	} catch {
+		return null;
+	}
+}
+
+function extractConvexJwtClaimsFromRequest(request: SerializedAuthRequest): ConvexJwtClaims | null {
+	const cookieHeader = getHeaderValue(request.headers, "cookie");
+	const rawJwt =
+		readCookieValue(cookieHeader, "better-auth.convex_jwt") ??
+		readCookieValue(cookieHeader, "__Secure-better-auth.convex_jwt");
+	if (!rawJwt) {
+		return null;
+	}
+
+	const [, payload] = rawJwt.split(".", 3);
+	if (!payload) {
+		return null;
+	}
+
+	const decoded = decodeBase64Url(payload);
+	if (!decoded) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(decoded) as ConvexJwtClaims;
+		return typeof parsed === "object" && parsed !== null ? parsed : null;
+	} catch {
+		return null;
+	}
 }
 
 function upsertHeader(
@@ -258,17 +317,21 @@ export function applyProjectScopeToRequest(
 	let body = parseRequestBody(request.body);
 	if (shouldInjectResolvedProjectId(pathname)) {
 		body = body ?? {};
-		if (!normalizeScopeValue(body.projectId) && !normalizeScopeValue(body.project_id)) {
+		const forceProjectScope = pathname.startsWith("/api/auth/api-key/");
+		if (
+			forceProjectScope ||
+			(!normalizeScopeValue(body.projectId) && !normalizeScopeValue(body.project_id))
+		) {
 			body.projectId = projectId;
+			delete body.project_id;
 		}
 		if (pathname === "/api/auth/api-key/create") {
 			const metadata =
 				typeof body.metadata === "object" && body.metadata !== null
 					? { ...(body.metadata as Record<string, unknown>) }
 					: {};
-			if (!normalizeScopeValue(metadata.projectId) && !normalizeScopeValue(metadata.project_id)) {
-				metadata.projectId = projectId;
-			}
+			metadata.projectId = projectId;
+			delete metadata.project_id;
 			body.metadata = metadata;
 		}
 	}
@@ -292,6 +355,11 @@ function jsonResponse(status: number, payload: Record<string, unknown>) {
 		headers: [{ key: "content-type", value: "application/json" }],
 		body: JSON.stringify(payload),
 	};
+}
+
+function isLocalDashboardRuntime(): boolean {
+	const siteUrl = process.env.SITE_URL;
+	return typeof siteUrl === "string" && siteUrl.includes("localhost");
 }
 
 function filterCollectionByProject(
@@ -375,13 +443,78 @@ async function assertApiKeyRecordInProject(
 	keyId: string,
 	projectId: string,
 ): Promise<boolean> {
-	const adapter = authComponent.adapter(ctx) as unknown as RuntimeLookupAdapter;
-	const rows = await adapter.findMany<RuntimeApiKeyRow>({
+	const db = getPluginDb(ctx);
+	const row = (await db.findOne({
 		model: "apikey",
 		where: [{ field: "id", value: keyId }],
-		limit: 1,
+	})) as RuntimeApiKeyRow | null;
+	return readProjectIdFromRecord(row ?? {}) === projectId;
+}
+
+async function resolveSessionUserForRequest(
+	_ctx: GenericCtx<DataModel>,
+	request: SerializedAuthRequest,
+): Promise<RuntimeUserRow | null> {
+	const convexJwtClaims = extractConvexJwtClaimsFromRequest(request);
+	if (
+		convexJwtClaims.sub &&
+		(typeof convexJwtClaims.exp !== "number" || convexJwtClaims.exp * 1000 > Date.now())
+	) {
+		return { id: convexJwtClaims.sub };
+	}
+	return null;
+}
+
+function getApiKeyPermissionForPath(pathname: string): string | null {
+	if (pathname === "/api/auth/api-key/create") return "api_key.create";
+	if (pathname === "/api/auth/api-key/list" || pathname === "/api/auth/api-key/get") {
+		return "api_key.read";
+	}
+	if (
+		pathname === "/api/auth/api-key/delete" ||
+		pathname === "/api/auth/api-key/update"
+	) {
+		return "api_key.delete";
+	}
+	return null;
+}
+
+async function enforceDashboardProjectPermission(
+	ctx: GenericCtx<DataModel>,
+	db: PluginDBAdapter,
+	request: SerializedAuthRequest,
+	projectId: string,
+): Promise<ReturnType<typeof jsonResponse> | null> {
+	const pathname = getPathname(request.url);
+	const requiredPermission = getApiKeyPermissionForPath(pathname);
+	if (!requiredPermission) {
+		return null;
+	}
+
+	const user = await resolveSessionUserForRequest(ctx, request);
+	if (!user?.id) {
+		return jsonResponse(401, {
+			error: "AUTHENTICATION_REQUIRED",
+			message: "Authentication required",
+		});
+	}
+
+	const permissions = await getEffectiveProjectPermissions(
+		db,
+		{
+			userId: user.id,
+			projectId,
+		},
+	);
+
+	if (permissions.has("*") || permissions.has(requiredPermission)) {
+		return null;
+	}
+
+	return jsonResponse(403, {
+		error: "FORBIDDEN",
+		message: `Missing permission: ${requiredPermission}`,
 	});
-	return readProjectIdFromRecord(rows[0] ?? {}) === projectId;
 }
 
 async function enforceApiKeyProjectBoundaries(
@@ -471,6 +604,13 @@ export function shouldRejectExplicitProjectScopeWithoutApiKey(
 	return shouldUseProjectRuntimeConfig(request.url);
 }
 
+function requiresDashboardProjectScope(request: SerializedAuthRequest): boolean {
+	return (
+		hasInternalProjectScopeBypass(request.headers) &&
+		getPathname(request.url).startsWith("/api/auth/api-key/")
+	);
+}
+
 export const handleAuthRequest = internalAction({
 	args: {
 		request: v.object({
@@ -488,6 +628,10 @@ export const handleAuthRequest = internalAction({
 	handler: async (ctx, args) => {
 		const scope = resolveRequestProjectScope(args.request);
 		const apiKey = extractApiKeyFromRequest(args.request);
+		const internalDashboardProjectId =
+			!apiKey && hasInternalProjectScopeBypass(args.request.headers)
+				? normalizeScopeValue(scope.projectId) ?? null
+				: null;
 		if (shouldRejectExplicitProjectScopeWithoutApiKey(args.request, scope, apiKey)) {
 			return jsonResponse(403, {
 				error: "PROJECT_API_KEY_REQUIRED",
@@ -499,6 +643,15 @@ export const handleAuthRequest = internalAction({
 			scope,
 			apiKey,
 		});
+		const effectiveDashboardProjectId =
+			internalDashboardProjectId ?? resolvedScope.projectId ?? null;
+		if (requiresDashboardProjectScope(args.request) && !effectiveDashboardProjectId) {
+			return jsonResponse(400, {
+				error: "PROJECT_SCOPE_REQUIRED",
+				message:
+					"Dashboard API key operations must include the active project scope.",
+			});
+		}
 		const useProjectRuntimeConfig = shouldUseProjectRuntimeConfig(args.request.url);
 		if (
 			resolvedScope.explicitProjectId &&
@@ -536,22 +689,61 @@ export const handleAuthRequest = internalAction({
 		const runtimeConfig = useProjectRuntimeConfig
 			? await getRequestConfig(ctx, scope, { apiKey })
 			: await getRequestConfig(ctx, null, { apiKey });
-		const response = await handleBanataNodeAuthRequest(
-			ctx,
-			(requestCtx: GenericCtx<DataModel>) =>
-				createBanataNodeAuth(requestCtx, {
-					authComponent,
-					authConfig,
-					config: runtimeConfig,
-				}),
-			requestForHandler,
-		);
+		const dashboardProjectId =
+			!apiKey && hasInternalProjectScopeBypass(args.request.headers)
+				? effectiveDashboardProjectId
+				: null;
+		if (dashboardProjectId) {
+			const pluginDb = getPluginDb(ctx, runtimeConfig);
+			const permissionError = await enforceDashboardProjectPermission(
+				ctx,
+				pluginDb,
+				args.request,
+				dashboardProjectId,
+			);
+			if (permissionError) {
+				return permissionError;
+			}
+		}
+		const effectiveRequest =
+			dashboardProjectId && getPathname(requestForHandler.url).startsWith("/api/auth/api-key/")
+				? applyProjectScopeToRequest(requestForHandler, dashboardProjectId)
+				: requestForHandler;
+		let response;
+		try {
+			response = await handleBanataNodeAuthRequest(
+				ctx,
+				(requestCtx: GenericCtx<DataModel>) =>
+					createBanataNodeAuth(requestCtx, {
+						authComponent,
+						authConfig,
+						config: runtimeConfig,
+					}),
+				effectiveRequest,
+			);
+		} catch (error) {
+			const pathname = getPathname(effectiveRequest.url);
+			console.error("[banata-auth] auth runtime failure", {
+				pathname,
+				method: effectiveRequest.method,
+				error,
+			});
+			return jsonResponse(500, {
+				error: "AUTH_RUNTIME_ERROR",
+				message: "Banata Auth failed while handling this request.",
+				...(isLocalDashboardRuntime()
+					? {
+							details: error instanceof Error ? error.message : String(error),
+						}
+					: {}),
+			});
+		}
 		return {
 			...response,
 			body: filterProjectScopedResponseBody(
-				getPathname(requestForHandler.url),
+				getPathname(effectiveRequest.url),
 				response.body,
-				resolvedScope.apiKeyProjectId,
+				resolvedScope.apiKeyProjectId ?? dashboardProjectId,
 			),
 		};
 	},

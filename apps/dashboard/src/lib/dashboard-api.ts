@@ -28,6 +28,17 @@ import {
 // active project changes.
 
 let _activeProjectId: string | null = null;
+const ACTIVE_PROJECT_STORAGE_KEY = "banata-active-project-id";
+
+function getPersistedActiveProjectId(): string | null {
+	if (typeof window === "undefined") return null;
+	const stored = window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY);
+	return typeof stored === "string" && stored.trim().length > 0 ? stored.trim() : null;
+}
+
+function getEffectiveActiveProjectId(): string | null {
+	return _activeProjectId ?? getPersistedActiveProjectId();
+}
 
 /**
  * Set the active project scope for all API calls.
@@ -44,7 +55,7 @@ export function setActiveScope(projectId: string | null) {
 
 /** Get the current active scope (for components that need to read it). */
 export function getActiveScope(): { projectId: string | null } {
-	return { projectId: _activeProjectId };
+	return { projectId: getEffectiveActiveProjectId() };
 }
 
 // ── Client-side project filter ───────────────────────────────────────
@@ -58,16 +69,17 @@ export function getActiveScope(): { projectId: string | null } {
  * project is a clean slate with zero inherited data.
  */
 function filterByActiveProject<T>(items: T[]): T[] {
-	if (!_activeProjectId) return items;
+	const activeProjectId = getEffectiveActiveProjectId();
+	if (!activeProjectId) return items;
 	return items.filter((item) => {
 		const obj = item as Record<string, unknown>;
 		// Direct projectId field (most tables)
-		if (obj.projectId === _activeProjectId) return true;
+		if (obj.projectId === activeProjectId) return true;
 		// Check metadata.projectId (used by API keys — Better Auth stores
 		// arbitrary metadata but ignores top-level projectId)
 		if (typeof obj.metadata === "object" && obj.metadata !== null) {
 			const meta = obj.metadata as Record<string, unknown>;
-			if (meta.projectId === _activeProjectId) return true;
+			if (meta.projectId === activeProjectId) return true;
 		}
 		// Everything else is excluded — no spillovers between projects
 		return false;
@@ -114,7 +126,7 @@ async function cachedPostJson(
 	ttlMs = DEFAULT_CACHE_TTL,
 ): Promise<unknown> {
 	// Include active scope in cache key so different projects don't share cached data
-	const scopeKey = _activeProjectId ?? "";
+	const scopeKey = getEffectiveActiveProjectId() ?? "";
 	const key = `${scopeKey}|${path}:${JSON.stringify(body)}`;
 	const cached = apiCache.get(key);
 	if (cached && Date.now() < cached.expiry) {
@@ -285,16 +297,21 @@ async function ensurePermission(permission: string, projectId: string): Promise<
 async function postJson(path: string, body: Record<string, unknown>): Promise<unknown> {
 	// Auto-inject projectId unless exempt or already provided
 	const mergedBody = { ...body };
+	const headers: Record<string, string> = { "content-type": "application/json" };
+	const activeProjectId = getEffectiveActiveProjectId();
 	if (!SCOPE_EXEMPT_PATHS.has(path)) {
-		if (_activeProjectId && !mergedBody.projectId) {
-			mergedBody.projectId = _activeProjectId;
+		if (activeProjectId && !mergedBody.projectId) {
+			mergedBody.projectId = activeProjectId;
+		}
+		if (activeProjectId) {
+			headers["x-banata-project-id"] = activeProjectId;
 		}
 	}
 
-	if (_activeProjectId && !SCOPE_EXEMPT_PATHS.has(path)) {
+	if (activeProjectId && !SCOPE_EXEMPT_PATHS.has(path)) {
 		const permission = resolvePermissionForPath(path);
 		if (permission) {
-			await ensurePermission(permission, _activeProjectId);
+			await ensurePermission(permission, activeProjectId);
 		}
 	}
 
@@ -303,7 +320,7 @@ async function postJson(path: string, body: Record<string, unknown>): Promise<un
 		response = await fetch(path, {
 			method: "POST",
 			credentials: "include",
-			headers: { "content-type": "application/json" },
+			headers,
 			body: JSON.stringify(mergedBody),
 		});
 	} catch {
@@ -328,12 +345,17 @@ async function postJson(path: string, body: Record<string, unknown>): Promise<un
 }
 
 async function getJson(path: string): Promise<unknown> {
+	const headers: Record<string, string> = { "content-type": "application/json" };
+	const activeProjectId = getEffectiveActiveProjectId();
+	if (activeProjectId && !SCOPE_EXEMPT_PATHS.has(path)) {
+		headers["x-banata-project-id"] = activeProjectId;
+	}
 	let response: Response;
 	try {
 		response = await fetch(path, {
 			method: "GET",
 			credentials: "include",
-			headers: { "content-type": "application/json" },
+			headers,
 		});
 	} catch {
 		throw new ApiError("Backend is unreachable — is your Convex dev server running?", {
@@ -435,10 +457,11 @@ export async function createApiKey(name: string, prefix?: string): Promise<{ key
 	if (normalizedPrefix) {
 		body.prefix = normalizedPrefix;
 	}
+	const activeProjectId = getEffectiveActiveProjectId();
 	// API keys are scoped per project. Better Auth persists `metadata`, so we
 	// stamp the active project there and the runtime resolves project scope from it.
-	if (_activeProjectId) {
-		body.metadata = { projectId: _activeProjectId };
+	if (activeProjectId) {
+		body.metadata = { projectId: activeProjectId };
 	}
 	const payload = await postJson("/api/auth/api-key/create", body);
 	if (typeof payload !== "object" || payload === null) {

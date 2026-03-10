@@ -67,6 +67,31 @@ describe("authNode helpers", () => {
 		});
 	});
 
+	it("overwrites spoofed API key project scope with the active dashboard project", () => {
+		const request = applyProjectScopeToRequest(
+			{
+				method: "POST",
+				url: "https://example.com/api/auth/api-key/create",
+				headers: [],
+				body: JSON.stringify({
+					name: "CI",
+					projectId: "proj_other",
+					metadata: {
+						projectId: "proj_other",
+					},
+				}),
+			},
+			"proj_123",
+		);
+
+		expect(JSON.parse(request.body ?? "{}")).toMatchObject({
+			projectId: "proj_123",
+			metadata: {
+				projectId: "proj_123",
+			},
+		});
+	});
+
 	it("filters API key list responses to the API key project", () => {
 		const filtered = filterProjectScopedResponseBody(
 			"/api/auth/api-key/list",

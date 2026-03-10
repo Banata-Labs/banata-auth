@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	banUser,
+	createApiKey,
 	createOrganization,
 	createSsoConnection,
 	getUser,
 	invalidateCache,
 	inviteOrganizationMember,
 	listUsers,
+	setActiveScope,
 	toggleAuthMethod,
 	toggleSocialProvider,
 	unbanUser,
@@ -14,8 +16,10 @@ import {
 
 describe("dashboard api client", () => {
 	beforeEach(() => {
+		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
 		invalidateCache();
+		setActiveScope(null);
 	});
 
 	it("maps list users from wrapped payload", async () => {
@@ -197,5 +201,74 @@ describe("dashboard api client", () => {
 				}),
 			}),
 		);
+	});
+
+	it("stamps API key creation requests with the active project metadata", async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ key: "ba_live_secret" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+		setActiveScope("proj_123");
+
+		await createApiKey("Production", "ba_live_");
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			"/api/auth/api-key/create",
+			expect.objectContaining({
+				method: "POST",
+			}),
+		);
+		const firstCall = (
+			fetchMock.mock.calls as unknown as Array<[RequestInfo | URL, RequestInit]>
+		)[0];
+		expect(firstCall).toBeDefined();
+		const requestInit = firstCall![1];
+		expect(JSON.parse(String(requestInit.body))).toEqual({
+			name: "Production",
+			prefix: "ba_live_",
+			metadata: {
+				projectId: "proj_123",
+			},
+			projectId: "proj_123",
+		});
+	});
+
+	it("falls back to the persisted active project before the provider sync effect runs", async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(JSON.stringify({ key: "ba_persisted_secret" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+		vi.stubGlobal("window", {
+			localStorage: {
+				getItem: vi.fn((key: string) =>
+					key === "banata-active-project-id" ? "proj_persisted" : null,
+				),
+			},
+		} as unknown as Window & typeof globalThis);
+
+		await createApiKey("Persisted");
+
+		const firstCall = (
+			fetchMock.mock.calls as unknown as Array<[RequestInfo | URL, RequestInit]>
+		)[0];
+		expect(firstCall).toBeDefined();
+		expect(firstCall?.[1].headers).toMatchObject({
+			"content-type": "application/json",
+			"x-banata-project-id": "proj_persisted",
+		});
+		expect(JSON.parse(String(firstCall?.[1].body))).toMatchObject({
+			projectId: "proj_persisted",
+			metadata: {
+				projectId: "proj_persisted",
+			},
+		});
 	});
 });

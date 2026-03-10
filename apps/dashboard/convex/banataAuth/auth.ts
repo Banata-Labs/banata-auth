@@ -42,14 +42,6 @@ interface RuntimeApiKeyRow extends Record<string, unknown> {
 	metadata?: unknown;
 }
 
-interface RuntimeProjectLookupAdapter {
-	findMany<T = Record<string, unknown>>(data: {
-		model: string;
-		where?: Array<{ field: string; value: string | null }>;
-		limit?: number;
-	}): Promise<T[]>;
-}
-
 export interface RuntimeProjectScope {
 	projectId?: string | null;
 	clientId?: string | null;
@@ -189,6 +181,19 @@ export function getConfig(): BanataAuthConfig {
 	return getPlatformConfig();
 }
 
+export function getPluginDb(
+	ctx: GenericCtx<DataModel>,
+	config: BanataAuthConfig = getPlatformConfig(),
+): PluginDBAdapter {
+	return authComponent.adapter(ctx)(
+		createBanataAuthOptions(ctx, {
+			authComponent,
+			authConfig,
+			config,
+		}),
+	) as unknown as PluginDBAdapter;
+}
+
 function buildProjectConfig(projectName: string, secret: string): BanataAuthConfig {
 	return {
 		appName: projectName,
@@ -300,14 +305,12 @@ async function loadPersistedDashboardConfig(
 		return null;
 	}
 
-	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	const db = getPluginDb(ctx);
 	try {
-		const scopedRows = await adapter.findMany<DashboardConfigRow>({
+		const scopedRow = (await db.findOne({
 			model: "dashboardConfig",
 			where: [{ field: "projectId", value: projectId }],
-			limit: 1,
-		});
-		const scopedRow = scopedRows[0];
+		})) as DashboardConfigRow | null;
 		if (scopedRow?.configJson) {
 			return JSON.parse(scopedRow.configJson) as PersistedDashboardConfig;
 		}
@@ -321,14 +324,12 @@ async function loadProjectById(
 	ctx: GenericCtx<DataModel>,
 	projectId: string,
 ): Promise<DashboardProjectRow | null> {
-	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
+	const db = getPluginDb(ctx);
 	try {
-		const rows = await adapter.findMany<DashboardProjectRow>({
+		return (await db.findOne({
 			model: "project",
 			where: [{ field: "id", value: projectId }],
-			limit: 1,
-		});
-		return rows[0] ?? null;
+		})) as DashboardProjectRow | null;
 	} catch {
 		return null;
 	}
@@ -363,26 +364,25 @@ export async function resolveRuntimeProjectId(
 	ctx: GenericCtx<DataModel>,
 	scope: RuntimeProjectScope | null | undefined,
 ): Promise<string | null> {
-	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
-	return resolveExplicitRuntimeProjectId(adapter, scope);
+	return resolveExplicitRuntimeProjectId(ctx, scope);
 }
 
 async function resolveExplicitRuntimeProjectId(
-	adapter: RuntimeProjectLookupAdapter,
+	ctx: GenericCtx<DataModel>,
 	scope: RuntimeProjectScope | null | undefined,
 ): Promise<string | null> {
+	const db = getPluginDb(ctx);
 	const projectId =
 		typeof scope?.projectId === "string" && scope.projectId.trim().length > 0
 			? scope.projectId.trim()
 			: null;
 	if (projectId) {
 		try {
-			const rows = await adapter.findMany<DashboardProjectRow>({
+			const row = (await db.findOne({
 				model: "project",
 				where: [{ field: "id", value: projectId }],
-				limit: 1,
-			});
-			return rows[0]?.id ?? null;
+			})) as DashboardProjectRow | null;
+			return row?.id ?? null;
 		} catch {
 			return null;
 		}
@@ -397,21 +397,21 @@ async function resolveExplicitRuntimeProjectId(
 	}
 
 	try {
-		const rows = await adapter.findMany<DashboardProjectRow>({
+		const row = (await db.findOne({
 			model: "project",
 			where: [{ field: "slug", value: clientId }],
-			limit: 1,
-		});
-		return rows[0]?.id ?? null;
+		})) as DashboardProjectRow | null;
+		return row?.id ?? null;
 	} catch {
 		return null;
 	}
 }
 
 async function resolveApiKeyProjectId(
-	adapter: RuntimeProjectLookupAdapter,
+	ctx: GenericCtx<DataModel>,
 	apiKey: string | null | undefined,
 ): Promise<string | null> {
+	const db = getPluginDb(ctx);
 	const normalizedApiKey = normalizeRuntimeScopeValue(apiKey);
 	if (!normalizedApiKey) {
 		return null;
@@ -423,12 +423,11 @@ async function resolveApiKeyProjectId(
 
 	for (const candidate of lookupCandidates) {
 		try {
-			const rows = await adapter.findMany<RuntimeApiKeyRow>({
+			const row = (await db.findOne({
 				model: "apikey",
 				where: [{ field: "key", value: candidate }],
-				limit: 1,
-			});
-			const projectId = readProjectIdFromApiKeyRow(rows[0]);
+			})) as RuntimeApiKeyRow | null;
+			const projectId = readProjectIdFromApiKeyRow(row);
 			if (projectId) {
 				return projectId;
 			}
@@ -447,10 +446,9 @@ export async function resolveRuntimeProjectScope(
 		apiKey?: string | null;
 	},
 ): Promise<ResolvedRuntimeProjectScope> {
-	const adapter = authComponent.adapter(ctx) as unknown as RuntimeProjectLookupAdapter;
 	const [explicitProjectId, apiKeyProjectId] = await Promise.all([
-		resolveExplicitRuntimeProjectId(adapter, params.scope),
-		resolveApiKeyProjectId(adapter, params.apiKey),
+		resolveExplicitRuntimeProjectId(ctx, params.scope),
+		resolveApiKeyProjectId(ctx, params.apiKey),
 	]);
 
 	return {
@@ -464,7 +462,7 @@ async function buildProjectRequestConfig(
 	ctx: GenericCtx<DataModel>,
 	projectId: string,
 ): Promise<BanataAuthConfig> {
-	const db = authComponent.adapter(ctx) as unknown as PluginDBAdapter;
+	const db = getPluginDb(ctx);
 	const [project, overrides, secret] = await Promise.all([
 		loadProjectById(ctx, projectId),
 		loadPersistedDashboardConfig(ctx, projectId),
