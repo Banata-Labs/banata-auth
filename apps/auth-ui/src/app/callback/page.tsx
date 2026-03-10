@@ -3,17 +3,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useEffect } from "react";
 
 export default function CallbackPage() {
 	const { data: session, isPending } = authClient.useSession();
+	const { scopedPath } = useProjectAuthConfig();
 
 	useEffect(() => {
 		if (!isPending && session?.user) {
-			window.location.href = "/org-selector";
+			window.location.href = scopedPath("/org-selector");
 		}
-	}, [isPending, session]);
+	}, [isPending, scopedPath, session]);
 
 	const params =
 		typeof window === "undefined"
@@ -33,7 +35,7 @@ export default function CallbackPage() {
 				type="button"
 				variant="outline"
 				onClick={() => {
-					window.location.href = "/sign-in";
+					window.location.href = scopedPath("/sign-in");
 				}}
 			>
 				Back to sign in

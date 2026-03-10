@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useEffect, useState } from "react";
 
@@ -22,6 +23,7 @@ export default function OrgSelectorPage() {
 	const [orgs, setOrgs] = useState<Org[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const { scopedPath } = useProjectAuthConfig();
 
 	useEffect(() => {
 		void (async () => {
@@ -67,7 +69,7 @@ export default function OrgSelectorPage() {
 							await (authClient as unknown as OrganizationClient).organization.setActive({
 								organizationId: org.id,
 							});
-							window.location.href = "/callback";
+							window.location.href = scopedPath("/callback");
 						}}
 					>
 						<span>{org.name}</span>

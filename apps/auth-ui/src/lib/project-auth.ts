@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export const BANATA_CLIENT_ID_COOKIE = "banata_client_id";
 export const BANATA_PROJECT_ID_COOKIE = "banata_project_id";
+export const BANATA_REDIRECT_URL_COOKIE = "banata_redirect_url";
 
 interface RuntimeAuthMethods {
 	emailPassword: boolean;
@@ -27,6 +28,7 @@ export interface PublicAuthConfig {
 export interface ProjectAuthScope {
 	clientId: string | null;
 	projectId: string | null;
+	redirectUrl: string | null;
 }
 
 interface UseProjectAuthConfigResult {
@@ -59,7 +61,7 @@ function writeCookie(name: string, value: string | null) {
 
 function readScopeFromWindow(): ProjectAuthScope {
 	if (typeof window === "undefined") {
-		return { clientId: null, projectId: null };
+		return { clientId: null, projectId: null, redirectUrl: null };
 	}
 
 	const params = new URLSearchParams(window.location.search);
@@ -67,13 +69,19 @@ function readScopeFromWindow(): ProjectAuthScope {
 		params.get("client_id") ?? params.get("clientId") ?? readCookie(BANATA_CLIENT_ID_COOKIE);
 	const projectId =
 		params.get("project_id") ?? params.get("projectId") ?? readCookie(BANATA_PROJECT_ID_COOKIE);
+	const redirectUrl =
+		params.get("redirect_url") ??
+		params.get("redirectUrl") ??
+		readCookie(BANATA_REDIRECT_URL_COOKIE);
 
 	if (clientId) writeCookie(BANATA_CLIENT_ID_COOKIE, clientId);
 	if (projectId) writeCookie(BANATA_PROJECT_ID_COOKIE, projectId);
+	if (redirectUrl) writeCookie(BANATA_REDIRECT_URL_COOKIE, redirectUrl);
 
 	return {
 		clientId: clientId?.trim() || null,
 		projectId: projectId?.trim() || null,
+		redirectUrl: redirectUrl?.trim() || null,
 	};
 }
 
@@ -87,6 +95,9 @@ function appendScope(path: string, scope: ProjectAuthScope): string {
 	}
 	if (scope.projectId && !params.has("project_id") && !params.has("projectId")) {
 		params.set("project_id", scope.projectId);
+	}
+	if (scope.redirectUrl && !params.has("redirect_url") && !params.has("redirectUrl")) {
+		params.set("redirect_url", scope.redirectUrl);
 	}
 
 	const query = params.toString();
@@ -127,7 +138,11 @@ async function fetchPublicAuthConfig(scope: ProjectAuthScope): Promise<PublicAut
 }
 
 export function useProjectAuthConfig(): UseProjectAuthConfigResult {
-	const [scope, setScope] = useState<ProjectAuthScope>({ clientId: null, projectId: null });
+	const [scope, setScope] = useState<ProjectAuthScope>({
+		clientId: null,
+		projectId: null,
+		redirectUrl: null,
+	});
 	const [config, setConfig] = useState<PublicAuthConfig | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
