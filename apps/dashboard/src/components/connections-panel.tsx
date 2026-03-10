@@ -57,7 +57,251 @@ function connectionStatusVariant(connection: SsoConnection) {
 	return "secondary" as const;
 }
 
-export function ConnectionsPanel({ organizationId }: { organizationId?: string }) {
+function buildConnectionInput(params: {
+	effectiveOrganizationId: string;
+	type: "oidc" | "saml";
+	name: string;
+	domains: string[];
+	oidcIssuer: string;
+	oidcClientId: string;
+	oidcClientSecret: string;
+	oidcScopes: string;
+	oidcDiscoveryUrl: string;
+	samlEntityId: string;
+	samlSsoUrl: string;
+	samlCertificate: string;
+	samlSpEntityId: string;
+	samlNameIdFormat: string;
+	signRequest: boolean;
+}) {
+	const { effectiveOrganizationId, type, name, domains } = params;
+	if (type === "oidc") {
+		return {
+			organizationId: effectiveOrganizationId,
+			type: "oidc" as const,
+			name: name.trim(),
+			domains,
+			oidcConfig: {
+				issuer: params.oidcIssuer.trim(),
+				clientId: params.oidcClientId.trim(),
+				clientSecret: params.oidcClientSecret,
+				scopes: toScopes(params.oidcScopes),
+				discoveryUrl: params.oidcDiscoveryUrl.trim() || undefined,
+			},
+		};
+	}
+
+	return {
+		organizationId: effectiveOrganizationId,
+		type: "saml" as const,
+		name: name.trim(),
+		domains,
+		samlConfig: {
+			idpEntityId: params.samlEntityId.trim(),
+			idpSsoUrl: params.samlSsoUrl.trim(),
+			idpCertificate: params.samlCertificate.trim(),
+			spEntityId: params.samlSpEntityId.trim() || undefined,
+			nameIdFormat: params.samlNameIdFormat.trim() || undefined,
+			signRequest: params.signRequest,
+		},
+	};
+}
+
+function ProvisioningDetailsCard({ connection }: { connection: SsoConnection | null }) {
+	if (!connection) {
+		return null;
+	}
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-base">Provisioning details</CardTitle>
+				<CardDescription>
+					Use these values in your IdP immediately after creating the connection.
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="grid gap-3 text-sm">
+				<div className="rounded-lg border px-3 py-2">
+					<p className="text-xs uppercase tracking-wide text-muted-foreground">Connection</p>
+					<p className="font-medium">{connection.name}</p>
+				</div>
+				{connection.type === "saml" && connection.spMetadataUrl ? (
+					<div className="rounded-lg border px-3 py-2">
+						<p className="text-xs uppercase tracking-wide text-muted-foreground">SP metadata URL</p>
+						<a
+							href={connection.spMetadataUrl}
+							target="_blank"
+							rel="noreferrer"
+							className="mt-1 inline-flex items-center gap-1 font-mono text-xs text-primary underline-offset-4 hover:underline"
+						>
+							{connection.spMetadataUrl}
+							<ExternalLink className="size-3" />
+						</a>
+					</div>
+				) : null}
+				{connection.type === "saml" && connection.samlConfig?.spAcsUrl ? (
+					<div className="rounded-lg border px-3 py-2">
+						<p className="text-xs uppercase tracking-wide text-muted-foreground">ACS URL</p>
+						<p className="mt-1 font-mono text-xs">{connection.samlConfig.spAcsUrl}</p>
+					</div>
+				) : null}
+				{connection.type === "oidc" && connection.oidcConfig?.issuer ? (
+					<div className="rounded-lg border px-3 py-2">
+						<p className="text-xs uppercase tracking-wide text-muted-foreground">OIDC issuer</p>
+						<p className="mt-1 font-mono text-xs">{connection.oidcConfig.issuer}</p>
+					</div>
+				) : null}
+			</CardContent>
+		</Card>
+	);
+}
+
+function ConnectionTableRow({
+	connection,
+	organizationName,
+	isBusy,
+	onSetActive,
+	onDelete,
+}: {
+	connection: SsoConnection;
+	organizationName: string;
+	isBusy: boolean;
+	onSetActive: (connectionId: string, active: boolean) => void;
+	onDelete: (connectionId: string) => void;
+}) {
+	return (
+		<TableRow key={connection.id}>
+			<TableCell>
+				<div className="grid gap-1">
+					<div className="flex items-center gap-2">
+						<p className="font-medium">{connection.name}</p>
+						<Badge variant="outline" className="uppercase">
+							{connection.type}
+						</Badge>
+					</div>
+					<p className="font-mono text-xs text-muted-foreground">{connection.id}</p>
+				</div>
+			</TableCell>
+			<TableCell>{organizationName}</TableCell>
+			<TableCell className="font-mono text-xs text-muted-foreground">
+				{connection.domains.join(", ")}
+			</TableCell>
+			<TableCell>
+				<div className="flex flex-wrap gap-2">
+					<Badge variant={connectionStatusVariant(connection)}>{connection.state}</Badge>
+					<Badge variant={connection.domainVerified ? "default" : "secondary"}>
+						{connection.domainVerified ? "domain verified" : "domain pending"}
+					</Badge>
+				</div>
+			</TableCell>
+			<TableCell>
+				{connection.type === "oidc" ? (
+					<div className="grid gap-1 text-xs">
+						<p className="font-mono text-muted-foreground">
+							{connection.oidcConfig?.issuer || "Issuer missing"}
+						</p>
+						<p className="text-muted-foreground">
+							Client ID: {connection.oidcConfig?.clientId || "-"}
+						</p>
+					</div>
+				) : (
+					<div className="grid gap-1 text-xs">
+						<p className="font-mono text-muted-foreground">
+							{connection.samlConfig?.idpEntityId || "Entity ID missing"}
+						</p>
+						{connection.spMetadataUrl ? (
+							<a
+								href={connection.spMetadataUrl}
+								target="_blank"
+								rel="noreferrer"
+								className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+							>
+								SP metadata
+								<ExternalLink className="size-3" />
+							</a>
+						) : null}
+					</div>
+				)}
+			</TableCell>
+			<TableCell className="text-right">
+				<div className="flex justify-end gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={isBusy}
+						onClick={() => onSetActive(connection.id, connection.state !== "active")}
+					>
+						{connection.state === "active" ? "Disable" : "Activate"}
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={isBusy}
+						onClick={() => onDelete(connection.id)}
+					>
+						<Trash2 className="size-4" />
+					</Button>
+				</div>
+			</TableCell>
+		</TableRow>
+	);
+}
+
+function ConnectionsTableBody({
+	isLoading,
+	visibleConnections,
+	organizations,
+	busyConnectionId,
+	onSetActive,
+	onDelete,
+}: {
+	isLoading: boolean;
+	visibleConnections: SsoConnection[];
+	organizations: Organization[];
+	busyConnectionId: string | null;
+	onSetActive: (connectionId: string, active: boolean) => void;
+	onDelete: (connectionId: string) => void;
+}) {
+	if (isLoading) {
+		return (
+			<TableRow>
+				<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+					Loading enterprise connections...
+				</TableCell>
+			</TableRow>
+		);
+	}
+
+	if (visibleConnections.length === 0) {
+		return (
+			<TableRow>
+				<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+					No SSO connections configured for this scope.
+				</TableCell>
+			</TableRow>
+		);
+	}
+
+	return (
+		<>
+			{visibleConnections.map((connection) => (
+				<ConnectionTableRow
+					key={connection.id}
+					connection={connection}
+					organizationName={
+						organizations.find((organization) => organization.id === connection.organizationId)
+							?.name ?? connection.organizationId
+					}
+					isBusy={busyConnectionId === connection.id}
+					onSetActive={onSetActive}
+					onDelete={onDelete}
+				/>
+			))}
+		</>
+	);
+}
+
+function useConnectionsPanelModel(organizationId?: string) {
 	const activeProjectId = useActiveProjectId();
 	const [organizations, setOrganizations] = useState<Organization[]>([]);
 	const [connections, setConnections] = useState<SsoConnection[]>([]);
@@ -81,6 +325,22 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 	const [busyConnectionId, setBusyConnectionId] = useState<string | null>(null);
 	const [lastCreated, setLastCreated] = useState<SsoConnection | null>(null);
 	const [error, setError] = useState<string | null>(null);
+
+	const resetForm = useCallback(() => {
+		setName("");
+		setDomains("");
+		setOidcIssuer("");
+		setOidcClientId("");
+		setOidcClientSecret("");
+		setOidcScopes(DEFAULT_OIDC_SCOPES);
+		setOidcDiscoveryUrl("");
+		setSamlEntityId("");
+		setSamlSsoUrl("");
+		setSamlCertificate("");
+		setSamlSpEntityId("");
+		setSamlNameIdFormat("");
+		setSignRequest(false);
+	}, []);
 
 	useEffect(() => {
 		setSelectedOrganizationId(organizationId ?? "");
@@ -129,102 +389,199 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 
 	const effectiveOrganizationId = organizationId ?? selectedOrganizationId;
 
-	async function handleCreateConnection(event: React.FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		try {
-			setIsSubmitting(true);
-			setError(null);
-			const normalizedDomains = toDomainList(domains);
-			if (!effectiveOrganizationId) {
-				throw new Error("Select an organization first.");
+	const handleCreateConnection = useCallback(
+		async (event: React.FormEvent<HTMLFormElement>) => {
+			event.preventDefault();
+			try {
+				setIsSubmitting(true);
+				setError(null);
+				const normalizedDomains = toDomainList(domains);
+				if (!effectiveOrganizationId) {
+					throw new Error("Select an organization first.");
+				}
+				if (normalizedDomains.length === 0) {
+					throw new Error("At least one routing domain is required.");
+				}
+
+				const createdConnection = await createSsoConnection(
+					buildConnectionInput({
+						effectiveOrganizationId,
+						type,
+						name,
+						domains: normalizedDomains,
+						oidcIssuer,
+						oidcClientId,
+						oidcClientSecret,
+						oidcScopes,
+						oidcDiscoveryUrl,
+						samlEntityId,
+						samlSsoUrl,
+						samlCertificate,
+						samlSpEntityId,
+						samlNameIdFormat,
+						signRequest,
+					}),
+				);
+
+				setLastCreated(createdConnection);
+				resetForm();
+				await loadData();
+			} catch (caught) {
+				setError(caught instanceof Error ? caught.message : "Unable to create SSO connection.");
+			} finally {
+				setIsSubmitting(false);
 			}
-			if (normalizedDomains.length === 0) {
-				throw new Error("At least one routing domain is required.");
+		},
+		[
+			effectiveOrganizationId,
+			loadData,
+			name,
+			domains,
+			oidcIssuer,
+			oidcClientId,
+			oidcClientSecret,
+			oidcScopes,
+			oidcDiscoveryUrl,
+			resetForm,
+			samlEntityId,
+			samlSsoUrl,
+			samlCertificate,
+			samlSpEntityId,
+			samlNameIdFormat,
+			signRequest,
+			type,
+		],
+	);
+
+	const handleSetActive = useCallback(
+		async (connectionId: string, active: boolean) => {
+			try {
+				setBusyConnectionId(connectionId);
+				setError(null);
+				await setSsoConnectionActive(connectionId, active);
+				await loadData();
+			} catch {
+				setError(
+					active ? "Unable to activate SSO connection." : "Unable to deactivate SSO connection.",
+				);
+			} finally {
+				setBusyConnectionId(null);
 			}
+		},
+		[loadData],
+	);
 
-			const createdConnection =
-				type === "oidc"
-					? await createSsoConnection({
-							organizationId: effectiveOrganizationId,
-							type: "oidc",
-							name: name.trim(),
-							domains: normalizedDomains,
-							oidcConfig: {
-								issuer: oidcIssuer.trim(),
-								clientId: oidcClientId.trim(),
-								clientSecret: oidcClientSecret,
-								scopes: toScopes(oidcScopes),
-								discoveryUrl: oidcDiscoveryUrl.trim() || undefined,
-							},
-						})
-					: await createSsoConnection({
-							organizationId: effectiveOrganizationId,
-							type: "saml",
-							name: name.trim(),
-							domains: normalizedDomains,
-							samlConfig: {
-								idpEntityId: samlEntityId.trim(),
-								idpSsoUrl: samlSsoUrl.trim(),
-								idpCertificate: samlCertificate.trim(),
-								spEntityId: samlSpEntityId.trim() || undefined,
-								nameIdFormat: samlNameIdFormat.trim() || undefined,
-								signRequest,
-							},
-						});
+	const handleDelete = useCallback(
+		async (connectionId: string) => {
+			if (!window.confirm("Delete this SSO connection?")) {
+				return;
+			}
+			try {
+				setBusyConnectionId(connectionId);
+				setError(null);
+				await deleteSsoConnection(connectionId);
+				setLastCreated((current) => (current?.id === connectionId ? null : current));
+				await loadData();
+			} catch {
+				setError("Unable to delete SSO connection.");
+			} finally {
+				setBusyConnectionId(null);
+			}
+		},
+		[loadData],
+	);
 
-			setLastCreated(createdConnection);
-			setName("");
-			setDomains("");
-			setOidcIssuer("");
-			setOidcClientId("");
-			setOidcClientSecret("");
-			setOidcScopes(DEFAULT_OIDC_SCOPES);
-			setOidcDiscoveryUrl("");
-			setSamlEntityId("");
-			setSamlSsoUrl("");
-			setSamlCertificate("");
-			setSamlSpEntityId("");
-			setSamlNameIdFormat("");
-			setSignRequest(false);
-			await loadData();
-		} catch (caught) {
-			setError(caught instanceof Error ? caught.message : "Unable to create SSO connection.");
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
+	return {
+		organizations,
+		availableOrganizations,
+		visibleConnections,
+		selectedOrganizationId,
+		setSelectedOrganizationId,
+		name,
+		setName,
+		type,
+		setType,
+		domains,
+		setDomains,
+		oidcIssuer,
+		setOidcIssuer,
+		oidcClientId,
+		setOidcClientId,
+		oidcClientSecret,
+		setOidcClientSecret,
+		oidcScopes,
+		setOidcScopes,
+		oidcDiscoveryUrl,
+		setOidcDiscoveryUrl,
+		samlEntityId,
+		setSamlEntityId,
+		samlSsoUrl,
+		setSamlSsoUrl,
+		samlCertificate,
+		setSamlCertificate,
+		samlSpEntityId,
+		setSamlSpEntityId,
+		samlNameIdFormat,
+		setSamlNameIdFormat,
+		signRequest,
+		setSignRequest,
+		isLoading,
+		isSubmitting,
+		busyConnectionId,
+		lastCreated,
+		error,
+		loadData,
+		handleCreateConnection,
+		handleSetActive,
+		handleDelete,
+	};
+}
 
-	async function handleSetActive(connectionId: string, active: boolean) {
-		try {
-			setBusyConnectionId(connectionId);
-			setError(null);
-			await setSsoConnectionActive(connectionId, active);
-			await loadData();
-		} catch {
-			setError(
-				active ? "Unable to activate SSO connection." : "Unable to deactivate SSO connection.",
-			);
-		} finally {
-			setBusyConnectionId(null);
-		}
-	}
-
-	async function handleDelete(connectionId: string) {
-		if (!window.confirm("Delete this SSO connection?")) {
-			return;
-		}
-		try {
-			setBusyConnectionId(connectionId);
-			setError(null);
-			await deleteSsoConnection(connectionId);
-			setLastCreated((current) => (current?.id === connectionId ? null : current));
-			await loadData();
-		} catch {
-			setError("Unable to delete SSO connection.");
-		} finally {
-			setBusyConnectionId(null);
-		}
-	}
+export function ConnectionsPanel({ organizationId }: { organizationId?: string }) {
+	const {
+		organizations,
+		availableOrganizations,
+		visibleConnections,
+		selectedOrganizationId,
+		setSelectedOrganizationId,
+		name,
+		setName,
+		type,
+		setType,
+		domains,
+		setDomains,
+		oidcIssuer,
+		setOidcIssuer,
+		oidcClientId,
+		setOidcClientId,
+		oidcClientSecret,
+		setOidcClientSecret,
+		oidcScopes,
+		setOidcScopes,
+		oidcDiscoveryUrl,
+		setOidcDiscoveryUrl,
+		samlEntityId,
+		setSamlEntityId,
+		samlSsoUrl,
+		setSamlSsoUrl,
+		samlCertificate,
+		setSamlCertificate,
+		samlSpEntityId,
+		setSamlSpEntityId,
+		samlNameIdFormat,
+		setSamlNameIdFormat,
+		signRequest,
+		setSignRequest,
+		isLoading,
+		isSubmitting,
+		busyConnectionId,
+		lastCreated,
+		error,
+		loadData,
+		handleCreateConnection,
+		handleSetActive,
+		handleDelete,
+	} = useConnectionsPanelModel(organizationId);
 
 	return (
 		<div className="grid gap-6">
@@ -437,50 +794,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 				</CardContent>
 			</Card>
 
-			{lastCreated ? (
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-base">Provisioning details</CardTitle>
-						<CardDescription>
-							Use these values in your IdP immediately after creating the connection.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="grid gap-3 text-sm">
-						<div className="rounded-lg border px-3 py-2">
-							<p className="text-xs uppercase tracking-wide text-muted-foreground">Connection</p>
-							<p className="font-medium">{lastCreated.name}</p>
-						</div>
-						{lastCreated.type === "saml" && lastCreated.spMetadataUrl ? (
-							<div className="rounded-lg border px-3 py-2">
-								<p className="text-xs uppercase tracking-wide text-muted-foreground">
-									SP metadata URL
-								</p>
-								<a
-									href={lastCreated.spMetadataUrl}
-									target="_blank"
-									rel="noreferrer"
-									className="mt-1 inline-flex items-center gap-1 font-mono text-xs text-primary underline-offset-4 hover:underline"
-								>
-									{lastCreated.spMetadataUrl}
-									<ExternalLink className="size-3" />
-								</a>
-							</div>
-						) : null}
-						{lastCreated.type === "saml" && lastCreated.samlConfig?.spAcsUrl ? (
-							<div className="rounded-lg border px-3 py-2">
-								<p className="text-xs uppercase tracking-wide text-muted-foreground">ACS URL</p>
-								<p className="mt-1 font-mono text-xs">{lastCreated.samlConfig.spAcsUrl}</p>
-							</div>
-						) : null}
-						{lastCreated.type === "oidc" && lastCreated.oidcConfig?.issuer ? (
-							<div className="rounded-lg border px-3 py-2">
-								<p className="text-xs uppercase tracking-wide text-muted-foreground">OIDC issuer</p>
-								<p className="mt-1 font-mono text-xs">{lastCreated.oidcConfig.issuer}</p>
-							</div>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
+			<ProvisioningDetailsCard connection={lastCreated} />
 
 			<Card className="gap-0 overflow-hidden py-0">
 				<CardHeader>
@@ -504,107 +818,14 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{isLoading ? (
-								<TableRow>
-									<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-										Loading enterprise connections...
-									</TableCell>
-								</TableRow>
-							) : visibleConnections.length === 0 ? (
-								<TableRow>
-									<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-										No SSO connections configured for this scope.
-									</TableCell>
-								</TableRow>
-							) : (
-								visibleConnections.map((connection) => {
-									const organizationName =
-										organizations.find(
-											(organization) => organization.id === connection.organizationId,
-										)?.name ?? connection.organizationId;
-									const isBusy = busyConnectionId === connection.id;
-									return (
-										<TableRow key={connection.id}>
-											<TableCell>
-												<div className="grid gap-1">
-													<div className="flex items-center gap-2">
-														<p className="font-medium">{connection.name}</p>
-														<Badge variant="outline" className="uppercase">
-															{connection.type}
-														</Badge>
-													</div>
-													<p className="font-mono text-xs text-muted-foreground">{connection.id}</p>
-												</div>
-											</TableCell>
-											<TableCell>{organizationName}</TableCell>
-											<TableCell className="font-mono text-xs text-muted-foreground">
-												{connection.domains.join(", ")}
-											</TableCell>
-											<TableCell>
-												<div className="flex flex-wrap gap-2">
-													<Badge variant={connectionStatusVariant(connection)}>
-														{connection.state}
-													</Badge>
-													<Badge variant={connection.domainVerified ? "default" : "secondary"}>
-														{connection.domainVerified ? "domain verified" : "domain pending"}
-													</Badge>
-												</div>
-											</TableCell>
-											<TableCell>
-												{connection.type === "oidc" ? (
-													<div className="grid gap-1 text-xs">
-														<p className="font-mono text-muted-foreground">
-															{connection.oidcConfig?.issuer || "Issuer missing"}
-														</p>
-														<p className="text-muted-foreground">
-															Client ID: {connection.oidcConfig?.clientId || "-"}
-														</p>
-													</div>
-												) : (
-													<div className="grid gap-1 text-xs">
-														<p className="font-mono text-muted-foreground">
-															{connection.samlConfig?.idpEntityId || "Entity ID missing"}
-														</p>
-														{connection.spMetadataUrl ? (
-															<a
-																href={connection.spMetadataUrl}
-																target="_blank"
-																rel="noreferrer"
-																className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-															>
-																SP metadata
-																<ExternalLink className="size-3" />
-															</a>
-														) : null}
-													</div>
-												)}
-											</TableCell>
-											<TableCell className="text-right">
-												<div className="flex justify-end gap-2">
-													<Button
-														variant="outline"
-														size="sm"
-														disabled={isBusy}
-														onClick={() =>
-															void handleSetActive(connection.id, connection.state !== "active")
-														}
-													>
-														{connection.state === "active" ? "Disable" : "Activate"}
-													</Button>
-													<Button
-														variant="outline"
-														size="sm"
-														disabled={isBusy}
-														onClick={() => void handleDelete(connection.id)}
-													>
-														<Trash2 className="size-4" />
-													</Button>
-												</div>
-											</TableCell>
-										</TableRow>
-									);
-								})
-							)}
+							<ConnectionsTableBody
+								isLoading={isLoading}
+								visibleConnections={visibleConnections}
+								organizations={organizations}
+								busyConnectionId={busyConnectionId}
+								onSetActive={(connectionId, active) => void handleSetActive(connectionId, active)}
+								onDelete={(connectionId) => void handleDelete(connectionId)}
+							/>
 						</TableBody>
 					</Table>
 				</CardContent>
