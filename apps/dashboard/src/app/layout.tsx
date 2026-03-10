@@ -3,22 +3,9 @@ import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { getToken } from "@/lib/auth-server";
 import { resolveDashboardConvexSiteUrl } from "@/lib/convex-urls";
-import { BotIdClient } from "botid/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-
-/**
- * Routes protected by Vercel BotID — invisible CAPTCHA that blocks
- * sophisticated bots on authentication endpoints.
- * @see https://vercel.com/docs/botid
- */
-const botIdProtectedRoutes = [
-	{ path: "/api/auth/sign-in/*", method: "POST" as const },
-	{ path: "/api/auth/sign-up/*", method: "POST" as const },
-	{ path: "/api/auth/forget-password/*", method: "POST" as const },
-	{ path: "/api/auth/reset-password/*", method: "POST" as const },
-];
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -48,7 +35,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						<link rel="dns-prefetch" href={convexSiteUrl} />
 					</>
 				)}
-				<BotIdClient protect={botIdProtectedRoutes} />
 			</head>
 			<body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
 				<BackendStatusProvider>

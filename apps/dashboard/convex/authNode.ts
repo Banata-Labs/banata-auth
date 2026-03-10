@@ -357,6 +357,18 @@ function jsonResponse(status: number, payload: Record<string, unknown>) {
 	};
 }
 
+function summarizeRequestForLog(request: SerializedAuthRequest) {
+	return {
+		method: request.method,
+		pathname: getPathname(request.url),
+		hasApiKey: Boolean(extractApiKeyFromRequest(request)),
+		hasAuthorization: Boolean(getHeaderValue(request.headers, "authorization")),
+		hasProjectHeader: Boolean(getHeaderValue(request.headers, "x-banata-project-id")),
+		hasClientHeader: Boolean(getHeaderValue(request.headers, "x-banata-client-id")),
+		hasInternalScopeBypass: hasInternalProjectScopeBypass(request.headers),
+	};
+}
+
 function isLocalDashboardRuntime(): boolean {
 	const siteUrl = process.env.SITE_URL;
 	return typeof siteUrl === "string" && siteUrl.includes("localhost");
@@ -626,6 +638,7 @@ export const handleAuthRequest = internalAction({
 		body: v.union(v.string(), v.null()),
 	}),
 	handler: async (ctx, args) => {
+		console.info("[banata-auth] auth request start", summarizeRequestForLog(args.request));
 		const scope = resolveRequestProjectScope(args.request);
 		const apiKey = extractApiKeyFromRequest(args.request);
 		const internalDashboardProjectId =
@@ -633,6 +646,10 @@ export const handleAuthRequest = internalAction({
 				? normalizeScopeValue(scope.projectId) ?? null
 				: null;
 		if (shouldRejectExplicitProjectScopeWithoutApiKey(args.request, scope, apiKey)) {
+			console.warn("[banata-auth] rejecting explicit project scope without api key", {
+				...summarizeRequestForLog(args.request),
+				scope,
+			});
 			return jsonResponse(403, {
 				error: "PROJECT_API_KEY_REQUIRED",
 				message:
@@ -646,6 +663,11 @@ export const handleAuthRequest = internalAction({
 		const effectiveDashboardProjectId =
 			internalDashboardProjectId ?? resolvedScope.projectId ?? null;
 		if (requiresDashboardProjectScope(args.request) && !effectiveDashboardProjectId) {
+			console.warn("[banata-auth] missing dashboard project scope", {
+				...summarizeRequestForLog(args.request),
+				scope,
+				resolvedScope,
+			});
 			return jsonResponse(400, {
 				error: "PROJECT_SCOPE_REQUIRED",
 				message:
@@ -658,12 +680,20 @@ export const handleAuthRequest = internalAction({
 			resolvedScope.apiKeyProjectId &&
 			resolvedScope.explicitProjectId !== resolvedScope.apiKeyProjectId
 		) {
+			console.warn("[banata-auth] project scope mismatch", {
+				...summarizeRequestForLog(args.request),
+				resolvedScope,
+			});
 			return jsonResponse(403, {
 				error: "PROJECT_SCOPE_MISMATCH",
 				message: "The supplied project scope does not match the API key's project.",
 			});
 		}
 		if (apiKey && !resolvedScope.apiKeyProjectId && requestSupportsApiKeyBearer(getPathname(args.request.url))) {
+			console.warn("[banata-auth] api key missing project scope", {
+				...summarizeRequestForLog(args.request),
+				resolvedScope,
+			});
 			return jsonResponse(403, {
 				error: "PROJECT_SCOPE_REQUIRED",
 				message: "This API key is not scoped to a Banata project.",
@@ -671,6 +701,11 @@ export const handleAuthRequest = internalAction({
 		}
 		if (useProjectRuntimeConfig && (scope.hasExplicitScope || Boolean(apiKey))) {
 			if (!resolvedScope.projectId) {
+				console.warn("[banata-auth] unknown project scope", {
+					...summarizeRequestForLog(args.request),
+					scope,
+					resolvedScope,
+				});
 				return {
 					status: 404,
 					headers: [{ key: "content-type", value: "application/json" }],
@@ -702,6 +737,10 @@ export const handleAuthRequest = internalAction({
 				dashboardProjectId,
 			);
 			if (permissionError) {
+				console.warn("[banata-auth] dashboard permission denied", {
+					...summarizeRequestForLog(args.request),
+					dashboardProjectId,
+				});
 				return permissionError;
 			}
 		}
@@ -738,6 +777,13 @@ export const handleAuthRequest = internalAction({
 					: {}),
 			});
 		}
+		console.info("[banata-auth] auth request complete", {
+			...summarizeRequestForLog(effectiveRequest),
+			status: response.status,
+			resolvedProjectId: resolvedScope.projectId ?? null,
+			apiKeyProjectId: resolvedScope.apiKeyProjectId ?? null,
+			dashboardProjectId,
+		});
 		return {
 			...response,
 			body: filterProjectScopedResponseBody(
