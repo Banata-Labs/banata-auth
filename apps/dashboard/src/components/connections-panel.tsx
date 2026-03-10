@@ -4,6 +4,14 @@ import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,7 +40,7 @@ import {
 	setSsoConnectionActive,
 } from "@/lib/dashboard-api";
 import type { Organization, SsoConnection } from "@banata-auth/shared";
-import { ExternalLink, RefreshCw, Trash2 } from "lucide-react";
+import { ExternalLink, Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_OIDC_SCOPES = "openid,email,profile";
@@ -113,191 +121,46 @@ function ProvisioningDetailsCard({ connection }: { connection: SsoConnection | n
 	}
 
 	return (
-		<Card>
+		<Card className="border-primary/20 bg-primary/5">
 			<CardHeader>
-				<CardTitle className="text-base">Provisioning details</CardTitle>
+				<CardTitle className="text-sm text-primary">Provisioning details</CardTitle>
 				<CardDescription>
-					Use these values in your IdP immediately after creating the connection.
+					Use these values in your IdP to finish setting up "{connection.name}".
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-3 text-sm">
-				<div className="rounded-lg border px-3 py-2">
-					<p className="text-xs uppercase tracking-wide text-muted-foreground">Connection</p>
-					<p className="font-medium">{connection.name}</p>
-				</div>
-				{connection.type === "saml" && connection.spMetadataUrl ? (
-					<div className="rounded-lg border px-3 py-2">
-						<p className="text-xs uppercase tracking-wide text-muted-foreground">SP metadata URL</p>
+				{connection.type === "saml" && connection.spMetadataUrl && (
+					<div className="space-y-1">
+						<p className="text-xs font-medium text-muted-foreground">SP metadata URL</p>
 						<a
 							href={connection.spMetadataUrl}
 							target="_blank"
 							rel="noreferrer"
-							className="mt-1 inline-flex items-center gap-1 font-mono text-xs text-primary underline-offset-4 hover:underline"
+							className="inline-flex items-center gap-1 font-mono text-xs text-primary underline-offset-4 hover:underline"
 						>
 							{connection.spMetadataUrl}
 							<ExternalLink className="size-3" />
 						</a>
 					</div>
-				) : null}
-				{connection.type === "saml" && connection.samlConfig?.spAcsUrl ? (
-					<div className="rounded-lg border px-3 py-2">
-						<p className="text-xs uppercase tracking-wide text-muted-foreground">ACS URL</p>
-						<p className="mt-1 font-mono text-xs">{connection.samlConfig.spAcsUrl}</p>
-					</div>
-				) : null}
-				{connection.type === "oidc" && connection.oidcConfig?.issuer ? (
-					<div className="rounded-lg border px-3 py-2">
-						<p className="text-xs uppercase tracking-wide text-muted-foreground">OIDC issuer</p>
-						<p className="mt-1 font-mono text-xs">{connection.oidcConfig.issuer}</p>
-					</div>
-				) : null}
-			</CardContent>
-		</Card>
-	);
-}
-
-function ConnectionTableRow({
-	connection,
-	organizationName,
-	isBusy,
-	onSetActive,
-	onDelete,
-}: {
-	connection: SsoConnection;
-	organizationName: string;
-	isBusy: boolean;
-	onSetActive: (connectionId: string, active: boolean) => void;
-	onDelete: (connectionId: string) => void;
-}) {
-	return (
-		<TableRow key={connection.id}>
-			<TableCell>
-				<div className="grid gap-1">
-					<div className="flex items-center gap-2">
-						<p className="font-medium">{connection.name}</p>
-						<Badge variant="outline" className="uppercase">
-							{connection.type}
-						</Badge>
-					</div>
-					<p className="font-mono text-xs text-muted-foreground">{connection.id}</p>
-				</div>
-			</TableCell>
-			<TableCell>{organizationName}</TableCell>
-			<TableCell className="font-mono text-xs text-muted-foreground">
-				{connection.domains.join(", ")}
-			</TableCell>
-			<TableCell>
-				<div className="flex flex-wrap gap-2">
-					<Badge variant={connectionStatusVariant(connection)}>{connection.state}</Badge>
-					<Badge variant={connection.domainVerified ? "default" : "secondary"}>
-						{connection.domainVerified ? "domain verified" : "domain pending"}
-					</Badge>
-				</div>
-			</TableCell>
-			<TableCell>
-				{connection.type === "oidc" ? (
-					<div className="grid gap-1 text-xs">
-						<p className="font-mono text-muted-foreground">
-							{connection.oidcConfig?.issuer || "Issuer missing"}
-						</p>
-						<p className="text-muted-foreground">
-							Client ID: {connection.oidcConfig?.clientId || "-"}
-						</p>
-					</div>
-				) : (
-					<div className="grid gap-1 text-xs">
-						<p className="font-mono text-muted-foreground">
-							{connection.samlConfig?.idpEntityId || "Entity ID missing"}
-						</p>
-						{connection.spMetadataUrl ? (
-							<a
-								href={connection.spMetadataUrl}
-								target="_blank"
-								rel="noreferrer"
-								className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-							>
-								SP metadata
-								<ExternalLink className="size-3" />
-							</a>
-						) : null}
+				)}
+				{connection.type === "saml" && connection.samlConfig?.spAcsUrl && (
+					<div className="space-y-1">
+						<p className="text-xs font-medium text-muted-foreground">ACS URL</p>
+						<code className="block rounded bg-muted px-2 py-1 font-mono text-xs">
+							{connection.samlConfig.spAcsUrl}
+						</code>
 					</div>
 				)}
-			</TableCell>
-			<TableCell className="text-right">
-				<div className="flex justify-end gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={isBusy}
-						onClick={() => onSetActive(connection.id, connection.state !== "active")}
-					>
-						{connection.state === "active" ? "Disable" : "Activate"}
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={isBusy}
-						onClick={() => onDelete(connection.id)}
-					>
-						<Trash2 className="size-4" />
-					</Button>
-				</div>
-			</TableCell>
-		</TableRow>
-	);
-}
-
-function ConnectionsTableBody({
-	isLoading,
-	visibleConnections,
-	organizations,
-	busyConnectionId,
-	onSetActive,
-	onDelete,
-}: {
-	isLoading: boolean;
-	visibleConnections: SsoConnection[];
-	organizations: Organization[];
-	busyConnectionId: string | null;
-	onSetActive: (connectionId: string, active: boolean) => void;
-	onDelete: (connectionId: string) => void;
-}) {
-	if (isLoading) {
-		return (
-			<TableRow>
-				<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-					Loading enterprise connections...
-				</TableCell>
-			</TableRow>
-		);
-	}
-
-	if (visibleConnections.length === 0) {
-		return (
-			<TableRow>
-				<TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-					No SSO connections configured for this scope.
-				</TableCell>
-			</TableRow>
-		);
-	}
-
-	return (
-		<>
-			{visibleConnections.map((connection) => (
-				<ConnectionTableRow
-					key={connection.id}
-					connection={connection}
-					organizationName={
-						organizations.find((organization) => organization.id === connection.organizationId)
-							?.name ?? connection.organizationId
-					}
-					isBusy={busyConnectionId === connection.id}
-					onSetActive={onSetActive}
-					onDelete={onDelete}
-				/>
-			))}
-		</>
+				{connection.type === "oidc" && connection.oidcConfig?.issuer && (
+					<div className="space-y-1">
+						<p className="text-xs font-medium text-muted-foreground">OIDC issuer</p>
+						<code className="block rounded bg-muted px-2 py-1 font-mono text-xs">
+							{connection.oidcConfig.issuer}
+						</code>
+					</div>
+				)}
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -538,6 +401,8 @@ function useConnectionsPanelModel(organizationId?: string) {
 }
 
 export function ConnectionsPanel({ organizationId }: { organizationId?: string }) {
+	const [showCreateDialog, setShowCreateDialog] = useState(false);
+	const model = useConnectionsPanelModel(organizationId);
 	const {
 		organizations,
 		availableOrganizations,
@@ -581,33 +446,171 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 		handleCreateConnection,
 		handleSetActive,
 		handleDelete,
-	} = useConnectionsPanelModel(organizationId);
+	} = model;
 
 	return (
 		<div className="grid gap-6">
-			<Card>
+			<div className="flex flex-wrap items-center gap-2">
+				<Button
+					onClick={() => setShowCreateDialog(true)}
+					disabled={availableOrganizations.length === 0}
+				>
+					<Plus className="size-4" />
+					Create Connection
+				</Button>
+				<Button variant="outline" onClick={() => void loadData()} disabled={isLoading}>
+					<RefreshCw className="size-4" />
+					Refresh
+				</Button>
+				{availableOrganizations.length === 0 && !isLoading && (
+					<p className="text-sm text-muted-foreground">
+						Create an organization first before adding enterprise SSO.
+					</p>
+				)}
+			</div>
+
+			{error && <p className="text-sm text-destructive">{error}</p>}
+
+			<ProvisioningDetailsCard connection={lastCreated} />
+
+			<Card className="gap-0 overflow-hidden py-0">
 				<CardHeader>
-					<CardTitle className="text-base">Create connection</CardTitle>
+					<CardTitle className="text-base">Connections</CardTitle>
 					<CardDescription>
-						Create an enterprise SSO connection backed by the project-scoped Banata RBAC routes.
+						{organizationId
+							? "SSO connections scoped to the selected organization."
+							: "All enterprise SSO connections for this project."}
 					</CardDescription>
 				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleCreateConnection} className="grid gap-5">
-						<div className="grid gap-4 md:grid-cols-2">
+				<CardContent className="px-0">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Connection</TableHead>
+								<TableHead>Organization</TableHead>
+								<TableHead>Domains</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{isLoading ? (
+								<TableRow>
+									<TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+										Loading connections...
+									</TableCell>
+								</TableRow>
+							) : visibleConnections.length === 0 ? (
+								<TableRow>
+									<TableCell colSpan={5} className="py-12 text-center">
+										<div className="flex flex-col items-center gap-3 text-muted-foreground">
+											<Link2 className="size-8 opacity-40" />
+											<div className="space-y-1">
+												<p className="text-sm font-medium">No SSO connections</p>
+												<p className="text-xs">
+													Create your first enterprise SSO connection.
+												</p>
+											</div>
+										</div>
+									</TableCell>
+								</TableRow>
+							) : (
+								visibleConnections.map((connection) => (
+									<TableRow key={connection.id}>
+										<TableCell>
+											<div className="grid gap-0.5">
+												<div className="flex items-center gap-2">
+													<p className="font-medium">{connection.name}</p>
+													<Badge variant="outline" className="text-[11px] uppercase">
+														{connection.type}
+													</Badge>
+												</div>
+												<p className="font-mono text-xs text-muted-foreground">
+													{connection.id}
+												</p>
+											</div>
+										</TableCell>
+										<TableCell className="text-sm">
+											{organizations.find((o) => o.id === connection.organizationId)?.name ??
+												connection.organizationId}
+										</TableCell>
+										<TableCell className="font-mono text-xs text-muted-foreground">
+											{connection.domains.join(", ")}
+										</TableCell>
+										<TableCell>
+											<div className="flex flex-wrap gap-1.5">
+												<Badge variant={connectionStatusVariant(connection)}>
+													{connection.state}
+												</Badge>
+												<Badge variant={connection.domainVerified ? "default" : "secondary"}>
+													{connection.domainVerified ? "verified" : "pending"}
+												</Badge>
+											</div>
+										</TableCell>
+										<TableCell className="text-right">
+											<div className="flex justify-end gap-2">
+												<Button
+													variant="outline"
+													size="sm"
+													disabled={busyConnectionId === connection.id}
+													onClick={() =>
+														void handleSetActive(connection.id, connection.state !== "active")
+													}
+												>
+													{connection.state === "active" ? "Disable" : "Activate"}
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="size-8 text-muted-foreground hover:text-destructive"
+													disabled={busyConnectionId === connection.id}
+													onClick={() => void handleDelete(connection.id)}
+												>
+													<Trash2 className="size-4" />
+												</Button>
+											</div>
+										</TableCell>
+									</TableRow>
+								))
+							)}
+						</TableBody>
+					</Table>
+				</CardContent>
+			</Card>
+
+			{/* Create Connection Dialog */}
+			<Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+				<DialogContent className="max-w-xl">
+					<DialogHeader>
+						<DialogTitle>Create SSO Connection</DialogTitle>
+						<DialogDescription>
+							Set up an enterprise SSO connection with OIDC or SAML.
+						</DialogDescription>
+					</DialogHeader>
+					<form
+						onSubmit={async (e) => {
+							await handleCreateConnection(e);
+							if (!error) setShowCreateDialog(false);
+						}}
+						className="grid gap-4"
+					>
+						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="grid gap-2">
 								<Label htmlFor="connection-organization">Organization</Label>
 								{organizationId ? (
 									<Input id="connection-organization" value={organizationId} disabled />
 								) : (
-									<Select value={selectedOrganizationId} onValueChange={setSelectedOrganizationId}>
+									<Select
+										value={selectedOrganizationId}
+										onValueChange={setSelectedOrganizationId}
+									>
 										<SelectTrigger id="connection-organization">
-											<SelectValue placeholder="Select an organization" />
+											<SelectValue placeholder="Select organization" />
 										</SelectTrigger>
 										<SelectContent>
-											{availableOrganizations.map((organization) => (
-												<SelectItem key={organization.id} value={organization.id}>
-													{organization.name}
+											{availableOrganizations.map((org) => (
+												<SelectItem key={org.id} value={org.id}>
+													{org.name}
 												</SelectItem>
 											))}
 										</SelectContent>
@@ -624,28 +627,16 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 									required
 								/>
 							</div>
-							<div className="grid gap-2">
-								<Label htmlFor="connection-type">Protocol</Label>
-								<Select value={type} onValueChange={(value) => setType(value as "oidc" | "saml")}>
-									<SelectTrigger id="connection-type">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="oidc">OIDC</SelectItem>
-										<SelectItem value="saml">SAML 2.0</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-							<div className="grid gap-2">
-								<Label htmlFor="connection-domains">Routing domains</Label>
-								<Input
-									id="connection-domains"
-									value={domains}
-									onChange={(event) => setDomains(event.target.value)}
-									placeholder="acme.com, login.acme.com"
-									required
-								/>
-							</div>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="connection-domains">Routing domains</Label>
+							<Input
+								id="connection-domains"
+								value={domains}
+								onChange={(event) => setDomains(event.target.value)}
+								placeholder="acme.com, login.acme.com"
+								required
+							/>
 						</div>
 
 						<Tabs value={type} onValueChange={(value) => setType(value as "oidc" | "saml")}>
@@ -653,8 +644,8 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 								<TabsTrigger value="oidc">OIDC</TabsTrigger>
 								<TabsTrigger value="saml">SAML</TabsTrigger>
 							</TabsList>
-							<TabsContent value="oidc" className="grid gap-4">
-								<div className="grid gap-4 md:grid-cols-2">
+							<TabsContent value="oidc" className="grid gap-3">
+								<div className="grid gap-3 sm:grid-cols-2">
 									<div className="grid gap-2">
 										<Label htmlFor="oidc-issuer">Issuer</Label>
 										<Input
@@ -706,8 +697,8 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 									/>
 								</div>
 							</TabsContent>
-							<TabsContent value="saml" className="grid gap-4">
-								<div className="grid gap-4 md:grid-cols-2">
+							<TabsContent value="saml" className="grid gap-3">
+								<div className="grid gap-3 sm:grid-cols-2">
 									<div className="grid gap-2">
 										<Label htmlFor="saml-entity-id">IdP entity ID</Label>
 										<Input
@@ -728,17 +719,19 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 											required={type === "saml"}
 										/>
 									</div>
-									<div className="grid gap-2 md:col-span-2">
-										<Label htmlFor="saml-certificate">X.509 certificate</Label>
-										<Textarea
-											id="saml-certificate"
-											value={samlCertificate}
-											onChange={(event) => setSamlCertificate(event.target.value)}
-											placeholder="-----BEGIN CERTIFICATE-----"
-											rows={7}
-											required={type === "saml"}
-										/>
-									</div>
+								</div>
+								<div className="grid gap-2">
+									<Label htmlFor="saml-certificate">X.509 certificate</Label>
+									<Textarea
+										id="saml-certificate"
+										value={samlCertificate}
+										onChange={(event) => setSamlCertificate(event.target.value)}
+										placeholder="-----BEGIN CERTIFICATE-----"
+										rows={5}
+										required={type === "saml"}
+									/>
+								</div>
+								<div className="grid gap-3 sm:grid-cols-2">
 									<div className="grid gap-2">
 										<Label htmlFor="saml-sp-entity-id">SP entity ID (optional)</Label>
 										<Input
@@ -754,7 +747,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 											id="saml-name-id-format"
 											value={samlNameIdFormat}
 											onChange={(event) => setSamlNameIdFormat(event.target.value)}
-											placeholder="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+											placeholder="urn:oasis:names:tc:SAML:1.1:..."
 										/>
 									</div>
 								</div>
@@ -762,7 +755,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 									<div>
 										<p className="text-sm font-medium">Sign authn requests</p>
 										<p className="text-xs text-muted-foreground">
-											Enable this when your IdP requires signed authentication requests.
+											Enable when your IdP requires signed requests.
 										</p>
 									</div>
 									<Switch checked={signRequest} onCheckedChange={setSignRequest} />
@@ -770,66 +763,23 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 							</TabsContent>
 						</Tabs>
 
-						<div className="flex flex-wrap items-center gap-3">
-							<Button type="submit" disabled={isSubmitting || availableOrganizations.length === 0}>
-								{isSubmitting ? "Creating..." : "Create connection"}
-							</Button>
+						{error && <p className="text-sm text-destructive">{error}</p>}
+
+						<DialogFooter>
 							<Button
 								type="button"
-								variant="secondary"
-								onClick={() => void loadData()}
-								disabled={isLoading}
+								variant="outline"
+								onClick={() => setShowCreateDialog(false)}
 							>
-								<RefreshCw className="mr-2 size-4" />
-								Refresh
+								Cancel
 							</Button>
-							{availableOrganizations.length === 0 ? (
-								<p className="text-sm text-muted-foreground">
-									Create an organization first before adding enterprise SSO.
-								</p>
-							) : null}
-						</div>
-						{error ? <p className="text-sm text-destructive">{error}</p> : null}
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? "Creating..." : "Create Connection"}
+							</Button>
+						</DialogFooter>
 					</form>
-				</CardContent>
-			</Card>
-
-			<ProvisioningDetailsCard connection={lastCreated} />
-
-			<Card className="gap-0 overflow-hidden py-0">
-				<CardHeader>
-					<CardTitle className="text-base">Live connections</CardTitle>
-					<CardDescription>
-						{organizationId
-							? "Connections scoped to the selected organization."
-							: "Connections scoped to the active project."}
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="px-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Connection</TableHead>
-								<TableHead>Organization</TableHead>
-								<TableHead>Routing</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead>Protocol details</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<ConnectionsTableBody
-								isLoading={isLoading}
-								visibleConnections={visibleConnections}
-								organizations={organizations}
-								busyConnectionId={busyConnectionId}
-								onSetActive={(connectionId, active) => void handleSetActive(connectionId, active)}
-								onDelete={(connectionId) => void handleDelete(connectionId)}
-							/>
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

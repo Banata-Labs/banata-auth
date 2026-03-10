@@ -5,6 +5,14 @@ import { ProviderIcon, providerMeta } from "@/components/provider-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SkeletonHeader, SkeletonProviderRow } from "@/components/ui/skeleton";
@@ -18,7 +26,7 @@ import {
 	saveSocialProviderCredential,
 	toggleSocialProvider,
 } from "@/lib/dashboard-api";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Settings, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -73,6 +81,7 @@ export default function ProvidersPage() {
 	const [savingProvider, setSavingProvider] = useState<string | null>(null);
 	const [deletingProvider, setDeletingProvider] = useState<string | null>(null);
 	const [togglingProviders, setTogglingProviders] = useState<Record<string, boolean>>({});
+	const [managingProvider, setManagingProvider] = useState<string | null>(null);
 
 	const { reportError } = useBackendStatus();
 
@@ -144,6 +153,7 @@ export default function ProvidersPage() {
 					},
 				}));
 				toast.success("Provider credentials saved");
+				setManagingProvider(null);
 			} catch (error) {
 				reportError(error);
 				toast.error("Failed to save provider credentials");
@@ -167,6 +177,7 @@ export default function ProvidersPage() {
 					return next;
 				});
 				toast.success("Provider credentials removed");
+				setManagingProvider(null);
 			} catch (error) {
 				reportError(error);
 				toast.error("Failed to remove provider credentials");
@@ -203,6 +214,8 @@ export default function ProvidersPage() {
 		[reportError],
 	);
 
+	const managingProviderDef = providerDefs.find((p) => p.id === managingProvider);
+
 	if (isLoading) {
 		return (
 			<div className="grid gap-6">
@@ -224,7 +237,7 @@ export default function ProvidersPage() {
 				<h1 className="text-2xl font-semibold tracking-tight">Providers</h1>
 				<p className="mt-1 max-w-3xl text-sm text-muted-foreground">
 					Configure provider credentials for this project, store them securely in the vault, then
-					enable the providers you want to expose on the hosted auth flow for this app.
+					enable the providers you want to expose on the hosted auth flow.
 				</p>
 				<p className="mt-2 text-xs text-muted-foreground">
 					Configured: {configuredCount} · Enabled: {enabledCount}
@@ -236,136 +249,50 @@ export default function ProvidersPage() {
 					<div className="divide-y divide-border">
 						{providerDefs.map((provider) => {
 							const info = credentials[provider.id];
-							const draft = drafts[provider.id] ?? {
-								clientId: "",
-								clientSecret: "",
-								tenantId: "",
-							};
 							const enabled = config?.socialProviders[provider.id]?.enabled ?? false;
 							const isConfigured = !!info;
-							const isBusy =
-								savingProvider === provider.id ||
-								deletingProvider === provider.id ||
-								!!togglingProviders[provider.id];
 
 							return (
-								<div key={provider.id} className="px-6 py-5">
-									<div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-										<div className="space-y-3">
-											<div className="flex items-center gap-3">
-												<div className="flex size-10 items-center justify-center rounded-full bg-muted">
-													<ProviderIcon
-														provider={provider.id}
-														size={22}
-														className={providerMeta[provider.id]?.color}
-													/>
-												</div>
-												<div className="space-y-1">
-													<div className="flex flex-wrap items-center gap-2">
-														<span className="text-sm font-medium">{provider.name}</span>
-														<Badge variant={enabled ? "default" : "secondary"}>
-															{enabled ? "Enabled" : "Disabled"}
-														</Badge>
-														{isConfigured ? (
-															<Badge variant="outline">Credentials stored</Badge>
-														) : (
-															<Badge variant="outline">Not configured</Badge>
-														)}
-													</div>
-													<p className="text-sm text-muted-foreground">{provider.description}</p>
-												</div>
-											</div>
-
-											<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-												<div className="space-y-2">
-													<Label htmlFor={`${provider.id}-client-id`}>Client ID</Label>
-													<Input
-														id={`${provider.id}-client-id`}
-														value={draft.clientId}
-														onChange={(event) =>
-															handleDraftChange(provider.id, { clientId: event.target.value })
-														}
-														placeholder="Enter the OAuth client ID"
-													/>
-												</div>
-												<div className="space-y-2">
-													<Label htmlFor={`${provider.id}-client-secret`}>Client secret</Label>
-													<Input
-														id={`${provider.id}-client-secret`}
-														type="password"
-														value={draft.clientSecret}
-														onChange={(event) =>
-															handleDraftChange(provider.id, { clientSecret: event.target.value })
-														}
-														placeholder={
-															info?.hasClientSecret
-																? "Stored securely. Enter a new secret to rotate it."
-																: "Enter the OAuth client secret"
-														}
-													/>
-												</div>
-												{provider.tenantLabel ? (
-													<div className="space-y-2">
-														<Label htmlFor={`${provider.id}-tenant-id`}>
-															{provider.tenantLabel}
-														</Label>
-														<Input
-															id={`${provider.id}-tenant-id`}
-															value={draft.tenantId}
-															onChange={(event) =>
-																handleDraftChange(provider.id, { tenantId: event.target.value })
-															}
-															placeholder="Optional tenant identifier"
-														/>
-													</div>
+								<div key={provider.id} className="flex items-center justify-between gap-4 px-6 py-4">
+									<div className="flex items-center gap-3">
+										<div className="flex size-10 items-center justify-center rounded-full bg-muted">
+											<ProviderIcon
+												provider={provider.id}
+												size={22}
+												className={providerMeta[provider.id]?.color}
+											/>
+										</div>
+										<div className="min-w-0">
+											<div className="flex flex-wrap items-center gap-2">
+												<span className="text-sm font-medium">{provider.name}</span>
+												{isConfigured ? (
+													<Badge variant="outline" className="text-[11px]">
+														Configured
+													</Badge>
 												) : null}
 											</div>
-
-											<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-												{info?.clientId ? <span>Stored client ID: {info.clientId}</span> : null}
-												{info?.tenantId ? <span>Tenant ID: {info.tenantId}</span> : null}
-											</div>
+											<p className="text-xs text-muted-foreground">{provider.description}</p>
 										</div>
-
-										<div className="flex min-w-[220px] flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4">
-											<div className="flex items-center justify-between gap-4">
-												<div className="space-y-1">
-													<p className="text-sm font-medium">Expose on hosted auth</p>
-													<p className="text-xs text-muted-foreground">
-														Users can only sign in with this provider after credentials are saved
-														for this project.
-													</p>
-												</div>
-												<Switch
-													checked={enabled}
-													disabled={!isConfigured || !!togglingProviders[provider.id]}
-													onCheckedChange={() => handleToggle(provider.id, enabled)}
-												/>
-											</div>
-
-											<Button
-												onClick={() => handleSave(provider.id)}
-												disabled={isBusy || !draft.clientId.trim()}
-											>
-												{savingProvider === provider.id ? (
-													<Loader2 className="size-4 animate-spin" />
-												) : null}
-												Save credentials
-											</Button>
-
-											<Button
-												variant="outline"
-												onClick={() => handleDelete(provider.id)}
-												disabled={!isConfigured || isBusy}
-											>
-												{deletingProvider === provider.id ? (
-													<Loader2 className="size-4 animate-spin" />
-												) : (
-													<Trash2 className="size-4" />
-												)}
-												Remove credentials
-											</Button>
+									</div>
+									<div className="flex items-center gap-3">
+										<div className="flex items-center gap-2">
+											<span className="text-xs text-muted-foreground">
+												{enabled ? "On" : "Off"}
+											</span>
+											<Switch
+												checked={enabled}
+												disabled={!isConfigured || !!togglingProviders[provider.id]}
+												onCheckedChange={() => handleToggle(provider.id, enabled)}
+											/>
 										</div>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => setManagingProvider(provider.id)}
+										>
+											<Settings className="size-4" />
+											Manage
+										</Button>
 									</div>
 								</div>
 							);
@@ -373,6 +300,138 @@ export default function ProvidersPage() {
 					</div>
 				</CardContent>
 			</Card>
+
+			{/* Manage Provider Dialog */}
+			<Dialog
+				open={!!managingProvider}
+				onOpenChange={(open) => {
+					if (!open) setManagingProvider(null);
+				}}
+			>
+				{managingProviderDef && (
+					<DialogContent>
+						<DialogHeader>
+							<div className="flex items-center gap-3">
+								<div className="flex size-10 items-center justify-center rounded-full bg-muted">
+									<ProviderIcon
+										provider={managingProviderDef.id}
+										size={22}
+										className={providerMeta[managingProviderDef.id]?.color}
+									/>
+								</div>
+								<div>
+									<DialogTitle>{managingProviderDef.name}</DialogTitle>
+									<DialogDescription>{managingProviderDef.description}</DialogDescription>
+								</div>
+							</div>
+						</DialogHeader>
+
+						{(() => {
+							const providerId = managingProviderDef.id;
+							const info = credentials[providerId];
+							const draft = drafts[providerId] ?? {
+								clientId: "",
+								clientSecret: "",
+								tenantId: "",
+							};
+							const isConfigured = !!info;
+							const isBusy =
+								savingProvider === providerId || deletingProvider === providerId;
+
+							return (
+								<div className="grid gap-4">
+									{isConfigured && info?.clientId && (
+										<div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+											<p className="text-xs text-muted-foreground">
+												Stored client ID: <span className="font-mono">{info.clientId}</span>
+											</p>
+											{info?.tenantId && (
+												<p className="text-xs text-muted-foreground">
+													Tenant ID: <span className="font-mono">{info.tenantId}</span>
+												</p>
+											)}
+										</div>
+									)}
+
+									<div className="grid gap-3">
+										<div className="grid gap-2">
+											<Label htmlFor={`${providerId}-client-id`}>Client ID</Label>
+											<Input
+												id={`${providerId}-client-id`}
+												value={draft.clientId}
+												onChange={(event) =>
+													handleDraftChange(providerId, { clientId: event.target.value })
+												}
+												placeholder="Enter the OAuth client ID"
+											/>
+										</div>
+										<div className="grid gap-2">
+											<Label htmlFor={`${providerId}-client-secret`}>Client secret</Label>
+											<Input
+												id={`${providerId}-client-secret`}
+												type="password"
+												value={draft.clientSecret}
+												onChange={(event) =>
+													handleDraftChange(providerId, { clientSecret: event.target.value })
+												}
+												placeholder={
+													info?.hasClientSecret
+														? "Stored securely. Enter a new secret to rotate."
+														: "Enter the OAuth client secret"
+												}
+											/>
+										</div>
+										{managingProviderDef.tenantLabel && (
+											<div className="grid gap-2">
+												<Label htmlFor={`${providerId}-tenant-id`}>
+													{managingProviderDef.tenantLabel}
+												</Label>
+												<Input
+													id={`${providerId}-tenant-id`}
+													value={draft.tenantId}
+													onChange={(event) =>
+														handleDraftChange(providerId, { tenantId: event.target.value })
+													}
+													placeholder="Optional tenant identifier"
+												/>
+											</div>
+										)}
+									</div>
+
+									<DialogFooter className="gap-2 sm:justify-between">
+										{isConfigured ? (
+											<Button
+												variant="outline"
+												onClick={() => handleDelete(providerId)}
+												disabled={isBusy}
+												className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+											>
+												{deletingProvider === providerId ? (
+													<Loader2 className="size-4 animate-spin" />
+												) : (
+													<Trash2 className="size-4" />
+												)}
+												Remove
+											</Button>
+										) : (
+											<div />
+										)}
+										<Button
+											onClick={() => handleSave(providerId)}
+											disabled={isBusy || !draft.clientId.trim()}
+										>
+											{savingProvider === providerId ? (
+												<Loader2 className="size-4 animate-spin" />
+											) : null}
+											Save credentials
+										</Button>
+									</DialogFooter>
+								</div>
+							);
+						})()}
+					</DialogContent>
+				)}
+			</Dialog>
 		</div>
 	);
 }
