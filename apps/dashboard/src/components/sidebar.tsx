@@ -1,6 +1,5 @@
 "use client";
 
-import { LogoMark } from "@/components/logo";
 import { ProjectSwitcher } from "@/components/project-switcher";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -166,21 +165,13 @@ export function Sidebar() {
 
 	return (
 		<aside className="fixed inset-y-0 left-0 z-30 flex w-[240px] flex-col border-r border-sidebar-border bg-sidebar">
-			{/* Header */}
-			<div className="border-b border-border">
-				<div className="flex h-14 items-center gap-2 px-4">
-					<LogoMark size={24} className="shrink-0 text-sidebar-primary" />
-					<span className="truncate text-[18px] font-semibold text-sidebar-foreground">
-						Banata Auth
-					</span>
-				</div>
-				<div className="border-t border-border px-3 py-3">
-					<ProjectSwitcher className="w-full" />
-				</div>
+			{/* Header — project switcher */}
+			<div className="border-b border-sidebar-border px-3 py-3">
+				<ProjectSwitcher className="w-full" />
 			</div>
 
 			{/* Navigation */}
-			<nav className="flex-1 overflow-y-auto px-3 py-4">
+			<nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-4">
 				<div className="flex flex-col gap-6">
 					{navSections.map((section, sectionIdx) => (
 						<div key={section.title || `section-${sectionIdx}`}>
