@@ -598,6 +598,44 @@ async function countDirectoryUsers(db: PluginDBAdapter, providerId: string) {
 export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 	return {
 		id: "banata-enterprise",
+		schema: {
+			ssoProvider: {
+				fields: {
+					organizationId: { type: "string" as const, required: false },
+					providerId: { type: "string" as const, required: true },
+					issuer: { type: "string" as const, required: true },
+					domain: { type: "string" as const, required: true },
+					name: { type: "string" as const, required: false },
+					domainVerified: { type: "boolean" as const, required: false },
+					projectId: { type: "string" as const, required: false },
+					oidcConfig: { type: "string" as const, required: false },
+					samlConfig: { type: "string" as const, required: false },
+					providerType: { type: "string" as const, required: true },
+					active: { type: "boolean" as const, required: false },
+					userId: { type: "string" as const, required: false },
+					createdAt: { type: "number" as const, required: true },
+					updatedAt: { type: "number" as const, required: true },
+				},
+			},
+			scimProvider: {
+				fields: {
+					organizationId: { type: "string" as const, required: false },
+					providerId: { type: "string" as const, required: true },
+					scimToken: { type: "string" as const, required: false },
+					name: { type: "string" as const, required: false },
+					provider: { type: "string" as const, required: false },
+					projectId: { type: "string" as const, required: false },
+					endpointUrl: { type: "string" as const, required: false },
+					tokenHash: { type: "string" as const, required: false },
+					active: { type: "boolean" as const, required: false },
+					lastSyncAt: { type: "number" as const, required: false },
+					lastSyncStatus: { type: "string" as const, required: false },
+					userId: { type: "string" as const, required: false },
+					createdAt: { type: "number" as const, required: true },
+					updatedAt: { type: "number" as const, required: true },
+				},
+			},
+		},
 		endpoints: {
 			listSsoProviders: createAuthEndpoint(
 				"/banata/sso/list-providers",

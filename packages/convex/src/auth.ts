@@ -414,6 +414,13 @@ function mergeBetterAuthOptions(
 	return mergeOptionValues(base, override) as BetterAuthOptions;
 }
 
+function createOptionalStringField() {
+	return {
+		type: "string" as const,
+		required: false,
+	};
+}
+
 function resolveConfiguredSecret(secret: string | undefined): string {
 	const normalized = typeof secret === "string" ? secret.trim() : "";
 	if (normalized.length > 0) {
@@ -632,6 +639,27 @@ export function createBanataAuthOptions(
 		secret: resolvedSecret,
 		trustedOrigins,
 		database: dbAdapter,
+		user: {
+			additionalFields: {
+				projectId: createOptionalStringField(),
+			},
+		},
+		session: {
+			additionalFields: {
+				projectId: createOptionalStringField(),
+			},
+		},
+		account: {
+			storeStateStrategy: "cookie",
+			additionalFields: {
+				projectId: createOptionalStringField(),
+			},
+		},
+		verification: {
+			additionalFields: {
+				projectId: createOptionalStringField(),
+			},
+		},
 		emailAndPassword: {
 			enabled: methods.emailPassword !== false,
 			requireEmailVerification: emailPassword.requireEmailVerification ?? true,

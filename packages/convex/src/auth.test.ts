@@ -173,6 +173,52 @@ describe("createBanataAuthOptions()", () => {
 		).toBeUndefined();
 	});
 
+	it("registers projectId as a known field on core auth models", () => {
+		const options = createOptions();
+
+		expect(options.user?.additionalFields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+		expect(options.session?.additionalFields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+		expect(options.account?.additionalFields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+		expect(options.verification?.additionalFields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+	});
+
+	it("registers projectId-aware enterprise models", () => {
+		const options = createOptions();
+		const enterprisePlugin = options.plugins?.find(
+			(plugin) => plugin.id === "banata-enterprise",
+		) as
+			| (BetterAuthPlugin & {
+					schema?: Record<
+						string,
+						{
+							fields?: Record<string, { type: string; required?: boolean }>;
+						}
+					>;
+			  })
+			| undefined;
+
+		expect(enterprisePlugin?.schema?.ssoProvider?.fields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+		expect(enterprisePlugin?.schema?.scimProvider?.fields?.projectId).toMatchObject({
+			type: "string",
+			required: false,
+		});
+	});
+
 	it("builds a packaged component helper with the bundled schema", () => {
 		const definedAuth = defineBanataAuth({
 			componentRef: {
