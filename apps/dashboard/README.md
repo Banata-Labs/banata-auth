@@ -1,6 +1,13 @@
 # Dashboard go-live setup
 
-This app is wired to its own Convex project and Better Auth backend.
+This app is Banata's own managed dashboard. The expected flow is:
+
+1. A developer signs in to the dashboard.
+2. Banata auto-creates a default project on first load if none exists.
+3. The developer creates a project-scoped API key from the dashboard.
+4. Their customer app binds to Banata using that API key.
+
+This repo's dashboard app is wired to its own Convex project and Better Auth backend.
 
 ## 1) GitHub OAuth app
 
@@ -41,4 +48,69 @@ From repo root:
 bunx turbo run dev --filter=@banata-auth/dashboard
 ```
 
-Open `http://localhost:3001/sign-in` and sign in with GitHub.
+In a second terminal, start Convex with a fresh build of the workspace packages:
+
+```bash
+bun run --cwd apps/dashboard dev:convex
+```
+
+Open `http://localhost:3000/sign-in` and sign in with GitHub.
+
+## 5) Important local dev note
+
+The dashboard frontend and the Convex backend do not hot-reload the same way.
+If you change code inside `packages/shared`, `packages/sdk`, `packages/react`,
+`packages/nextjs`, or `packages/convex`, you must rebuild those packages before
+starting `convex dev`, and you should restart `convex dev` after such changes.
+
+If you skip that restart, the UI can talk to a stale Convex auth runtime and
+you may see errors such as:
+
+- `METADATA_IS_DISABLED` when creating project-scoped API keys
+- missing new auth endpoints or old auth behavior after a package fix
+
+## 6) Production deployment on Vercel
+
+The dashboard frontend and the dashboard Convex backend must deploy together.
+If Vercel builds the Next.js app without also running `convex deploy`, the
+hosted dashboard can serve new frontend code against a stale Convex auth
+runtime. That is exactly how production can end up returning:
+
+- `METADATA_IS_DISABLED` when local development already works
+
+Recommended Vercel setup for the `apps/dashboard` project:
+
+- Root Directory:
+  - `apps/dashboard`
+- Install Command:
+  - `bun install --frozen-lockfile`
+- Build Command:
+  - `bun run build:vercel`
+
+What `build:vercel` does:
+
+- calls `bunx convex deploy -y`
+- lets Convex inject the deployed cloud URL into the build command via
+  `--cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL`
+- derives `NEXT_PUBLIC_CONVEX_SITE_URL` automatically from that cloud URL
+- runs the Next.js build only after Convex finishes deploying
+
+Vercel env vars to add:
+
+- `CONVEX_DEPLOY_KEY`
+  - production: a Production Deploy Key for the Banata dashboard Convex project
+  - preview: a Preview Deploy Key if you want preview deployments to push to
+    preview Convex deployments automatically
+
+Optional Vercel env vars:
+
+- `NEXT_PUBLIC_CONVEX_SITE_URL`
+  - only needed if you do not want the build script to derive it from
+    `NEXT_PUBLIC_CONVEX_URL`
+
+Keep the actual auth secrets on the Convex deployment, not in Vercel:
+
+- `SITE_URL`
+- `BETTER_AUTH_SECRET`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`

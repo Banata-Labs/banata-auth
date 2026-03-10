@@ -2,6 +2,7 @@ import { BackendStatusProvider } from "@/components/backend-status";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { getToken } from "@/lib/auth-server";
+import { resolveDashboardConvexSiteUrl } from "@/lib/convex-urls";
 import { BotIdClient } from "botid/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -29,6 +30,7 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const token = await getToken();
+	const convexSiteUrl = resolveDashboardConvexSiteUrl();
 
 	return (
 		<html lang="en" className="dark">
@@ -40,10 +42,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						<link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_URL} />
 					</>
 				)}
-				{process.env.NEXT_PUBLIC_CONVEX_SITE_URL && (
+				{convexSiteUrl && (
 					<>
-						<link rel="preconnect" href={process.env.NEXT_PUBLIC_CONVEX_SITE_URL} />
-						<link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_CONVEX_SITE_URL} />
+						<link rel="preconnect" href={convexSiteUrl} />
+						<link rel="dns-prefetch" href={convexSiteUrl} />
 					</>
 				)}
 				<BotIdClient protect={botIdProtectedRoutes} />
