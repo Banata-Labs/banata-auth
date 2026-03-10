@@ -3,7 +3,10 @@ import { fetchAction, fetchMutation, fetchQuery, preloadQuery } from "convex/nex
 import type { Preloaded } from "convex/react";
 import type { ArgsAndOptions, FunctionReference, FunctionReturnType } from "convex/server";
 import React from "react";
-import { createRouteHandler, type BanataProjectRouteScope } from "./route-handler";
+import {
+	createRouteHandler,
+	type BanataProjectRouteScope,
+} from "./route-handler";
 
 const cache =
 	React.cache ??
@@ -44,12 +47,16 @@ function applyServerAuthHeaders(
 	headers: Headers,
 	options: {
 		apiKey?: string;
+		allowInternalProjectScope?: boolean;
 		project?: BanataProjectRouteScope;
 	},
 ): void {
 	const apiKey = normalizeValue(options.apiKey);
 	if (apiKey) {
 		headers.set("x-api-key", apiKey);
+	}
+	if (options.allowInternalProjectScope) {
+		headers.set("x-banata-internal-project-scope", "1");
 	}
 
 	const projectId = normalizeValue(options.project?.projectId);
@@ -67,7 +74,7 @@ function applyServerAuthHeaders(
 // utilities do not have a Request object to inspect.
 type StaticProjectScope = Omit<BanataProjectRouteScope, "resolve">;
 
-export interface BanataAuthServerOptions extends GetTokenOptions {
+interface BanataAuthServerBaseOptions extends GetTokenOptions {
 	/**
 	 * Your Convex cloud URL (e.g. `https://adjective-animal-123.convex.cloud`).
 	 * Typically `process.env.NEXT_PUBLIC_CONVEX_URL`.
@@ -79,7 +86,9 @@ export interface BanataAuthServerOptions extends GetTokenOptions {
 	 * Typically `process.env.NEXT_PUBLIC_CONVEX_SITE_URL`.
 	 */
 	convexSiteUrl: string;
+}
 
+export type BanataManagedAuthServerOptions = {
 	/**
 	 * Project-scoped Banata API key.
 	 *
@@ -87,14 +96,24 @@ export interface BanataAuthServerOptions extends GetTokenOptions {
 	 * The browser never sees this key; the Next.js server injects it while
 	 * proxying auth traffic and refreshing Convex auth tokens.
 	 */
-	apiKey?: string;
-
-	/**
-	 * Optional legacy scope hints for partially migrated or self-hosted setups.
-	 * Managed Banata resolves project scope from the API key first.
-	 */
+	apiKey: string;
+	allowInternalProjectScope?: false;
 	project?: StaticProjectScope;
-}
+};
+
+export type BanataInternalAuthServerOptions = {
+	apiKey?: string;
+	/**
+	 * Banata-internal escape hatch for hosted first-party surfaces.
+	 *
+	 * This should not be used by customer apps.
+	 */
+	allowInternalProjectScope: true;
+	project?: StaticProjectScope;
+};
+
+export type BanataAuthServerOptions = BanataAuthServerBaseOptions &
+	(BanataManagedAuthServerOptions | BanataInternalAuthServerOptions);
 
 /**
  * Create the Banata Auth server utilities for Next.js.
@@ -113,6 +132,7 @@ export function createBanataAuthServer(opts: BanataAuthServerOptions) {
 		mutableHeaders.delete("transfer-encoding");
 		applyServerAuthHeaders(mutableHeaders, {
 			apiKey: opts.apiKey,
+			allowInternalProjectScope: opts.allowInternalProjectScope,
 			project: opts.project,
 		});
 		return getBetterAuthToken(siteUrl, mutableHeaders, {
@@ -122,11 +142,18 @@ export function createBanataAuthServer(opts: BanataAuthServerOptions) {
 		});
 	});
 
-	const handler = createRouteHandler({
-		convexSiteUrl: opts.convexSiteUrl,
-		apiKey: opts.apiKey,
-		project: opts.project,
-	});
+	const handler = opts.allowInternalProjectScope
+		? createRouteHandler({
+				convexSiteUrl: opts.convexSiteUrl,
+				allowInternalProjectScope: true,
+				apiKey: opts.apiKey,
+				project: opts.project,
+			})
+		: createRouteHandler({
+				convexSiteUrl: opts.convexSiteUrl,
+				apiKey: opts.apiKey,
+				project: opts.project,
+			});
 
 	const callWithToken = async <
 		FnType extends "query" | "mutation" | "action",

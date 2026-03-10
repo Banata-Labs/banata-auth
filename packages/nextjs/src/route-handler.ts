@@ -55,26 +55,39 @@ export interface BanataProjectRouteScope {
 		| Promise<{ projectId?: string; clientId?: string }>;
 }
 
-export interface BanataRouteAuthOptions {
+type BanataManagedRouteAuthOptions = {
 	/**
 	 * Project-scoped Banata API key.
 	 *
-	 * This is the recommended way to bind a customer app to a Banata project.
+	 * This is the required managed-service binding for customer apps.
 	 * The key is injected server-side into the proxied request and is never
 	 * exposed to the browser.
 	 */
-	apiKey?: string;
+	apiKey: string;
+	allowInternalProjectScope?: false;
+};
 
+type BanataInternalRouteAuthOptions = {
+	apiKey?: string;
 	/**
-	 * Banata-internal escape hatch for the hosted auth UI.
+	 * Banata-internal escape hatch for hosted first-party surfaces.
 	 *
 	 * This should not be used by customer apps. It allows Banata's own
-	 * first-party hosted auth surfaces to resolve project scope from
-	 * `client_id` / `project_id` without requiring a customer API key in
-	 * the browser.
+	 * dashboard/auth UI to resolve project scope from `client_id` /
+	 * `project_id` without requiring a customer API key in the browser.
 	 */
-	allowInternalProjectScope?: boolean;
-}
+	allowInternalProjectScope: true;
+};
+
+export type BanataRouteAuthOptions = {
+	/** Optional explicit or request-resolved Banata project scope. */
+	project?: BanataProjectRouteScope;
+} & (BanataManagedRouteAuthOptions | BanataInternalRouteAuthOptions);
+
+export type BanataRouteHandlerOptions = {
+	/** The Convex .site URL where HTTP actions are hosted. */
+	convexSiteUrl: string;
+} & BanataRouteAuthOptions;
 
 function normalizeScopeValue(value: string | null | undefined): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
@@ -135,19 +148,16 @@ function sanitizeUpstreamResponseHeaders(headers: Headers): Headers {
 	return sanitized;
 }
 
-export function createRouteHandler(options: {
-	/** The Convex .site URL where HTTP actions are hosted. */
-	convexSiteUrl: string;
-	/** Optional server-side Banata API key used to bind the request to a project. */
-	apiKey?: string;
-	/** Banata-internal escape hatch for hosted auth surfaces. */
-	allowInternalProjectScope?: boolean;
-	/** Optional explicit or request-resolved Banata project scope. */
-	project?: BanataProjectRouteScope;
-}) {
+export function createRouteHandler(options: BanataRouteHandlerOptions) {
 	const { allowInternalProjectScope, apiKey, convexSiteUrl, project } = options;
 	const siteUrl = convexSiteUrl.replace(/\/$/, "");
 	const normalizedApiKey = normalizeScopeValue(apiKey);
+	if (!normalizedApiKey && !allowInternalProjectScope) {
+		throw new Error(
+			"Banata customer apps must configure a project-scoped apiKey. " +
+				"Use allowInternalProjectScope only for Banata's own hosted surfaces.",
+		);
+	}
 
 	async function handler(request: Request): Promise<Response> {
 		const requestUrl = new URL(request.url);

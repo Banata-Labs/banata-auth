@@ -45,6 +45,16 @@ function firstFetchCall(): [Request, RequestInit?] {
 	return call as [Request, RequestInit?];
 }
 
+function createManagedHandler(
+	options: Partial<Parameters<typeof createRouteHandler>[0]> = {},
+) {
+	return createRouteHandler({
+		convexSiteUrl: "https://my-site.convex.site",
+		apiKey: "sk_test_project_key",
+		...options,
+	});
+}
+
 describe("createRouteHandler", () => {
 	beforeEach(() => {
 		mockFetch.mockReset();
@@ -56,9 +66,7 @@ describe("createRouteHandler", () => {
 
 	describe("handler shape", () => {
 		it("returns an object with GET, POST, PUT, PATCH, DELETE handlers", () => {
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			expect(handler).toHaveProperty("GET");
 			expect(handler).toHaveProperty("POST");
@@ -73,9 +81,7 @@ describe("createRouteHandler", () => {
 		});
 
 		it("all handlers are the same function reference", () => {
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			expect(handler.GET).toBe(handler.POST);
 			expect(handler.POST).toBe(handler.PUT);
@@ -88,9 +94,7 @@ describe("createRouteHandler", () => {
 		it("forwards request to Convex site URL with correct path", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/sign-in",
@@ -106,7 +110,7 @@ describe("createRouteHandler", () => {
 		it("strips trailing slash from convexSiteUrl", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
+			const handler = createManagedHandler({
 				convexSiteUrl: "https://my-site.convex.site/",
 			});
 
@@ -128,9 +132,7 @@ describe("createRouteHandler", () => {
 		it("preserves query string parameters", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/callback?code=abc&state=xyz",
@@ -146,9 +148,7 @@ describe("createRouteHandler", () => {
 		it("forwards request headers", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",
@@ -173,8 +173,7 @@ describe("createRouteHandler", () => {
 		it("injects a configured Banata client ID header", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
+			const handler = createManagedHandler({
 				project: { clientId: "customer-app" },
 			});
 
@@ -190,10 +189,7 @@ describe("createRouteHandler", () => {
 		it("injects a configured Banata API key as a private upstream header", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-				apiKey: "sk_test_project_key",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest("http://localhost:3000/api/auth/session");
 			await handler.GET(request);
@@ -221,9 +217,7 @@ describe("createRouteHandler", () => {
 		it("resolves Banata scope from query parameters", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session?client_id=customer-app&project_id=project_123",
@@ -242,9 +236,7 @@ describe("createRouteHandler", () => {
 		it("resolves Banata scope from cookies", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",
@@ -268,9 +260,7 @@ describe("createRouteHandler", () => {
 		it("sets host header to the Convex site host", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",
@@ -286,9 +276,7 @@ describe("createRouteHandler", () => {
 		it("uses request.method in the forwarded fetch call", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/sign-in",
@@ -304,9 +292,7 @@ describe("createRouteHandler", () => {
 		it('uses redirect: "manual" in fetch options', async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/callback",
@@ -324,9 +310,7 @@ describe("createRouteHandler", () => {
 			const responseBody = JSON.stringify({ user: { id: "123" } });
 			mockFetch.mockResolvedValue(createMockResponse(responseBody));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",
@@ -342,9 +326,7 @@ describe("createRouteHandler", () => {
 				createMockResponse("Not Found", { status: 404, statusText: "Not Found" }),
 			);
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/nonexistent",
@@ -364,9 +346,7 @@ describe("createRouteHandler", () => {
 				}),
 			);
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/sign-in",
@@ -389,9 +369,7 @@ describe("createRouteHandler", () => {
 				}),
 			);
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest("http://localhost:3000/api/auth/sign-in/social");
 			const response = await handler.POST(request);
@@ -408,9 +386,7 @@ describe("createRouteHandler", () => {
 		it("returns 502 on fetch error with JSON error body", async () => {
 			mockFetch.mockRejectedValue(new Error("Network failure"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",
@@ -426,9 +402,7 @@ describe("createRouteHandler", () => {
 		it("returns application/json content-type on error", async () => {
 			mockFetch.mockRejectedValue(new Error("Connection refused"));
 
-			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
-			});
+			const handler = createManagedHandler();
 
 			const request = createMockRequest(
 				"http://localhost:3000/api/auth/session",

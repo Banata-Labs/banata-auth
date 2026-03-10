@@ -99,6 +99,29 @@ describe("createBanataAuthServer()", () => {
 		expect(headers.get("x-banata-project-id")).toBe("project_123");
 	});
 
+	it("supports Banata internal hosted surfaces without a customer api key", async () => {
+		const server = createBanataAuthServer({
+			convexUrl: "https://test.convex.cloud",
+			convexSiteUrl: "https://test.convex.site",
+			allowInternalProjectScope: true,
+			project: { clientId: "banata-dashboard" },
+		});
+
+		await server.getToken();
+
+		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
+			convexSiteUrl: "https://test.convex.site",
+			allowInternalProjectScope: true,
+			apiKey: undefined,
+			project: { clientId: "banata-dashboard" },
+		});
+		const [siteUrl, headers] = mocks.getToken.mock.calls[0] as [string, Headers];
+		expect(siteUrl).toBe("https://test.convex.site");
+		expect(headers.get("x-api-key")).toBeNull();
+		expect(headers.get("x-banata-internal-project-scope")).toBe("1");
+		expect(headers.get("x-banata-client-id")).toBe("banata-dashboard");
+	});
+
 	it("reports authentication state from the resolved token", async () => {
 		const server = createBanataAuthServer({
 			convexUrl: "https://test.convex.cloud",
