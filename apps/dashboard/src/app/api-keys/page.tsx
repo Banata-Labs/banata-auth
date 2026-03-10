@@ -86,8 +86,10 @@ export default function ApiKeysPage() {
 								setPrefix("");
 								await refreshKeys();
 								toast.success("API key created");
-							} catch {
-								toast.error("Unable to create API key");
+							} catch (error) {
+								toast.error(
+									error instanceof Error ? error.message : "Unable to create API key",
+								);
 							}
 						}}
 						className="flex gap-3"
