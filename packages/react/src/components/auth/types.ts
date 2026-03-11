@@ -11,11 +11,31 @@ export interface AuthClientLike {
 			email: string;
 			password: string;
 			callbackURL?: string;
-		}) => Promise<{ data?: unknown; error?: { message?: string } | null }>;
+		}) => Promise<{
+			data?: unknown;
+			error?:
+				| {
+						message?: string;
+						code?: string;
+						status?: number;
+						details?: { tryAgainIn?: number };
+				  }
+				| null;
+		}>;
 		social: (params: {
 			provider: string;
 			callbackURL?: string;
-		}) => Promise<{ data?: unknown; error?: { message?: string } | null }>;
+		}) => Promise<{
+			data?: unknown;
+			error?:
+				| {
+						message?: string;
+						code?: string;
+						status?: number;
+						details?: { tryAgainIn?: number };
+				  }
+				| null;
+		}>;
 	};
 	signUp: {
 		email: (params: {
@@ -23,7 +43,17 @@ export interface AuthClientLike {
 			email: string;
 			password: string;
 			callbackURL?: string;
-		}) => Promise<{ data?: unknown; error?: { message?: string } | null }>;
+		}) => Promise<{
+			data?: unknown;
+			error?:
+				| {
+						message?: string;
+						code?: string;
+						status?: number;
+						details?: { tryAgainIn?: number };
+				  }
+				| null;
+		}>;
 	};
 	signOut: () => Promise<unknown>;
 }

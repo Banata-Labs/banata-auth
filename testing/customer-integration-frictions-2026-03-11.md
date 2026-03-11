@@ -192,3 +192,37 @@ Test surface:
 - Fix is on `main` in source:
   - `@banata-auth/nextjs` route handler now mirrors `Set-Cookie` into `Set-Better-Auth-Cookie` for allowed hosted origins
 - This fix still requires a new npm package release before the external app can validate it, because the customer app is intentionally pinned to published npm packages only.
+
+## 18. Hosted public config was temporarily broken by project-scoped rate limiting
+
+- During this pass, hosted public-config reads started failing with:
+  - `AUTH_RUNTIME_ERROR`
+- Root cause in source:
+  - the custom project-scoped rate limiter was trying to add `projectId` to Better Auth's built-in `rateLimit` schema, which Better Auth does not expose as an extensible model
+  - then a follow-up attempt used the wrong adapter surface in the `onRequest` hook
+- Fixes are now on `main` and deployed:
+  - project scope is bound into auth storage per request
+  - the custom limiter now scopes by a project-qualified key on Better Auth's native rate-limit table
+- Verified healthy again:
+  - `POST https://auth.banata.dev/api/auth/banata/config/public` -> `200`
+  - `POST https://auth-ui.banata.dev/api/auth/banata/config/public` -> `200`
+
+## 19. Shared-IP testing can still feel harsher than expected even after project scoping
+
+- Project scoping fixed cross-project contamination, but repeated testing from the same IP was still enough to trip the hosted sign-up/sign-in forms.
+- Source improvement now deployed:
+  - email-based auth limits are bucketed by `project + ip + path + submitted identifier`
+- This removed the immediate false-positive `Rate limit exceeded` state for a fresh signup identity on the hosted page.
+- Remaining UX gap:
+  - the hosted UI still needs clearer retry messaging and a smoother recovery path when throttling does happen.
+
+## 20. Hosted sign-up still needs one more clean end-to-end confirmation
+
+- After the rate-limit fixes, the hosted sign-up page no longer showed the immediate throttle error for a fresh email.
+- However, the final browser-driven submit still did not conclusively land back on the customer app during this pass.
+- I was able to verify:
+  - hosted config lookup works
+  - the limiter no longer hard-blocks fresh email identities the same way it did earlier
+- I was not yet able to verify in the browser:
+  - `hosted sign-up -> customer-app session cookie -> redirected customer app home`
+- So this remains an active verification item, not a closed issue.

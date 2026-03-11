@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, type ReactNode, useState } from "react";
+import { formatAuthClientError } from "./format-error";
 import { SocialButtons } from "./social-buttons";
 import type { AuthClientLike, SocialProvider } from "./types";
 
@@ -72,7 +73,7 @@ export function SignInForm({
 				callbackURL,
 			});
 			if (result.error) {
-				setError(result.error.message ?? "Unable to sign in");
+				setError(formatAuthClientError(result.error, "Unable to sign in"));
 				return;
 			}
 			onSuccess?.();

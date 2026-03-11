@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatAuthClientError } from "./format-error";
 import { resolveSocialProviders } from "./provider-registry";
 import type { AuthClientLike, SocialProvider } from "./types";
 
@@ -55,7 +56,7 @@ export function SocialButtons({
 
 			// Better Auth may return a redirect URL instead of auto-redirecting
 			if (result.error) {
-				setError(result.error.message ?? `Unable to sign in with ${providerId}`);
+				setError(formatAuthClientError(result.error, `Unable to sign in with ${providerId}`));
 				return;
 			}
 

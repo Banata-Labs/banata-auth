@@ -126,6 +126,16 @@ Check:
 3. your auth route allows the hosted UI origin
 4. your app uses a real project-scoped API key
 
+### The hosted page says `Rate limit exceeded`
+
+Banata rate-limits sensitive auth endpoints per project, IP, path, and, for email-based flows, the submitted identifier.
+
+If you are repeatedly testing from one office/shared IP:
+
+1. wait for the retry window to expire
+2. try again with a fresh email if you are testing sign-up
+3. avoid hammering the same hosted auth form while you are iterating on frontend code
+
 ### The hosted page loads but returns the wrong Banata project
 
 Check that `client_id` is the project's client ID from the Banata dashboard, not the workspace slug or workspace name.

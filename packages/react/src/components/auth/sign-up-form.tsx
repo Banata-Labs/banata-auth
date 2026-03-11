@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, type ReactNode, useState } from "react";
+import { formatAuthClientError } from "./format-error";
 import { SocialButtons } from "./social-buttons";
 import type { AuthClientLike, SocialProvider } from "./types";
 
@@ -65,7 +66,7 @@ export function SignUpForm({
 				callbackURL,
 			});
 			if (result.error) {
-				setError(result.error.message ?? "Unable to create account");
+				setError(formatAuthClientError(result.error, "Unable to create account"));
 				return;
 			}
 			onSuccess?.();

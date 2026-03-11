@@ -238,6 +238,16 @@ Check:
 3. `/auth/callback` exists in your app
 4. `redirect_url` points back to your app origin
 
+### Repeated first-run testing starts hitting rate limits
+
+Banata rate-limits sensitive auth routes. That protection is project-aware and, for email-based endpoints, identifier-aware, but repeated tests from one shared IP can still hit the limit window.
+
+If that happens:
+
+1. wait for the retry window to expire
+2. use a fresh email when testing sign-up
+3. avoid repeatedly submitting the same hosted form while you are debugging app-side routing
+
 ---
 
 ## Next Steps

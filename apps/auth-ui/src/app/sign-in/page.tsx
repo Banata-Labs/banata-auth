@@ -28,6 +28,34 @@ type SignInViewModel = {
 	callbackURL: string;
 };
 
+function formatAuthError(error: {
+	message?: string;
+	code?: string;
+	status?: number;
+	details?: { tryAgainIn?: number };
+} | null | undefined, fallbackMessage: string) {
+	if (!error) {
+		return fallbackMessage;
+	}
+
+	const baseMessage = error.message?.trim() || fallbackMessage;
+	const isRateLimited =
+		error.code === "RATE_LIMITED" ||
+		error.status === 429 ||
+		baseMessage.toLowerCase() === "rate limit exceeded.";
+	if (!isRateLimited) {
+		return baseMessage;
+	}
+
+	const retryAfter = error.details?.tryAgainIn;
+	if (typeof retryAfter !== "number" || !Number.isFinite(retryAfter) || retryAfter <= 0) {
+		return baseMessage;
+	}
+
+	const seconds = Math.max(1, Math.ceil(retryAfter));
+	return `${baseMessage} Try again in about ${seconds} second${seconds === 1 ? "" : "s"}.`;
+}
+
 function getSignInViewModel(
 	config: ReturnType<typeof useProjectAuthConfig>["config"],
 	socialProviderCount: number,
@@ -139,7 +167,7 @@ export default function SignInPage() {
 								callbackURL: viewModel.callbackURL,
 							});
 							if (result.error) {
-								setError(result.error.message ?? "Unable to sign in");
+								setError(formatAuthError(result.error, "Unable to sign in"));
 								return;
 							}
 							window.location.href = viewModel.callbackURL;
