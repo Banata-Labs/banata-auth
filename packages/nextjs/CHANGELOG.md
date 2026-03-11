@@ -1,5 +1,11 @@
 # @banata-auth/nextjs
 
+## 0.2.2
+
+### Patch Changes
+
+- [`8b4f593`](https://github.com/Banata-Labs/banata-auth/commit/8b4f593253be6096aca7d16fa811662fef97b069) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Mirror `Set-Cookie` into `Set-Better-Auth-Cookie` on cross-origin auth proxy responses so hosted Banata auth flows can complete sign-up and sign-in against customer app Next.js route handlers.
+
 ## 0.2.1
 
 ### Patch Changes
