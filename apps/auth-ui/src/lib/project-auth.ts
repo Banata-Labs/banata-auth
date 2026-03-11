@@ -24,6 +24,7 @@ interface UseProjectAuthConfigResult {
 	hasScope: boolean;
 	scopedPath: (path: string) => string;
 	scopedApiPath: (path: string) => string;
+	hostedAuthUrl: (path: string) => string | null;
 	customerOrigin: string | null;
 	customerAuthBaseUrl: string | null;
 	customerCallbackUrl: string | null;
@@ -90,6 +91,14 @@ function appendScope(path: string, scope: ProjectAuthScope): string {
 
 	const query = params.toString();
 	return query ? `${pathname}?${query}` : pathname;
+}
+
+function toHostedAuthUrl(path: string, scope: ProjectAuthScope): string | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	return new URL(appendScope(path, scope), window.location.origin).toString();
 }
 
 function parseRedirectUrl(value: string | null): URL | null {
@@ -232,6 +241,7 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		hasScope: hasProjectAuthScope(scope),
 		scopedPath: (path) => appendScope(path, scope),
 		scopedApiPath: (path) => appendScope(path, scope),
+		hostedAuthUrl: (path) => toHostedAuthUrl(path, scope),
 		customerOrigin: toCustomerOrigin(scope),
 		customerAuthBaseUrl: toCustomerAuthBaseUrl(scope),
 		customerCallbackUrl: toCustomerCallbackUrl(scope),

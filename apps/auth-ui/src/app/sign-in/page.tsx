@@ -31,6 +31,7 @@ type SignInViewModel = {
 function getSignInViewModel(
 	config: ReturnType<typeof useProjectAuthConfig>["config"],
 	socialProviderCount: number,
+	hostedAuthUrl: (path: string) => string | null,
 	scopedPath: (path: string) => string,
 ): SignInViewModel {
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
@@ -51,7 +52,7 @@ function getSignInViewModel(
 			magicLinkEnabled ||
 			emailOtpEnabled ||
 			socialProviderCount > 0,
-		callbackURL: scopedPath("/callback"),
+		callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),
 	};
 }
 
@@ -88,6 +89,7 @@ export default function SignInPage() {
 		error: configError,
 		enabledSocialProviders,
 		hasScope,
+		hostedAuthUrl,
 		isLoading,
 		scopedPath,
 	} = useProjectAuthConfig();
@@ -107,7 +109,12 @@ export default function SignInPage() {
 		);
 	}
 
-	const viewModel = getSignInViewModel(config, enabledSocialProviders.length, scopedPath);
+	const viewModel = getSignInViewModel(
+		config,
+		enabledSocialProviders.length,
+		hostedAuthUrl,
+		scopedPath,
+	);
 
 	return (
 		<div className="mt-14">

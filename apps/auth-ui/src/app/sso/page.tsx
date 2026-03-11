@@ -12,7 +12,7 @@ import { useState } from "react";
 export default function SsoPage() {
 	const [emailDomain, setEmailDomain] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const { config, customerAuthBaseUrl, scopedPath } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl, hostedAuthUrl, scopedPath } = useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	return (
@@ -36,7 +36,7 @@ export default function SsoPage() {
 						"/sign-in/sso",
 						{
 							domain: emailDomain,
-							callbackURL: scopedPath("/callback"),
+							callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),
 						},
 					);
 					if (!response.ok) {

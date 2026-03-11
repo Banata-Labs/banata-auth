@@ -19,7 +19,7 @@ export default function EmailOtpPage() {
 	const [email, setEmail] = useState("");
 	const [otp, setOtp] = useState("");
 	const [step, setStep] = useState<"request" | "verify">("request");
-	const { config, customerAuthBaseUrl, error, hasScope, isLoading, scopedPath } =
+	const { config, customerAuthBaseUrl, error, hasScope, hostedAuthUrl, isLoading, scopedPath } =
 		useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
@@ -86,7 +86,7 @@ export default function EmailOtpPage() {
 						await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/email-otp", {
 							email,
 							otp,
-							callbackURL: scopedPath("/callback"),
+							callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),
 						});
 						window.location.href = scopedPath("/callback");
 					}}

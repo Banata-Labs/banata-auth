@@ -18,7 +18,7 @@ import { useState } from "react";
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
-	const { config, customerAuthBaseUrl, error, hasScope, isLoading, scopedPath } =
+	const { config, customerAuthBaseUrl, error, hasScope, hostedAuthUrl, isLoading, scopedPath } =
 		useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
 					if (!customerAuthBaseUrl) return;
 					await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/forget-password", {
 						email,
-						redirectTo: scopedPath("/reset-password"),
+						redirectTo: hostedAuthUrl("/reset-password") ?? scopedPath("/reset-password"),
 					});
 					setSent(true);
 				}}

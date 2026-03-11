@@ -19,6 +19,7 @@ export default function SignUpPage() {
 		error,
 		enabledSocialProviders,
 		hasScope,
+		hostedAuthUrl,
 		isLoading,
 		scopedPath,
 	} = useProjectAuthConfig();
@@ -40,7 +41,9 @@ export default function SignUpPage() {
 
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
 	const verificationRequired = config?.emailPassword.requireEmailVerification ?? true;
-	const callbackURL = verificationRequired ? scopedPath("/verify-email") : scopedPath("/callback");
+	const callbackURL = verificationRequired
+		? (hostedAuthUrl("/verify-email") ?? scopedPath("/verify-email"))
+		: (hostedAuthUrl("/callback") ?? scopedPath("/callback"));
 
 	if (!emailPasswordEnabled && enabledSocialProviders.length === 0) {
 		return (

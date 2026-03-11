@@ -18,7 +18,7 @@ import { useState } from "react";
 export default function MagicLinkPage() {
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
-	const { config, customerAuthBaseUrl, error, hasScope, isLoading, scopedPath } =
+	const { config, customerAuthBaseUrl, error, hasScope, hostedAuthUrl, isLoading, scopedPath } =
 		useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
@@ -57,7 +57,7 @@ export default function MagicLinkPage() {
 					if (!customerAuthBaseUrl) return;
 					await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/magic-link", {
 						email,
-						callbackURL: scopedPath("/callback"),
+						callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),
 					});
 					setSent(true);
 				}}
