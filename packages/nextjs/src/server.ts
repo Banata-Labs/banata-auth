@@ -86,6 +86,8 @@ interface BanataAuthServerBaseOptions extends GetTokenOptions {
 	 * Typically `process.env.NEXT_PUBLIC_CONVEX_SITE_URL`.
 	 */
 	convexSiteUrl: string;
+	/** Origins allowed to call the auth proxy cross-origin. */
+	allowedOrigins?: string[];
 }
 
 export type BanataManagedAuthServerOptions = {
@@ -146,11 +148,13 @@ export function createBanataAuthServer(opts: BanataAuthServerOptions) {
 		? createRouteHandler({
 				convexSiteUrl: opts.convexSiteUrl,
 				allowInternalProjectScope: true,
+				allowedOrigins: opts.allowedOrigins,
 				apiKey: opts.apiKey,
 				project: opts.project,
 			})
 		: createRouteHandler({
 				convexSiteUrl: opts.convexSiteUrl,
+				allowedOrigins: opts.allowedOrigins,
 				apiKey: opts.apiKey,
 				project: opts.project,
 			});

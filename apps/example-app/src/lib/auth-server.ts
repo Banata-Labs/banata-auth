@@ -3,10 +3,9 @@ import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 const apiKey = process.env.BANATA_API_KEY;
 
 if (!apiKey) {
-	console.warn(
-		"[Banata Auth Example] BANATA_API_KEY is not set. " +
-			"Create a project API key in the Banata dashboard and set it in your app server environment. " +
-			"Project-scoped auth flows will not work until you do.",
+	throw new Error(
+		"[Banata Auth Example] BANATA_API_KEY is required. " +
+			"Create a project API key in the Banata dashboard and set it in your app server environment before starting the app.",
 	);
 }
 

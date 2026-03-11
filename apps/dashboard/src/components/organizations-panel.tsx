@@ -154,9 +154,7 @@ export function OrganizationsPanel({ initial }: { initial: Organization[] }) {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Create Organization</DialogTitle>
-						<DialogDescription>
-							Add a new organization to your project.
-						</DialogDescription>
+						<DialogDescription>Add a new organization to your project.</DialogDescription>
 					</DialogHeader>
 					<form
 						onSubmit={async (e) => {
@@ -209,9 +207,7 @@ export function OrganizationsPanel({ initial }: { initial: Organization[] }) {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Invite Member</DialogTitle>
-						<DialogDescription>
-							Send an invitation to join an organization.
-						</DialogDescription>
+						<DialogDescription>Send an invitation to join an organization.</DialogDescription>
 					</DialogHeader>
 					<form
 						onSubmit={async (e) => {

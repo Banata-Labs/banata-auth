@@ -151,6 +151,10 @@ describe("BanataAuth", () => {
 			expect(client.organizations).toBeDefined();
 		});
 
+		it("has configuration resource", () => {
+			expect(client.configuration).toBeDefined();
+		});
+
 		it("has sso resource", () => {
 			expect(client.sso).toBeDefined();
 		});
@@ -349,6 +353,64 @@ describe("HttpClient", () => {
 			expect(parsed.searchParams.get("limit")).toBe("10");
 			expect(parsed.searchParams.has("email")).toBe(false);
 			expect(parsed.searchParams.has("order")).toBe(false);
+		});
+	});
+
+	describe("configuration resource", () => {
+		it("posts to the dashboard config endpoint", async () => {
+			const fetchMock = mockFetch({ body: { authMethods: { emailPassword: true } } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.configuration.getDashboardConfig();
+
+			expect(getFetchUrl(fetchMock)).toBe("https://api.example.com/api/auth/banata/config/dashboard");
+			const options = getFetchOptions(fetchMock);
+			expect(options.method).toBe("POST");
+			expect(options.body).toBe("{}");
+		});
+
+		it("includes project scope when saving dashboard config", async () => {
+			const fetchMock = mockFetch({ body: { authMethods: { emailPassword: true } } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.configuration.saveDashboardConfig({
+				projectId: "project_123",
+				authMethods: {
+					emailPassword: true,
+					sso: false,
+					passkey: false,
+					magicLink: false,
+					emailOtp: false,
+					twoFactor: false,
+					anonymous: false,
+					organization: false,
+					username: false,
+				},
+			});
+
+			const options = getFetchOptions(fetchMock);
+			expect(options.body).toBe(
+				JSON.stringify({
+					projectId: "project_123",
+					authMethods: {
+						emailPassword: true,
+						sso: false,
+						passkey: false,
+						magicLink: false,
+						emailOtp: false,
+						twoFactor: false,
+						anonymous: false,
+						organization: false,
+						username: false,
+					},
+				}),
+			);
 		});
 	});
 

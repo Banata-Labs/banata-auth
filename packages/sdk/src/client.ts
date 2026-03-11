@@ -1,6 +1,7 @@
 import { createErrorFromStatus } from "@banata-auth/shared";
 import { ApiKeys } from "./resources/api-keys";
 import { AuditLogs } from "./resources/audit-logs";
+import { Configuration } from "./resources/configuration";
 import { DirectorySync } from "./resources/directory-sync";
 import { Domains } from "./resources/domains";
 import { Emails } from "./resources/emails";
@@ -219,6 +220,7 @@ export class BanataAuth {
 	private readonly httpClient: HttpClient;
 
 	readonly apiKeys: ApiKeys;
+	readonly configuration: Configuration;
 	readonly userManagement: UserManagement;
 	readonly organizations: Organizations;
 	readonly sso: SSO;
@@ -245,6 +247,7 @@ export class BanataAuth {
 		this.httpClient = new HttpClient(opts);
 
 		this.apiKeys = new ApiKeys(this.httpClient);
+		this.configuration = new Configuration(this.httpClient);
 		this.userManagement = new UserManagement(this.httpClient);
 		this.organizations = new Organizations(this.httpClient);
 		this.sso = new SSO(this.httpClient);

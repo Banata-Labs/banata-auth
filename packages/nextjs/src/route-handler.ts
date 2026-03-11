@@ -31,6 +31,7 @@ const FORWARDED_HEADERS = new Set([
 	"origin",
 	"referer",
 	"user-agent",
+	"better-auth-cookie",
 	"x-requested-with",
 	"x-banata-client-id",
 	"x-banata-project-id",
@@ -87,6 +88,8 @@ export type BanataRouteAuthOptions = {
 export type BanataRouteHandlerOptions = {
 	/** The Convex .site URL where HTTP actions are hosted. */
 	convexSiteUrl: string;
+	/** Origins allowed to call this auth proxy cross-origin. */
+	allowedOrigins?: string[];
 } & BanataRouteAuthOptions;
 
 function normalizeScopeValue(value: string | null | undefined): string | null {
@@ -149,7 +152,7 @@ function sanitizeUpstreamResponseHeaders(headers: Headers): Headers {
 }
 
 export function createRouteHandler(options: BanataRouteHandlerOptions) {
-	const { allowInternalProjectScope, apiKey, convexSiteUrl, project } = options;
+	const { allowInternalProjectScope, allowedOrigins, apiKey, convexSiteUrl, project } = options;
 	const siteUrl = convexSiteUrl.replace(/\/$/, "");
 	const normalizedApiKey = normalizeScopeValue(apiKey);
 	if (!normalizedApiKey && !allowInternalProjectScope) {
@@ -159,7 +162,42 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 		);
 	}
 
+	function applyCorsHeaders(request: Request, headers: Headers): Headers {
+		const origin = request.headers.get("origin");
+		if (!origin || !allowedOrigins?.includes(origin)) {
+			return headers;
+		}
+
+		headers.set("access-control-allow-origin", origin);
+		headers.set("vary", "origin");
+		headers.set("access-control-allow-methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+		headers.set(
+			"access-control-allow-headers",
+			[
+				"authorization",
+				"better-auth-cookie",
+				"content-type",
+				"x-banata-client-id",
+				"x-banata-project-id",
+				"x-requested-with",
+			].join(", "),
+		);
+		headers.set(
+			"access-control-expose-headers",
+			["set-better-auth-cookie", "set-ott", "x-request-id"].join(", "),
+		);
+		headers.set("access-control-allow-credentials", "true");
+		return headers;
+	}
+
 	async function handler(request: Request): Promise<Response> {
+		if (request.method === "OPTIONS") {
+			return new Response(null, {
+				status: 204,
+				headers: applyCorsHeaders(request, new Headers()),
+			});
+		}
+
 		const requestUrl = new URL(request.url);
 		const targetUrl = `${siteUrl}${requestUrl.pathname}${requestUrl.search}`;
 
@@ -206,13 +244,16 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 			return new Response(response.body, {
 				status: response.status,
 				statusText: response.statusText,
-				headers: sanitizeUpstreamResponseHeaders(response.headers),
+				headers: applyCorsHeaders(
+					request,
+					sanitizeUpstreamResponseHeaders(response.headers),
+				),
 			});
 		} catch (error) {
 			console.error("[banata-auth] Proxy error:", error);
 			return new Response(JSON.stringify({ error: "Auth service unavailable" }), {
 				status: 502,
-				headers: { "Content-Type": "application/json" },
+				headers: applyCorsHeaders(request, new Headers({ "Content-Type": "application/json" })),
 			});
 		}
 	}
@@ -223,5 +264,6 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 		PUT: handler,
 		PATCH: handler,
 		DELETE: handler,
+		OPTIONS: handler,
 	};
 }

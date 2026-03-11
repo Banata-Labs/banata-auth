@@ -170,6 +170,22 @@ describe("createRouteHandler", () => {
 			);
 		});
 
+		it("forwards the Better Auth cookie handoff header for hosted auth", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler();
+
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in/email", {
+				headers: {
+					"better-auth-cookie": "session=abc123",
+				},
+			});
+			await handler.POST(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("better-auth-cookie")).toBe("session=abc123");
+		});
+
 		it("injects a configured Banata client ID header", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
@@ -379,6 +395,50 @@ describe("createRouteHandler", () => {
 			expect(response.headers.get("transfer-encoding")).toBeNull();
 			expect(response.headers.get("set-cookie")).toBe("session=abc; Path=/; HttpOnly");
 			expect(response.headers.get("x-custom")).toBe("value");
+		});
+
+		it("responds to OPTIONS with the configured CORS headers", async () => {
+			const handler = createManagedHandler({
+				allowedOrigins: ["https://auth-ui.banata.dev"],
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in/email", {
+				method: "OPTIONS",
+				headers: {
+					origin: "https://auth-ui.banata.dev",
+				},
+			});
+			const response = await handler.OPTIONS(request);
+
+			expect(response.status).toBe(204);
+			expect(response.headers.get("access-control-allow-origin")).toBe(
+				"https://auth-ui.banata.dev",
+			);
+			expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+			expect(response.headers.get("access-control-expose-headers")).toContain(
+				"set-better-auth-cookie",
+			);
+			expect(mockFetch).not.toHaveBeenCalled();
+		});
+
+		it("adds CORS headers to proxied responses for allowed hosted origins", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler({
+				allowedOrigins: ["https://auth-ui.banata.dev"],
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/get-session", {
+				headers: {
+					origin: "https://auth-ui.banata.dev",
+				},
+			});
+			const response = await handler.GET(request);
+
+			expect(response.headers.get("access-control-allow-origin")).toBe(
+				"https://auth-ui.banata.dev",
+			);
+			expect(response.headers.get("vary")).toBe("origin");
 		});
 	});
 

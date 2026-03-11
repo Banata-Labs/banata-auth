@@ -37,9 +37,9 @@
 			"default": "./dist/auth-config.js"
 		},
 		"./adapter": {
-			"types": "./dist/component/adapter.d.ts",
-			"import": "./dist/component/adapter.js",
-			"default": "./dist/component/adapter.js"
+			"types": "./dist/adapter.d.ts",
+			"import": "./dist/adapter.js",
+			"default": "./dist/adapter.js"
 		},
 		"./convex.config": {
 			"import": "./src/component/convex.config.ts",

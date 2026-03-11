@@ -58,6 +58,8 @@ A **project** is a fully isolated auth tenant. Everything that constitutes an ap
 
 The only entities shared across projects are **dashboard admin users** (the people who log in to the admin dashboard itself).
 
+Project-scoped API keys enforce the same boundary programmatically. A key created for one project should not be able to list, mutate, or configure auth data for another project.
+
 ---
 
 ## Data Model

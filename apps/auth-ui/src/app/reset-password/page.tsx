@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
+import { useProjectAuthClient } from "@/lib/auth-client";
+import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useState } from "react";
 
@@ -14,6 +15,8 @@ export default function ResetPasswordPage() {
 			: (new URLSearchParams(window.location.search).get("token") ?? "");
 	const [password, setPassword] = useState("");
 	const [done, setDone] = useState(false);
+	const { customerAuthBaseUrl } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	return (
 		<AuthCard title="Set a new password" description="Password reset tokens expire in 1 hour.">

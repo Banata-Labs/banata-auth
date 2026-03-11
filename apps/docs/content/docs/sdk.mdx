@@ -1,15 +1,20 @@
 ---
 title: "SDK Reference"
-description: "Dashboard-first admin API client for Banata Auth."
+description: "Manage Banata projects, users, organizations, RBAC, and dashboard-backed config by code."
 section: "Packages"
 order: 14
 ---
 
-`@banata-auth/sdk` is the **dashboard-first** Banata package.
+`@banata-auth/sdk` is the Banata admin and configuration client.
 
-It is a remote HTTP client for Banata auth endpoints. It does **not** talk to your database directly and it does **not** require self-hosting.
+Use it when your backend needs to:
 
-Start by creating a project and a project-scoped API key in the Banata dashboard. The SDK is the app-side client for that dashboard-managed project.
+- manage users, orgs, invitations, SSO, SCIM, and RBAC
+- manage API keys and webhooks
+- update project configuration by code
+- keep dashboard config and code-driven config in sync
+
+The SDK talks to Banata over HTTP. It does **not** write to your app database directly.
 
 ```bash
 npm install @banata-auth/sdk
@@ -23,59 +28,116 @@ npm install @banata-auth/sdk
 import { BanataAuth } from "@banata-auth/sdk";
 
 const banata = new BanataAuth({
-  apiKey: process.env.BANATA_AUTH_API_KEY!,
-  baseUrl: process.env.BANATA_AUTH_BASE_URL!,
+  apiKey: process.env.BANATA_API_KEY!,
+  baseUrl: "https://auth.banata.dev",
 });
 ```
 
-### `BanataAuthOptions`
-
-| Option | Type | Required | Description |
-|---|---|---|---|
-| `apiKey` | `string` | Yes | API key used for bearer auth |
-| `baseUrl` | `string` | Yes in practice | Base URL for Banata auth HTTP endpoints |
-| `timeout` | `number` | No | Request timeout in milliseconds |
-| `retries` | `number` | No | Retries for 5xx and `429` responses |
-| `projectId` | `string` | No | Legacy override for self-hosted or partially migrated setups. Managed Banata resolves project scope from the API key. |
-| `environmentId` | `string` | No | Default environment scope |
+Start by creating the project and API key in the Banata dashboard. Then use that project-scoped key in the SDK.
 
 ---
 
-## What The SDK Is For
+## What The SDK Controls
 
-Use the SDK when your app needs to manage Banata remotely:
-
-- users
-- organizations
-- SSO
-- directory sync
-- webhooks
-- RBAC
-- projects
-- vault secrets
-- audit logs
-
-This is the package that should feel closest to WorkOS.
+| Resource | Purpose |
+|---|---|
+| `configuration` | Dashboard-backed auth, branding, provider, and policy config |
+| `users` / `userManagement` | User CRUD, sessions, banning, impersonation |
+| `organizations` / `orgs` | Organizations, members, invitations |
+| `sso` | Enterprise SSO connections |
+| `directories` / `directorySync` | SCIM providers, users, and groups |
+| `rbac` | Custom roles, permissions, and checks |
+| `apiKeys` | API key lifecycle |
+| `webhooks` | Webhook endpoints |
+| `projects` | Project lifecycle |
+| `vault` | Secret storage |
+| `auditLogs` | Audit events |
+| `emails` | Email providers, templates, and delivery tools |
+| `domains` | Domain management |
+| `portal` | Portal link generation |
 
 ---
 
-## Example
+## Dashboard + Code Stay In Sync
+
+Banata is dashboard-first, but configuration can also be updated by code.
+
+That means:
+
+- dashboard changes affect the SDK immediately
+- SDK config writes affect the dashboard immediately
+- hosted UI reads the same project config as both of them
+
+There is no separate "dashboard config" and "SDK config" store.
+
+---
+
+## Configure Auth Methods By Code
 
 ```ts
-import { BanataAuth } from "@banata-auth/sdk";
-
-const banata = new BanataAuth({
-  apiKey: process.env.BANATA_AUTH_API_KEY!,
-  baseUrl: process.env.BANATA_AUTH_BASE_URL!,
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    emailPassword: true,
+    emailOtp: true,
+    magicLink: false,
+    passkey: false,
+  },
+  emailPassword: {
+    requireEmailVerification: true,
+    autoSignInAfterVerification: true,
+    minPasswordLength: 10,
+    maxPasswordLength: 128,
+  },
 });
+```
 
-const users = await banata.users.listUsers({ limit: 20 });
+This updates the same project config the dashboard reads under:
 
-const webhook = await banata.webhooks.createEndpoint({
-  url: "https://example.com/api/webhooks",
-  eventTypes: ["user.created"],
+- **Authentication -> Methods**
+- the hosted auth UI
+
+---
+
+## Configure Branding By Code
+
+```ts
+await banata.configuration.saveBrandingConfig({
+  primaryColor: "#0f766e",
+  bgColor: "#f5f5f4",
+  borderRadius: 14,
+  font: "General Sans",
+  logoUrl: "https://example.com/logo.svg",
 });
+```
 
+Hosted auth pages and dashboard-backed rendering pick this up automatically.
+
+---
+
+## Configure Social Providers By Code
+
+```ts
+await banata.configuration.saveSocialProviderCredential({
+  providerId: "github",
+  clientId: process.env.GITHUB_CLIENT_ID!,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+  enabled: true,
+});
+```
+
+This mirrors what the dashboard does under **Authentication -> Providers**.
+
+You can also inspect the current provider state:
+
+```ts
+const providers = await banata.configuration.getSocialProviderCredentials();
+```
+
+---
+
+## Example Admin Workflow
+
+```ts
 const role = await banata.rbac.createRole({
   name: "HR Admin",
   slug: "hr_admin",
@@ -86,48 +148,18 @@ await banata.rbac.updateRole({
   id: role.id,
   permissions: ["employee.read", "employee.manage", "leave.approve", "payroll.read"],
 });
+
+const users = await banata.users.listUsers({ limit: 20 });
+
+const webhook = await banata.webhooks.createEndpoint({
+  url: "https://example.com/api/webhooks",
+  eventTypes: ["user.created"],
+});
 ```
 
 ---
 
-## RBAC Workflow
-
-For RBAC, the SDK now supports the complete custom-role flow:
-
-1. Create permission slugs with `banata.rbac.createPermission(...)`
-2. Create a role with an initial `permissions` array, or create it empty
-3. Update that role later with `banata.rbac.updateRole({ id, permissions: [...] })`
-4. Assign the role slug to an organization member with `banata.rbac.assignRole(...)`
-5. Check access with `banata.rbac.checkPermission(...)` or `checkPermissions(...)`
-
-This matches the dashboard flow on `/authorization/roles` and `/authorization/permissions`.
-
----
-
-## Resource Groups
-
-| Property | Purpose |
-|---|---|
-| `users` / `userManagement` | User CRUD, sessions, banning, impersonation |
-| `organizations` / `orgs` | Organizations, members, invitations |
-| `sso` | Enterprise SSO connections |
-| `directories` / `directorySync` | SCIM providers, users, and groups |
-| `webhooks` | Webhook endpoints and signature verification |
-| `rbac` | Roles and permission checks |
-| `projects` | Project lifecycle and scoping |
-| `vault` | Secret storage |
-| `auditLogs` | Audit events |
-| `events` | Event stream access |
-| `emails` | Email and template operations |
-| `domains` | Domain verification |
-| `portal` | Portal link generation |
-| `apiKeys` | API key lifecycle |
-
----
-
 ## Error Handling
-
-SDK responses throw typed errors from `@banata-auth/shared`:
 
 ```ts
 import { AuthenticationError, NotFoundError } from "@banata-auth/shared";
@@ -147,8 +179,19 @@ try {
 
 ---
 
-## Positioning
+## Important Scope Rules
 
-- Use `@banata-auth/sdk` for the public, dashboard-first integration story.
-- Create the project and issue the API key in the dashboard first. The SDK then operates inside that API key's project scope.
-- Use `@banata-auth/convex` only when you intentionally want the self-hosted runtime.
+- The project-scoped API key is the normal scope boundary.
+- `projectId` in SDK options is a legacy override, not the preferred managed path.
+- Hosted Banata should not let one project's API key read or mutate another project's auth data.
+
+If you are building a customer app, prefer letting the API key determine scope.
+
+---
+
+## Related Guides
+
+- [Quick Start](/docs/quickstart)
+- [Next.js](/docs/nextjs)
+- [Hosted Sign-In](/docs/hosted-ui)
+- [Projects](/docs/projects-environments)

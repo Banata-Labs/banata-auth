@@ -253,7 +253,10 @@ export default function ProvidersPage() {
 							const isConfigured = !!info;
 
 							return (
-								<div key={provider.id} className="flex items-center justify-between gap-4 px-6 py-4">
+								<div
+									key={provider.id}
+									className="flex items-center justify-between gap-4 px-6 py-4"
+								>
 									<div className="flex items-center gap-3">
 										<div className="flex size-10 items-center justify-center rounded-full bg-muted">
 											<ProviderIcon
@@ -335,8 +338,7 @@ export default function ProvidersPage() {
 								tenantId: "",
 							};
 							const isConfigured = !!info;
-							const isBusy =
-								savingProvider === providerId || deletingProvider === providerId;
+							const isBusy = savingProvider === providerId || deletingProvider === providerId;
 
 							return (
 								<div className="grid gap-4">

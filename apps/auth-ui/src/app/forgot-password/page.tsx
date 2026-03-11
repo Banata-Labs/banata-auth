@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useState } from "react";
@@ -16,7 +17,9 @@ import { useState } from "react";
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
-	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl, error, hasScope, isLoading, scopedPath } =
+		useProjectAuthConfig();
+	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;
@@ -45,13 +48,10 @@ export default function ForgotPasswordPage() {
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
-					await fetch(scopedApiPath("/api/auth/forget-password"), {
-						method: "POST",
-						headers: { "content-type": "application/json" },
-						body: JSON.stringify({
-							email,
-							redirectTo: scopedPath("/reset-password"),
-						}),
+					if (!customerAuthBaseUrl) return;
+					await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/forget-password", {
+						email,
+						redirectTo: scopedPath("/reset-password"),
 					});
 					setSent(true);
 				}}

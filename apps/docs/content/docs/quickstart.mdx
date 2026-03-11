@@ -1,74 +1,86 @@
 ---
-title: "Self-Hosted Quick Start"
-description: "Deploy the full Banata platform on your own infrastructure."
-section: "Deployment"
-order: 2
+title: "Quick Start"
+description: "Connect a Next.js app to hosted Banata Auth with a project-scoped API key and hosted sign-in."
+section: "Getting Started"
+order: 3
 ---
 
-This guide is for operators self-hosting Banata itself.
+This is the normal Banata customer journey.
 
-It is **not** a customer-app quickstart for embedding auth locally. Self-hosting Banata still means:
+You do **not** embed Banata's auth backend in your app. You:
 
-1. deploy a Banata dashboard and backend
-2. sign in to that dashboard
-3. create a project
+1. sign in to the Banata dashboard
+2. create or open a project
+3. configure auth methods, providers, and emails in the dashboard
 4. create a project-scoped API key
-5. point apps at that self-hosted Banata instance with the same SDKs and frontend helpers
+5. connect your app to that project with `@banata-auth/nextjs`
+6. send users through Banata's hosted sign-in UI
+
+If you self-host Banata, the flow stays the same. The only difference is which Banata instance your app points to.
 
 ---
 
-## What You Are Deploying
+## Prerequisites
 
-The self-hosted stack keeps Banata's normal product shape:
+Before writing code, finish these dashboard steps first:
 
-- dashboard-first setup
-- project-scoped API keys
-- Banata-managed users, sessions, organizations, and templates
-- Banata-managed email delivery and auth configuration
-- app-side integration through `@banata-auth/sdk`, `@banata-auth/nextjs`, and `@banata-auth/react`
+1. Create a Banata project.
+2. Create a **project-scoped** API key.
+3. Enable the auth methods you want under **Authentication -> Methods**.
+4. Configure any required provider credentials under **Authentication -> Providers**.
+5. If you enable email-based auth, configure an email provider and templates under **Emails**.
+
+If you skip steps 3-5, the hosted UI will load but it may show no usable auth method.
 
 ---
 
-## Platform Runtime Files
+## Install Packages
 
-The self-hosted platform still keeps a small amount of local Convex wiring:
-
-```text
-convex/
-|-- convex.config.ts
-|-- auth.config.ts
-|-- authNode.ts
-|-- http.ts
-`-- banataAuth/
-    |-- auth.ts
-    |-- adapter.ts
-    `-- schema.ts
+```bash
+npm install @banata-auth/nextjs @banata-auth/sdk
 ```
 
-The packaged component provides the component registration, packaged schema, and packaged migrations. The local `banataAuth/` folder only keeps the files that still need deployment env, runtime config, or Convex codegen anchoring.
+Use:
 
-See [Convex Integration](/docs/convex) for the exact file responsibilities.
-
----
-
-## Operator Setup
-
-1. Deploy the Banata dashboard app
-2. Deploy the Convex backend for that Banata instance
-3. Configure email providers and templates in the dashboard
-4. Sign in to the dashboard as an operator
-5. Create a project for the customer or internal app
-6. Create a project-scoped API key
-
-At that point the app integration looks the same as hosted Banata.
+- `@banata-auth/nextjs` for your app-side auth proxy and callback handoff
+- `@banata-auth/sdk` when you want to configure or manage Banata programmatically from your backend
 
 ---
 
-## App Integration Example
+## Environment Variables
+
+```bash
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
+
+BANATA_API_KEY=sk_test_your_project_key
+BANATA_HOSTED_UI_URL=https://auth-ui.banata.dev
+NEXT_PUBLIC_BANATA_CLIENT_ID=your_project_client_id
+```
+
+Notes:
+
+- `BANATA_API_KEY` must stay server-side.
+- `NEXT_PUBLIC_BANATA_CLIENT_ID` is used for public hosted-auth lookup.
+- `NEXT_PUBLIC_CONVEX_SITE_URL` is the Banata auth backend URL that your Next.js route proxies to.
+
+---
+
+## Create Server Auth Helpers
 
 ```ts
 // src/lib/auth-server.ts
 import { createBanataAuthServer } from "@banata-auth/nextjs/server";
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required.`);
+  }
+  return value;
+}
 
 export const {
   handler,
@@ -79,50 +91,151 @@ export const {
   fetchAuthMutation,
   fetchAuthAction,
 } = createBanataAuthServer({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-  apiKey: process.env.BANATA_API_KEY!,
+  convexUrl: requireEnv("NEXT_PUBLIC_CONVEX_URL"),
+  convexSiteUrl: requireEnv("NEXT_PUBLIC_CONVEX_SITE_URL"),
+  apiKey: requireEnv("BANATA_API_KEY"),
+  allowedOrigins: [requireEnv("BANATA_HOSTED_UI_URL")],
 });
 ```
+
+`apiKey` is what binds your app to a Banata project. Without it, customer auth should not start working.
+
+---
+
+## Create The App Auth Route
 
 ```ts
 // src/app/api/auth/[...all]/route.ts
 import { handler } from "@/lib/auth-server";
 
-export const { GET, POST, PUT, PATCH, DELETE } = handler;
+export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 ```
 
-```ts
-// src/lib/auth-client.ts
-import { createAuthClient } from "@banata-auth/react/plugins";
+This route keeps auth cookies on your own domain while Banata handles the auth backend.
 
-export const authClient = createAuthClient({
-  baseURL: "/api/auth",
+---
+
+## Add The Hosted Callback Page
+
+When Banata finishes hosted auth, it hands the user back to your app's `/auth/callback` page so your app can mint its own session cookie on your domain.
+
+```tsx
+// src/app/auth/callback/page.tsx
+import { HostedAuthCallback } from "@banata-auth/nextjs/client";
+
+export default function AuthCallbackPage() {
+  return <HostedAuthCallback apiPath="/api/auth" fallbackTo="/sign-in" />;
+}
+```
+
+---
+
+## Start Hosted Sign-In
+
+```tsx
+// src/app/sign-in/page.tsx
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required.`);
+  }
+  return value;
+}
+
+function buildHostedSignInUrl() {
+  const url = new URL("/sign-in", requireEnv("BANATA_HOSTED_UI_URL"));
+  url.searchParams.set("client_id", requireEnv("NEXT_PUBLIC_BANATA_CLIENT_ID"));
+  url.searchParams.set("redirect_url", `${requireEnv("NEXT_PUBLIC_SITE_URL")}/`);
+  return url.toString();
+}
+
+export default function SignInPage() {
+  return <a href={buildHostedSignInUrl()}>Continue with Banata</a>;
+}
+```
+
+`redirect_url` should point to where you want the user to end up **after** Banata hands the session back to your app.
+
+---
+
+## Configure Banata By Code
+
+The dashboard is still the source of truth, but you can update the same project config by code with the SDK:
+
+```ts
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_API_KEY!,
+  baseUrl: "https://auth.banata.dev",
+});
+
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    emailPassword: true,
+    emailOtp: true,
+  },
+  emailPassword: {
+    requireEmailVerification: true,
+    autoSignInAfterVerification: true,
+  },
+});
+
+await banata.configuration.saveBrandingConfig({
+  primaryColor: "#0f766e",
+  bgColor: "#f5f5f4",
+  borderRadius: 14,
 });
 ```
 
----
-
-## Environment Variables
-
-For the customer app:
-
-```bash
-NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-BANATA_API_KEY=sk_test_your_project_key
-```
-
-For the Banata platform deployment itself, follow:
-
-- [Self-Hosted Environment Variables](/docs/env-vars)
-- [Deploying the Self-Hosted Stack](/docs/deploy)
+These calls update the same dashboard-backed configuration rows, so the dashboard and hosted UI reflect the changes automatically.
 
 ---
 
-## Important Rule
+## What To Test First
 
-Do not treat `@banata-auth/convex` as the normal first-run integration for customer apps.
+After wiring the app:
 
-Customer apps should not become usable auth runtimes just because someone copied local Convex config into their repo. Authentication is meant to start only after a Banata dashboard project exists and a project-scoped API key has been issued.
+1. Open the hosted sign-in link.
+2. Confirm the hosted UI shows the auth methods you enabled in the dashboard.
+3. Complete sign-in.
+4. Confirm the user lands back on your app origin, not on the Banata domain.
+5. Confirm `/api/auth/get-session` on your app returns a live session.
+
+---
+
+## Common First-Run Problems
+
+### Hosted UI shows no sign-in method
+
+You enabled neither:
+
+- an auth method under **Authentication -> Methods**
+- nor the provider credentials needed for that method under **Authentication -> Providers**
+
+### Email/password shows but sign-up is not practical
+
+Email delivery is not ready yet. Configure:
+
+1. an email provider
+2. the relevant templates
+3. the email policy you want for that project
+
+### Hosted sign-in works but no session exists on your app domain
+
+Check:
+
+1. your app exports `OPTIONS` from `/api/auth/[...all]/route.ts`
+2. `allowedOrigins` includes the hosted UI origin
+3. `/auth/callback` exists in your app
+4. `redirect_url` points back to your app origin
+
+---
+
+## Next Steps
+
+- [Hosted Sign-In](/docs/hosted-ui)
+- [Next.js](/docs/nextjs)
+- [SDK Reference](/docs/sdk)
+- [Projects](/docs/projects-environments)
+- [Self-Hosting](/docs/self-hosting)

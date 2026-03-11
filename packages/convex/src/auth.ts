@@ -40,7 +40,7 @@ import { passkey } from "@better-auth/passkey";
 // through a Node action proxy in ./node.ts so samlify can run inside Convex.
 import { scim } from "@better-auth/scim";
 import { createClient } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
+import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { betterAuth } from "better-auth";
@@ -51,6 +51,7 @@ import { emailOTP } from "better-auth/plugins/email-otp";
 // jwt is handled internally by the convex() plugin — do not import separately
 import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
+import { oneTimeToken } from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { username } from "better-auth/plugins/username";
 import type {
@@ -211,6 +212,15 @@ export interface BanataAuthConfig {
 	 * the proxy forwards the callback to Convex for processing.
 	 */
 	siteUrl: string;
+
+	/**
+	 * Hosted auth UI origin.
+	 *
+	 * When set, Banata enables the cross-domain Better Auth flow so a hosted
+	 * auth UI can drive sign-in against the customer app's `/api/auth` route
+	 * while still keeping the final session on the customer app domain.
+	 */
+	hostedUiUrl?: string;
 
 	/**
 	 * Better Auth secret for signing/encryption.
@@ -908,9 +918,21 @@ function buildPlugins(
 		// Bearer token plugin — API key-style auth
 		bearer(),
 
+		// One-time-token plugin — used to hand hosted auth flows back to the
+		// customer app domain after auth completes.
+		oneTimeToken(),
+
 		// Username plugin — sign-in with username
 		username(),
 	];
+
+	const hostedUiUrl =
+		typeof config.hostedUiUrl === "string" && config.hostedUiUrl.trim().length > 0
+			? config.hostedUiUrl.trim()
+			: null;
+	if (hostedUiUrl) {
+		plugins.push(crossDomain({ siteUrl: hostedUiUrl }));
+	}
 
 	// ── Magic Link ──
 	// Enabled if the method is on AND either consumer provided a callback

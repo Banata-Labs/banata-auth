@@ -10,9 +10,26 @@ export interface RuntimeAuthMethods {
 	username: boolean;
 }
 
+export interface RuntimeEmailPasswordPolicy {
+	requireEmailVerification: boolean;
+	autoSignIn: boolean;
+	minPasswordLength: number;
+	maxPasswordLength: number;
+}
+
 export interface RuntimeSocialProviderStatus {
 	enabled: boolean;
 	demo: boolean;
+}
+
+export interface RuntimeBrandingConfig {
+	primaryColor: string;
+	bgColor: string;
+	borderRadius: number;
+	darkMode: boolean;
+	customCss: string;
+	font: string;
+	logoUrl: string;
 }
 
 export interface RuntimeAuthFeatures {
@@ -31,9 +48,11 @@ export interface RuntimeAuthSessions {
 
 export interface RuntimeAuthConfig {
 	authMethods: RuntimeAuthMethods;
+	emailPassword: RuntimeEmailPasswordPolicy;
 	socialProviders: Record<string, RuntimeSocialProviderStatus>;
 	features: RuntimeAuthFeatures;
 	sessions: RuntimeAuthSessions;
+	branding?: RuntimeBrandingConfig;
 }
 
 export function listEnabledSocialProviderIds(

@@ -14,11 +14,13 @@ export const docsNav: DocNavSection[] = [
 		items: [
 			{ slug: "introduction", title: "Introduction" },
 			{ slug: "project-structure", title: "Project Structure" },
+			{ slug: "quickstart", title: "Quick Start" },
 		],
 	},
 	{
 		section: "Authentication",
 		items: [
+			{ slug: "hosted-ui", title: "Hosted Sign-In" },
 			{ slug: "email-password", title: "Email & Password" },
 			{ slug: "social-oauth", title: "Social OAuth" },
 			{ slug: "magic-links", title: "Magic Links" },
@@ -84,7 +86,6 @@ export const docsNav: DocNavSection[] = [
 	{
 		section: "Deployment",
 		items: [
-			{ slug: "quickstart", title: "Self-Hosted Quick Start" },
 			{ slug: "env-vars", title: "Self-Hosted Environment Variables" },
 			{ slug: "deploy", title: "Deploying the Self-Hosted Stack" },
 			{ slug: "self-hosting", title: "Self-Hosting" },

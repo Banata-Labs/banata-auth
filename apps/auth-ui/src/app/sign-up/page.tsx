@@ -6,14 +6,22 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
-import { authClient } from "@/lib/auth-client";
+import { useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard, SignUpForm, SocialButtons } from "@banata-auth/react";
 import Link from "next/link";
 
 export default function SignUpPage() {
-	const { config, error, enabledSocialProviders, hasScope, isLoading, scopedPath } =
-		useProjectAuthConfig();
+	const {
+		config,
+		customerAuthBaseUrl,
+		error,
+		enabledSocialProviders,
+		hasScope,
+		isLoading,
+		scopedPath,
+	} = useProjectAuthConfig();
+	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;
@@ -29,6 +37,7 @@ export default function SignUpPage() {
 
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
 	const callbackURL = scopedPath("/verify-email");
+	const verificationRequired = config?.emailPassword.requireEmailVerification ?? true;
 
 	if (!emailPasswordEnabled && enabledSocialProviders.length === 0) {
 		return (
@@ -69,7 +78,11 @@ export default function SignUpPage() {
 				authClient={authClient}
 				callbackURL={callbackURL}
 				socialProviders={enabledSocialProviders}
-				description="Email verification is required."
+				description={
+					verificationRequired
+						? "Email verification is required before the account can sign in."
+						: "Create an account for this Banata project."
+				}
 				footer={
 					<p>
 						Already have an account?{" "}

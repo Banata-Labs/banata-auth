@@ -20,6 +20,7 @@ interface PersistedSocialProviderStatus {
 
 interface PersistedDashboardConfig {
 	authMethods?: NonNullable<BanataAuthConfig["authMethods"]>;
+	emailPassword?: NonNullable<BanataAuthConfig["emailPassword"]>;
 	socialProviders?: Record<string, PersistedSocialProviderStatus>;
 }
 
@@ -116,6 +117,7 @@ function getPlatformConfig(): BanataAuthConfig {
 	return {
 		appName: "Banata Auth Dashboard",
 		siteUrl,
+		hostedUiUrl: process.env.AUTH_UI_URL ?? "http://localhost:3003",
 		secret: process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
@@ -125,6 +127,12 @@ function getPlatformConfig(): BanataAuthConfig {
 			passkey: false,
 			twoFactor: false,
 			organization: true,
+		},
+		emailPassword: {
+			requireEmailVerification: true,
+			autoSignIn: true,
+			minPasswordLength: 8,
+			maxPasswordLength: 128,
 		},
 		email: {
 			sendVerificationEmail: async ({
@@ -198,6 +206,7 @@ function buildProjectConfig(projectName: string, secret: string): BanataAuthConf
 	return {
 		appName: projectName,
 		siteUrl: process.env.SITE_URL ?? "http://localhost:3000",
+		hostedUiUrl: process.env.AUTH_UI_URL ?? "http://localhost:3003",
 		secret,
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
@@ -210,6 +219,12 @@ function buildProjectConfig(projectName: string, secret: string): BanataAuthConf
 			username: false,
 			anonymous: false,
 			organization: true,
+		},
+		emailPassword: {
+			requireEmailVerification: true,
+			autoSignIn: true,
+			minPasswordLength: 8,
+			maxPasswordLength: 128,
 		},
 		emailOptions: {
 			appName: projectName,
@@ -235,9 +250,14 @@ function mergeRuntimeConfig(
 		...(baseConfig.authMethods ?? {}),
 		...(overrides.authMethods ?? {}),
 	};
+	const emailPassword = {
+		...(baseConfig.emailPassword ?? {}),
+		...(overrides.emailPassword ?? {}),
+	};
 	const config: BanataAuthConfig = {
 		...baseConfig,
 		authMethods,
+		emailPassword,
 	};
 
 	if (socialProviders && Object.keys(socialProviders).length > 0) {

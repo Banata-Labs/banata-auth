@@ -34,6 +34,7 @@ import {
 export {
 	adminClient,
 	apiKeyClient,
+	oneTimeTokenClient,
 	twoFactorClient,
 	multiSessionClient,
 	usernameClient,

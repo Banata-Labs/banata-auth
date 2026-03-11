@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
+import { useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard, SocialButtons } from "@banata-auth/react";
 import Link from "next/link";
@@ -83,12 +83,14 @@ export default function SignInPage() {
 	const [error, setError] = useState<string | null>(null);
 	const {
 		config,
+		customerAuthBaseUrl,
 		error: configError,
 		enabledSocialProviders,
 		hasScope,
 		isLoading,
 		scopedPath,
 	} = useProjectAuthConfig();
+	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;

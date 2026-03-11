@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useState } from "react";
@@ -16,7 +17,9 @@ import { useState } from "react";
 export default function MagicLinkPage() {
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
-	const { config, error, hasScope, isLoading, scopedApiPath, scopedPath } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl, error, hasScope, isLoading, scopedPath } =
+		useProjectAuthConfig();
+	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard />;
@@ -45,10 +48,10 @@ export default function MagicLinkPage() {
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
-					await fetch(scopedApiPath("/api/auth/sign-in/magic-link"), {
-						method: "POST",
-						headers: { "content-type": "application/json" },
-						body: JSON.stringify({ email, callbackURL: scopedPath("/org-selector") }),
+					if (!customerAuthBaseUrl) return;
+					await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/magic-link", {
+						email,
+						callbackURL: scopedPath("/org-selector"),
 					});
 					setSent(true);
 				}}

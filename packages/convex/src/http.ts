@@ -65,6 +65,11 @@ function deserializeAuthResponse(serialized: SerializedAuthResponse) {
 	});
 }
 
+function shouldExposeProxyErrorDetails(): boolean {
+	const siteUrl = process.env.SITE_URL;
+	return typeof siteUrl === "string" && siteUrl.includes("localhost");
+}
+
 /**
  * Register all Banata Auth HTTP routes on a Convex httpRouter.
  */
@@ -109,10 +114,33 @@ export function registerBanataAuthNodeProxyRoutes(
 					? null
 					: await request.text(),
 		};
-		const serializedResponse = await ctx.runAction(handleNodeAuthRequest, {
-			request: serializedRequest,
-		});
-		return deserializeAuthResponse(serializedResponse);
+		try {
+			const serializedResponse = await ctx.runAction(handleNodeAuthRequest, {
+				request: serializedRequest,
+			});
+			return deserializeAuthResponse(serializedResponse);
+		} catch (error) {
+			console.error("[banata-auth] node proxy route failed", {
+				method: serializedRequest.method,
+				url: serializedRequest.url,
+				error,
+			});
+			return new Response(
+				JSON.stringify({
+					error: "AUTH_PROXY_ERROR",
+					message: "Banata Auth proxy failed while forwarding this request.",
+					...(shouldExposeProxyErrorDetails()
+						? {
+								details: error instanceof Error ? error.message : String(error),
+							}
+						: {}),
+				}),
+				{
+					status: 500,
+					headers: { "content-type": "application/json" },
+				},
+			);
+		}
 	});
 
 	const wellKnown = httpRouter.lookup("/.well-known/openid-configuration", "GET");

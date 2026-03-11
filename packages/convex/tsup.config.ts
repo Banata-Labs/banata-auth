@@ -3,12 +3,12 @@ import { defineConfig } from "tsup";
 export default defineConfig({
 	entry: [
 		"src/index.ts",
+		"src/adapter.ts",
 		"src/auth-config.ts",
 		"src/http.ts",
 		"src/node.ts",
 		"src/triggers.ts",
 		"src/plugins/index.ts",
-		"src/component/adapter.ts",
 	],
 	format: ["esm"],
 	// Use tsc for declaration generation (tsup's DTS rollup hangs on

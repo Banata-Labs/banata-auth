@@ -507,9 +507,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 											<Link2 className="size-8 opacity-40" />
 											<div className="space-y-1">
 												<p className="text-sm font-medium">No SSO connections</p>
-												<p className="text-xs">
-													Create your first enterprise SSO connection.
-												</p>
+												<p className="text-xs">Create your first enterprise SSO connection.</p>
 											</div>
 										</div>
 									</TableCell>
@@ -525,9 +523,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 														{connection.type}
 													</Badge>
 												</div>
-												<p className="font-mono text-xs text-muted-foreground">
-													{connection.id}
-												</p>
+												<p className="font-mono text-xs text-muted-foreground">{connection.id}</p>
 											</div>
 										</TableCell>
 										<TableCell className="text-sm">
@@ -600,10 +596,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 								{organizationId ? (
 									<Input id="connection-organization" value={organizationId} disabled />
 								) : (
-									<Select
-										value={selectedOrganizationId}
-										onValueChange={setSelectedOrganizationId}
-									>
+									<Select value={selectedOrganizationId} onValueChange={setSelectedOrganizationId}>
 										<SelectTrigger id="connection-organization">
 											<SelectValue placeholder="Select organization" />
 										</SelectTrigger>
@@ -766,11 +759,7 @@ export function ConnectionsPanel({ organizationId }: { organizationId?: string }
 						{error && <p className="text-sm text-destructive">{error}</p>}
 
 						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setShowCreateDialog(false)}
-							>
+							<Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
 								Cancel
 							</Button>
 							<Button type="submit" disabled={isSubmitting}>

@@ -1,6 +1,13 @@
 export { BanataAuth } from "./client";
 export type { BanataAuthOptions } from "./client";
 export { ApiKeys } from "./resources/api-keys";
+export {
+	Configuration,
+	type AuthConfiguration,
+	type SaveSocialProviderCredentialOptions,
+	type SocialProviderCredentialRecord,
+	type SocialProviderCredentials,
+} from "./resources/configuration";
 export { UserManagement } from "./resources/user-management";
 export { Organizations } from "./resources/organizations";
 export { SSO } from "./resources/sso";

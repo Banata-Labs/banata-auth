@@ -81,6 +81,13 @@ export interface ConfigPluginOptions {
 		username?: boolean;
 	};
 
+	emailPassword?: {
+		requireEmailVerification?: boolean;
+		autoSignIn?: boolean;
+		minPasswordLength?: number;
+		maxPasswordLength?: number;
+	};
+
 	/**
 	 * Social providers config â€” keys are provider names, values indicate
 	 * whether they are enabled + whether they use demo credentials.
@@ -757,6 +764,14 @@ const saveDashboardConfigSchema = z
 				username: z.boolean().optional(),
 			})
 			.optional(),
+		emailPassword: z
+			.object({
+				requireEmailVerification: z.boolean().optional(),
+				autoSignIn: z.boolean().optional(),
+				minPasswordLength: z.number().int().min(8).max(128).optional(),
+				maxPasswordLength: z.number().int().min(8).max(256).optional(),
+			})
+			.optional(),
 		socialProviders: z
 			.record(z.string(), z.object({ enabled: z.boolean(), demo: z.boolean().optional() }))
 			.optional(),
@@ -809,6 +824,12 @@ interface StaticDashboardConfig {
 		anonymous: boolean;
 		username: boolean;
 	};
+	emailPassword: {
+		requireEmailVerification: boolean;
+		autoSignIn: boolean;
+		minPasswordLength: number;
+		maxPasswordLength: number;
+	};
 	socialProviders: Record<string, { enabled: boolean; demo: boolean }>;
 	features: {
 		hostedUi: boolean;
@@ -840,6 +861,12 @@ function buildStaticConfig(
 				organization: true,
 				anonymous: false,
 				username: false,
+			},
+			emailPassword: {
+				requireEmailVerification: true,
+				autoSignIn: true,
+				minPasswordLength: 8,
+				maxPasswordLength: 128,
 			},
 			socialProviders: {},
 			features: {
@@ -878,6 +905,12 @@ function buildStaticConfig(
 			organization: options?.authMethods?.organization ?? false,
 			anonymous: options?.authMethods?.anonymous ?? false,
 			username: options?.authMethods?.username ?? false,
+		},
+		emailPassword: {
+			requireEmailVerification: options?.emailPassword?.requireEmailVerification ?? true,
+			autoSignIn: options?.emailPassword?.autoSignIn ?? true,
+			minPasswordLength: options?.emailPassword?.minPasswordLength ?? 8,
+			maxPasswordLength: options?.emailPassword?.maxPasswordLength ?? 128,
 		},
 		socialProviders,
 		features: {
@@ -1048,6 +1081,41 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 	): Promise<StaticDashboardConfig> {
 		const cfg = await ensurePersistedOverrides(db, projectId);
 		return syncConfiguredSocialProviders(db, projectId, cfg);
+	}
+
+	async function getResolvedBrandingConfig(
+		db: PluginDBAdapter,
+		projectId?: string,
+	): Promise<{
+		primaryColor: string;
+		bgColor: string;
+		borderRadius: number;
+		darkMode: boolean;
+		customCss: string;
+		font: string;
+		logoUrl: string;
+	}> {
+		const where: WhereClause[] = [];
+		if (projectId) {
+			where.push({ field: "projectId", value: projectId });
+		}
+
+		const rows = await db.findMany<BrandingConfigRow>({
+			model: "brandingConfig",
+			where,
+			limit: 1,
+		});
+
+		const row = rows.length > 0 ? rows[0] : null;
+		return {
+			primaryColor: row?.primaryColor ?? "#0f766e",
+			bgColor: row?.bgColor ?? "#f5f5f4",
+			borderRadius: row?.borderRadius ?? 14,
+			darkMode: row?.darkMode ?? false,
+			customCss: row?.customCss ?? "",
+			font: row?.font ?? "General Sans",
+			logoUrl: row?.logoUrl ?? "",
+		};
 	}
 
 	async function listSocialProviderCredentialSummary(
@@ -1338,8 +1406,14 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						db,
 						ctx.body as Record<string, unknown>,
 					);
-					const cfg = await getResolvedDashboardConfig(db, projectId);
-					return ctx.json(cfg);
+					const [cfg, branding] = await Promise.all([
+						getResolvedDashboardConfig(db, projectId),
+						getResolvedBrandingConfig(db, projectId),
+					]);
+					return ctx.json({
+						...cfg,
+						branding,
+					});
 				},
 			),
 
@@ -2062,17 +2136,15 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					});
 
 					const row = rows.length > 0 ? rows[0] : null;
-					const config = {
-						primaryColor: row?.primaryColor ?? "#6366f1",
-						bgColor: row?.bgColor ?? "#09090b",
-						borderRadius: row?.borderRadius ?? 8,
-						darkMode: row?.darkMode ?? true,
+					return ctx.json({
+						primaryColor: row?.primaryColor ?? "#0f766e",
+						bgColor: row?.bgColor ?? "#f5f5f4",
+						borderRadius: row?.borderRadius ?? 14,
+						darkMode: row?.darkMode ?? false,
 						customCss: row?.customCss ?? "",
-						font: row?.font ?? "inter",
+						font: row?.font ?? "General Sans",
 						logoUrl: row?.logoUrl ?? "",
-					};
-
-					return ctx.json(config);
+					});
 				},
 			),
 
@@ -2124,12 +2196,12 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 							model: "brandingConfig",
 							data: {
 								...scope.data,
-								primaryColor: body.primaryColor ?? "#6366f1",
-								bgColor: body.bgColor ?? "#09090b",
-								borderRadius: body.borderRadius ?? 8,
-								darkMode: body.darkMode ?? true,
+								primaryColor: body.primaryColor ?? "#0f766e",
+								bgColor: body.bgColor ?? "#f5f5f4",
+								borderRadius: body.borderRadius ?? 14,
+								darkMode: body.darkMode ?? false,
 								customCss: body.customCss ? sanitizeCss(body.customCss) : "",
-								font: body.font ?? "inter",
+								font: body.font ?? "General Sans",
 								logoUrl: body.logoUrl ?? "",
 								createdAt: now,
 								updatedAt: now,
@@ -2138,12 +2210,12 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					}
 
 					return ctx.json({
-						primaryColor: result?.primaryColor ?? "#6366f1",
-						bgColor: result?.bgColor ?? "#09090b",
-						borderRadius: result?.borderRadius ?? 8,
-						darkMode: result?.darkMode ?? true,
+						primaryColor: result?.primaryColor ?? "#0f766e",
+						bgColor: result?.bgColor ?? "#f5f5f4",
+						borderRadius: result?.borderRadius ?? 14,
+						darkMode: result?.darkMode ?? false,
 						customCss: result?.customCss ?? "",
-						font: result?.font ?? "inter",
+						font: result?.font ?? "General Sans",
 						logoUrl: result?.logoUrl ?? "",
 					});
 				},

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BanataAuth } from "../client";
 import { AuditLogs } from "../resources/audit-logs";
+import { Configuration } from "../resources/configuration";
 import { DirectorySync } from "../resources/directory-sync";
 import { Domains } from "../resources/domains";
 import { Events } from "../resources/events";
@@ -105,6 +106,24 @@ describe("Resource modules", () => {
 			"sendInvitation",
 			"revokeInvitation",
 			"listInvitations",
+		]);
+	});
+
+	describe("Configuration", () => {
+		it("is an instance of Configuration", () => {
+			expect(client.configuration).toBeInstanceOf(Configuration);
+		});
+
+		expectMethodsExist(Configuration.prototype, [
+			"getDashboardConfig",
+			"saveDashboardConfig",
+			"getSocialProviderCredentials",
+			"saveSocialProviderCredential",
+			"deleteSocialProviderCredential",
+			"getBrandingConfig",
+			"saveBrandingConfig",
+			"getAuthConfiguration",
+			"saveAuthConfiguration",
 		]);
 	});
 

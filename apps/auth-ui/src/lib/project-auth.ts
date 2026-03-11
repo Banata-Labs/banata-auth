@@ -1,29 +1,13 @@
 "use client";
 
+import type { RuntimeAuthConfig } from "@banata-auth/shared";
 import { useEffect, useMemo, useState } from "react";
 
 export const BANATA_CLIENT_ID_COOKIE = "banata_client_id";
 export const BANATA_PROJECT_ID_COOKIE = "banata_project_id";
 export const BANATA_REDIRECT_URL_COOKIE = "banata_redirect_url";
 
-interface RuntimeAuthMethods {
-	emailPassword: boolean;
-	magicLink: boolean;
-	emailOtp: boolean;
-	passkey: boolean;
-	twoFactor: boolean;
-	organization: boolean;
-	sso: boolean;
-}
-
-interface RuntimeSocialProviderStatus {
-	enabled: boolean;
-}
-
-export interface PublicAuthConfig {
-	authMethods: RuntimeAuthMethods;
-	socialProviders: Record<string, RuntimeSocialProviderStatus>;
-}
+export type PublicAuthConfig = RuntimeAuthConfig;
 
 export interface ProjectAuthScope {
 	clientId: string | null;
@@ -39,6 +23,9 @@ interface UseProjectAuthConfigResult {
 	hasScope: boolean;
 	scopedPath: (path: string) => string;
 	scopedApiPath: (path: string) => string;
+	customerOrigin: string | null;
+	customerAuthBaseUrl: string | null;
+	customerCallbackUrl: string | null;
 	enabledSocialProviders: Array<{ id: string; label: string }>;
 }
 
@@ -102,6 +89,42 @@ function appendScope(path: string, scope: ProjectAuthScope): string {
 
 	const query = params.toString();
 	return query ? `${pathname}?${query}` : pathname;
+}
+
+function parseRedirectUrl(value: string | null): URL | null {
+	if (!value) {
+		return null;
+	}
+
+	try {
+		return new URL(value);
+	} catch {
+		return null;
+	}
+}
+
+function toCustomerOrigin(scope: ProjectAuthScope): string | null {
+	const redirectUrl = parseRedirectUrl(scope.redirectUrl);
+	return redirectUrl?.origin ?? null;
+}
+
+function toCustomerAuthBaseUrl(scope: ProjectAuthScope): string | null {
+	const origin = toCustomerOrigin(scope);
+	return origin ? `${origin}/api/auth` : null;
+}
+
+function toCustomerCallbackUrl(scope: ProjectAuthScope): string | null {
+	const redirectUrl = parseRedirectUrl(scope.redirectUrl);
+	if (!redirectUrl) {
+		return null;
+	}
+
+	const callbackUrl = new URL("/auth/callback", redirectUrl.origin);
+	const nextValue = `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`;
+	if (nextValue && nextValue !== "/") {
+		callbackUrl.searchParams.set("next", nextValue);
+	}
+	return callbackUrl.toString();
 }
 
 function toProviderLabel(providerId: string): string {
@@ -196,6 +219,34 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		[config],
 	);
 
+	useEffect(() => {
+		if (typeof document === "undefined") {
+			return;
+		}
+
+		const root = document.documentElement;
+		const branding = config?.branding;
+		if (!branding) {
+			return;
+		}
+
+		root.classList.toggle("dark", branding.darkMode);
+		root.classList.toggle("light", !branding.darkMode);
+		root.style.setProperty("--primary", branding.primaryColor);
+		root.style.setProperty("--ring", branding.primaryColor);
+		root.style.setProperty("--background", branding.bgColor);
+		root.style.setProperty("--radius", `${branding.borderRadius / 16}rem`);
+
+		const styleId = "banata-auth-custom-css";
+		let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+		if (!styleEl) {
+			styleEl = document.createElement("style");
+			styleEl.id = styleId;
+			document.head.appendChild(styleEl);
+		}
+		styleEl.textContent = branding.customCss || "";
+	}, [config]);
+
 	return {
 		scope,
 		config,
@@ -204,6 +255,9 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		hasScope: hasProjectAuthScope(scope),
 		scopedPath: (path) => appendScope(path, scope),
 		scopedApiPath: (path) => appendScope(path, scope),
+		customerOrigin: toCustomerOrigin(scope),
+		customerAuthBaseUrl: toCustomerAuthBaseUrl(scope),
+		customerCallbackUrl: toCustomerCallbackUrl(scope),
 		enabledSocialProviders,
 	};
 }
