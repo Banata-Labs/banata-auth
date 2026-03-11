@@ -948,6 +948,22 @@ function deepMergeConfig(
 		}
 	}
 
+	if (partial.emailPassword && typeof partial.emailPassword === "object") {
+		const src = partial.emailPassword as Record<string, unknown>;
+		if (typeof src.requireEmailVerification === "boolean") {
+			target.emailPassword.requireEmailVerification = src.requireEmailVerification;
+		}
+		if (typeof src.autoSignIn === "boolean") {
+			target.emailPassword.autoSignIn = src.autoSignIn;
+		}
+		if (typeof src.minPasswordLength === "number") {
+			target.emailPassword.minPasswordLength = src.minPasswordLength;
+		}
+		if (typeof src.maxPasswordLength === "number") {
+			target.emailPassword.maxPasswordLength = src.maxPasswordLength;
+		}
+	}
+
 	if (partial.socialProviders && typeof partial.socialProviders === "object") {
 		const src = partial.socialProviders as Record<string, { enabled: boolean; demo?: boolean }>;
 		for (const [key, value] of Object.entries(src)) {
@@ -980,6 +996,11 @@ function deepMergeConfig(
 
 	return target;
 }
+
+export const __configPluginTesting = {
+	buildStaticConfig,
+	deepMergeConfig,
+};
 
 // â”€â”€â”€ Plugin Factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
