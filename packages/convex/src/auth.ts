@@ -34,7 +34,7 @@
  * ```
  */
 
-import { RATE_LIMITS } from "@banata-auth/shared";
+import { getCurrentAuthContext } from "@better-auth/core/context";
 import { passkey } from "@better-auth/passkey";
 // SCIM runs in Convex's standard runtime. SSO protocol endpoints are mounted
 // through a Node action proxy in ./node.ts so samlify can run inside Convex.
@@ -72,6 +72,7 @@ import { organizationRbacPlugin } from "./plugins/organization-rbac";
 import { portalPlugin } from "./plugins/portal";
 import { projectsPlugin } from "./plugins/projects";
 import { type BanataProtectionOptions, banataProtection } from "./plugins/protection";
+import { projectScopedRateLimitPlugin } from "./plugins/rate-limit";
 import { userManagementPlugin } from "./plugins/user-management";
 import { vaultPlugin } from "./plugins/vault";
 import { webhookSystem } from "./plugins/webhook";
@@ -377,6 +378,29 @@ type ComponentClient = ReturnType<typeof createClient>;
 const MODULE_ANALYSIS_SECRET = "placeholder-for-module-analysis";
 let warnedAboutMissingSecret = false;
 let warnedAboutStaticAdapterFallback = false;
+const projectScopedModelNames = new Set(
+	Object.entries(
+		(
+			banataAuthSchema as unknown as {
+				tables?: Record<string, { validator?: { fields?: Record<string, unknown> } }>;
+			}
+		).tables ?? {},
+	)
+		.filter(([, table]) => table?.validator?.fields?.projectId !== undefined)
+		.map(([model]) => model),
+);
+
+type AdapterMutationInput = {
+	model?: string;
+	data?: Record<string, unknown>;
+	update?: Record<string, unknown>;
+	where?: Array<{
+		field: string;
+		value: unknown;
+		operator?: string;
+		connector?: "AND" | "OR";
+	}>;
+};
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return Object.prototype.toString.call(value) === "[object Object]";
@@ -449,6 +473,152 @@ function resolveConfiguredSecret(secret: string | undefined): string {
 	return MODULE_ANALYSIS_SECRET;
 }
 
+function normalizeScopedValue(value: unknown): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readProjectScopeFromUrl(urlValue: string | null | undefined): string | null {
+	if (!urlValue) {
+		return null;
+	}
+
+	try {
+		const url = new URL(urlValue, "http://localhost");
+		return (
+			normalizeScopedValue(url.searchParams.get("projectId")) ??
+			normalizeScopedValue(url.searchParams.get("project_id"))
+		);
+	} catch {
+		return null;
+	}
+}
+
+async function resolveCurrentRequestProjectId(): Promise<string | null> {
+	try {
+		const context = await getCurrentAuthContext();
+		return (
+			normalizeScopedValue(context.headers?.get("x-banata-project-id")) ??
+			normalizeScopedValue(context.request?.headers.get("x-banata-project-id")) ??
+			readProjectScopeFromUrl(context.request?.url) ??
+			null
+		);
+	} catch {
+		return null;
+	}
+}
+
+function ensureProjectScopedWhere(
+	where: AdapterMutationInput["where"],
+	projectId: string,
+	model: string,
+) {
+	const nextWhere = Array.isArray(where) ? [...where] : [];
+	const existing = nextWhere.find((clause) => clause.field === "projectId");
+	if (existing) {
+		const existingValue = normalizeScopedValue(existing.value);
+		if (existingValue && existingValue !== projectId) {
+			throw new Error(
+				`Project scope mismatch for model ${model}: ${existingValue} does not match ${projectId}.`,
+			);
+		}
+		return nextWhere;
+	}
+
+	nextWhere.push({ field: "projectId", value: projectId });
+	return nextWhere;
+}
+
+function ensureProjectScopedData(
+	data: Record<string, unknown> | undefined,
+	projectId: string,
+	model: string,
+) {
+	const nextData = { ...(data ?? {}) };
+	const existingValue = normalizeScopedValue(nextData.projectId);
+	if (existingValue && existingValue !== projectId) {
+		throw new Error(
+			`Project scope mismatch for model ${model}: ${existingValue} does not match ${projectId}.`,
+		);
+	}
+	nextData.projectId = projectId;
+	return nextData;
+}
+
+function wrapProjectScopedDatabaseAdapter(
+	database: BetterAuthOptions["database"],
+): BetterAuthOptions["database"] {
+	if (!database || typeof database !== "object") {
+		return database;
+	}
+
+	return new Proxy(database as Record<string, unknown>, {
+		get(target, prop, receiver) {
+			const original = Reflect.get(target, prop, receiver);
+			if (typeof prop !== "string" || typeof original !== "function") {
+				return original;
+			}
+
+			if (
+				![
+					"create",
+					"findOne",
+					"findMany",
+					"update",
+					"updateMany",
+					"delete",
+					"deleteMany",
+					"count",
+				].includes(prop)
+			) {
+				return original.bind(target);
+			}
+
+			return async (input: AdapterMutationInput, ...rest: unknown[]) => {
+				const model = typeof input?.model === "string" ? input.model : null;
+				const projectId = model ? await resolveCurrentRequestProjectId() : null;
+				if (!model || !projectId || !projectScopedModelNames.has(model)) {
+					return original.apply(target, [input, ...rest]);
+				}
+
+				switch (prop) {
+					case "create":
+						return original.apply(target, [
+							{
+								...input,
+								data: ensureProjectScopedData(input.data, projectId, model),
+							},
+							...rest,
+						]);
+					case "update":
+					case "updateMany":
+						return original.apply(target, [
+							{
+								...input,
+								where: ensureProjectScopedWhere(input.where, projectId, model),
+								update: ensureProjectScopedData(input.update, projectId, model),
+							},
+							...rest,
+						]);
+					case "findOne":
+					case "findMany":
+					case "delete":
+					case "deleteMany":
+					case "count":
+						return original.apply(target, [
+							{
+								...input,
+								where: ensureProjectScopedWhere(input.where, projectId, model),
+							},
+							...rest,
+						]);
+					default:
+						return original.apply(target, [input, ...rest]);
+				}
+			};
+		},
+	}) as BetterAuthOptions["database"];
+}
+
 function createStaticDatabaseAdapter(): BetterAuthOptions["database"] {
 	return {} as BetterAuthOptions["database"];
 }
@@ -484,7 +654,7 @@ function resolveDatabaseAdapter(
 	}
 
 	try {
-		return authComponent.adapter(ctx);
+		return wrapProjectScopedDatabaseAdapter(authComponent.adapter(ctx));
 	} catch {
 		if (!warnedAboutStaticAdapterFallback) {
 			warnedAboutStaticAdapterFallback = true;
@@ -687,39 +857,7 @@ export function createBanataAuthOptions(
 		// Rate limiting — protects sign-in, sign-up, password reset, and OTP endpoints
 		// from brute-force and credential-stuffing attacks.
 		rateLimit: {
-			enabled: true,
-			window: 60, // 1-minute window
-			max: RATE_LIMITS.general, // default max per window
-			customRules: {
-				"/sign-in/*": {
-					window: 60,
-					max: RATE_LIMITS.signIn,
-				},
-				"/sign-up/*": {
-					window: 60,
-					max: RATE_LIMITS.signUp,
-				},
-				"/forget-password": {
-					window: 60,
-					max: RATE_LIMITS.passwordReset,
-				},
-				"/reset-password": {
-					window: 60,
-					max: RATE_LIMITS.passwordReset,
-				},
-				"/email-otp/*": {
-					window: 60,
-					max: RATE_LIMITS.emailOperations,
-				},
-				"/magic-link/*": {
-					window: 60,
-					max: RATE_LIMITS.emailOperations,
-				},
-				"/admin/*": {
-					window: 60,
-					max: RATE_LIMITS.admin,
-				},
-			},
+			enabled: false,
 		},
 		...(socialProviders != null && { socialProviders }),
 		plugins: [
@@ -729,6 +867,7 @@ export function createBanataAuthOptions(
 				// Auto-rotate JWKS keys if the algorithm changed (e.g. EdDSA → RS256)
 				jwksRotateOnTokenGenerationError: true,
 			}),
+			projectScopedRateLimitPlugin(),
 			...plugins,
 		],
 		// Wire lifecycle triggers into Better Auth's database hooks

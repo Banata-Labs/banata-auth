@@ -1,4 +1,5 @@
 import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
+import { runWithEndpointContext } from "@better-auth/core/context";
 import type { BetterAuthPlugin } from "better-auth";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -192,6 +193,110 @@ describe("createBanataAuthOptions()", () => {
 			type: "string",
 			required: false,
 		});
+	});
+
+	it("scopes core adapter reads by the current project context", async () => {
+		const findOne = vi.fn(async () => null);
+		const options = createBanataAuthOptions(
+			{ runQuery: vi.fn() } as never,
+			{
+				authComponent: {
+					adapter: () =>
+						({
+							findOne,
+						}) as never,
+				} as never,
+				authConfig: {
+					providers: [getAuthConfigProvider()],
+				},
+				config: {
+					siteUrl: "http://localhost:3000",
+					secret: "test-secret",
+				},
+			},
+		);
+
+		await runWithEndpointContext(
+			{
+				headers: new Headers({
+					"x-banata-project-id": "proj_test",
+				}),
+				request: new Request("http://localhost/api/auth/sign-in/email"),
+				context: {} as never,
+			},
+			async () => {
+				await (options.database as { findOne: (input: unknown) => Promise<unknown> }).findOne({
+					model: "user",
+					where: [{ field: "email", value: "test@example.com" }],
+				});
+			},
+		);
+
+		expect(findOne).toHaveBeenCalledWith({
+			model: "user",
+			where: [
+				{ field: "email", value: "test@example.com" },
+				{ field: "projectId", value: "proj_test" },
+			],
+		});
+	});
+
+	it("scopes core adapter creates by the current project context", async () => {
+		const create = vi.fn(async () => null);
+		const options = createBanataAuthOptions(
+			{ runQuery: vi.fn() } as never,
+			{
+				authComponent: {
+					adapter: () =>
+						({
+							create,
+						}) as never,
+				} as never,
+				authConfig: {
+					providers: [getAuthConfigProvider()],
+				},
+				config: {
+					siteUrl: "http://localhost:3000",
+					secret: "test-secret",
+				},
+			},
+		);
+
+		await runWithEndpointContext(
+			{
+				headers: new Headers({
+					"x-banata-project-id": "proj_test",
+				}),
+				request: new Request("http://localhost/api/auth/sign-up/email"),
+				context: {} as never,
+			},
+			async () => {
+				await (options.database as { create: (input: unknown) => Promise<unknown> }).create({
+					model: "user",
+					data: {
+						email: "test@example.com",
+						name: "Test User",
+					},
+				});
+			},
+		);
+
+		expect(create).toHaveBeenCalledWith({
+			model: "user",
+			data: {
+				email: "test@example.com",
+				name: "Test User",
+				projectId: "proj_test",
+			},
+		});
+	});
+
+	it("uses Banata's project-scoped rate limiter instead of Better Auth's global limiter", () => {
+		const options = createOptions();
+		expect(options.rateLimit?.enabled).toBe(false);
+		expect(options.plugins?.some((plugin) => plugin.id === "banata-project-rate-limit")).toBe(
+			true,
+		);
 	});
 
 	it("registers projectId-aware enterprise models", () => {
