@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/sdk",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -47,7 +47,7 @@
 		"clean": "rm -rf dist .turbo"
 	},
 	"dependencies": {
-		"@banata-auth/shared": "^0.1.0"
+		"@banata-auth/shared": "^0.1.1"
 	},
 	"devDependencies": {
 		"tsup": "^8.3.0",

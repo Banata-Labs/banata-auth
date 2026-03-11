@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/shared",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -11,7 +11,14 @@
 		"directory": "packages/shared"
 	},
 	"homepage": "https://auth-docs.banata.dev/docs/packages/shared",
-	"keywords": ["banata-auth", "auth", "shared", "types", "schemas", "validation"],
+	"keywords": [
+		"banata-auth",
+		"auth",
+		"shared",
+		"types",
+		"schemas",
+		"validation"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -26,7 +33,9 @@
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
