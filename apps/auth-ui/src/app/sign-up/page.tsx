@@ -36,8 +36,8 @@ export default function SignUpPage() {
 	}
 
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
-	const callbackURL = scopedPath("/verify-email");
 	const verificationRequired = config?.emailPassword.requireEmailVerification ?? true;
+	const callbackURL = verificationRequired ? scopedPath("/verify-email") : scopedPath("/callback");
 
 	if (!emailPasswordEnabled && enabledSocialProviders.length === 0) {
 		return (

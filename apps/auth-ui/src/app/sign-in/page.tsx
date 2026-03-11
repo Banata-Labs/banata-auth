@@ -50,7 +50,7 @@ function getSignInViewModel(
 			magicLinkEnabled ||
 			emailOtpEnabled ||
 			socialProviderCount > 0,
-		callbackURL: scopedPath("/org-selector"),
+		callbackURL: scopedPath("/callback"),
 	};
 }
 

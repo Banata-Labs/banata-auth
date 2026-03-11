@@ -137,3 +137,58 @@ Test surface:
 - `POST https://auth.banata.dev/api/auth/banata/config/public` with `{"clientId":"default"}` returned `200`
 - `GET https://auth-ui.banata.dev/api/auth/get-session` returned `200 null` in a clean unauthenticated browser
 - The rebuilt customer app on `http://localhost:3100/sign-in` now points to hosted Banata correctly and no longer uses stale localhost Banata URLs
+
+## 14. Code-driven email/password policy sync was broken, then fixed in source
+
+- Reproduced with the published SDK against hosted Banata:
+  - `saveDashboardConfig({ emailPassword: { requireEmailVerification: false } })`
+  - followed by `getDashboardConfig()`
+- Before the fix, the response still returned:
+  - `"requireEmailVerification": true`
+- Root cause in source:
+  - the dashboard config plugin deep-merge helper never merged the nested `emailPassword` object
+- Fix is on `main` in source, but this did not require an npm package release because the hosted dashboard/runtime picked it up directly after deploy.
+
+## 15. Hosted dashboard login was misconfigured for production
+
+- Reproduced on `https://auth.banata.dev/api-keys`
+- After GitHub login, the dashboard first tried to send the browser to:
+  - `http://localhost:3003/api-keys?ott=...`
+- After the first fix, it then tried to send the browser to:
+  - `https://auth-ui.banata.dev/api-keys?ott=...`
+- Both are wrong for dashboard account login.
+- Root causes in source:
+  - dashboard runtime was falling back to `AUTH_UI_URL ?? "http://localhost:3003"` in production
+  - dashboard account auth was also incorrectly using the hosted-UI cross-domain path intended for customer project auth
+- Fixes are now on `main` in source:
+  - production no longer falls back to localhost for hosted UI URL derivation
+  - dashboard account auth no longer uses the hosted-UI handoff path
+- After the fix, hosted dashboard login returns correctly to:
+  - `https://auth.banata.dev/api-keys`
+
+## 16. Fresh project-scoped hosted API key creation now works end to end
+
+- Created successfully in the hosted dashboard UI:
+  - key name: `ticketing-e2e-fresh`
+- The raw key value was shown once and copied into the external app env.
+- After switching the external app to this fresh key, live SDK config updates succeeded.
+
+## 17. Hosted UI sign-up still hangs with published `@banata-auth/nextjs@0.2.1`
+
+- Current live customer flow:
+  - external app opens hosted sign-up on `https://auth-ui.banata.dev/sign-up?client_id=default&redirect_url=http://localhost:3100/`
+  - hosted UI posts to the customer app proxy:
+    - `POST http://localhost:3100/api/auth/sign-up/email`
+- Direct verification of the customer app proxy shows the backend response is healthy:
+  - `200`
+  - returns JSON user payload
+  - returns a session cookie
+- But the hosted UI remains stuck on:
+  - `Creating account...`
+- Root cause found in source:
+  - the customer app Next.js auth proxy returns `Set-Cookie`
+  - the hosted cross-domain client expects `Set-Better-Auth-Cookie`
+  - so the cross-domain auth client never completes the cookie handoff
+- Fix is on `main` in source:
+  - `@banata-auth/nextjs` route handler now mirrors `Set-Cookie` into `Set-Better-Auth-Cookie` for allowed hosted origins
+- This fix still requires a new npm package release before the external app can validate it, because the customer app is intentionally pinned to published npm packages only.
