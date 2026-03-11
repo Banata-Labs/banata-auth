@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import React, { createElement } from "react";
 import { useEffect, useState } from "react";
 
@@ -72,7 +71,6 @@ export function HostedAuthCallback({
 	fallbackTo?: string;
 	loadingMessage?: string;
 }) {
-	const searchParams = useSearchParams();
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -82,7 +80,10 @@ export function HostedAuthCallback({
 			try {
 				const result = await completeHostedAuth({
 					apiPath,
-					next: searchParams.get("next"),
+					next:
+						typeof window === "undefined"
+							? null
+							: new URL(window.location.href).searchParams.get("next"),
 				});
 				if (!cancelled) {
 					window.location.replace(result.next);
@@ -97,7 +98,7 @@ export function HostedAuthCallback({
 		return () => {
 			cancelled = true;
 		};
-	}, [apiPath, searchParams]);
+	}, [apiPath]);
 
 	if (error) {
 		return createElement(
