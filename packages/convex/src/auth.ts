@@ -34,7 +34,6 @@
  * ```
  */
 
-import { getCurrentAuthContext } from "@better-auth/core/context";
 import { passkey } from "@better-auth/passkey";
 // SCIM runs in Convex's standard runtime. SSO protocol endpoints are mounted
 // through a Node action proxy in ./node.ts so samlify can run inside Convex.
@@ -477,36 +476,6 @@ function normalizeScopedValue(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
-function readProjectScopeFromUrl(urlValue: string | null | undefined): string | null {
-	if (!urlValue) {
-		return null;
-	}
-
-	try {
-		const url = new URL(urlValue, "http://localhost");
-		return (
-			normalizeScopedValue(url.searchParams.get("projectId")) ??
-			normalizeScopedValue(url.searchParams.get("project_id"))
-		);
-	} catch {
-		return null;
-	}
-}
-
-async function resolveCurrentRequestProjectId(): Promise<string | null> {
-	try {
-		const context = await getCurrentAuthContext();
-		return (
-			normalizeScopedValue(context.headers?.get("x-banata-project-id")) ??
-			normalizeScopedValue(context.request?.headers.get("x-banata-project-id")) ??
-			readProjectScopeFromUrl(context.request?.url) ??
-			null
-		);
-	} catch {
-		return null;
-	}
-}
-
 function ensureProjectScopedWhere(
 	where: AdapterMutationInput["where"],
 	projectId: string,
@@ -546,6 +515,7 @@ function ensureProjectScopedData(
 
 function wrapProjectScopedDatabaseAdapter(
 	database: BetterAuthOptions["database"],
+	requestProjectId?: string | null,
 ): BetterAuthOptions["database"] {
 	if (!database || typeof database !== "object") {
 		return database;
@@ -575,7 +545,10 @@ function wrapProjectScopedDatabaseAdapter(
 
 			return async (input: AdapterMutationInput, ...rest: unknown[]) => {
 				const model = typeof input?.model === "string" ? input.model : null;
-				const projectId = model ? await resolveCurrentRequestProjectId() : null;
+				const projectId =
+					model && projectScopedModelNames.has(model)
+						? normalizeScopedValue(requestProjectId)
+						: null;
 				if (!model || !projectId || !projectScopedModelNames.has(model)) {
 					return original.apply(target, [input, ...rest]);
 				}
@@ -641,6 +614,7 @@ function canResolveRuntimeAdapter(ctx: unknown): boolean {
 function resolveDatabaseAdapter(
 	authComponent: ComponentClient,
 	ctx: GenericCtx<GenericDataModel>,
+	requestProjectId?: string | null,
 ): BetterAuthOptions["database"] {
 	if (!canResolveRuntimeAdapter(ctx)) {
 		if (!warnedAboutStaticAdapterFallback) {
@@ -654,7 +628,7 @@ function resolveDatabaseAdapter(
 	}
 
 	try {
-		return wrapProjectScopedDatabaseAdapter(authComponent.adapter(ctx));
+		return wrapProjectScopedDatabaseAdapter(authComponent.adapter(ctx), requestProjectId);
 	} catch {
 		if (!warnedAboutStaticAdapterFallback) {
 			warnedAboutStaticAdapterFallback = true;
@@ -773,9 +747,10 @@ export function createBanataAuthOptions(
 		authComponent: ComponentClient;
 		authConfig: AuthConfig;
 		config: BanataAuthConfig;
+		requestProjectId?: string | null;
 	},
 ): BetterAuthOptions {
-	const { authComponent, authConfig, config } = params;
+	const { authComponent, authConfig, config, requestProjectId } = params;
 	const methods = config.authMethods ?? {};
 	const emailPassword = config.emailPassword ?? {};
 	const resolvedSecret = resolveConfiguredSecret(config.secret);
@@ -786,7 +761,7 @@ export function createBanataAuthOptions(
 	// ── Built-in email system ──
 	// Create auto-email callbacks that read provider config from the DB.
 	// These serve as fallbacks when the consumer doesn't provide their own.
-	const dbAdapter = resolveDatabaseAdapter(authComponent, ctx);
+	const dbAdapter = resolveDatabaseAdapter(authComponent, ctx, requestProjectId);
 	const emailOpts: BanataEmailOptions = {
 		appName: config.appName,
 		...config.emailOptions,
@@ -903,6 +878,7 @@ export function createBanataAuth(
 		authComponent: ComponentClient;
 		authConfig: AuthConfig;
 		config: BanataAuthConfig;
+		requestProjectId?: string | null;
 	},
 ) {
 	return betterAuth(createBanataAuthOptions(ctx, params));
@@ -924,6 +900,7 @@ export function createBanataAuthStaticOptions(params: {
 	authComponent: ComponentClient;
 	authConfig: AuthConfig;
 	config: BanataAuthConfig;
+	requestProjectId?: string | null;
 }) {
 	// Pass an empty object as ctx — the adapter won't be used during schema generation
 	return createBanataAuthOptions({} as GenericCtx<GenericDataModel>, params);

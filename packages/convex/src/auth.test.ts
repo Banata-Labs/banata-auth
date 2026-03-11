@@ -1,5 +1,4 @@
 import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
-import { runWithEndpointContext } from "@better-auth/core/context";
 import type { BetterAuthPlugin } from "better-auth";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -213,24 +212,14 @@ describe("createBanataAuthOptions()", () => {
 					siteUrl: "http://localhost:3000",
 					secret: "test-secret",
 				},
+				requestProjectId: "proj_test",
 			},
 		);
 
-		await runWithEndpointContext(
-			{
-				headers: new Headers({
-					"x-banata-project-id": "proj_test",
-				}),
-				request: new Request("http://localhost/api/auth/sign-in/email"),
-				context: {} as never,
-			},
-			async () => {
-				await (options.database as { findOne: (input: unknown) => Promise<unknown> }).findOne({
-					model: "user",
-					where: [{ field: "email", value: "test@example.com" }],
-				});
-			},
-		);
+		await (options.database as { findOne: (input: unknown) => Promise<unknown> }).findOne({
+			model: "user",
+			where: [{ field: "email", value: "test@example.com" }],
+		});
 
 		expect(findOne).toHaveBeenCalledWith({
 			model: "user",
@@ -259,27 +248,17 @@ describe("createBanataAuthOptions()", () => {
 					siteUrl: "http://localhost:3000",
 					secret: "test-secret",
 				},
+				requestProjectId: "proj_test",
 			},
 		);
 
-		await runWithEndpointContext(
-			{
-				headers: new Headers({
-					"x-banata-project-id": "proj_test",
-				}),
-				request: new Request("http://localhost/api/auth/sign-up/email"),
-				context: {} as never,
+		await (options.database as { create: (input: unknown) => Promise<unknown> }).create({
+			model: "user",
+			data: {
+				email: "test@example.com",
+				name: "Test User",
 			},
-			async () => {
-				await (options.database as { create: (input: unknown) => Promise<unknown> }).create({
-					model: "user",
-					data: {
-						email: "test@example.com",
-						name: "Test User",
-					},
-				});
-			},
-		);
+		});
 
 		expect(create).toHaveBeenCalledWith({
 			model: "user",

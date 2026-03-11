@@ -113,6 +113,7 @@ export function createBanataNodeAuthOptions(
 		authComponent: ComponentClient;
 		authConfig: AuthConfig;
 		config: BanataAuthConfig;
+		requestProjectId?: string | null;
 	},
 ) {
 	const baseOptions = createBanataAuthOptions(ctx, params);
@@ -137,6 +138,7 @@ export function createBanataNodeAuth(
 		authComponent: ComponentClient;
 		authConfig: AuthConfig;
 		config: BanataAuthConfig;
+		requestProjectId?: string | null;
 	},
 ): CreateNodeAuth {
 	return betterAuth(createBanataNodeAuthOptions(ctx, params));

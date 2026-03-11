@@ -757,6 +757,7 @@ export const handleAuthRequest = internalAction({
 						authComponent,
 						authConfig,
 						config: runtimeConfig,
+						requestProjectId: resolvedScope.projectId ?? dashboardProjectId ?? null,
 					}),
 				effectiveRequest,
 			);
