@@ -52,6 +52,48 @@ function resolveProjectScopeId(request: Request): string {
 	);
 }
 
+function normalizeIdentifierValue(value: unknown): string | null {
+	if (typeof value !== "string") {
+		return null;
+	}
+	const normalized = value.trim().toLowerCase();
+	return normalized.length > 0 ? normalized.slice(0, 320) : null;
+}
+
+async function readRequestIdentifier(request: Request): Promise<string | null> {
+	const contentType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+	if (!contentType) {
+		return null;
+	}
+
+	try {
+		if (contentType === "application/json") {
+			const body = (await request.clone().json()) as Record<string, unknown>;
+			return (
+				normalizeIdentifierValue(body.email) ??
+				normalizeIdentifierValue(body.username) ??
+				normalizeIdentifierValue(body.identifier)
+			);
+		}
+
+		if (
+			contentType === "application/x-www-form-urlencoded" ||
+			contentType === "multipart/form-data"
+		) {
+			const form = await request.clone().formData();
+			return (
+				normalizeIdentifierValue(form.get("email")) ??
+				normalizeIdentifierValue(form.get("username")) ??
+				normalizeIdentifierValue(form.get("identifier"))
+			);
+		}
+	} catch {
+		return null;
+	}
+
+	return null;
+}
+
 function normalizePathname(urlValue: string, baseUrl: string): string {
 	try {
 		const requestUrl = new URL(urlValue, "http://localhost");
@@ -120,7 +162,10 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 			const path = normalizePathname(request.url, ctx.baseURL);
 			const rule = resolveRule(path);
 			const projectScopeId = resolveProjectScopeId(request);
-			const key = `${projectScopeId}|${ip}|${path}`;
+			const identifier = await readRequestIdentifier(request);
+			const key = identifier
+				? `${projectScopeId}|${ip}|${path}|${identifier}`
+				: `${projectScopeId}|${ip}|${path}`;
 			const where = [{ field: "key", value: key }];
 
 			const existing = ((await ctx.adapter.findMany({
