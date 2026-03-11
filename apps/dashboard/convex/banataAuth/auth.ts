@@ -136,12 +136,10 @@ function resolveHostedUiUrl(siteUrl: string): string {
 
 function getPlatformConfig(): BanataAuthConfig {
 	const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
-	const hostedUiUrl = resolveHostedUiUrl(siteUrl);
 
 	return {
 		appName: "Banata Auth Dashboard",
 		siteUrl,
-		hostedUiUrl,
 		secret: process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {

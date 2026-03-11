@@ -16,9 +16,10 @@ describe("dashboard banata auth runtime", () => {
 
 		expect(apiKeyPlugin?.options?.enableMetadata).toBe(true);
 		expect(apiKeyPlugin?.options?.enableSessionForAPIKeys).toBe(true);
+		expect(options.plugins?.some((plugin) => plugin.id === "cross-domain")).toBe(false);
 	});
 
-	it("derives the hosted UI URL from the production site URL when AUTH_UI_URL is unset", () => {
+	it("keeps platform dashboard auth on the dashboard domain", () => {
 		const originalSiteUrl = process.env.SITE_URL;
 		const originalHostedUiUrl = process.env.AUTH_UI_URL;
 
@@ -26,7 +27,7 @@ describe("dashboard banata auth runtime", () => {
 		delete process.env.AUTH_UI_URL;
 
 		try {
-			expect(getConfig().hostedUiUrl).toBe("https://auth-ui.banata.dev");
+			expect(getConfig().hostedUiUrl).toBeUndefined();
 		} finally {
 			if (typeof originalSiteUrl === "undefined") {
 				delete process.env.SITE_URL;
