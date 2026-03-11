@@ -440,6 +440,36 @@ describe("createRouteHandler", () => {
 			);
 			expect(response.headers.get("vary")).toBe("origin");
 		});
+
+		it("mirrors set-cookie into set-better-auth-cookie for allowed hosted origins", async () => {
+			mockFetch.mockResolvedValue(
+				createMockResponse('{"token":"abc"}', {
+					headers: {
+						"set-cookie": "session=abc; Path=/; HttpOnly; Secure; SameSite=Lax",
+					},
+				}),
+			);
+
+			const handler = createManagedHandler({
+				allowedOrigins: ["https://auth-ui.banata.dev"],
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-up/email", {
+				method: "POST",
+				headers: {
+					origin: "https://auth-ui.banata.dev",
+					"better-auth-cookie": "",
+				},
+			});
+			const response = await handler.POST(request);
+
+			expect(response.headers.get("set-cookie")).toBe(
+				"session=abc; Path=/; HttpOnly; Secure; SameSite=Lax",
+			);
+			expect(response.headers.get("set-better-auth-cookie")).toBe(
+				"session=abc; Path=/; HttpOnly; Secure; SameSite=Lax",
+			);
+		});
 	});
 
 	describe("error handling", () => {

@@ -151,6 +151,21 @@ function sanitizeUpstreamResponseHeaders(headers: Headers): Headers {
 	return sanitized;
 }
 
+function mirrorCrossDomainCookieHeader(request: Request, headers: Headers): Headers {
+	const origin = request.headers.get("origin");
+	if (!origin) {
+		return headers;
+	}
+
+	const setCookie = headers.get("set-cookie");
+	if (!setCookie || headers.has("set-better-auth-cookie")) {
+		return headers;
+	}
+
+	headers.set("set-better-auth-cookie", setCookie);
+	return headers;
+}
+
 export function createRouteHandler(options: BanataRouteHandlerOptions) {
 	const { allowInternalProjectScope, allowedOrigins, apiKey, convexSiteUrl, project } = options;
 	const siteUrl = convexSiteUrl.replace(/\/$/, "");
@@ -246,7 +261,10 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 				statusText: response.statusText,
 				headers: applyCorsHeaders(
 					request,
-					sanitizeUpstreamResponseHeaders(response.headers),
+					mirrorCrossDomainCookieHeader(
+						request,
+						sanitizeUpstreamResponseHeaders(response.headers),
+					),
 				),
 			});
 		} catch (error) {
