@@ -1,103 +1,100 @@
 ---
 title: "Hosted Sign-In"
-description: "Reference guide for Banata's hosted auth UI. This is documented, but it is not the primary integration path right now."
-section: "Configure Authentication"
-order: 99
+description: "Let Banata render the auth UI for you. Your app links to a hosted sign-in page, the user authenticates, and Banata redirects them back."
+section: "Platform Operators"
+order: 6
 ---
 
-Hosted sign-in is available, but it is not the primary Banata integration path right now.
+Hosted sign-in is an alternative integration path where Banata renders the authentication UI on your behalf. Instead of building sign-in and sign-up pages in your own app, you link users to a Banata-hosted page that handles the entire auth flow and redirects them back when they're done.
 
-The main docs path focuses on:
-
-- configuring projects from the dashboard
-- binding apps with project-scoped API keys
-- rendering auth in your own app with `@banata-auth/nextjs` and `@banata-auth/react`
-
-Use hosted sign-in only when you specifically want Banata to render the primary auth surface.
+This is a good fit when you want to get auth working quickly without designing your own UI, or when you prefer to keep auth screens outside your app entirely.
 
 ---
 
 ## How It Works
 
-In the hosted model:
-
-1. your app links to Banata's hosted UI
-2. Banata authenticates the user on the Banata domain
-3. Banata redirects back to your app
-4. your app finalizes the session on its own domain
-
----
-
-## What Must Be Configured First
-
-Hosted UI only reflects the configuration already saved for that project.
-
-Before you test it, make sure the project has:
-
-1. at least one enabled auth method
-2. provider credentials for the methods you expect to render
-3. email delivery configured for email-based flows
-4. branding configured if you want the hosted pages to match the project
+1. Your app links the user to Banata's hosted sign-in page, passing your project's `client_id` as a query parameter.
+2. Banata renders the sign-in UI with the auth methods and providers you've configured for the project.
+3. The user authenticates on the Banata domain.
+4. Banata redirects back to your app's callback URL.
+5. Your app finalizes the session on its own domain.
 
 ---
 
-## Customer App Requirements
+## Prerequisites
 
-Your app still needs:
+The hosted UI reflects the configuration already saved for your project. Before you test it, make sure you've completed the following in the Banata dashboard:
 
-1. `/api/auth/[...all]` proxy route
-2. a valid project-scoped API key on the server
-3. the callback handling required by the hosted flow
-
-If your app is missing those pieces, hosted auth may succeed on Banata but still fail to create a usable session in the app.
+1. **Enable at least one auth method** — go to **Authentication > Methods** and turn on the methods you want to appear on the hosted page.
+2. **Add provider credentials** — if you enabled social OAuth, configure your provider credentials under **Authentication > Providers**.
+3. **Set up email delivery** — if you're using email-based flows (email & password, magic links, OTP), configure an email provider under **Emails > Providers**.
+4. **Configure branding** (optional) — update your project's branding settings so the hosted pages match your product's look and feel.
 
 ---
 
-## Branding And Configuration
+## App Requirements
 
-Hosted UI uses the same project configuration the dashboard and SDK use.
+Even though Banata handles the UI, your app still needs a few things in place:
 
-That means:
+### Proxy Route
 
-- dashboard branding changes update the hosted UI
-- SDK configuration writes update the hosted UI
-- there is no separate hosted-auth theme file to maintain
+Set up the `/api/auth/[...all]` proxy route in your app. This is the same route used by the primary SDK integration and is required for session management.
+
+### API Key
+
+Your server must have a valid project-scoped API key. Create one in the dashboard under **API Keys** and store it as an environment variable. See the [API Keys](/docs/api-keys) guide for details.
+
+### Callback Handling
+
+Your app needs a `/auth/callback` route that receives the redirect from Banata after the user authenticates. If this route is missing or misconfigured, the hosted flow will complete successfully on the Banata side but the user won't have a valid session in your app.
+
+Make sure your auth route also exports the `OPTIONS` handler and allows the hosted UI origin for CORS.
+
+---
+
+## Branding
+
+The hosted UI uses the same project configuration as the dashboard and the SDK. That means:
+
+- Branding changes you make in the dashboard are automatically reflected on the hosted pages.
+- Configuration updates from the SDK are also reflected.
+- There is no separate theme file to maintain for hosted auth.
 
 ---
 
 ## Troubleshooting
 
-### The hosted page loads but shows no buttons or form
+### The hosted page loads but shows no sign-in options
 
-The project is missing dashboard configuration. Check **Authentication -> Methods** and **Authentication -> Providers**.
+Your project is missing auth configuration. Check **Authentication > Methods** to confirm at least one method is enabled, and check **Authentication > Providers** to confirm credentials are configured for any social providers you've turned on.
 
-### The hosted flow finishes but the user is still unauthenticated in the app
+### The hosted flow completes but the user is still unauthenticated
 
-Check:
+Check the following:
 
-1. `/auth/callback` exists
-2. `OPTIONS` is exported from your auth route
-3. your auth route allows the hosted UI origin
-4. your app uses a real project-scoped API key
+1. Your app has a `/auth/callback` route that handles the redirect.
+2. Your auth route exports the `OPTIONS` handler.
+3. Your auth route allows the hosted UI origin in its CORS configuration.
+4. Your app is using a valid project-scoped API key (not a workspace slug or other identifier).
 
-### The hosted page says `Rate limit exceeded`
+### Rate limit exceeded
 
-Banata rate-limits sensitive auth endpoints per project, IP, path, and, for email-based flows, the submitted identifier.
+Banata rate-limits sensitive auth endpoints per project, IP, path, and (for email-based flows) the submitted identifier. If you're hitting rate limits during development:
 
-If you are repeatedly testing from one shared IP:
+1. Wait for the retry window to expire.
+2. Use a different email address if you're testing sign-up.
+3. Avoid repeatedly submitting the same form while iterating.
 
-1. wait for the retry window to expire
-2. try again with a fresh email if you are testing sign-up
-3. avoid hammering the same hosted auth form while you are iterating
+### The hosted page returns the wrong project
 
-### The hosted page loads but returns the wrong project
-
-Check that `client_id` is the project's client ID from the Banata dashboard, not the workspace slug or workspace name.
+Verify that the `client_id` parameter is set to the project's client ID from the Banata dashboard. This is not the workspace slug or workspace name — it's the ID shown on the project's settings page.
 
 ---
 
-## Current Positioning
+## Next Steps
 
-This page remains in the docs as a reference because the product supports it.
-
-It is intentionally de-emphasized in the main navigation until the hosted UI path reaches the same quality bar as the primary app-owned UI flow.
+- [Quick Start](/docs/quickstart) — set up the primary app-owned auth integration with `@banata-auth/nextjs`
+- [API Keys](/docs/api-keys) — create and manage the keys that connect your app to a project
+- [Auth Configuration](/docs/auth-configuration) — configure the auth methods and providers that appear in the hosted UI
+- [Email Templates](/docs/email-templates) — customize the emails sent during email-based auth flows
+- [Deploy](/docs/deploy) — go live with your Banata-powered app

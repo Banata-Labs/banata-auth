@@ -1,18 +1,11 @@
 ---
 title: "Next.js"
-description: "Proxy Banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an API key."
+description: "Integrate Banata Auth into your Next.js app with server-side auth helpers, route proxying, and session management."
 section: "Build Your App"
 order: 1
 ---
 
-`@banata-auth/nextjs` is the main server-side package for customer apps.
-
-Use it to:
-
-- proxy `/api/auth/*` through your app
-- keep cookies on your own domain
-- bind the app to one Banata project with a server-side API key
-- read auth state in server components, actions, and route handlers
+`@banata-auth/nextjs` is the server-side package for integrating Banata Auth into Next.js applications. It proxies auth requests through your app, keeps cookies on your domain, and provides helpers for reading auth state in server components.
 
 ```bash
 npm install @banata-auth/nextjs
@@ -20,20 +13,20 @@ npm install @banata-auth/nextjs
 
 ---
 
-## Recommended Model
+## Setup
 
-1. Create a project in the Banata dashboard.
-2. Configure auth methods, providers, and emails for that project.
-3. Create a project-scoped API key.
-4. Store the key in your server environment.
-5. Proxy `/api/auth` through your app.
-6. Render sign-in and sign-up UI in your own frontend.
+If you haven't set up the basics yet, follow the [Quick Start](/docs/quickstart) guide first. Here's a summary of what you need:
 
-The browser never sees the API key.
+### 1. Environment Variables
 
----
+```bash
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
+BANATA_API_KEY=sk_test_your_project_key
+```
 
-## Server Helpers
+### 2. Server Auth Helpers
 
 ```ts
 // src/lib/auth-server.ts
@@ -54,11 +47,7 @@ export const {
 });
 ```
 
-This uses the same API key for the auth route, token refreshes, and server-side auth helpers.
-
----
-
-## Route File
+### 3. Auth Route
 
 ```ts
 // src/app/api/auth/[...all]/route.ts
@@ -67,11 +56,13 @@ import { handler } from "@/lib/auth-server";
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 ```
 
-Your app should talk to `/api/auth` on its own origin. Do not call the Banata backend URL directly from the browser.
-
 ---
 
-## Read Auth State On The Server
+## Server-Side Auth Helpers
+
+### Checking Authentication
+
+Use `isAuthenticated` in server components and route handlers to check if the current request has a valid session:
 
 ```tsx
 import { redirect } from "next/navigation";
@@ -84,29 +75,65 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  return <div>Authenticated dashboard</div>;
+  return <div>Welcome to the dashboard</div>;
+}
+```
+
+### Getting the Auth Token
+
+Use `getToken` when you need the raw auth token for server-side API calls:
+
+```ts
+import { getToken } from "@/lib/auth-server";
+
+export default async function ApiPage() {
+  const token = await getToken();
+
+  if (!token) {
+    // Not authenticated
+  }
+
+  // Use token for authenticated API calls
+}
+```
+
+### Fetching Data with Auth Context
+
+If your app also uses Convex, the auth helpers let you run authenticated Convex queries and mutations from the server:
+
+```tsx
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@/convex/_generated/api";
+
+export default async function ProfilePage() {
+  const profile = await fetchAuthQuery(api.users.getProfile);
+  return <div>{profile.name}</div>;
 }
 ```
 
 ---
 
-## Environment Variables
+## How the Proxy Works
 
-```bash
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
+When your browser calls `/api/auth/sign-in/email`, the Next.js route handler proxies that request to the Banata backend. The response (including session cookies) is passed back to the browser on your app's domain.
 
-BANATA_API_KEY=sk_test_your_project_key
+```
+Browser → /api/auth/sign-in/email → Next.js route handler → Banata backend
+                                                          ← Session cookie
+Browser ← Set-Cookie on your domain ←
 ```
 
-`BANATA_API_KEY` must stay server-side.
+This approach means:
+
+- **Cookies stay on your domain** — no third-party cookie issues.
+- **The API key is never exposed** — the browser only talks to your app.
+- **CORS is not an issue** — everything is same-origin from the browser's perspective.
 
 ---
 
 ## Programmatic Configuration
 
-`@banata-auth/nextjs` handles transport and cookies. If you want to change the project's Banata configuration by code, use the SDK:
+The `@banata-auth/nextjs` package handles transport and authentication. To change your project's configuration by code (auth methods, branding, providers), use the [SDK](/docs/sdk):
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -121,46 +148,32 @@ await banata.configuration.saveDashboardConfig({
     emailPassword: true,
     emailOtp: true,
   },
-  emailPassword: {
-    requireEmailVerification: false,
-    autoSignIn: true,
-  },
 });
 ```
-
-That updates the same project config the dashboard reads.
 
 ---
 
 ## Troubleshooting
 
-### The frontend can render, but auth calls fail
+### Auth calls fail with a network error
 
-Check:
+- Check that `NEXT_PUBLIC_CONVEX_SITE_URL` is correct and the Banata backend is running.
+- Verify `BANATA_API_KEY` is set in your environment.
 
-1. the app is calling `/api/auth`
-2. the project API key is valid
-3. the target Banata project has the required methods enabled
+### No session after sign-in
 
-### The app has no session after sign-in
+- Make sure the auth route exists at `src/app/api/auth/[...all]/route.ts`.
+- Verify `/api/auth/get-session` returns session data in your browser.
+- Ensure your app and the auth route are on the same origin.
 
-Check:
+### "Do I need a projectId or clientId?"
 
-1. the auth route is mounted inside your app
-2. the app and auth route are on the same origin
-3. `/api/auth/get-session` works in the browser session
-
-### Do I still need `projectId` or `clientId` in app code?
-
-Normally no.
-
-The API key is the main project-binding mechanism for the app backend.
+No. The API key handles project binding automatically.
 
 ---
 
-## Related Guides
+## Next Steps
 
-- [Quick Start](/docs/quickstart)
-- [React](/docs/react)
-- [SDK Reference](/docs/sdk)
-- [Self-Hosting](/docs/self-hosting)
+- [React Components](/docs/react) — Add pre-built UI and auth hooks
+- [SDK Reference](/docs/sdk) — Manage Banata resources by code
+- [Email & Password](/docs/email-password) — Configure email/password sign-in

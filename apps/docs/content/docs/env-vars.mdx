@@ -1,15 +1,13 @@
 ---
-title: "Self-Hosted Environment Variables"
-description: "Complete reference for every environment variable used by Banata Auth — Convex backend, Next.js frontend, and OAuth providers."
-section: "Configuration"
-order: 18
+title: "Environment Variables"
+description: "Complete reference for every environment variable you need when self-hosting Banata Auth with Convex and Next.js."
+section: "Platform Operators"
+order: 3
 ---
 
-This page applies to the **self-hosted Convex + Next.js** architecture.
+> **Self-hosted deployments only.** This page covers the environment variables required when you run your own Convex + Next.js stack. If you use Banata as a managed service, you can skip this entirely — just create a project in the dashboard, generate an API key, and integrate with [`@banata-auth/sdk`](/docs/sdk).
 
-If you use Banata as a managed service, start in the dashboard, create a project, issue a project-scoped API key, and use [`@banata-auth/sdk`](/docs/sdk). You do **not** need this Convex deployment setup for the dashboard-first path.
-
-Banata Auth uses environment variables in **two separate runtimes** for self-hosting: the Convex backend (server-side) and the Next.js frontend. It's important to set each variable in the right place.
+Banata Auth reads environment variables from **two separate runtimes**: the Convex backend (server-side) and the Next.js frontend. Setting each variable in the right place is essential for everything to work correctly.
 
 ---
 
@@ -30,14 +28,14 @@ Banata Auth uses environment variables in **two separate runtimes** for self-hos
 
 ## Convex Environment Variables
 
-These are set on the **Convex deployment** using `npx convex env set`. They're available to Convex functions via `process.env`.
+You set these on your **Convex deployment** with `npx convex env set`. They're available to your Convex functions via `process.env`.
 
 ### Core
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `BETTER_AUTH_SECRET` | **Yes** | — | Cryptographic secret for signing sessions, tokens, and webhook payloads. Must be a strong random string (32+ bytes). Generate with `openssl rand -base64 32`. |
-| `SITE_URL` | **Yes** | — | Your app's public URL (e.g., `http://localhost:3000` in dev, `https://myapp.com` in production). Used for OAuth callback URLs, email links, and cookie configuration. |
+| `BETTER_AUTH_SECRET` | **Yes** | — | Cryptographic secret for signing sessions, tokens, and webhook payloads. Use a strong random string (32+ bytes). Generate one with `openssl rand -base64 32`. |
+| `SITE_URL` | **Yes** | — | Your app's public URL (e.g., `http://localhost:3000` in dev, `https://myapp.com` in production). Banata uses this for OAuth callback URLs, email links, and cookie configuration. |
 
 ```bash
 # Set core variables
@@ -47,7 +45,7 @@ npx convex env set SITE_URL "http://localhost:3000"
 
 ### Social OAuth Providers
 
-Set these only for the providers you've enabled in `socialProviders`:
+You only need to set credentials for the providers you've enabled in your `socialProviders` configuration.
 
 | Variable | Provider | Description |
 |---|---|---|
@@ -74,11 +72,11 @@ Set these only for the providers you've enabled in `socialProviders`:
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn | App Client Secret |
 
 ```bash
-# Example: Set GitHub OAuth credentials
+# Example: GitHub OAuth
 npx convex env set GITHUB_CLIENT_ID "Ov23li..."
 npx convex env set GITHUB_CLIENT_SECRET "your-secret"
 
-# Example: Set Google OAuth credentials
+# Example: Google OAuth
 npx convex env set GOOGLE_CLIENT_ID "123456.apps.googleusercontent.com"
 npx convex env set GOOGLE_CLIENT_SECRET "GOCSPX-..."
 ```
@@ -87,15 +85,15 @@ npx convex env set GOOGLE_CLIENT_SECRET "GOCSPX-..."
 
 | Variable | Required | Description |
 |---|---|---|
-| `RESEND_API_KEY` | If sending emails | API key from [Resend](https://resend.com). Used in email callbacks for verification, password reset, magic links, OTP, and invitations. |
+| `RESEND_API_KEY` | If sending emails | API key from [Resend](https://resend.com). Used for verification emails, password resets, magic links, OTP codes, and invitations. |
 
 ```bash
 npx convex env set RESEND_API_KEY "re_..."
 ```
 
-> **Note:** You can use any email provider (SendGrid, Postmark, Mailgun, etc.) — just change the `fetch()` call in your email callbacks. `RESEND_API_KEY` is shown here because the dashboard uses Resend by default.
+> **Tip:** Resend is the default, but you can swap in any email provider (SendGrid, Postmark, Mailgun, etc.) by changing the `fetch()` call in your email callbacks.
 
-### Passkey (WebAuthn)
+### Passkeys (WebAuthn)
 
 | Variable | Required | Description |
 |---|---|---|
@@ -107,10 +105,10 @@ npx convex env set PASSKEY_RP_ID "myapp.com"
 npx convex env set PASSKEY_ORIGIN "https://myapp.com"
 ```
 
-### Listing All Convex Variables
+### Managing Convex Variables
 
 ```bash
-# View all set variables
+# List all variables on your deployment
 npx convex env list
 
 # Remove a variable
@@ -121,16 +119,14 @@ npx convex env unset GITHUB_CLIENT_ID
 
 ## Next.js Environment Variables (`.env.local`)
 
-These are set in your `.env.local` file and are available to your Next.js app.
-
-### Core
+These live in your `.env.local` file and are available to your Next.js application at build and runtime.
 
 | Variable | Required | Public? | Description |
 |---|---|---|---|
 | `CONVEX_DEPLOYMENT` | **Yes** | No | Convex deployment identifier (e.g., `dev:your-project-name`) |
 | `NEXT_PUBLIC_CONVEX_URL` | **Yes** | Yes | Convex client URL (e.g., `https://your-project.convex.cloud`) |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | **Yes** | Yes | Convex HTTP actions URL (e.g., `https://your-project.convex.site`) |
-| `NEXT_PUBLIC_SITE_URL` | Recommended | Yes | Your app's URL. Used for building absolute URLs during SSR. |
+| `NEXT_PUBLIC_SITE_URL` | Recommended | Yes | Your app's URL. Used for building absolute URLs during SSR and prerendering. |
 
 ### Example `.env.local`
 
@@ -146,7 +142,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ### Local Development
 
-For local Convex development (`npx convex dev`):
+When you run Convex locally with `npx convex dev`, your `.env.local` should point to the local endpoints:
 
 ```bash
 CONVEX_DEPLOYMENT=local:local-your-project-name
@@ -155,11 +151,13 @@ NEXT_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-### `NEXT_PUBLIC_` Prefix
+---
 
-Variables starting with `NEXT_PUBLIC_` are embedded in the client-side JavaScript bundle and visible to users. **Never put secrets in `NEXT_PUBLIC_` variables.**
+## `NEXT_PUBLIC_` Safety Reminder
 
-| Safe for `NEXT_PUBLIC_` | Not Safe for `NEXT_PUBLIC_` |
+Any variable prefixed with `NEXT_PUBLIC_` gets embedded in your client-side JavaScript bundle and is visible to every user. **Never put secrets in `NEXT_PUBLIC_` variables.**
+
+| Safe for `NEXT_PUBLIC_` | Never use `NEXT_PUBLIC_` for |
 |---|---|
 | Convex URL | `BETTER_AUTH_SECRET` |
 | Site URL | API keys |
@@ -167,41 +165,29 @@ Variables starting with `NEXT_PUBLIC_` are embedded in the client-side JavaScrip
 
 ---
 
-## Dashboard-Specific Variables
-
-The admin dashboard (`apps/dashboard`) uses additional variables:
-
-| Variable | Where | Description |
-|---|---|---|
-| `RESEND_API_KEY` | Convex | For sending auth emails from the dashboard |
-| `BETTER_AUTH_SECRET` | Convex | Dashboard auth secret (can be different from your app's) |
-| `SITE_URL` | Convex | Dashboard URL (e.g., `http://localhost:3000`) |
-
----
-
 ## Production Checklist
 
-Before deploying to production, verify:
+Before you go live, walk through each item:
 
-- [ ] `BETTER_AUTH_SECRET` is set to a unique, strong random value (different from development)
-- [ ] `SITE_URL` is set to your production domain (e.g., `https://myapp.com`)
+- [ ] `BETTER_AUTH_SECRET` is a unique, strong random value (different from development)
+- [ ] `SITE_URL` points to your production domain (e.g., `https://myapp.com`)
 - [ ] `NEXT_PUBLIC_CONVEX_URL` points to your production Convex deployment
 - [ ] `NEXT_PUBLIC_CONVEX_SITE_URL` points to your production Convex site URL
-- [ ] OAuth callback URLs in provider dashboards are updated to production URLs
-- [ ] `PASSKEY_RP_ID` is set to your production domain (not `localhost`)
-- [ ] `PASSKEY_ORIGIN` is set to your production origin (with `https://`)
+- [ ] OAuth callback URLs in each provider's dashboard are updated to production URLs
+- [ ] `PASSKEY_RP_ID` is your production domain (not `localhost`)
+- [ ] `PASSKEY_ORIGIN` is your production origin (with `https://`)
 - [ ] Email provider API key is set and verified
-- [ ] No development secrets are used in production
-- [ ] `.env.local` is in `.gitignore` (never commit secrets)
+- [ ] No development secrets are reused in production
+- [ ] `.env.local` is listed in `.gitignore` (never commit secrets)
 
 ---
 
 ## Template `.env.local`
 
-Copy this template for new projects:
+Copy this into your project as a starting point:
 
 ```bash
-# Convex deployment (filled by `npx convex dev`)
+# Convex deployment (filled automatically by `npx convex dev`)
 CONVEX_DEPLOYMENT=dev:your-deployment-name
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
@@ -210,7 +196,7 @@ NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-And set these on Convex:
+Then set your Convex-side variables:
 
 ```bash
 npx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
@@ -220,8 +206,9 @@ npx convex env set SITE_URL "http://localhost:3000"
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Deploy](/docs/deploy)** — Production deployment guide
+- **[Convex Integration](/docs/convex)** — Deep dive into the Convex backend configuration
+- **[Deploy](/docs/deploy)** — Ship your self-hosted instance to production
 - **[Quick Start](/docs/quickstart)** — Set up a new project from scratch
-- **[Convex](/docs/convex)** — Backend configuration reference
+- **[Auth Configuration](/docs/auth-configuration)** — Configure authentication methods and plugins

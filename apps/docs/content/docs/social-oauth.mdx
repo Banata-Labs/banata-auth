@@ -1,83 +1,65 @@
 ---
 title: "Social OAuth"
-description: "Add social login with Google, GitHub, Apple, Microsoft, and 6 more providers — complete setup guides for each."
-section: "Authentication"
-order: 5
+description: "Add social login with Google, GitHub, Apple, Microsoft, and more. Step-by-step setup for each provider."
+section: "Configure Authentication"
+order: 3
 ---
 
-Banata Auth supports **10 social OAuth providers** out of the box. Users can sign in with their existing accounts from these services, reducing friction and increasing sign-up conversion.
+Social OAuth lets users sign in with accounts they already have — Google, GitHub, Apple, and others. This reduces friction, eliminates another password to remember, and increases sign-up conversion rates.
+
+Banata Auth supports **10 social OAuth providers** out of the box.
 
 ---
 
 ## Supported Providers
 
-| Provider | Config Key | OAuth Type | Notes |
-|---|---|---|---|
-| **Google** | `google` | OAuth 2.0 / OIDC | Most common. Supports Google Workspace. |
-| **GitHub** | `github` | OAuth 2.0 | Popular for developer tools. |
-| **Apple** | `apple` | OAuth 2.0 / OIDC | Required for iOS App Store apps. Requires yearly key rotation. |
-| **Microsoft** | `microsoft` | OAuth 2.0 / OIDC | Supports Azure AD. Requires `tenantId`. |
-| **Facebook** | `facebook` | OAuth 2.0 | Large consumer user base. |
-| **Twitter** | `twitter` | OAuth 2.0 | Also known as X. |
-| **Discord** | `discord` | OAuth 2.0 | Popular for gaming and communities. |
-| **Spotify** | `spotify` | OAuth 2.0 | For music-related apps. |
-| **Twitch** | `twitch` | OAuth 2.0 / OIDC | For streaming and gaming apps. |
-| **LinkedIn** | `linkedin` | OAuth 2.0 / OIDC | For professional/B2B apps. |
+| Provider | Config Key | Notes |
+|---|---|---|
+| Google | `google` | Most common. Supports Google Workspace. |
+| GitHub | `github` | Popular for developer tools. |
+| Apple | `apple` | Required for iOS apps. Keys expire after 6 months. |
+| Microsoft | `microsoft` | Supports Azure AD. Requires `tenantId`. |
+| Facebook | `facebook` | Large consumer user base. |
+| Twitter (X) | `twitter` | OAuth 2.0. |
+| Discord | `discord` | Popular for gaming and community apps. |
+| Spotify | `spotify` | For music-related apps. |
+| Twitch | `twitch` | For streaming and gaming apps. |
+| LinkedIn | `linkedin` | For B2B and professional apps. |
 
 ---
 
-## Configuration
+## Setting Up a Provider
 
-Add social providers to your `BanataAuthConfig`:
+The setup is the same for every provider:
 
-```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+1. **Create an OAuth app** on the provider's developer portal.
+2. **Set the callback URL** to `{YOUR_APP_URL}/api/auth/callback/{provider}`.
+3. **Copy the Client ID and Client Secret**.
+4. **Add the credentials** to the Banata dashboard or your Convex environment.
 
-    authMethods: {
-      emailPassword: true,   // Keep email/password alongside social
-    },
+### Callback URL Pattern
 
-    socialProviders: {
-      google: {
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      },
-      github: {
-        clientId: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      },
-      // Add more providers as needed...
-    },
-  };
-}
+All providers use the same callback URL format:
+
+```
+http://localhost:3000/api/auth/callback/github     ← Development
+https://myapp.com/api/auth/callback/github         ← Production
 ```
 
-### Setting Provider Credentials
+### Adding Credentials via Dashboard
 
-OAuth credentials must be set on the **Convex deployment** (not in `.env.local`), since they're used by server-side Convex functions:
+1. Go to **Authentication > Providers** in your project.
+2. Select the provider you want to configure.
+3. Enter the **Client ID** and **Client Secret**.
+4. Save.
+
+### Adding Credentials via Convex Environment
+
+For self-hosted setups, set the credentials on your Convex deployment:
 
 ```bash
-# Google
-npx convex env set GOOGLE_CLIENT_ID "your-google-client-id"
-npx convex env set GOOGLE_CLIENT_SECRET "your-google-client-secret"
-
-# GitHub
-npx convex env set GITHUB_CLIENT_ID "your-github-client-id"
-npx convex env set GITHUB_CLIENT_SECRET "your-github-client-secret"
-
-# Apple
-npx convex env set APPLE_CLIENT_ID "your-apple-service-id"
-npx convex env set APPLE_CLIENT_SECRET "your-apple-client-secret"
-
-# Microsoft
-npx convex env set MICROSOFT_CLIENT_ID "your-microsoft-client-id"
-npx convex env set MICROSOFT_CLIENT_SECRET "your-microsoft-client-secret"
-npx convex env set MICROSOFT_TENANT_ID "your-tenant-id"
+npx convex env set GITHUB_CLIENT_ID "your-client-id"
+npx convex env set GITHUB_CLIENT_SECRET "your-client-secret"
 ```
 
 ---
@@ -86,395 +68,169 @@ npx convex env set MICROSOFT_TENANT_ID "your-tenant-id"
 
 ### Google
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create a new project (or select existing)
-3. Navigate to **APIs & Services > Credentials**
-4. Click **Create Credentials > OAuth client ID**
-5. Select **Web application**
-6. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-7. Copy the **Client ID** and **Client Secret**
+1. Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create a new **OAuth client ID** (Web application type).
+3. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+4. Copy the Client ID and Client Secret.
 
-```bash
-npx convex env set GOOGLE_CLIENT_ID "123456789.apps.googleusercontent.com"
-npx convex env set GOOGLE_CLIENT_SECRET "GOCSPX-..."
-```
-
-```typescript
-socialProviders: {
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  },
-},
-```
-
-> **Production:** Update the redirect URI to `https://your-domain.com/api/auth/callback/google`.
+> For production, update the redirect URI to `https://your-domain.com/api/auth/callback/google`.
 
 ### GitHub
 
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click **New OAuth App**
-3. Set **Homepage URL**: `http://localhost:3000`
-4. Set **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
-5. Copy the **Client ID**
-6. Generate a new **Client Secret**
-
-```bash
-npx convex env set GITHUB_CLIENT_ID "Ov23li..."
-npx convex env set GITHUB_CLIENT_SECRET "your-secret"
-```
-
-```typescript
-socialProviders: {
-  github: {
-    clientId: process.env.GITHUB_CLIENT_ID!,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-  },
-},
-```
+1. Go to [GitHub Developer Settings > OAuth Apps](https://github.com/settings/developers).
+2. Click **New OAuth App**.
+3. Set **Homepage URL** to `http://localhost:3000`.
+4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`.
+5. Copy the Client ID and generate a Client Secret.
 
 ### Apple
 
-Apple Sign-In requires more setup than other providers:
+1. Go to [Apple Developer Portal](https://developer.apple.com/account).
+2. Create an **App ID** with Sign in with Apple enabled.
+3. Create a **Services ID** (this is your `clientId`).
+4. Configure the redirect URL: `http://localhost:3000/api/auth/callback/apple`
+5. Create a **Key** with Sign in with Apple enabled and generate the client secret.
 
-1. Go to [Apple Developer Portal](https://developer.apple.com/account)
-2. Navigate to **Certificates, Identifiers & Profiles > Identifiers**
-3. Create a new **App ID** with **Sign in with Apple** enabled
-4. Create a **Services ID** (this is your `clientId`)
-5. Configure the **Web Authentication** domain and redirect URL: `http://localhost:3000/api/auth/callback/apple`
-6. Create a **Key** with **Sign in with Apple** enabled
-7. Generate the client secret using the key (Apple uses JWT-based secrets)
-
-```bash
-npx convex env set APPLE_CLIENT_ID "com.myapp.auth"
-npx convex env set APPLE_CLIENT_SECRET "your-generated-jwt-secret"
-```
-
-```typescript
-socialProviders: {
-  apple: {
-    clientId: process.env.APPLE_CLIENT_ID!,
-    clientSecret: process.env.APPLE_CLIENT_SECRET!,
-  },
-},
-```
-
-> **Important:** Apple client secrets expire after 6 months. You'll need to regenerate them periodically.
+> **Important:** Apple client secrets expire after 6 months and need periodic regeneration.
 
 ### Microsoft (Azure AD)
 
-1. Go to the [Azure Portal](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps)
-2. Click **New registration**
-3. Set redirect URI: `http://localhost:3000/api/auth/callback/microsoft` (Web platform)
-4. Note the **Application (client) ID** and **Directory (tenant) ID**
-5. Go to **Certificates & secrets > New client secret**
-6. Copy the secret value
+1. Go to [Azure Portal > App registrations](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps).
+2. Click **New registration**.
+3. Set redirect URI to `http://localhost:3000/api/auth/callback/microsoft` (Web platform).
+4. Note the Application (client) ID and Directory (tenant) ID.
+5. Create a new client secret under **Certificates & secrets**.
 
-```bash
-npx convex env set MICROSOFT_CLIENT_ID "your-app-id"
-npx convex env set MICROSOFT_CLIENT_SECRET "your-secret-value"
-npx convex env set MICROSOFT_TENANT_ID "your-tenant-id"
-```
+Microsoft requires a `tenantId`. Options:
 
-```typescript
-socialProviders: {
-  microsoft: {
-    clientId: process.env.MICROSOFT_CLIENT_ID!,
-    clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-    tenantId: process.env.MICROSOFT_TENANT_ID!,  // Required for Microsoft
-  },
-},
-```
-
-**Tenant ID options:**
-- **Specific tenant** — Only users from that Azure AD tenant
-- `"common"` — Any Microsoft account (personal + work/school)
-- `"organizations"` — Work/school accounts only
-- `"consumers"` — Personal Microsoft accounts only
+| Value | Effect |
+|---|---|
+| Your tenant ID | Only users from that Azure AD tenant |
+| `"common"` | Any Microsoft account (personal + work/school) |
+| `"organizations"` | Work/school accounts only |
+| `"consumers"` | Personal Microsoft accounts only |
 
 ### Facebook
 
-1. Go to [Meta for Developers](https://developers.facebook.com/apps/)
-2. Create a new app (Consumer type)
-3. Add **Facebook Login** product
-4. Set **Valid OAuth Redirect URIs**: `http://localhost:3000/api/auth/callback/facebook`
-5. Go to **Settings > Basic** for App ID and App Secret
-
-```typescript
-socialProviders: {
-  facebook: {
-    clientId: process.env.FACEBOOK_CLIENT_ID!,
-    clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-  },
-},
-```
+1. Go to [Meta for Developers](https://developers.facebook.com/apps/).
+2. Create a new app (Consumer type).
+3. Add **Facebook Login** and set the redirect URI: `http://localhost:3000/api/auth/callback/facebook`
 
 ### Twitter (X)
 
-1. Go to the [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
-2. Create a new project and app
-3. Enable **OAuth 2.0**
-4. Set **Callback URL**: `http://localhost:3000/api/auth/callback/twitter`
-5. Copy the **Client ID** and **Client Secret**
-
-```typescript
-socialProviders: {
-  twitter: {
-    clientId: process.env.TWITTER_CLIENT_ID!,
-    clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-  },
-},
-```
+1. Go to the [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard).
+2. Create a new project and app with **OAuth 2.0** enabled.
+3. Set callback URL: `http://localhost:3000/api/auth/callback/twitter`
 
 ### Discord
 
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create a new application
-3. Go to **OAuth2** settings
-4. Add redirect: `http://localhost:3000/api/auth/callback/discord`
-5. Copy the **Client ID** and reset the **Client Secret**
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Create a new application.
+3. Go to **OAuth2** and add redirect: `http://localhost:3000/api/auth/callback/discord`
 
-```typescript
-socialProviders: {
-  discord: {
-    clientId: process.env.DISCORD_CLIENT_ID!,
-    clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-  },
-},
-```
+### Spotify, Twitch, LinkedIn
 
-### Spotify
-
-1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create a new app
-3. Add redirect URI: `http://localhost:3000/api/auth/callback/spotify`
-4. Copy the **Client ID** and **Client Secret**
-
-```typescript
-socialProviders: {
-  spotify: {
-    clientId: process.env.SPOTIFY_CLIENT_ID!,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
-  },
-},
-```
-
-### Twitch
-
-1. Go to the [Twitch Developer Console](https://dev.twitch.tv/console/apps)
-2. Register a new application
-3. Set **OAuth Redirect URL**: `http://localhost:3000/api/auth/callback/twitch`
-4. Copy the **Client ID** and generate a **Client Secret**
-
-```typescript
-socialProviders: {
-  twitch: {
-    clientId: process.env.TWITCH_CLIENT_ID!,
-    clientSecret: process.env.TWITCH_CLIENT_SECRET!,
-  },
-},
-```
-
-### LinkedIn
-
-1. Go to the [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps)
-2. Create a new app
-3. Under **Auth**, add redirect URL: `http://localhost:3000/api/auth/callback/linkedin`
-4. Request the **Sign In with LinkedIn using OpenID Connect** product
-5. Copy the **Client ID** and **Client Secret**
-
-```typescript
-socialProviders: {
-  linkedin: {
-    clientId: process.env.LINKEDIN_CLIENT_ID!,
-    clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-  },
-},
-```
+Follow the same pattern on each provider's developer portal:
+- [Spotify Dashboard](https://developer.spotify.com/dashboard)
+- [Twitch Developer Console](https://dev.twitch.tv/console/apps)
+- [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps)
 
 ---
 
-## Callback URL Pattern
-
-All OAuth providers follow the same callback URL pattern:
-
-```
-{YOUR_SITE_URL}/api/auth/callback/{PROVIDER_ID}
-```
-
-| Environment | Example |
-|---|---|
-| Local development | `http://localhost:3000/api/auth/callback/github` |
-| Production | `https://myapp.com/api/auth/callback/github` |
-
-The callback URL is handled by the catch-all route handler at `/api/auth/[...all]`, which proxies the request to Convex where Better Auth processes the OAuth callback and creates/links the user account.
-
----
-
-## Client-Side Integration
+## Client-Side Usage
 
 ### Initiating Social Sign-In
 
-```typescript
+```ts
 import { authClient } from "@/lib/auth-client";
 
-// Sign in with GitHub
 await authClient.signIn.social({
   provider: "github",
-  callbackURL: "/dashboard",  // Where to redirect after success
-});
-
-// Sign in with Google
-await authClient.signIn.social({
-  provider: "google",
   callbackURL: "/dashboard",
 });
 ```
 
-This redirects the user to the provider's OAuth consent page. After granting permission, they're redirected back to your callback URL, and then to the `callbackURL` you specified.
+This redirects the user to the provider's OAuth consent page. After they grant permission, they're redirected back through your callback URL, and then to the `callbackURL` you specified.
 
-### SocialButtons Component
-
-Banata Auth ships a `SocialButtons` component that renders buttons for all configured providers:
+### Using the SocialButtons Component
 
 ```tsx
-import { SocialButtons } from "@banata-auth/react";
+import { SocialButtons, SignInForm } from "@banata-auth/react";
 import { authClient } from "@/lib/auth-client";
 
-// Define which providers to show
 const providers = [
   { id: "google", label: "Google" },
   { id: "github", label: "GitHub" },
-  { id: "apple", label: "Apple" },
 ];
 
 export default function SignInPage() {
   return (
     <div>
-      <h1>Sign In</h1>
-
-      {/* Social login buttons */}
       <SocialButtons
         providers={providers}
         authClient={authClient}
         callbackURL="/dashboard"
       />
-
-      {/* Divider */}
       <div>or</div>
-
-      {/* Email/password form */}
-      <SignInForm authClient={authClient} />
+      <SignInForm authClient={authClient} callbackURL="/dashboard" />
     </div>
   );
 }
 ```
 
-The `SocialProvider` interface:
-
-```typescript
-interface SocialProvider {
-  id: string;       // Provider ID: "google", "github", etc.
-  label: string;    // Display name: "Google", "GitHub", etc.
-  icon?: ReactNode; // Optional custom icon
-}
-```
-
 ---
 
-## Conditional Provider Configuration
+## How the OAuth Flow Works
 
-You can conditionally enable providers based on whether credentials are available:
+Here's what happens when a user clicks "Sign in with GitHub":
 
-```typescript
-socialProviders:
-  process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-    ? {
-        github: {
-          clientId: process.env.GITHUB_CLIENT_ID,
-          clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        },
-        ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-          ? {
-              google: {
-                clientId: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-              },
-            }
-          : {}),
-      }
-    : undefined,
 ```
-
-This way, if credentials aren't set, the provider is simply not available — no errors thrown.
+1. Browser → POST /api/auth/sign-in/social { provider: "github" }
+2. Your app → proxies to Banata backend
+3. Banata → returns redirect to GitHub OAuth consent page
+4. Browser → redirected to github.com/login/oauth/authorize
+5. User → grants permission on GitHub
+6. GitHub → redirects to /api/auth/callback/github?code=xxx
+7. Your app → proxies callback to Banata
+8. Banata → exchanges code for tokens, creates/links user, creates session
+9. Browser → redirected to your callbackURL with session cookie set
+```
 
 ---
 
 ## Account Linking
 
-When a user signs in with a social provider and an account with the same email already exists (from email/password sign-up), Better Auth handles account linking:
+When a user signs in with a social provider and their email matches an existing account:
 
-1. **Auto-link** — If the email is verified on both sides, the social account is automatically linked to the existing user.
-2. **New account** — If the email doesn't match any existing user, a new user is created.
+- **Auto-link** — if the email is verified on both sides, the social account is linked to the existing user.
+- **New account** — if no user exists with that email, a new user is created.
 
-The user can then sign in with either method (email/password or social).
-
----
-
-## How the OAuth Flow Works
-
-Here's what happens under the hood when a user clicks "Sign in with GitHub":
-
-```
-1. Browser → POST /api/auth/sign-in/social { provider: "github" }
-2. Next.js route handler → Proxies to Convex .site/api/auth/sign-in/social
-3. Convex (Better Auth) → Returns redirect to GitHub OAuth consent page
-4. Browser → Redirected to github.com/login/oauth/authorize
-5. User → Grants permission on GitHub
-6. GitHub → Redirects to /api/auth/callback/github?code=xxx
-7. Next.js route handler → Proxies to Convex .site/api/auth/callback/github
-8. Convex (Better Auth) → Exchanges code for tokens, creates/links user, creates session
-9. Browser → Redirected to callbackURL (/dashboard) with session cookie set
-```
-
-The reverse proxy at `/api/auth/[...all]` uses `redirect: "manual"` to properly handle the redirect chain without the browser prematurely resolving redirects.
-
----
-
-## Audit Events
-
-Social sign-ins generate these audit log events:
-
-| Event | When |
-|---|---|
-| `user.created` | New user created via social sign-in |
-| `session.created` | Social sign-in successful (new session) |
-| `account.linked` | Social account linked to existing user |
+After linking, the user can sign in with either method (email/password or social).
 
 ---
 
 ## Troubleshooting
 
-### "redirect_uri_mismatch" Error
+### "redirect_uri_mismatch" error
 
-The callback URL in your OAuth provider settings doesn't match the actual URL. Make sure:
+The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly:
 - Development: `http://localhost:3000/api/auth/callback/{provider}`
 - Production: `https://your-domain.com/api/auth/callback/{provider}`
 
-### "Access Denied" After Granting Permission
+### "Access Denied" after granting permission
 
-1. Check that the provider's **Client Secret** is correctly set on Convex: `npx convex env list`
-2. Check that the provider is included in your `socialProviders` config.
-3. For Microsoft, make sure `tenantId` is set.
+- Verify the Client Secret is correctly set.
+- Check that the provider is configured in your Banata project.
+- For Microsoft, make sure `tenantId` is set.
 
-### User Created Without Name/Email
+### User created without name or email
 
-Some providers don't return all user fields. Check the provider's scope settings to ensure you're requesting the right permissions (e.g., `email` scope for Google).
+Some providers don't return all user fields by default. Check the provider's scope settings to ensure you're requesting the right permissions.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Magic Links](/docs/magic-links)** — Passwordless authentication via email
-- **[Multi-Factor Auth](/docs/mfa)** — Add TOTP as a second factor
-- **[Organizations](/docs/organizations-overview)** — Multi-tenant workspaces
+- [Magic Links](/docs/magic-links) — Passwordless authentication via email
+- [Multi-Factor Auth](/docs/mfa) — Add TOTP as a second factor
+- [Organizations](/docs/organizations-overview) — Multi-tenant workspaces

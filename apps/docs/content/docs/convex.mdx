@@ -1,37 +1,41 @@
 ---
 title: "Convex Integration"
 description: "Platform-runtime reference for self-hosting Banata on Convex."
-section: "Packages"
-order: 17
+section: "Platform Operators"
+order: 1
 ---
 
-`@banata-auth/convex` is the platform-runtime package behind Banata.
-
-Use it when you are:
-
-- operating the hosted Banata service
-- self-hosting the Banata platform
-- working on Banata's internal runtime and plugins
-
-Do **not** treat it as the default customer-app integration path.
+`@banata-auth/convex` is the platform-runtime package that powers every Banata deployment. It contains the Convex component, schema, migrations, and plugins that make Banata work. If you are running the Banata platform itself, this is the package that does the heavy lifting.
 
 ---
 
-## What It Is Responsible For
+## Who This Is For
 
-Inside a Banata platform deployment, `@banata-auth/convex` provides:
+You should read this page if you are:
 
-- the packaged Convex component registration
-- packaged component schema
-- packaged component migrations
-- Better Auth runtime helpers
-- the custom Banata plugins for emails, API keys, projects, RBAC, orgs, vault, and audit logs
+- **Operating the hosted Banata service** — you deploy and maintain the production platform.
+- **Self-hosting Banata** — you run your own instance of the Banata platform.
+- **Contributing to Banata internals** — you are working on runtime code, plugins, or migrations.
 
-The platform keeps a thin local `convex/banataAuth/` folder only for the pieces that cannot live entirely inside the component environment.
+If you are a regular app developer integrating authentication into your product, this package is not for you. Head to the [SDK](/docs/sdk), [Next.js](/docs/nextjs), or [React](/docs/react) guides instead.
+
+---
+
+## What It Provides
+
+Inside a Banata platform deployment, `@banata-auth/convex` gives you:
+
+- **Component registration** — the packaged Convex component that gets installed into your deployment.
+- **Schema** — the packaged component schema for all Banata tables.
+- **Migrations** — versioned data migrations that run automatically on deploy.
+- **Better Auth runtime helpers** — the auth engine configuration and request handling.
+- **Banata plugins** — emails, API keys, projects, RBAC, organizations, vault, and audit logs.
 
 ---
 
 ## Minimal Local Files
+
+The platform keeps a thin local `convex/banataAuth/` folder for the pieces that cannot live entirely inside the Convex component environment.
 
 ```text
 convex/
@@ -45,34 +49,34 @@ convex/
     `-- schema.ts
 ```
 
-Why these remain local:
+Why these files remain local:
 
-- `banataAuth/auth.ts` binds deployment env and runtime config
-- `banataAuth/adapter.ts` closes over the local auth factory
-- `banataAuth/schema.ts` is still needed as a local codegen anchor for Convex components
+- **`banataAuth/auth.ts`** — binds your deployment environment and runtime config.
+- **`banataAuth/adapter.ts`** — closes over the local auth factory.
+- **`banataAuth/schema.ts`** — serves as the local codegen anchor that Convex components require.
 
-Everything else should come from the package.
+Everything else comes from the package.
 
 ---
 
 ## Product Boundary
 
-The important product rule is:
+There is an important distinction between the platform and customer apps:
 
-- apps authenticate through a Banata dashboard project
-- project scope comes from a project-scoped API key
-- self-hosting still keeps that same dashboard-first flow
+- Customer apps authenticate through a Banata dashboard project.
+- Project scope comes from a project-scoped API key that you create in the dashboard.
+- Self-hosting keeps that same dashboard-first flow — you still create projects and issue keys.
 
-So `@banata-auth/convex` powers the Banata platform, while customer apps normally use:
+So `@banata-auth/convex` powers the Banata platform, while customer apps use the client-facing packages:
 
-- [`@banata-auth/sdk`](/docs/sdk)
-- [`@banata-auth/nextjs`](/docs/nextjs)
-- [`@banata-auth/react`](/docs/react)
+- [`@banata-auth/sdk`](/docs/sdk) — framework-agnostic client
+- [`@banata-auth/nextjs`](/docs/nextjs) — Next.js integration
+- [`@banata-auth/react`](/docs/react) — React hooks and components
 
 ---
 
-## Related Docs
+## Next Steps
 
-- [Self-Hosted Quick Start](/docs/quickstart)
-- [Self-Hosting](/docs/self-hosting)
-- [API Keys](/docs/api-keys)
+- [Self-Hosting](/docs/self-hosting) — set up your own Banata instance.
+- [Environment Variables](/docs/env-vars) — configure secrets and service URLs.
+- [Deploying](/docs/deploy) — push your platform to production.

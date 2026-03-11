@@ -1,172 +1,94 @@
 ---
 title: "Settings"
-description: "Configure your Banata Auth project name, auth method overview, team management, and danger zone."
-section: "Configuration"
-order: 25
+description: "Manage your project identity, review your auth configuration at a glance, and handle destructive actions from the Settings page."
+section: "Operate Your Project"
+order: 6
 ---
 
-The **Settings** section provides centralized project-level configuration for your Banata Auth instance. It is organized into four sub-pages accessible via a sidebar navigation.
+The **Settings** page is your central hub for managing project-level details in Banata Auth. From here you can update your project name, review which authentication methods are active, and perform administrative actions like resetting configuration or deleting a project.
 
----
-
-## Settings Sub-Pages
-
-| Page | Path | Description |
-|---|---|---|
-| **General** | `/settings/general` | Project name, description, client ID |
-| **Auth Overview** | `/settings/auth-overview` | Read-only summary of enabled auth methods, providers, and sessions |
-| **Team** | `/settings/team` | Team member management (coming soon) |
-| **Danger Zone** | `/settings/danger-zone` | Destructive actions: reset configuration, delete project |
-
-Navigating to `/settings` automatically redirects to `/settings/general`.
+Settings is organized into four sub-pages, accessible from the sidebar when you navigate to **Settings** in the dashboard.
 
 ---
 
-## General Settings
+## General
 
-The General page manages your project identity.
+The General page is where you manage your project's identity. You land here by default when you open Settings.
 
-### Project Identity
+### Project Name
 
-- **Project name** — A human-readable name for your project (max 100 characters). Shown in the dashboard header.
-- **Description** — An optional description of your project (max 500 characters).
+Your project name is the human-readable label that appears throughout the dashboard. You can change it at any time — just type a new name (up to 100 characters) and click **Save changes**.
+
+### Description
+
+Add an optional description (up to 500 characters) to help your team understand what the project is for. This is especially useful if you manage multiple Banata Auth projects.
 
 ### Client ID
 
-A read-only identifier for your project. Banata uses it in callback URLs, public configuration lookups, and internal project metadata. The normal SDK flow does **not** use `clientId` to choose a project; project-scoped API keys do that. You can still copy it from the dashboard when you need it for redirects or public auth flows.
-
-### Saving
-
-Changes to project name and description are persisted to the backend when you click **Save changes**. The save button is disabled when there are no unsaved changes.
+Your Client ID is a read-only identifier assigned to your project. Banata uses it internally for callback URLs and public configuration lookups. You don't need it for day-to-day SDK usage — project-scoped API keys handle that — but you can copy it from the dashboard whenever you need it for redirect URLs or public auth flows.
 
 ---
 
 ## Auth Overview
 
-A read-only dashboard showing the current state of your authentication configuration. This page does not allow editing — it links to the appropriate configuration pages for changes.
+The Auth Overview page gives you a read-only snapshot of your current authentication setup. Nothing is editable here — it's purely informational, with links to the relevant configuration pages if you want to make changes.
 
-### What's Displayed
+You'll see:
 
-- **Summary stats** — Count of enabled auth methods, social providers, and features
-- **Authentication Methods** — All 9 methods (Email & Password, Magic Link, Email OTP, Passkey, Two-Factor Auth, Organizations, Anonymous Users, Username, Enterprise SSO) with enabled/disabled badges
-- **Social Providers** — List of configured social OAuth providers with demo badges where applicable
-- **Session Configuration** — Current max session length, access token duration, and inactivity timeout
+- **Summary stats** — A quick count of how many auth methods, social providers, and features you have enabled.
+- **Authentication Methods** — All available methods (Email & Password, Magic Link, Email OTP, Passkey, Two-Factor Auth, Organizations, Anonymous Users, Username, Enterprise SSO) with clear enabled/disabled badges.
+- **Social Providers** — Which OAuth providers you've configured, with demo badges where applicable.
+- **Session Configuration** — Your current max session length, access token duration, and inactivity timeout.
+
+This page is a great first stop when you want to quickly confirm what's turned on before making changes elsewhere.
 
 ---
 
 ## Team
 
-Team management is coming soon. Currently the page shows:
+Team management is **coming soon**. Right now, the Team page shows your own account details — your name, email, and admin role.
 
-- **Your Account** — The currently signed-in admin user with their name, email, and role
-- **Team Members** — A placeholder section for future team invitation functionality
-
-When available, team management will allow inviting other users with specific roles and permissions to collaborate on your Banata Auth project.
+When team management launches, you'll be able to invite other users to collaborate on your Banata Auth project with specific roles and permissions.
 
 ---
 
 ## Danger Zone
 
-Contains destructive, irreversible actions that affect your entire project.
+The Danger Zone contains irreversible actions that affect your entire project. Both actions require you to type a confirmation phrase before they execute.
 
 ### Reset Configuration
 
-Resets all dashboard configuration to defaults:
+Resetting your configuration returns all dashboard settings to their defaults. This includes:
+
 - Branding settings
 - Email configuration
 - Detection rules (Radar)
-- All custom configuration
+- All other custom configuration
 
-User data (users, organizations, sessions) is preserved. Requires typing `RESET` to confirm.
+**Your user data is preserved.** Users, organizations, and sessions remain untouched.
+
+To confirm, type `RESET` when prompted.
 
 ### Delete Project
 
-Permanently deletes the project and all associated data:
+Deleting your project permanently removes everything associated with it:
+
 - Users and sessions
 - Organizations and memberships
 - API keys and webhooks
 - All configuration
 
-Requires typing `DELETE MY PROJECT` to confirm.
+**This cannot be undone.** To confirm, type `DELETE MY PROJECT` when prompted.
 
-> **Note:** Both destructive actions are currently gated behind confirmation text inputs. The actual deletion/reset functionality will be connected to backend endpoints in a future release.
-
----
-
-## API Endpoints
-
-The settings backend uses the `configPlugin` with project config endpoints:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/banata/config/project/get` | POST | Get project configuration |
-| `/api/auth/banata/config/project/save` | POST | Update project configuration (partial updates) |
-
-All endpoints require **admin authentication**.
-
-### Get Project Config
-
-```typescript
-// POST /api/auth/banata/config/project/get
-// Body: {}
-// Response:
-{
-  "projectName": "My Banata Project",
-  "projectDescription": "A short description",
-  "clientId": "banata-auth"
-}
-```
-
-### Save Project Config
-
-```typescript
-// POST /api/auth/banata/config/project/save
-// Body (partial update):
-{
-  "projectName": "Production App"
-}
-// Response: the full project config
-```
-
-> **Note:** The `clientId` field is read-only. It is useful for public/auth flow metadata, but project-scoped API keys are what scope SDK and admin API requests.
+<Callout type="warn">
+  Take a moment before using either action. Resetting configuration can disrupt live auth flows, and deleting a project removes all data permanently.
+</Callout>
 
 ---
 
-## Data Model
+## Next Steps
 
-Project configuration is stored as a singleton row in the `projectConfig` table:
-
-```typescript
-defineTable({
-  configJson: v.string(),    // JSON-serialized project settings
-  createdAt: v.float64(),
-  updatedAt: v.float64(),
-})
-```
-
-The `configJson` field stores a JSON object with `projectName` and `projectDescription`.
-
----
-
-## Using Settings Programmatically
-
-```typescript
-import { getProjectConfig, saveProjectConfig } from "@/lib/dashboard-api";
-
-// Get current settings
-const config = await getProjectConfig();
-console.log(config.projectName);   // "My Banata Project"
-
-// Update settings
-const updated = await saveProjectConfig({
-  projectName: "Production App",
-});
-```
-
----
-
-## What's Next
-
-- **[Radar & Bot Protection](/docs/radar)** — Configure bot detection with provider credentials
-- **[Bot Protection Package](/docs/bot-protection)** — Integrate bot detection in your Next.js app
-- **[Domains](/docs/domains)** — Configure custom domains for auth services
+- **[Radar & Bot Protection](/docs/radar)** — Set up bot detection rules and provider credentials.
+- **[Bot Protection Package](/docs/bot-protection)** — Integrate bot detection into your Next.js app.
+- **[Domains](/docs/domains)** — Configure custom domains for your auth services.
+- **[API Keys](/docs/api-keys)** — Create and manage project-scoped API keys.

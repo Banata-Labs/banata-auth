@@ -1,85 +1,56 @@
 ---
 title: "Anonymous Authentication"
-description: "Allow users to interact with your app without creating an account, with optional upgrade to a full account later."
-section: "Authentication"
-order: 24
+description: "Let users interact with your app without an account, then upgrade to a full account while preserving their data."
+section: "Configure Authentication"
+order: 7
 ---
 
-Anonymous authentication lets users interact with your application **without providing an email, password, or any credentials**. A temporary user record and session are created automatically, allowing the user to start using your app immediately. Later, the user can **upgrade** to a full account by linking an email/password, social login, or other authentication method -- preserving all data created during the anonymous session.
+Anonymous authentication lets users start using your app immediately -- no email, no password, no sign-up form. Banata Auth creates a temporary user record and session behind the scenes, so your users can explore features, save preferences, and create content right away. When they are ready, they upgrade to a full account and everything they did as a guest carries over seamlessly.
 
 ---
 
 ## Use Cases
 
-Anonymous auth is well-suited for scenarios where you want to reduce friction and let users experience your product before committing to an account:
+Anonymous auth shines wherever you want to reduce friction and let people experience your product before committing:
 
 - **Try-before-signup** -- Let users explore features, create content, or configure settings before asking them to register.
-- **Guest checkout** -- Allow purchases or form submissions without requiring an account upfront.
-- **Onboarding flows** -- Capture user preferences or progress during onboarding, then prompt for account creation at a natural breakpoint.
-- **Collaborative tools** -- Let anonymous users join a shared session or document with a link, then optionally claim their identity later.
+- **Guest checkout** -- Accept purchases or form submissions without requiring an account upfront.
+- **Onboarding flows** -- Capture preferences or progress during onboarding, then prompt for account creation at a natural breakpoint.
+- **Collaborative tools** -- Let guests join a shared session or document via a link, then optionally claim their identity later.
 - **Mobile-first experiences** -- Reduce drop-off by deferring account creation until the user sees value.
 
 ---
 
-## How It Works
+## Enable Anonymous Auth
 
-```
-1. User lands on your app without an account
-2. Client calls authClient.signIn.anonymous()
-3. Server creates a temporary user record (no email, no password)
-4. Server creates a session for the anonymous user
-5. User interacts with the app normally -- data is tied to their user ID
-6. When ready, user clicks "Create Account" or "Sign Up"
-7. Client calls the upgrade method (e.g., link email/password)
-8. Server links the credentials to the existing anonymous user record
-9. The user ID, session, and all associated data are preserved
-10. User is now a full, authenticated user
-```
+### Via the Dashboard
 
-### Anonymous User Properties
+1. Go to **Authentication > Methods** in your project.
+2. Toggle on **Anonymous**.
+3. Make sure at least one upgrade method is also enabled (Email & Password, Social OAuth, Magic Links, etc.) so anonymous users have a path to a full account.
 
-When an anonymous user is created, the user record has these characteristics:
+### Via the SDK
 
-| Property | Value |
-|---|---|
-| `id` | Generated user ID (same format as regular users) |
-| `email` | `null` |
-| `name` | `null` |
-| `emailVerified` | `false` |
-| `isAnonymous` | `true` |
-| `createdAt` | Timestamp of anonymous session creation |
-
-The `isAnonymous` flag distinguishes anonymous users from regular users and is set to `false` when the user upgrades to a full account.
-
----
-
-## Configuration
-
-Enable anonymous authentication in your `BanataAuthConfig`:
+You can also enable anonymous auth programmatically:
 
 ```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
-
-    authMethods: {
-      anonymous: true,       // Enable anonymous authentication
-      emailPassword: true,   // Users need a method to upgrade to
-    },
-  };
-}
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    anonymous: true,
+    emailPassword: true, // at least one upgrade method
+  },
+});
 ```
 
-> **Note:** Anonymous auth is most useful when combined with at least one other authentication method that users can upgrade to (email/password, social OAuth, magic links, etc.).
+> **Note:** Anonymous auth is most useful when combined with at least one other authentication method that users can upgrade to. Without an upgrade path, anonymous users have no way to secure their account.
 
 ---
 
 ## Client-Side API
 
 ### Create an Anonymous Session
+
+Call `authClient.signIn.anonymous()` to create a guest session. This generates a user record with no credentials and returns a fully functional session:
 
 ```typescript
 import { authClient } from "@/lib/auth-client";
@@ -89,14 +60,15 @@ const { data, error } = await authClient.signIn.anonymous();
 if (error) {
   console.error(error.message);
 } else {
-  // data contains the anonymous user and session
   console.log(data.user.id);          // "usr_01HXYZ..."
   console.log(data.user.isAnonymous); // true
   console.log(data.session);          // { id, token, expiresAt, ... }
 }
 ```
 
-### Check if the Current User is Anonymous
+### Check if the Current User Is Anonymous
+
+Use the `isAnonymous` flag to decide what UI to show -- for example, displaying an upgrade banner or restricting certain features:
 
 ```typescript
 const session = await authClient.getSession();
@@ -108,7 +80,7 @@ if (session?.data?.user?.isAnonymous) {
 }
 ```
 
-### Upgrade to Email/Password
+### Upgrade to Email & Password
 
 Link an email and password to the anonymous user, converting them to a full account:
 
@@ -116,7 +88,7 @@ Link an email and password to the anonymous user, converting them to a full acco
 const { data, error } = await authClient.anonymous.upgrade({
   email: "user@example.com",
   password: "securePassword123",
-  name: "Jane Doe",  // Optional
+  name: "Jane Doe", // optional
 });
 
 if (error) {
@@ -127,11 +99,9 @@ if (error) {
   // - "User is not anonymous" (400)
   console.error(error.message);
 } else {
-  // data.user.isAnonymous is now false
-  // data.user.email is now "user@example.com"
-  // The user ID and session remain the same
   console.log(data.user.isAnonymous); // false
   console.log(data.user.email);       // "user@example.com"
+  // The user ID and session remain the same
 }
 ```
 
@@ -148,9 +118,13 @@ await authClient.anonymous.upgradeWithSocial({
 // On return, the anonymous user is linked to the Google account
 ```
 
+This works with any social provider you have enabled (Google, GitHub, Apple, etc.).
+
 ---
 
-## Complete Anonymous-to-Upgrade Flow
+## Complete Component Example
+
+Here is a full React component that wraps your app with anonymous session management and an upgrade banner:
 
 ```tsx
 "use client";
@@ -170,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const session = await authClient.getSession();
 
     if (session?.data?.user) {
-      // User has an existing session (anonymous or full)
+      // User already has a session (anonymous or full)
       setUser(session.data.user);
     } else {
       // No session -- create an anonymous one
@@ -214,12 +188,22 @@ function UpgradeBanner() {
     }
   }
 
+  async function handleSocialUpgrade(provider: string) {
+    await authClient.anonymous.upgradeWithSocial({
+      provider,
+      callbackURL: window.location.pathname,
+    });
+  }
+
   if (!showForm) {
     return (
       <div style={{
         padding: "12px 16px",
         backgroundColor: "#f0f4ff",
         borderBottom: "1px solid #d0d8f0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
       }}>
         <span>
           You are using a guest account. Your data will be preserved
@@ -260,67 +244,77 @@ function UpgradeBanner() {
           Later
         </button>
       </form>
+      <div style={{ marginTop: "12px" }}>
+        <p>Or upgrade with a social account:</p>
+        <button onClick={() => handleSocialUpgrade("google")}>
+          Continue with Google
+        </button>
+        <button onClick={() => handleSocialUpgrade("github")}>
+          Continue with GitHub
+        </button>
+      </div>
     </div>
   );
 }
 ```
 
+> **Tip:** Always check for an existing session before calling `signIn.anonymous()`. If you create a new anonymous session on every page load, you will generate orphaned user records and hit rate limits.
+
 ---
 
-## Data Persistence During Upgrade
+## What's Preserved on Upgrade
 
-When an anonymous user upgrades to a full account, the following are preserved:
+When an anonymous user upgrades to a full account, the upgrade is an **in-place mutation** of the existing user record -- not a creation of a new one. This means all foreign key relationships to the user ID stay intact.
 
 | Data | Preserved? | Notes |
 |---|---|---|
-| User ID | Yes | The `id` remains the same |
-| Session | Yes | The current session continues, no re-authentication needed |
+| User ID | Yes | The `id` remains exactly the same |
+| Session | Yes | The current session continues; no re-authentication needed |
 | Associated records | Yes | Any data linked to the user ID (posts, preferences, cart items, etc.) |
 | Organization memberships | Yes | If the anonymous user was added to an organization |
 | Metadata | Yes | Any custom metadata set on the user record |
 
-The upgrade is an **in-place mutation** of the existing user record, not a creation of a new user. This means all foreign key relationships to the user ID remain intact.
+---
 
-### What Changes on Upgrade
+## What Changes on Upgrade
 
-| Property | Before | After |
+| Property | Before Upgrade | After Upgrade |
 |---|---|---|
 | `isAnonymous` | `true` | `false` |
-| `email` | `null` | Provided email |
-| `name` | `null` | Provided name (if given) |
-| `emailVerified` | `false` | `false` (verification email sent) |
+| `email` | `null` | The provided email |
+| `name` | `null` | The provided name (if given) |
+| `emailVerified` | `false` | `false` (a verification email is sent) |
 
 ---
 
 ## Cleanup of Stale Anonymous Accounts
 
-Anonymous users that never upgrade will accumulate over time. Banata Auth provides mechanisms to clean up stale anonymous accounts.
+Anonymous users who never upgrade will accumulate over time. You should plan for cleanup from the start.
 
 ### Automatic Cleanup
 
-Configure automatic cleanup of anonymous accounts that have been inactive beyond a threshold:
+You can configure a maximum age for anonymous accounts in your dashboard under **Authentication > Methods > Anonymous > Settings**, or via the SDK:
 
 ```typescript
-function buildConfig(): BanataAuthConfig {
-  return {
-    // ...
-    authMethods: {
-      anonymous: {
-        enabled: true,
-        maxAge: 30 * 24 * 60 * 60,  // 30 days in seconds
-      },
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    anonymous: {
+      enabled: true,
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     },
-  };
-}
+  },
+});
 ```
 
-When `maxAge` is set, anonymous user sessions that have not been active within the specified period are eligible for cleanup. The cleanup process runs periodically and:
+When `maxAge` is set, anonymous users whose last session activity exceeds the threshold are automatically cleaned up. The process:
 
-1. Identifies anonymous users whose last session activity exceeds `maxAge`
-2. Deletes the anonymous user record and associated session data
-3. Logs a `user.deleted` audit event for each cleanup
+1. Identifies anonymous users whose last session activity exceeds `maxAge`.
+2. Deletes the anonymous user record and associated session data.
+3. Logs a `user.deleted` audit event for each removal.
 
 ### Manual Cleanup via Admin SDK
+
+If you prefer more control, you can clean up stale anonymous accounts programmatically:
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
@@ -351,38 +345,25 @@ for (const user of data) {
 
 ---
 
-## Rate Limiting
+## Rate Limits
 
 Anonymous session creation is rate-limited to prevent abuse:
 
 | Operation | Limit |
 |---|---|
-| Create anonymous session | 30 requests per minute (per IP) |
+| Create anonymous session | 30 requests per minute per IP |
 
-This prevents automated scripts from creating large numbers of anonymous accounts.
-
----
-
-## Audit Events
-
-| Event | When |
-|---|---|
-| `user.created` | Anonymous user record created |
-| `session.created` | Anonymous session started |
-| `user.updated` | Anonymous user upgraded to full account |
-| `user.deleted` | Stale anonymous user cleaned up |
-
-See the [Audit Logs](/docs/audit-logs) guide for more details.
+If your application exceeds this limit, the API returns a `429 Too Many Requests` error. Make sure your frontend checks for an existing session before creating a new anonymous one.
 
 ---
 
 ## Security Considerations
 
-1. **Rate limit anonymous creation** -- Without rate limiting, anonymous auth can be abused to create unlimited user records. The built-in rate limit (30/min per IP) mitigates this.
-2. **Limit anonymous capabilities** -- Consider restricting what anonymous users can do in your application. Use the `isAnonymous` flag to gate sensitive operations (payments, data exports, etc.).
-3. **Set a cleanup policy** -- Always configure `maxAge` or implement manual cleanup to prevent unbounded growth of anonymous records.
-4. **Session expiry still applies** -- Anonymous sessions expire according to the standard session lifetime (7 days by default). After expiry, the anonymous user cannot resume their session.
-5. **Upgrade prompts** -- Display clear upgrade prompts at natural breakpoints (after completing a task, before checkout, etc.) to convert anonymous users to full accounts.
+1. **Rate limits are your first line of defense.** Without them, anonymous auth can be abused to create unlimited user records. The built-in limit of 30 per minute per IP keeps this in check.
+2. **Limit what anonymous users can do.** Use the `isAnonymous` flag to gate sensitive operations like payments, data exports, and administrative actions. Treat anonymous users as untrusted until they upgrade.
+3. **Always configure cleanup.** Set a `maxAge` or implement manual cleanup to prevent unbounded growth of anonymous records in your database.
+4. **Session expiry still applies.** Anonymous sessions expire according to your standard session lifetime (7 days by default). After expiry, the anonymous user cannot resume their session, and their data may become inaccessible if they have no credentials to re-authenticate.
+5. **Prompt upgrades at natural breakpoints.** Display clear upgrade prompts after the user completes a meaningful action (finishing a task, before checkout, after saving a document) to maximize conversion from anonymous to full accounts.
 
 ---
 
@@ -390,28 +371,29 @@ See the [Audit Logs](/docs/audit-logs) guide for more details.
 
 ### "User is not anonymous"
 
-The upgrade endpoint was called on a user that is already a full account (i.e., `isAnonymous` is `false`). Only anonymous users can be upgraded.
+You called the upgrade endpoint on a user whose `isAnonymous` flag is already `false`. Only anonymous users can be upgraded. If the user already has credentials, they are a full account.
 
 ### "Email already in use"
 
-The email provided during upgrade is already registered to another user. The anonymous user cannot claim an email that belongs to an existing account.
+The email provided during upgrade belongs to another existing user. An anonymous user cannot claim an email that is already registered. You may want to prompt the user to sign in to the existing account instead.
 
 ### "Anonymous session expired"
 
-The session expired before the user upgraded. The anonymous user record still exists, but a new session must be created. If the user has no way to re-authenticate (no email/password), the data from the previous session may be inaccessible.
+The session expired before the user upgraded. The anonymous user record may still exist, but since there are no credentials to re-authenticate, the user will get a new anonymous session if they return. Data from the previous session may be inaccessible unless you have a recovery mechanism.
 
 ### "Too many anonymous accounts"
 
-If you see a large number of anonymous users, check for:
-- Bot traffic creating sessions programmatically
-- Missing cleanup configuration
-- Frontend code that creates anonymous sessions on every page load (should check for existing session first)
+If you see a large number of anonymous user records, check for:
+
+- **Bot traffic** creating sessions programmatically.
+- **Missing cleanup configuration** -- make sure `maxAge` is set.
+- **Frontend bugs** that create a new anonymous session on every page load instead of reusing the existing session.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Email & Password](/docs/email-password)** -- The most common upgrade target for anonymous users
-- **[Social OAuth](/docs/social-oauth)** -- Let anonymous users upgrade via Google, GitHub, etc.
-- **[Username Auth](/docs/username-auth)** -- Upgrade with a username instead of email
-- **[Organizations](/docs/organizations-overview)** -- Multi-tenant workspaces
+- **[Email & Password](/docs/email-password)** -- The most common upgrade target for anonymous users.
+- **[Social OAuth](/docs/social-oauth)** -- Let anonymous users upgrade via Google, GitHub, and more.
+- **[Magic Links](/docs/magic-links)** -- Passwordless upgrade path.
+- **[Organizations](/docs/organizations-overview)** -- Add anonymous users to multi-tenant workspaces.

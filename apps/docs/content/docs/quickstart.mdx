@@ -1,54 +1,41 @@
 ---
 title: "Quick Start"
-description: "Connect a Next.js app to Banata with a project-scoped API key and app-owned auth routes."
+description: "Connect a Next.js app to Banata Auth in under 10 minutes. Install packages, set up auth routes, and add sign-in pages."
 section: "Start Here"
 order: 2
 ---
 
-This is the standard Banata integration path.
-
-You do **not** embed Banata's auth backend in your app. You:
-
-1. create a project in the Banata dashboard
-2. configure auth methods and providers for that project
-3. create a project-scoped API key
-4. proxy `/api/auth` through your app
-5. render auth UI inside your own frontend
-
-If you self-host Banata, this flow stays the same. Only the Banata URLs change.
+This guide walks you through adding Banata Auth to a Next.js application. By the end, you'll have working sign-up, sign-in, and session management.
 
 ---
 
-## Dashboard Prerequisites
+## Prerequisites
 
-Before you write code:
+Before writing code, set up your Banata project:
 
-1. Sign in to the Banata dashboard.
-2. Open or create the project you want your app to use.
-3. Enable the auth methods you want under **Authentication -> Methods**.
-4. Configure provider credentials under **Authentication -> Providers**.
-5. If you enable email-based auth, configure **Emails** and templates.
-6. Create a **project-scoped API key** under **API Keys**.
-
-If you skip steps 3 to 5, your frontend can still render forms, but the backend will reject flows that are not enabled for that project.
+1. **Sign in** to the Banata dashboard.
+2. **Create a project** (or use your default project).
+3. **Enable auth methods** — go to **Authentication > Methods** and turn on at least one method (e.g., Email & Password).
+4. **Configure providers** — if you enabled social OAuth, add your provider credentials under **Authentication > Providers**.
+5. **Set up email** — if you're using email-based auth, configure an email provider under **Emails > Providers** and customize your templates under **Email Templates**.
+6. **Create an API key** — go to **API Keys**, create a new key, and copy it immediately. The raw key is only shown once.
 
 ---
 
-## Install Packages
+## Step 1: Install Packages
 
 ```bash
-npm install @banata-auth/nextjs @banata-auth/react @banata-auth/sdk
+npm install @banata-auth/nextjs @banata-auth/react
 ```
 
-Use:
-
-- `@banata-auth/nextjs` for the auth route proxy and server helpers
-- `@banata-auth/react` for sign-in and sign-up UI in your app
-- `@banata-auth/sdk` when you want to configure Banata by code
+- `@banata-auth/nextjs` — handles the auth route proxy and server-side auth helpers
+- `@banata-auth/react` — provides pre-built sign-in/sign-up UI components
 
 ---
 
-## Environment Variables
+## Step 2: Set Environment Variables
+
+Create or update your `.env.local` file:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -59,15 +46,20 @@ NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
 BANATA_API_KEY=sk_test_your_project_key
 ```
 
-Notes:
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Your app's public URL |
+| `NEXT_PUBLIC_CONVEX_URL` | The Banata backend URL (Convex cloud) |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | The Banata auth API URL (Convex site) |
+| `BANATA_API_KEY` | Your project-scoped API key (keep this server-side only) |
 
-- `BANATA_API_KEY` must stay server-side.
-- `NEXT_PUBLIC_CONVEX_SITE_URL` is the Banata auth backend URL.
-- `NEXT_PUBLIC_CONVEX_URL` is used by server-side Convex helpers.
+> **Important:** `BANATA_API_KEY` must not have the `NEXT_PUBLIC_` prefix. It should only be accessible on the server.
 
 ---
 
-## Create Server Auth Helpers
+## Step 3: Create Server Auth Helpers
+
+This file initializes the server-side auth connection to Banata. The API key binds your app to your Banata project.
 
 ```ts
 // src/lib/auth-server.ts
@@ -75,9 +67,7 @@ import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required.`);
-  }
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
 
@@ -96,11 +86,23 @@ export const {
 });
 ```
 
-The API key is what binds this app to one Banata project.
+Here's what each export does:
+
+| Export | Purpose |
+|---|---|
+| `handler` | Route handler for `/api/auth` — proxies auth requests to Banata |
+| `isAuthenticated` | Check if the current request has a valid session |
+| `getToken` | Get the current auth token for server-side API calls |
+| `preloadAuthQuery` | Preload a Convex query with auth context |
+| `fetchAuthQuery` | Execute a Convex query with auth context |
+| `fetchAuthMutation` | Execute a Convex mutation with auth context |
+| `fetchAuthAction` | Execute a Convex action with auth context |
 
 ---
 
-## Create The Auth Route
+## Step 4: Create the Auth Route
+
+This catch-all route proxies all `/api/auth/*` requests from your app to Banata. This keeps auth cookies on your domain.
 
 ```ts
 // src/app/api/auth/[...all]/route.ts
@@ -109,11 +111,13 @@ import { handler } from "@/lib/auth-server";
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 ```
 
-Your browser should call `/api/auth` on your own app origin, not the Banata backend URL directly.
+Your browser makes auth requests to your app's `/api/auth` endpoint — never directly to the Banata backend.
 
 ---
 
-## Create The Browser Auth Client
+## Step 5: Create the Browser Auth Client
+
+This client-side module is what your React components use to trigger sign-in, sign-up, sign-out, and other auth actions.
 
 ```ts
 // src/lib/auth-client.ts
@@ -126,9 +130,13 @@ export const authClient = createAuthClient({
 });
 ```
 
+The `baseURL` points to your own app's auth route (Step 4), not the Banata backend URL.
+
 ---
 
-## Add Sign-In And Sign-Up Pages
+## Step 6: Add Sign-In and Sign-Up Pages
+
+### Sign-In Page
 
 ```tsx
 // src/app/sign-in/page.tsx
@@ -144,12 +152,14 @@ export default function SignInPage() {
       authClient={authClient}
       callbackURL="/"
       title="Sign in"
-      description="Use the methods enabled for this Banata project."
+      description="Welcome back! Sign in to continue."
       footer={<Link href="/sign-up">Create an account</Link>}
     />
   );
 }
 ```
+
+### Sign-Up Page
 
 ```tsx
 // src/app/sign-up/page.tsx
@@ -165,16 +175,20 @@ export default function SignUpPage() {
       authClient={authClient}
       callbackURL="/"
       title="Create account"
-      description="This project is powered by Banata."
+      description="Sign up to get started."
       footer={<Link href="/sign-in">Already have an account?</Link>}
     />
   );
 }
 ```
 
+The `SignInForm` and `SignUpForm` components automatically render the right fields and social buttons based on what auth methods you've enabled in the Banata dashboard.
+
 ---
 
-## Guard Your App
+## Step 7: Protect Your Pages
+
+Use the `isAuthenticated` helper to guard server-rendered pages:
 
 ```tsx
 // src/app/page.tsx
@@ -188,15 +202,31 @@ export default async function HomePage() {
     redirect("/sign-in");
   }
 
-  return <div>Authenticated app shell</div>;
+  return <div>Welcome! You are signed in.</div>;
 }
 ```
 
 ---
 
-## Configure Banata By Code
+## Verify It Works
 
-The dashboard is the main management surface, but it is not the only way to configure a project.
+Start your development server and test the full flow:
+
+1. Open `/sign-up` and create a new account.
+2. After sign-up, verify you're redirected to your app.
+3. Open `/api/auth/get-session` in your browser — you should see your session data.
+4. Go to the Banata dashboard and check **Users** — the new user should appear there.
+5. Try signing out and signing back in at `/sign-in`.
+
+---
+
+## Configuring Banata by Code (Optional)
+
+The dashboard is the easiest way to configure your project, but you can also use the SDK to manage configuration programmatically:
+
+```bash
+npm install @banata-auth/sdk
+```
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -206,6 +236,7 @@ const banata = new BanataAuth({
   baseUrl: "https://auth.banata.dev",
 });
 
+// Enable auth methods
 await banata.configuration.saveDashboardConfig({
   authMethods: {
     emailPassword: true,
@@ -217,6 +248,7 @@ await banata.configuration.saveDashboardConfig({
   },
 });
 
+// Customize branding
 await banata.configuration.saveBrandingConfig({
   primaryColor: "#0f766e",
   bgColor: "#f5f5f4",
@@ -224,65 +256,46 @@ await banata.configuration.saveBrandingConfig({
 });
 ```
 
-These writes update the same project config that the dashboard reads. If you change auth settings by code, the dashboard reflects those changes immediately.
+Changes made by the SDK update the same configuration the dashboard reads — they're always in sync.
 
 ---
 
-## What To Verify
+## Troubleshooting
 
-After wiring the app:
+### Sign-in form renders but authentication fails
 
-1. Open `/sign-up` or `/sign-in` in your app.
-2. Create an account or sign in.
-3. Confirm `/api/auth/get-session` returns a live session.
-4. Confirm the same user appears in the Banata dashboard under **Users**.
-5. Confirm project configuration changes in the dashboard affect the app without local auth rewiring.
+- Verify the auth method is enabled in the dashboard (e.g., Email & Password is toggled on).
+- Check that provider credentials are configured if using social OAuth.
+- Confirm `BANATA_API_KEY` is set in your server environment.
 
----
+### Sign-in succeeds but the app shows no session
 
-## Common First-Run Problems
+- Make sure your browser is calling `/api/auth` on your app's origin, not the Banata backend URL directly.
+- Verify the auth route file exists at `src/app/api/auth/[...all]/route.ts`.
+- Check `/api/auth/get-session` in your browser — it should return session data.
 
-### The frontend renders, but sign-in fails immediately
+### Email verification or password reset emails aren't arriving
 
-Check:
+- Configure an email provider under **Emails > Providers** in the dashboard.
+- Make sure the relevant email type is enabled under **Emails > Configuration**.
+- Customize your templates under **Email Templates**.
 
-1. the project has the matching auth method enabled
-2. the required provider credentials are configured
-3. the app is using the correct `BANATA_API_KEY`
+### Hitting rate limits during testing
 
-### Email sign-up exists, but the flow is not practical
+Banata rate-limits auth endpoints to prevent abuse. If you're hitting limits during development:
 
-Email delivery is not ready yet. Configure:
-
-1. an email provider
-2. the relevant templates
-3. the email policy you want for that project
-
-### Sign-in succeeds, but the app still has no session
-
-Check:
-
-1. your browser is calling `/api/auth`, not the Banata backend directly
-2. the app and auth route are on the same origin
-3. `/api/auth/get-session` works in your browser session
-4. the project API key is valid and scoped correctly
-
-### Repeated first-run testing starts hitting rate limits
-
-Banata rate-limits sensitive auth routes. That protection is project-aware and, for email-based endpoints, identifier-aware, but repeated tests from one shared IP can still hit the limit window.
-
-If that happens:
-
-1. wait for the retry window to expire
-2. use a fresh email when testing sign-up
-3. avoid repeatedly submitting the same hosted form while you are debugging app-side routing
+- Wait a minute for the rate limit window to reset.
+- Use different email addresses for each sign-up test.
+- Avoid rapidly resubmitting forms.
 
 ---
 
 ## Next Steps
 
-- [API Keys](/docs/api-keys)
-- [Projects](/docs/projects-environments)
-- [Next.js](/docs/nextjs)
-- [React](/docs/react)
-- [SDK Reference](/docs/sdk)
+Now that your app is connected to Banata, explore these topics:
+
+- [Next.js Integration](/docs/nextjs) — Deep dive into the Next.js package
+- [React Components](/docs/react) — UI components and auth hooks
+- [Email & Password](/docs/email-password) — Configure email/password sign-in
+- [Social OAuth](/docs/social-oauth) — Add Google, GitHub, and other providers
+- [Organizations](/docs/organizations-overview) — Add multi-tenant workspaces

@@ -1,63 +1,46 @@
 ---
 title: "API Keys"
-description: "Project-scoped API keys are how your app authenticates to Banata and how Banata determines project scope."
+description: "API keys connect your application to a Banata project. Learn how to create, use, rotate, and manage API keys."
 section: "Start Here"
 order: 3
 ---
 
-API keys are the primary binding mechanism between your app and Banata.
-
-The normal flow is:
-
-1. create a project in the Banata dashboard
-2. create a project-scoped API key inside that project
-3. store the key on your server
-4. let Banata resolve the project from that key
-
-Your app should not need direct database access to use Banata.
+An API key is the link between your application and a Banata project. Every request your app makes to Banata carries this key, which tells Banata two things: that your app is authorized, and which project it belongs to.
 
 ---
 
-## Why API Keys Matter
+## Creating an API Key
 
-The API key does two jobs:
+1. Sign in to the Banata dashboard.
+2. Select the project you want to connect your app to.
+3. Go to **API Keys** in the sidebar.
+4. Click **Create new key**.
+5. Copy the key immediately and store it securely.
 
-- it authenticates your app to Banata
-- it tells Banata which project the app belongs to
-
-That is why the product contract is dashboard-first and API-key-first. No usable customer integration should come online before a project and project-scoped API key exist.
-
----
-
-## Create A Key In The Dashboard
-
-For the normal product path:
-
-1. sign in to the Banata dashboard
-2. switch to the target project
-3. open **API Keys**
-4. create a new key
-5. copy it immediately and store it securely
-
-The raw key is returned once. It cannot be fetched later.
+> **Important:** The full API key is only displayed once at creation time. Banata stores a hash of the key, not the raw value, so it cannot be retrieved later. If you lose it, create a new one.
 
 ---
 
-## Use The Key In Code
+## Using Your API Key
 
-### Next.js server helpers
+### In a Next.js app
+
+Pass the API key to `createBanataAuthServer` in your server auth helpers:
 
 ```ts
+// src/lib/auth-server.ts
 import { createBanataAuthServer } from "@banata-auth/nextjs/server";
 
-export const { handler } = createBanataAuthServer({
+export const { handler, isAuthenticated } = createBanataAuthServer({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
   apiKey: process.env.BANATA_API_KEY!,
 });
 ```
 
-### SDK
+### With the admin SDK
+
+Pass the API key when creating a `BanataAuth` client:
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -68,74 +51,94 @@ const banata = new BanataAuth({
 });
 ```
 
-In both cases, the key is what binds the app or server process to a project.
+In both cases, the API key is a server-side secret. Never expose it to the browser or include it in client-side code.
 
 ---
 
-## Scope Rules
+## How Project Scoping Works
 
-With the normal managed-service flow:
+Each API key belongs to exactly one project. When your app sends a request with that key, Banata automatically scopes the request to the correct project. You don't need to pass a `projectId` in your code — the key handles that.
 
-- one API key belongs to one project
-- requests from that key should stay inside that project
-- you should not need to pass `projectId` for routine usage
+This means:
 
-If a key from project A can read or mutate data from project B, that is a project-isolation bug.
-
----
-
-## Security Model
-
-Banata stores a hash of the key, not the raw key itself.
-
-That means:
-
-- lost keys cannot be retrieved
-- compromised keys should be revoked and replaced
-- raw keys should be stored in environment variables or a secrets manager
+- Users created through your app belong to that project.
+- Organizations, roles, and configurations are all scoped to that project.
+- An API key from project A cannot access data in project B.
 
 ---
 
-## Rotate And Revoke
+## Security Best Practices
 
-Use separate keys for separate integrations. That lets you revoke one surface without breaking everything else.
+### Store keys in environment variables
 
-Typical pattern:
+Never hard-code API keys in your source code. Use environment variables or a secrets manager:
 
-1. create a new key
-2. deploy the new key
-3. verify traffic
-4. revoke the old key
+```bash
+# .env.local (never commit this file)
+BANATA_API_KEY=sk_live_your_project_key
+```
+
+### Use separate keys for separate concerns
+
+If you have multiple services connecting to the same project (e.g., your web app and a background job worker), create a separate API key for each. This way, if one key is compromised, you can revoke it without affecting the others.
+
+### Rotate keys regularly
+
+To rotate an API key safely:
+
+1. Create a new key in the dashboard.
+2. Deploy your app with the new key.
+3. Verify everything works with the new key.
+4. Revoke the old key in the dashboard.
+
+---
+
+## Managing API Keys with the SDK
+
+You can also create and manage API keys programmatically:
+
+```ts
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_API_KEY!,
+  baseUrl: "https://auth.banata.dev",
+});
+
+// Create a new API key
+const key = await banata.apiKeys.createKey({
+  name: "Production Web App",
+});
+
+// List all keys for the project
+const keys = await banata.apiKeys.listKeys();
+
+// Delete a key
+await banata.apiKeys.deleteKey({ keyId: key.id });
+```
 
 ---
 
 ## Troubleshooting
 
-### Requests authenticate, but hit the wrong project
+### Auth requests work in the dashboard but fail in the app
 
-Check that the app is using the correct project-scoped key.
+- Verify `BANATA_API_KEY` is set in your server environment (not just `.env.local` — check your deployment platform too).
+- Make sure you're using the correct key for the right project.
 
-### The dashboard works, but the app does not
+### Requests return data from the wrong project
 
-Check:
+- You may be using an API key from a different project. Check which project the key was created in.
 
-1. `BANATA_API_KEY` exists on the app server
-2. the app is using the new key you created
-3. the key belongs to the expected project
+### Key works locally but not in production
 
-### A key works locally but not in production
-
-Check:
-
-1. the production deployment actually has the new key
-2. the production Banata backend was redeployed
-3. the requests are hitting the intended Banata instance
+- Confirm the production deployment has the correct `BANATA_API_KEY` environment variable.
+- If you recently created the key, make sure the production Banata backend has been redeployed.
 
 ---
 
 ## Next Steps
 
-- [Quick Start](/docs/quickstart)
-- [Projects](/docs/projects-environments)
-- [Next.js](/docs/nextjs)
-- [SDK Reference](/docs/sdk)
+- [Projects](/docs/projects-environments) — Understand how projects provide data isolation
+- [Quick Start](/docs/quickstart) — Set up your first app with Banata
+- [SDK Reference](/docs/sdk) — Manage API keys and other resources programmatically

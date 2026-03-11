@@ -1,97 +1,124 @@
 ---
 title: "Project Structure"
-description: "What you add to your app, what Banata owns, and which files matter for the normal customer integration path."
+description: "The files and packages you add to your app to integrate with Banata Auth, and what Banata manages for you."
 section: "Start Here"
 order: 5
 ---
 
-Banata should be understood in two layers:
-
-1. **Your app integration**
-2. **The Banata platform**
-
-Most customers only need the first layer.
+Integrating Banata Auth into your app requires only a handful of files. This page shows you what goes where, and clarifies the boundary between your app and Banata.
 
 ---
 
-## What Lives In Your App
+## What You Add to Your App
 
-For the normal integration path, your app only needs a small auth surface:
-
-| File or package | Purpose |
-|---|---|
-| `@banata-auth/nextjs` | Route proxy and server auth helpers |
-| `@banata-auth/react` | Sign-in/sign-up UI, provider, and auth hooks |
-| `@banata-auth/sdk` | Programmatic configuration and admin APIs |
-| `src/lib/auth-server.ts` | Server-side Banata binding |
-| `src/lib/auth-client.ts` | Browser client for `/api/auth` |
-| `src/app/api/auth/[...all]/route.ts` | Same-origin auth route in your app |
-
-Your app owns the application shell and the route surface. Banata owns the auth data and the runtime behind that route.
-
----
-
-## What Lives In Banata
-
-Banata owns these concerns per project:
-
-- users and sessions
-- social accounts
-- organizations and invitations
-- roles, permissions, and resource types
-- auth methods and provider credentials
-- email templates and delivery configuration
-- project branding and redirect configuration
-- audit logs, webhooks, SSO, and SCIM
-
----
-
-## Typical App Structure
+A typical Banata integration adds these files to your Next.js project:
 
 ```text
 src/
 ├── app/
-│   ├── api/auth/[...all]/route.ts
-│   ├── sign-in/page.tsx
-│   ├── sign-up/page.tsx
-│   └── page.tsx
+│   ├── api/auth/[...all]/route.ts   ← Auth route proxy
+│   ├── sign-in/page.tsx              ← Sign-in page
+│   ├── sign-up/page.tsx              ← Sign-up page
+│   └── page.tsx                      ← Your app (protected pages)
 └── lib/
-    ├── auth-client.ts
-    └── auth-server.ts
+    ├── auth-server.ts                ← Server-side Banata connection
+    └── auth-client.ts                ← Browser-side auth client
 ```
 
-That is the core of the customer integration. Everything else is normal app code.
+And these packages:
+
+| Package | Purpose |
+|---|---|
+| `@banata-auth/nextjs` | Auth route proxy and server-side helpers (`handler`, `isAuthenticated`, etc.) |
+| `@banata-auth/react` | Pre-built UI components (`SignInForm`, `SignUpForm`) and hooks (`useUser`, `useSession`) |
+| `@banata-auth/sdk` | Admin SDK for programmatic access to users, orgs, roles, and config (optional) |
+
+That's the full integration surface. Everything else in your project is normal application code.
 
 ---
 
-## What You Do Not Add
+## What Banata Manages
 
-For the normal Banata integration path, you do **not** add:
+Banata owns the auth backend and all the data associated with it. Per project, Banata manages:
 
-- a local auth database schema
-- a local Better Auth runtime
-- a local `convex/banataAuth` runtime inside your product app
+- Users, sessions, and credentials
+- Social accounts and OAuth tokens
+- Organizations, members, and invitations
+- Roles, permissions, and resource types
+- Auth method configuration and provider credentials
+- Email templates and delivery
+- Branding and redirect settings
+- Audit logs, webhooks, SSO connections, and SCIM directories
 
-Those belong to the Banata platform, not to each customer app.
+You configure all of this through the Banata dashboard (or the SDK). Your app doesn't need a local auth database or a local auth runtime.
 
 ---
 
-## Self-Hosting Changes Infrastructure, Not The Customer API
+## What You Don't Need
 
-If you self-host Banata, you deploy the Banata platform itself. Customer apps still:
+When using Banata Auth (hosted or self-hosted), your app does **not** need:
 
-1. sign in to a Banata dashboard
-2. create projects
-3. create API keys
-4. connect through the same SDKs and route helpers
+- A local auth database or user table
+- A local Better Auth runtime
+- A `convex/banataAuth` directory inside your app
+- Direct access to Banata's database
 
-The main difference is that the Banata URLs point to your self-hosted deployment instead of Banata's hosted cloud.
+Those components are part of the Banata platform itself, not something each customer app includes.
+
+---
+
+## File Reference
+
+### `src/lib/auth-server.ts`
+
+Initializes the server-side connection to Banata. This is where you pass your API key.
+
+```ts
+import { createBanataAuthServer } from "@banata-auth/nextjs/server";
+
+export const {
+  handler,
+  isAuthenticated,
+  getToken,
+  preloadAuthQuery,
+  fetchAuthQuery,
+  fetchAuthMutation,
+  fetchAuthAction,
+} = createBanataAuthServer({
+  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
+  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  apiKey: process.env.BANATA_API_KEY!,
+});
+```
+
+### `src/lib/auth-client.ts`
+
+Creates the browser-side auth client that your React components use.
+
+```ts
+"use client";
+
+import { createAuthClient } from "@banata-auth/react/plugins";
+
+export const authClient = createAuthClient({
+  baseURL: "/api/auth",
+});
+```
+
+### `src/app/api/auth/[...all]/route.ts`
+
+Catch-all route that proxies auth requests from your app to Banata.
+
+```ts
+import { handler } from "@/lib/auth-server";
+
+export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
+```
 
 ---
 
 ## Next Steps
 
-- [Quick Start](/docs/quickstart)
-- [Projects](/docs/projects-environments)
-- [Next.js](/docs/nextjs)
-- [Self-Hosting](/docs/self-hosting)
+- [Quick Start](/docs/quickstart) — Step-by-step setup guide
+- [Next.js Integration](/docs/nextjs) — Deep dive into the Next.js package
+- [React Components](/docs/react) — UI components and hooks

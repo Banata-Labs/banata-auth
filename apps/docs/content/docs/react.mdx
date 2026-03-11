@@ -1,13 +1,11 @@
 ---
 title: "React"
-description: "Use Banata's React package for auth UI, provider state, and client-side organization helpers."
+description: "Pre-built sign-in and sign-up forms, auth provider, hooks for user and session state, and organization helpers."
 section: "Build Your App"
 order: 2
 ---
 
-`@banata-auth/react` is the main UI package for customer apps.
-
-Use it with [`@banata-auth/nextjs`](/docs/nextjs) when you want your app to own the auth screens while Banata owns the backend runtime and data.
+`@banata-auth/react` provides UI components and hooks for building auth flows in your React application. Use it alongside [`@banata-auth/nextjs`](/docs/nextjs) to get a complete client + server integration.
 
 ```bash
 npm install @banata-auth/react
@@ -15,19 +13,22 @@ npm install @banata-auth/react
 
 ---
 
-## What It Provides
+## Package Exports
 
-| Import | What It Provides |
+| Import path | What it provides |
 |---|---|
-| `@banata-auth/react` | UI components, provider, hooks |
-| `@banata-auth/react/plugins` | `createAuthClient` and client plugins |
-| `@banata-auth/react/convex` | Convex provider bridge |
+| `@banata-auth/react` | UI components (`SignInForm`, `SignUpForm`, `SocialButtons`, `AuthCard`), provider, and hooks |
+| `@banata-auth/react/plugins` | `createAuthClient` and client plugins (e.g., `organizationClient`) |
+| `@banata-auth/react/convex` | Convex provider bridge for apps that use both Banata Auth and Convex |
 
 ---
 
-## Create The Browser Client
+## Browser Auth Client
+
+Before using any components or hooks, create a browser auth client. This client talks to your app's `/api/auth` route:
 
 ```ts
+// src/lib/auth-client.ts
 "use client";
 
 import { createAuthClient } from "@banata-auth/react/plugins";
@@ -39,45 +40,89 @@ export const authClient = createAuthClient({
 
 ---
 
-## Use The Prebuilt Forms
+## Pre-Built Forms
+
+### SignInForm
+
+A complete sign-in form that supports all enabled auth methods:
 
 ```tsx
 "use client";
 
 import Link from "next/link";
-import { SignInForm, SignUpForm } from "@banata-auth/react";
+import { SignInForm } from "@banata-auth/react";
 import { authClient } from "@/lib/auth-client";
 
-export function SignInScreen() {
+export default function SignInPage() {
   return (
     <SignInForm
       authClient={authClient}
       callbackURL="/"
+      title="Sign in"
+      description="Welcome back!"
       footer={<Link href="/sign-up">Create an account</Link>}
     />
   );
 }
+```
 
-export function SignUpScreen() {
+### SignUpForm
+
+```tsx
+"use client";
+
+import Link from "next/link";
+import { SignUpForm } from "@banata-auth/react";
+import { authClient } from "@/lib/auth-client";
+
+export default function SignUpPage() {
   return (
     <SignUpForm
       authClient={authClient}
       callbackURL="/"
+      title="Create account"
       footer={<Link href="/sign-in">Already have an account?</Link>}
     />
   );
 }
 ```
 
-These forms call your app's `/api/auth` route. They do not connect to the Banata backend directly from the browser.
+### SocialButtons
+
+Render social login buttons for specific providers:
+
+```tsx
+import { SocialButtons } from "@banata-auth/react";
+import { authClient } from "@/lib/auth-client";
+
+const providers = [
+  { id: "google", label: "Google" },
+  { id: "github", label: "GitHub" },
+];
+
+<SocialButtons
+  providers={providers}
+  authClient={authClient}
+  callbackURL="/dashboard"
+/>
+```
+
+Each provider object accepts:
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | Provider identifier: `"google"`, `"github"`, `"apple"`, etc. |
+| `label` | `string` | Display text for the button |
+| `icon` | `ReactNode` | Optional custom icon |
 
 ---
 
-## Provider And Hooks
+## Auth Provider and Hooks
 
-If you want auth state inside client components, wrap your app with `BanataAuthProvider` and provide an adapter:
+To access auth state in client components throughout your app, wrap your layout with `BanataAuthProvider`:
 
 ```tsx
+// src/components/auth-provider.tsx
 "use client";
 
 import { BanataAuthProvider } from "@banata-auth/react";
@@ -94,28 +139,86 @@ const adapter = {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  return <BanataAuthProvider adapter={adapter}>{children}</BanataAuthProvider>;
+  return (
+    <BanataAuthProvider adapter={adapter}>
+      {children}
+    </BanataAuthProvider>
+  );
 }
 ```
 
-Then use:
+Then use the provided hooks in any client component:
 
-- `useBanataAuth()`
-- `useUser()`
-- `useSession()`
-- `useOrganization()`
+### `useUser()`
+
+Get the current user and auth status:
+
+```tsx
+import { useUser } from "@banata-auth/react";
+
+function ProfileButton() {
+  const { user, isLoading, signOut } = useUser();
+
+  if (isLoading) return <span>Loading...</span>;
+  if (!user) return <a href="/sign-in">Sign in</a>;
+
+  return (
+    <div>
+      <span>{user.name}</span>
+      <button onClick={signOut}>Sign out</button>
+    </div>
+  );
+}
+```
+
+### `useSession()`
+
+Access the raw session data:
+
+```tsx
+import { useSession } from "@banata-auth/react";
+
+function SessionInfo() {
+  const { session, isLoading } = useSession();
+
+  if (!session) return null;
+  return <span>Session expires: {session.expiresAt}</span>;
+}
+```
+
+### `useOrganization()`
+
+Get the active organization:
+
+```tsx
+import { useOrganization } from "@banata-auth/react";
+
+function OrgHeader() {
+  const { organization, isLoading } = useOrganization();
+
+  if (!organization) return <span>No organization selected</span>;
+  return <h2>{organization.name}</h2>;
+}
+```
+
+### `useBanataAuth()`
+
+Access the full auth context:
+
+```tsx
+import { useBanataAuth } from "@banata-auth/react";
+
+const { user, session, organization, isLoading } = useBanataAuth();
+```
 
 ---
 
-## Organization Client
+## Organization Client Plugin
 
-Banata re-exports an organization client wrapper that accepts your project's custom role slugs.
+If your app uses organizations with custom roles, add the `organizationClient` plugin to support your project's role catalog:
 
 ```ts
-import {
-  createAuthClient,
-  organizationClient,
-} from "@banata-auth/react/plugins";
+import { createAuthClient, organizationClient } from "@banata-auth/react/plugins";
 
 export const authClient = createAuthClient({
   baseURL: "/api/auth",
@@ -123,21 +226,25 @@ export const authClient = createAuthClient({
 });
 ```
 
-This is important because Banata's RBAC model is `super_admin` first, with custom roles created inside the project. Customer apps should not be limited to a fixed `member | admin | owner` role set.
+This lets you use `authClient.organization.*` methods for creating organizations, managing members, sending invitations, and switching the active organization.
 
 ---
 
 ## Convex Bridge
 
-If your frontend also talks to Convex directly, use `BanataConvexProvider` from `@banata-auth/react/convex` to bridge Banata auth tokens into your Convex client.
+If your app uses Convex for data alongside Banata for auth, use `BanataConvexProvider` to bridge auth tokens into your Convex client:
 
-That is a frontend integration detail. It does not change the Banata project model.
+```tsx
+import { BanataConvexProvider } from "@banata-auth/react/convex";
+```
+
+This is a frontend integration detail — it passes the Banata auth token to Convex so your Convex queries can verify the user's identity.
 
 ---
 
-## Related Guides
+## Next Steps
 
-- [Quick Start](/docs/quickstart)
-- [Next.js](/docs/nextjs)
-- [SDK Reference](/docs/sdk)
-- [Roles & Permissions](/docs/roles-permissions)
+- [Next.js Integration](/docs/nextjs) — Server-side auth helpers
+- [SDK Reference](/docs/sdk) — Programmatic access to Banata
+- [Organizations](/docs/organizations-overview) — Multi-tenant workspaces
+- [Roles & Permissions](/docs/roles-permissions) — Access control within organizations

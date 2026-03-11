@@ -1,31 +1,19 @@
 ---
 title: "Notifications"
-description: "Real-time system notifications for critical auth events — user creation, password changes, MFA enrollment, and more."
-section: "Enterprise"
-order: 26
+description: "A focused view of the auth events that matter most — new users, security changes, organization activity, and key management."
+section: "Operate Your Project"
+order: 5
 ---
 
-The **Notifications** page surfaces the most important auth events from your audit log in a focused, actionable view. Instead of sifting through thousands of audit entries, notifications filter down to the events that matter — new users, security changes, organization activity, and key management.
+Notifications give you a quick overview of the most important things happening in your auth system. Instead of scanning through a full audit trail, the Notifications page highlights the events that typically require your attention — new user sign-ups, password changes, MFA enrollment, organization changes, and API key creation.
 
----
-
-## How Notifications Work
-
-```
-1. Auth events occur (sign-ups, password changes, MFA, org changes, etc.)
-2. Events are recorded in the audit log (30+ event types)
-3. The notifications view filters for "important" events only
-4. Important events are displayed in reverse chronological order
-5. Each notification shows the action, actor, and relative timestamp
-```
-
-Notifications are **a filtered view of the audit log** — not a separate system. This means every notification is also visible in the full [Audit Logs](/docs/audit-logs) view, and all audit log features (export, search, pagination) apply.
+Every notification links back to the full [audit log](/docs/audit-logs), so you can always dig deeper when you need to.
 
 ---
 
-## Important Events
+## Tracked Events
 
-Notifications filter the audit log to these high-signal event types:
+Notifications surface these high-signal event types:
 
 | Event | Triggered When |
 |---|---|
@@ -40,132 +28,28 @@ Notifications filter the audit log to these high-signal event types:
 | `api-key.created` | A new API key is generated |
 | `webhook.created` | A new webhook endpoint is registered |
 
-These events were selected because they represent **state changes that administrators should be aware of** — new accounts, security posture changes, organizational changes, and infrastructure changes.
-
-> **Important:** The notification filter uses substring matching. For example, the filter `user.created` will match both `user.created` and any future event containing that string.
-
----
-
-## Notification Data Model
-
-Each notification is an audit event with this structure:
-
-```typescript
-interface AuditEvent {
-  id: string;
-  action: string;          // e.g., "user.created"
-  occurredAt: string;      // ISO 8601 timestamp
-
-  actor: {
-    type: string;          // "user", "admin", "system", "api_key"
-    id: string;
-    email?: string;
-    name?: string;
-  };
-
-  target: {
-    type: string;
-    id: string;
-    email?: string;
-    name?: string;
-  };
-
-  context: Record<string, unknown>;
-}
-```
-
-See [Audit Logs](/docs/audit-logs) for the complete event structure documentation.
+These events represent state changes that administrators should know about — new accounts, security posture shifts, organizational changes, and infrastructure updates.
 
 ---
 
 ## Viewing Notifications in the Dashboard
 
-1. Navigate to **Notifications** in the dashboard sidebar
-2. Recent important events are displayed as a list
+1. Open your project in the Banata dashboard.
+2. Click **Notifications** in the sidebar.
 
-### Notification Display
+Each notification row shows three things:
 
-Each notification row shows:
+- **Action** — The event type (e.g., `user.created`, `password.changed`)
+- **Actor** — Who performed the action, shown as their name or email
+- **Timestamp** — When it happened, displayed as relative time (e.g., "2 minutes ago", "yesterday")
 
-- **Action badge** — The event type displayed as a badge (e.g., `user.created`, `password.changed`)
-- **Actor** — Who performed the action, shown as their name, email, or ID (in order of availability)
-- **Timestamp** — Relative time (e.g., "2 minutes ago", "3 hours ago", "yesterday")
-
-### Empty State
-
-When no important events have occurred, the page shows:
-
-> "No notifications. You're all caught up. Check back later for updates."
+Notifications are listed in reverse chronological order, so the most recent events appear first. When there are no new events to show, you will see a simple "all caught up" message.
 
 ---
 
-## Backend: No Separate Endpoints
+## Building Custom Notification Logic
 
-Notifications reuse the existing **audit log** endpoint — no additional backend endpoints are needed:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/banata/audit-logs/list` | POST | List audit events (existing endpoint) |
-
-The filtering from audit events to notifications happens **client-side** in the dashboard. The audit log endpoint returns all events, and the notifications page filters to important ones.
-
----
-
-## Customizing Important Events
-
-The set of important events is defined in the dashboard page source. To customize which events appear as notifications, modify the `IMPORTANT_ACTIONS` array:
-
-```typescript
-const IMPORTANT_ACTIONS = [
-  "user.created",
-  "user.deleted",
-  "password.changed",
-  "mfa.enabled",
-  "organization.created",
-  "organization.deleted",
-  "member.invited",
-  "member.removed",
-  "api-key.created",
-  "webhook.created",
-];
-```
-
-Add or remove event types to match your application's notification needs. Any valid audit log action can be included.
-
----
-
-## Relative Time Formatting
-
-Notifications display timestamps as human-readable relative time:
-
-| Time Elapsed | Display |
-|---|---|
-| < 1 minute | "just now" |
-| 1-59 minutes | "X minutes ago" |
-| 1-23 hours | "X hours ago" |
-| 1-6 days | "X days ago" |
-| 7+ days | Full date string |
-
----
-
-## Notifications vs. Audit Logs
-
-| Feature | Notifications | Audit Logs |
-|---|---|---|
-| **Scope** | ~10 important event types | All 30+ event types |
-| **Purpose** | Quick admin overview | Compliance and debugging |
-| **Filtering** | Pre-filtered to important events | Filterable by action, actor, date, organization |
-| **Export** | Not available (use Audit Logs) | JSON export with date range |
-| **Pagination** | Single page of recent events | Cursor-based pagination |
-| **Search** | Not available (use Audit Logs) | Searchable by action and actor |
-
-For comprehensive event querying, filtering, and export, use [Audit Logs](/docs/audit-logs).
-
----
-
-## Using the Audit Log API for Notifications
-
-If you're building a custom notification UI outside the dashboard, use the audit log SDK methods:
+If you want to surface notifications in your own application or build custom alerting, use the SDK's audit log methods to fetch and filter events programmatically.
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
@@ -175,13 +59,13 @@ const banata = new BanataAuth({
   baseUrl: "https://your-deployment.convex.site",
 });
 
-// Fetch recent events
+// Fetch recent audit events
 const { data: events } = await banata.auditLogs.listEvents({
   limit: 50,
 });
 
-// Filter to important events client-side
-const IMPORTANT_ACTIONS = [
+// Filter to the event types you care about
+const importantActions = [
   "user.created",
   "user.deleted",
   "password.changed",
@@ -195,18 +79,19 @@ const IMPORTANT_ACTIONS = [
 ];
 
 const notifications = events.filter((event) =>
-  IMPORTANT_ACTIONS.some((action) => event.action.includes(action))
+  importantActions.some((action) => event.action.includes(action))
 );
 ```
+
+You can adjust the `importantActions` list to match your needs. Any valid audit log action can be included — see [Audit Logs](/docs/audit-logs) for the full list of auto-tracked events.
 
 ---
 
 ## Webhook-Based Notifications
 
-For real-time push notifications (email, Slack, PagerDuty), use [Webhooks](/docs/webhooks) instead of polling the audit log:
+For real-time push notifications — sending alerts to Slack, email, PagerDuty, or any other external service — use [Webhooks](/docs/webhooks) instead of polling. Webhooks push events to your endpoint the moment they happen, so you do not need to check for new events on a schedule.
 
 ```typescript
-// Register a webhook for important events
 const endpoint = await banata.webhooks.createEndpoint({
   url: "https://myapp.com/api/notifications",
   events: [
@@ -219,38 +104,20 @@ const endpoint = await banata.webhooks.createEndpoint({
 });
 ```
 
-This gives you server-push notifications without polling.
-
----
-
-## Security Considerations
-
-1. **Admin-only access** — The notifications page and the underlying audit log endpoint require admin authentication.
-2. **No sensitive data exposed** — Notifications show event types, actor identities, and timestamps — never passwords, tokens, or secrets.
-3. **Audit trail integrity** — Notifications are a read-only view. Audit events cannot be modified or deleted through the notification interface.
+See the [Webhooks](/docs/webhooks) guide for details on payload format, signature verification, and retry behavior.
 
 ---
 
 ## Troubleshooting
 
-### "No notifications" but events are occurring
+**No notifications showing, but events are happening.** Check the full [Audit Logs](/docs/audit-logs) page to confirm events are being recorded. Common high-frequency events like `session.created` are intentionally excluded from notifications because they would create too much noise.
 
-1. Check that the events match the `IMPORTANT_ACTIONS` list. Common auth events like `session.created` are intentionally excluded — they're too frequent to be useful as notifications.
-2. Verify that audit logging is working by checking the full **Audit Logs** page.
-3. Ensure you're signed in as an admin.
-
-### "Failed to load notifications"
-
-The audit log endpoint may be unreachable. Check that the Convex backend is running and that your session is valid.
-
-### "Timestamps showing 'Invalid Date'"
-
-Ensure the audit events have valid `occurredAt` timestamps. This can happen if custom audit events are created with malformed date strings.
+**Notifications fail to load.** Verify that your backend is running and that you are signed in with an admin account. Notifications require admin-level access.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Audit Logs](/docs/audit-logs)** — Full audit trail with filtering, search, and export
-- **[Webhooks](/docs/webhooks)** — Push notifications for auth events
-- **[Radar & Bot Protection](/docs/radar)** — Monitor and block suspicious activity
+- **[Audit Logs](/docs/audit-logs)** — Search, filter, and export your full event history
+- **[Webhooks](/docs/webhooks)** — Push real-time event notifications to external services
+- **[Radar & Bot Protection](/docs/radar)** — Monitor and block suspicious authentication activity

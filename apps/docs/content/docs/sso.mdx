@@ -2,14 +2,10 @@
 title: "Single Sign-On (SSO)"
 description: "Enterprise SSO with SAML 2.0 and OpenID Connect (OIDC) for organization-level authentication."
 section: "Enterprise"
-order: 17
+order: 1
 ---
 
-> **Preview** — SSO is under active development. Management endpoints and dashboard UI are available, but full SAML 2.0 protocol support requires a Node.js sidecar. APIs may change before stable release.
-
-Single Sign-On (SSO) enables enterprise customers to authenticate through their existing identity provider (IdP) — Okta, Azure AD, Google Workspace, OneLogin, PingIdentity, and others. Instead of managing separate credentials in your application, users sign in once through their corporate IdP and are automatically authenticated.
-
-SSO connections in Banata Auth are scoped to **organizations**. Each organization can configure one or more SSO connections, and users with matching email domains are automatically routed to the correct identity provider.
+Single Sign-On (SSO) lets your enterprise customers authenticate through their existing identity provider (IdP) — Okta, Azure AD, Google Workspace, OneLogin, PingIdentity, and others. Instead of managing separate credentials in your application, your users sign in once through their corporate IdP and are automatically authenticated in yours.
 
 ---
 
@@ -17,7 +13,7 @@ SSO connections in Banata Auth are scoped to **organizations**. Each organizatio
 
 Banata Auth supports the two industry-standard SSO protocols:
 
-| Protocol | Description | Common Use Case |
+| Protocol | Description | Common Identity Providers |
 |---|---|---|
 | **SAML 2.0** | XML-based protocol widely adopted by enterprise identity providers. Exchanges signed XML assertions between the IdP and your application (the Service Provider). | Okta, Azure AD, ADFS, OneLogin, PingIdentity |
 | **OpenID Connect (OIDC)** | OAuth 2.0-based protocol that uses JSON tokens (JWTs). Lighter-weight and more developer-friendly than SAML. | Google Workspace, Auth0, Azure AD (v2), custom IdPs |
@@ -26,19 +22,19 @@ Both protocols achieve the same result: the user authenticates at their organiza
 
 ---
 
-## How It Works
+## How SSO Works
 
-### Connection Model
+### Organization-Scoped Connections
 
-SSO connections are always tied to an organization. This means:
+Every SSO connection belongs to an organization. This gives you fine-grained control over which identity providers serve which customers:
 
 - Each connection belongs to exactly one organization.
-- An organization can have multiple connections (e.g., SAML for the main workforce and OIDC for contractors).
-- Connections are scoped to the project they belong to and cannot be shared across projects.
+- An organization can have multiple connections (for example, SAML for the main workforce and OIDC for contractors).
+- Connections are scoped to your project and cannot be shared across projects.
 
 ### Domain-Based Routing
 
-When a user initiates SSO login, Banata Auth uses the email domain to determine which identity provider to route them to:
+When a user initiates SSO login, Banata Auth uses their email domain to determine which identity provider to route them to:
 
 ```
 1. User enters their email address (e.g., alice@acme.com)
@@ -51,7 +47,7 @@ When a user initiates SSO login, Banata Auth uses the email domain to determine 
 8. User is signed into your application
 ```
 
-Multiple domains can be associated with a single connection. For example, an organization might own both `acme.com` and `acme.io`.
+You can associate multiple domains with a single connection. For example, if an organization owns both `acme.com` and `acme.io`, users from either domain are routed to the same IdP.
 
 ### Just-in-Time (JIT) Provisioning
 
@@ -67,9 +63,11 @@ This eliminates the need for administrators to pre-provision user accounts. User
 
 ## Dashboard Setup
 
+The fastest way to set up SSO is through the Banata Auth dashboard.
+
 ### Creating an SSO Connection
 
-1. Navigate to the **SSO** section in the Banata Auth dashboard.
+1. Navigate to the **SSO** section in the dashboard.
 2. Click **Create Connection**.
 3. Select the **organization** that this connection belongs to.
 4. Choose the protocol: **SAML 2.0** or **OIDC**.
@@ -78,21 +76,21 @@ This eliminates the need for administrators to pre-provision user accounts. User
 
 ### Configuring SAML 2.0
 
-After creating the connection, you need to exchange metadata with the IdP:
+After creating a SAML connection, you need to exchange metadata between Banata Auth and the IdP.
 
-**From the IdP (provide to Banata Auth):**
+**From the IdP (you'll enter these in the dashboard):**
 - **Entity ID** — The IdP's unique identifier (e.g., `http://www.okta.com/exkxxxxxx`)
 - **SSO URL** — The IdP's sign-on endpoint where users are redirected
 - **Certificate** — The X.509 certificate used to verify SAML assertion signatures
 
-**From Banata Auth (provide to the IdP):**
+**From Banata Auth (you'll provide these to the IdP):**
 - **ACS URL** — The Assertion Consumer Service URL where the IdP sends SAML responses
 - **SP Entity ID** — Your application's unique identifier as a Service Provider
 - **Metadata URL** — An XML document containing both values above (some IdPs accept this directly)
 
 ### Configuring OIDC
 
-For OIDC connections, provide the following from the IdP:
+For OIDC connections, you'll need the following from the IdP:
 
 - **Issuer** — The IdP's issuer URL (e.g., `https://accounts.google.com`)
 - **Client ID** — The OAuth 2.0 client identifier
@@ -106,7 +104,7 @@ Most OIDC providers support discovery via `/.well-known/openid-configuration`, w
 
 ## SDK Usage
 
-Use the Banata Auth SDK to manage SSO connections programmatically.
+You can also manage SSO connections programmatically with the Banata Auth SDK.
 
 ### Initialize the Client
 
@@ -172,99 +170,9 @@ const { url } = await client.sso.getAuthorizationUrl({
 
 ---
 
-## API Endpoints
+## Connection Field Reference
 
-The following API endpoints are available for SSO operations:
-
-### `POST /sso/register`
-
-Create a new SSO connection for an organization.
-
-**Request Body:**
-
-```json
-{
-  "organizationId": "org_xxx",
-  "type": "saml",
-  "name": "Acme Corp Okta",
-  "domains": ["acme.com"],
-  "saml": {
-    "entityId": "http://www.okta.com/exkxxxxxx",
-    "ssoUrl": "https://acme.okta.com/app/xxxxx/sso/saml",
-    "certificate": "-----BEGIN CERTIFICATE-----..."
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "id": "conn_xxx",
-  "organizationId": "org_xxx",
-  "type": "saml",
-  "name": "Acme Corp Okta",
-  "domains": ["acme.com"],
-  "active": true,
-  "createdAt": "2025-01-15T10:30:00Z"
-}
-```
-
-### `POST /sso/sign-in`
-
-Initiate SSO login for a user. Returns a redirect URL pointing to the appropriate IdP.
-
-**Request Body:**
-
-```json
-{
-  "email": "alice@acme.com",
-  "callbackUrl": "https://myapp.com/auth/callback"
-}
-```
-
-**Response:**
-
-```json
-{
-  "redirectUrl": "https://acme.okta.com/app/xxxxx/sso/saml?SAMLRequest=..."
-}
-```
-
-### `POST /sso/list-providers`
-
-List all SSO connections for the current project.
-
-**Response:**
-
-```json
-{
-  "connections": [
-    {
-      "id": "conn_xxx",
-      "organizationId": "org_xxx",
-      "type": "saml",
-      "name": "Acme Corp Okta",
-      "domains": ["acme.com"],
-      "active": true
-    },
-    {
-      "id": "conn_yyy",
-      "organizationId": "org_yyy",
-      "type": "oidc",
-      "name": "Beta Inc Google",
-      "domains": ["betainc.com"],
-      "active": true
-    }
-  ]
-}
-```
-
----
-
-## Connection Types
-
-Each protocol requires different configuration fields. The table below summarizes what each type expects:
+Each protocol requires different configuration fields. Use these tables as a reference when setting up connections.
 
 ### SAML 2.0
 
@@ -294,15 +202,15 @@ Fields marked as provided by Banata Auth (`acsUrl`, `spEntityId`) are generated 
 
 ### Project Scoping
 
-SSO connections are scoped to the project they belong to. A connection created in one project cannot be accessed or used by another project, even within the same account. This ensures tenant isolation in multi-project deployments.
+SSO connections are scoped to your project. A connection created in one project cannot be accessed or used by another project, even within the same account. This ensures tenant isolation in multi-project deployments.
 
 ### Domain Verification
 
-When domains are associated with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ensures users are directed to the correct IdP.
+When you associate domains with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ensures users are directed to the correct IdP.
 
 ### Signature Validation
 
-For SAML connections, Banata Auth validates the XML signature on every assertion using the X.509 certificate provided during setup. Assertions with invalid, expired, or missing signatures are rejected.
+For SAML connections, Banata Auth validates the XML signature on every assertion using the X.509 certificate you provided during setup. Assertions with invalid, expired, or missing signatures are rejected.
 
 For OIDC connections, tokens are validated against the IdP's published JWKS (JSON Web Key Set), ensuring that tokens were issued by the expected provider and have not been tampered with.
 
@@ -311,3 +219,11 @@ For OIDC connections, tokens are validated against the IdP's published JWKS (JSO
 - **Replay protection** — SAML assertions include a unique ID and timestamp. Banata Auth rejects assertions that have already been consumed or that fall outside the allowed time window.
 - **Audience restriction** — Assertions are validated to ensure they were intended for your application (matching the SP Entity ID or Client ID).
 - **Encrypted assertions** — Banata Auth supports receiving encrypted SAML assertions for environments that require end-to-end confidentiality of identity attributes.
+
+---
+
+## Next Steps
+
+- [Organizations](/docs/organizations) — Learn how to create and manage the organizations that SSO connections belong to.
+- [Authentication](/docs/authentication) — See how SSO fits into the broader Banata Auth authentication flow.
+- [API Keys](/docs/api-keys) — Set up the project API key your SDK client needs to manage SSO connections.

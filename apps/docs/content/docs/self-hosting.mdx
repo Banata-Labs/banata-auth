@@ -1,40 +1,48 @@
 ---
 title: "Self-Hosting"
 description: "Run the full Banata platform on your own infrastructure."
-section: "Deployment"
-order: 30
+section: "Platform Operators"
+order: 5
 ---
 
-Self-hosting means hosting the Banata platform yourself, not embedding a different auth model into your product. The goal is the same product shape as the hosted Banata service:
+Self-hosting Banata means running the entire platform -- dashboard, auth backend, and all supporting services -- on infrastructure you control. You are not embedding a different auth model into your app; you are deploying the same product that powers the hosted Banata service.
 
-- dashboard-first project setup
-- project-scoped API keys
-- Banata-managed emails, templates, organizations, and auth configuration
-- the same SDKs and frontend packages pointed at your self-hosted Banata instance
-
-If you just want to integrate with Banata as a customer, use the hosted dashboard flow instead.
-
-The product model stays hosted-UI-first even when you self-host. Custom app-owned auth UI is still an advanced path, not the default product shape.
+If you only need to integrate auth into your application as a customer, head to the [Quick Start](/docs/quickstart) instead.
 
 ---
 
 ## Product Shape
 
-The hosted and self-hosted models are intended to match:
+The self-hosted and hosted versions of Banata follow the same workflow:
 
-1. An operator deploys Banata
-2. Developers sign in to the Banata dashboard
-3. They create a project
-4. They create a project-scoped API key
-5. Their apps use Banata's SDKs and auth surfaces against that Banata instance
+1. You deploy the Banata platform to your infrastructure.
+2. Developers sign in to your Banata dashboard.
+3. They create a **project**.
+4. They generate a **project-scoped API key**.
+5. Their apps use Banata's SDKs and auth UI, pointed at your Banata instance.
 
-The Convex package exists to power that platform deployment. It is not the primary customer integration surface.
+Everything your end-users interact with -- sign-in pages, email verification, organization management -- works identically whether the platform is hosted by Banata or by you.
 
 ---
 
-## Convex Wiring
+## What You Need
 
-The self-hosted platform keeps a small amount of local Convex wiring:
+To run Banata yourself, you need four things:
+
+| Component | Purpose |
+| --- | --- |
+| **Convex** | Backend functions, data storage, and real-time subscriptions |
+| **Next.js host** | Dashboard, hosted auth UI, and API proxy routes |
+| **Email provider** | Transactional email delivery (verification, invites, etc.) |
+| **DNS** | Your own domain(s) for the dashboard and auth surfaces |
+
+See [Self-Hosted Environment Variables](/docs/env-vars) for the full list of configuration values each component requires.
+
+---
+
+## Local Convex Wiring
+
+Your self-hosted deployment keeps a small set of local Convex files alongside the published `@banata-auth/convex` package:
 
 ```text
 convex/
@@ -48,28 +56,29 @@ convex/
     `-- schema.ts
 ```
 
-Why these remain:
+### What stays local
 
-- `auth.ts` binds project runtime config, env, and local auth config
-- `adapter.ts` closes over the local auth factory
-- `schema.ts` remains as a local schema anchor for Convex component codegen
+These files live in your repository because they bind platform configuration to your specific environment:
 
-What comes from `@banata-auth/convex`:
+- **`auth.ts`** -- wires your project runtime config, environment variables, and local auth settings.
+- **`adapter.ts`** -- closes over the local auth factory so Convex can invoke it at runtime.
+- **`schema.ts`** -- acts as a local schema anchor that Convex component codegen depends on.
 
-- packaged component registration
-- packaged component schema
-- packaged component migrations
-- auth factory helpers, plugins, triggers, and HTTP route helpers
+### What comes from `@banata-auth/convex`
+
+The published package provides everything that is shared across all Banata deployments:
+
+- Packaged component registration
+- Packaged component schema and migrations
+- Auth factory helpers, plugins, and triggers
+- HTTP route helpers for the auth API surface
+
+You should not need to modify any code inside the package. Your local files are the only customization surface.
 
 ---
 
-## Infrastructure
+## Next Steps
 
-To self-host Banata, you still need:
-
-- Convex for backend functions and data
-- a Next.js host for dashboard, auth UI, and proxy routes
-- an email provider for delivery
-- your own domains and DNS
-
-Follow [Quick Start](/docs/quickstart) for the customer-app integration model and [Deploy](/docs/deploy) plus [Self-Hosted Environment Variables](/docs/env-vars) for platform deployment.
+- **[Quick Start](/docs/quickstart)** -- integrate Banata auth into a customer application.
+- **[Deploy](/docs/deploy)** -- step-by-step guide for deploying the Banata platform.
+- **[Environment Variables](/docs/env-vars)** -- every configuration value your self-hosted instance needs.

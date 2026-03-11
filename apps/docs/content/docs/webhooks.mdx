@@ -1,42 +1,29 @@
 ---
 title: "Webhooks"
-description: "Event-driven webhooks with HMAC-SHA256 signatures, automatic retries, and delivery tracking."
-section: "Enterprise"
-order: 11
+description: "Receive real-time notifications when auth events occur — user sign-ups, session changes, organization updates, and more."
+section: "Operate Your Project"
+order: 3
 ---
 
-Banata Auth's webhook system delivers real-time event notifications to your endpoints whenever auth events occur — user sign-ups, session changes, organization updates, and more. Webhooks are **signed with HMAC-SHA256** for security and **automatically retried** on failure.
+Webhooks let you receive real-time HTTP notifications whenever something happens in your auth system. When a user signs up, a session is created, or an organization is updated, Banata Auth sends a `POST` request to your endpoint with the event details. You can use these notifications to sync data to external systems, trigger workflows, send emails, or track analytics.
 
----
-
-## How Webhooks Work
-
-```
-1. Auth event occurs (user signs up, session created, etc.)
-2. webhookSystem plugin dispatches the event
-3. For each registered endpoint:
-   a. Serialize the event payload as JSON
-   b. Sign with HMAC-SHA256 using the endpoint's secret
-   c. POST to the endpoint URL with signature headers
-4. If delivery fails (non-2xx response):
-   a. Schedule retry with exponential backoff
-   b. Up to 5 total attempts
-5. Record delivery status in webhookDelivery table
-```
+Every webhook is **signed with HMAC-SHA256** so you can verify it came from Banata Auth, and **automatically retried** if your endpoint is unavailable.
 
 ---
 
 ## Setting Up Webhooks
 
-### Via the Admin Dashboard
+### From the Dashboard
 
-1. Navigate to **Settings > Webhooks**
-2. Click **Add Endpoint**
-3. Enter the **Endpoint URL** (e.g., `https://myapp.com/api/webhooks/banata`)
-4. Select which **events** to subscribe to
-5. Copy the generated **signing secret** (starts with `whsec_`)
+1. Go to **Settings > Webhooks** in your project dashboard.
+2. Click **Add Endpoint**.
+3. Enter your **Endpoint URL** (e.g., `https://myapp.com/api/webhooks/banata`).
+4. Select which **events** you want to receive.
+5. Copy the generated **signing secret** (starts with `whsec_`). Store it somewhere safe — you will need it to verify incoming webhooks.
 
-### Via the Admin SDK
+### Using the SDK
+
+You can also manage webhook endpoints programmatically:
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
@@ -52,16 +39,13 @@ const endpoint = await banata.webhooks.createEndpoint({
   events: [
     "user.created",
     "user.updated",
-    "user.deleted",
     "session.created",
     "organization.created",
-    "member.added",
   ],
-  // A signing secret is automatically generated (whsec_...)
 });
 
+// Save this secret securely — you need it to verify signatures
 console.log(endpoint.secret); // "whsec_abc123..."
-// Store this secret securely — you need it to verify signatures
 
 // List all endpoints
 const { data: endpoints } = await banata.webhooks.listEndpoints();
@@ -81,9 +65,9 @@ await banata.webhooks.deleteEndpoint({
 
 ---
 
-## Webhook Payload
+## Webhook Payload Format
 
-Every webhook delivery sends a POST request with a JSON body:
+Every webhook arrives as a `POST` request with a JSON body:
 
 ```json
 {
@@ -98,79 +82,59 @@ Every webhook delivery sends a POST request with a JSON body:
 }
 ```
 
+The `data` field contains the full resource object relevant to the event.
+
 ### Headers
 
-| Header | Value | Description |
+Each request includes these headers:
+
+| Header | Example Value | Description |
 |---|---|---|
 | `Content-Type` | `application/json` | Always JSON |
-| `Webhook-Id` | `msg_01HXYZ...` | Unique message ID for deduplication |
-| `Webhook-Timestamp` | `1705312200` | Unix timestamp (seconds) |
+| `Webhook-Id` | `msg_01HXYZ...` | Unique message ID (use for deduplication) |
+| `Webhook-Timestamp` | `1705312200` | Unix timestamp in seconds |
 | `Webhook-Signature` | `t=1705312200,v1=abc123...` | HMAC-SHA256 signature |
 
 ---
 
-## Signing & Verification
+## Signing and Verification
+
+Every webhook is signed so you can confirm it was sent by Banata Auth and has not been tampered with.
 
 ### Signature Format
 
-The `Webhook-Signature` header uses this format:
+The `Webhook-Signature` header looks like this:
 
 ```
 t={timestamp},v1={hmac_hex}
 ```
 
-Where:
-- `t` is the Unix timestamp (seconds) from the `Webhook-Timestamp` header
-- `v1` is the HMAC-SHA256 hex digest of `{timestamp}.{body}`
+- **`t`** — The Unix timestamp (seconds), matching the `Webhook-Timestamp` header.
+- **`v1`** — The HMAC-SHA256 hex digest of the string `{timestamp}.{raw request body}`.
 
-### Signing Process (Server-Side)
-
-The webhook system signs payloads as follows:
-
-```
-1. message = "{timestamp}.{JSON body}"
-2. signature = HMAC-SHA256(secret, message)
-3. header = "t={timestamp},v1={hex(signature)}"
-```
-
-### Signing Secret Format
-
-Webhook secrets are prefixed with `whsec_` for identification:
-
-```
-whsec_abc123def456...
-```
-
-When computing the HMAC, the `whsec_` prefix is stripped first.
-
----
-
-## Verifying Webhooks
+The signing secret starts with `whsec_`. When computing the HMAC, strip the `whsec_` prefix first and use the remaining value as the key.
 
 ### Using the SDK (Recommended)
 
-The SDK provides an `async` `constructEvent` method that verifies the signature:
+The SDK's `constructEvent` method handles verification for you. It is **async** because it uses the Web Crypto API under the hood — always `await` it.
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
 
 const banata = new BanataAuth("your-api-key");
 
-// In your webhook handler:
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("webhook-signature")!;
-  const timestamp = request.headers.get("webhook-timestamp")!;
 
   try {
-    // constructEvent is async (uses Web Crypto API)
     const event = await banata.webhooks.constructEvent({
       payload: body,
       sigHeader: signature,
       secret: "whsec_your-endpoint-secret",
     });
 
-    // event is verified and parsed
+    // event is verified and parsed — safe to use
     switch (event.event) {
       case "user.created":
         await handleUserCreated(event.data);
@@ -178,23 +142,19 @@ export async function POST(request: Request) {
       case "session.created":
         await handleSessionCreated(event.data);
         break;
-      // ... handle other events
     }
 
     return new Response("OK", { status: 200 });
   } catch (error) {
-    // Signature verification failed
     console.error("Webhook verification failed:", error);
     return new Response("Invalid signature", { status: 401 });
   }
 }
 ```
 
-> **Important:** `constructEvent` is **async** because it uses the Web Crypto API (`crypto.subtle.importKey`, `crypto.subtle.sign`). Always `await` it.
-
 ### Manual Verification
 
-If you need to verify signatures without the SDK:
+If you prefer to verify signatures without the SDK (or you are using a language other than TypeScript), here is the process:
 
 ```typescript
 async function verifyWebhookSignature(
@@ -202,7 +162,7 @@ async function verifyWebhookSignature(
   signatureHeader: string,
   secret: string
 ): Promise<boolean> {
-  // Parse the signature header
+  // 1. Parse the signature header
   const parts = Object.fromEntries(
     signatureHeader.split(",").map((part) => {
       const [key, value] = part.split("=");
@@ -217,18 +177,18 @@ async function verifyWebhookSignature(
     return false;
   }
 
-  // Check timestamp is recent (within 5 minutes)
+  // 2. Reject timestamps older than 5 minutes (replay protection)
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(timestamp)) > 300) {
-    return false; // Replay attack protection
+    return false;
   }
 
-  // Strip whsec_ prefix
+  // 3. Strip the whsec_ prefix from the secret
   const rawSecret = secret.startsWith("whsec_")
     ? secret.slice(6)
     : secret;
 
-  // Compute expected signature
+  // 4. Compute the HMAC-SHA256 signature
   const message = `${timestamp}.${body}`;
   const encoder = new TextEncoder();
 
@@ -250,7 +210,7 @@ async function verifyWebhookSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  // Timing-safe comparison
+  // 5. Use timing-safe comparison
   return timingSafeEqual(computedSignature, expectedSignature);
 }
 
@@ -268,77 +228,77 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 ## Retry Policy
 
-Failed webhook deliveries are automatically retried with exponential backoff:
+If your endpoint returns a non-2xx status code (or is unreachable), Banata Auth retries with exponential backoff:
 
-| Attempt | Delay | Total Time |
+| Attempt | Delay After Failure | Cumulative Time |
 |---|---|---|
-| 1st attempt | Immediate | 0 |
-| 2nd attempt (1st retry) | **5 minutes** | 5 min |
-| 3rd attempt (2nd retry) | **30 minutes** | 35 min |
-| 4th attempt (3rd retry) | **2 hours** | 2 hr 35 min |
-| 5th attempt (4th retry) | **24 hours** | 26 hr 35 min |
+| 1st (initial) | Immediate | 0 |
+| 2nd (1st retry) | 5 minutes | 5 min |
+| 3rd (2nd retry) | 30 minutes | 35 min |
+| 4th (3rd retry) | 2 hours | 2 hr 35 min |
+| 5th (4th retry) | 24 hours | 26 hr 35 min |
 
-After 5 failed attempts, the delivery is marked as permanently failed. A non-2xx HTTP status code (or network error) counts as a failure.
+After 5 failed attempts, the delivery is marked as permanently failed.
 
-### Retry Best Practices
+**Tips for handling retries:**
 
-1. **Return 200 quickly** — Process webhooks asynchronously. Return 200 immediately and process the event in a background job.
-2. **Implement idempotency** — Use the `Webhook-Id` header to deduplicate. Store processed message IDs and skip duplicates.
-3. **Handle out-of-order delivery** — Retries may arrive out of order. Use the `timestamp` and `data` to determine the correct state.
+- **Return 200 quickly.** Do your heavy processing in a background job so the request does not time out.
+- **Deduplicate with `Webhook-Id`.** Store processed message IDs and skip any you have already seen.
+- **Handle out-of-order delivery.** Retries can arrive after newer events. Use the `timestamp` field to determine the correct state.
 
 ---
 
 ## Available Events
 
-The webhook system can deliver notifications for 30+ auth events:
+You can subscribe to any combination of the following events.
 
 ### User Events
 
 | Event | Triggered When |
 |---|---|
-| `user.created` | New user account created |
-| `user.updated` | User profile updated |
-| `user.deleted` | User account deleted |
-| `user.banned` | User account banned |
-| `user.unbanned` | User account unbanned |
+| `user.created` | A new user account is created |
+| `user.updated` | A user profile is updated |
+| `user.deleted` | A user account is deleted |
+| `user.banned` | A user account is banned |
+| `user.unbanned` | A user account is unbanned |
 
 ### Session Events
 
 | Event | Triggered When |
 |---|---|
-| `session.created` | New session started (sign-in) |
-| `session.revoked` | Session ended (sign-out) |
+| `session.created` | A new session starts (sign-in) |
+| `session.revoked` | A session ends (sign-out or revocation) |
 
 ### Organization Events
 
 | Event | Triggered When |
 |---|---|
-| `organization.created` | New organization created |
-| `organization.updated` | Organization details updated |
-| `organization.deleted` | Organization deleted |
-| `member.added` | Member added to organization |
-| `member.removed` | Member removed from organization |
-| `member.role_updated` | Member's role changed |
-| `invitation.created` | Invitation sent |
-| `invitation.accepted` | Invitation accepted |
-| `invitation.revoked` | Invitation revoked |
+| `organization.created` | A new organization is created |
+| `organization.updated` | Organization details are updated |
+| `organization.deleted` | An organization is deleted |
+| `member.added` | A member is added to an organization |
+| `member.removed` | A member is removed from an organization |
+| `member.role_updated` | A member's role changes |
+| `invitation.created` | An invitation is sent |
+| `invitation.accepted` | An invitation is accepted |
+| `invitation.revoked` | An invitation is revoked |
 
 ### Security Events
 
 | Event | Triggered When |
 |---|---|
-| `email.verified` | User verified their email |
-| `password.reset` | User reset their password |
-| `two_factor.enabled` | User enabled MFA |
-| `two_factor.disabled` | User disabled MFA |
-| `api_key.created` | New API key created |
-| `api_key.revoked` | API key revoked |
+| `email.verified` | A user verifies their email address |
+| `password.reset` | A user resets their password |
+| `two_factor.enabled` | A user enables multi-factor authentication |
+| `two_factor.disabled` | A user disables multi-factor authentication |
+| `api_key.created` | A new API key is created |
+| `api_key.revoked` | An API key is revoked |
 
 ---
 
-## Webhook Endpoint Handler Example
+## Complete Next.js Handler Example
 
-Complete Next.js API route handler:
+Here is a full webhook handler you can drop into a Next.js App Router project:
 
 ```typescript
 // src/app/api/webhooks/banata/route.ts
@@ -356,6 +316,7 @@ export async function POST(request: Request) {
     return new Response("Missing signature headers", { status: 400 });
   }
 
+  // Verify the webhook signature
   let event;
   try {
     event = await banata.webhooks.constructEvent({
@@ -372,7 +333,7 @@ export async function POST(request: Request) {
   try {
     switch (event.event) {
       case "user.created":
-        // Sync new user to your CRM, analytics, etc.
+        // Sync the new user to your CRM or analytics platform
         await syncUserToCRM(event.data);
         break;
 
@@ -382,20 +343,20 @@ export async function POST(request: Request) {
         break;
 
       case "organization.created":
-        // Provision resources for new organization
+        // Provision resources for the new organization
         await provisionOrgResources(event.data);
         break;
 
       case "session.created":
-        // Track sign-in analytics
+        // Track sign-in events for analytics
         await trackSignIn(event.data);
         break;
 
       default:
-        console.log(`Unhandled event: ${event.event}`);
+        console.log(`Unhandled event type: ${event.event}`);
     }
   } catch (err) {
-    // Log but still return 200 to prevent retries for processing errors
+    // Log the error but still return 200 to prevent unnecessary retries
     console.error(`Error processing ${event.event}:`, err);
   }
 
@@ -405,68 +366,41 @@ export async function POST(request: Request) {
 
 ---
 
-## Delivery Monitoring
+## Testing Locally
 
-Webhook deliveries are tracked in the `webhookDelivery` table. You can view delivery status, response codes, and retry history through:
-
-1. **Admin Dashboard** — Navigate to **Webhooks > Delivery Logs**
-2. **Admin SDK** — Query the webhook delivery endpoints
-
-### Delivery Record
-
-```typescript
-interface WebhookDelivery {
-  id: string;
-  endpointId: string;
-  event: string;
-  status: "pending" | "success" | "failed";
-  attempts: number;
-  lastAttemptAt: string;
-  responseCode?: number;
-  responseBody?: string;
-  createdAt: string;
-}
-```
-
----
-
-## Testing Webhooks Locally
-
-During development, your local server isn't publicly accessible. Use a tunnel:
-
-### Using ngrok
+During development, your local server is not publicly accessible. Use a tunneling tool like [ngrok](https://ngrok.com) to expose it:
 
 ```bash
 # Start your Next.js dev server
 npm run dev
 
-# In another terminal, create a tunnel
+# In another terminal, create a tunnel to port 3000
 ngrok http 3000
-
-# Copy the HTTPS URL (e.g., https://abc123.ngrok.io)
-# Register it as a webhook endpoint:
-#   https://abc123.ngrok.io/api/webhooks/banata
 ```
 
-### Using the Convex Dashboard
+Copy the HTTPS URL that ngrok gives you (e.g., `https://abc123.ngrok.io`) and register it as a webhook endpoint in the dashboard:
 
-Convex function logs show webhook dispatch activity. Check the logs at [dashboard.convex.dev](https://dashboard.convex.dev) to debug delivery issues.
+```
+https://abc123.ngrok.io/api/webhooks/banata
+```
+
+You can now trigger auth events locally and see the webhook requests arrive in real time.
 
 ---
 
 ## Security Best Practices
 
-1. **Always verify signatures** — Never process a webhook without verifying the HMAC signature.
-2. **Check timestamp freshness** — Reject webhooks with timestamps older than 5 minutes to prevent replay attacks.
-3. **Use HTTPS endpoints** — Never send webhook data over unencrypted HTTP in production.
-4. **Keep secrets secure** — Store the `whsec_` secret in environment variables, not in source code.
-5. **Process asynchronously** — Return 200 immediately and process in the background to avoid timeouts.
-6. **Implement idempotency** — Use the `Webhook-Id` header to deduplicate deliveries.
+1. **Always verify signatures.** Never process a webhook payload without checking the HMAC signature first.
+2. **Check timestamp freshness.** Reject webhooks with timestamps older than 5 minutes to guard against replay attacks.
+3. **Use HTTPS endpoints.** Never receive webhook data over unencrypted HTTP in production.
+4. **Store secrets in environment variables.** Keep your `whsec_` signing secret out of source code and version control.
+5. **Respond quickly, process later.** Return a `200` response right away and handle the event asynchronously in a background job.
+6. **Implement idempotency.** Use the `Webhook-Id` header to detect and skip duplicate deliveries.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Audit Logs](/docs/audit-logs)** — Comprehensive event logging
-- **[SDK Reference](/docs/sdk)** — Complete SDK API reference
-- **[Deploy](/docs/deploy)** — Production deployment with webhook monitoring
+- **[Audit Logs](/docs/audit-logs)** — Track and query a detailed history of auth events.
+- **[SDK Reference](/docs/sdk)** — Explore the full SDK API, including webhook management methods.
+- **[Deploy](/docs/deploy)** — Take your project to production with monitoring and alerting.

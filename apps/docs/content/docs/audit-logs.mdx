@@ -1,128 +1,122 @@
 ---
 title: "Audit Logs"
-description: "Comprehensive audit logging with 30 auto-tracked events, custom events, actor/target tracking, and export capabilities."
-section: "Enterprise"
-order: 12
+description: "Automatic audit trail for all auth events with custom event support, filtering, and export capabilities."
+section: "Operate Your Project"
+order: 4
 ---
 
-Banata Auth automatically logs **30 auth-related events** to a structured audit trail. Every sign-in, user creation, role change, and organization update is recorded with full context — who did it, what they did, what changed, and when.
+Banata automatically records **over 30 authentication events** into a structured audit trail. Every sign-in, user creation, role change, and organization update is captured with full context — who did it, what changed, and when it happened.
 
-Audit logs are critical for **compliance** (SOC 2, HIPAA, GDPR), **security monitoring**, and **debugging**.
+Audit logs are always on. There is nothing to configure and nothing to enable. They work out of the box so you can focus on building your product while Banata handles the compliance, security monitoring, and debugging trail behind the scenes.
 
 ---
 
-## How It Works
+## Audit Event Structure
 
-The `auditLog` plugin is one of the 7 **always-on plugins** — it's enabled by default with no configuration needed. Every auth action automatically generates an audit log entry.
+Every audit event captures five pieces of information:
 
-### Audit Event Structure
+- **Action** — what happened (e.g., `user.created`, `session.revoked`)
+- **Actor** — who performed the action, including their type (user, admin, system, or API key), ID, email, IP address, and user agent
+- **Target** — what was affected, such as a user, organization, session, or invitation
+- **Context** — additional metadata like the organization ID, request ID, or geographic location
+- **Changes** — for update events, a before-and-after snapshot of exactly what changed
 
-```typescript
-interface AuditEvent {
-  id: string;              // e.g., "aud_01HXYZ..."
-  action: string;          // e.g., "user.created", "session.revoked"
-  timestamp: string;       // ISO 8601
+Here is what a typical audit event looks like:
 
-  // Who performed the action
-  actor: {
-    type: "user" | "admin" | "system" | "api_key";
-    id: string;            // User ID, API key ID, or "system"
-    email?: string;
-    name?: string;
-    ipAddress?: string;
-    userAgent?: string;
-  };
-
-  // What was affected
-  target: {
-    type: "user" | "organization" | "session" | "member" | "invitation" | "role" | "api_key" | "webhook" | "sso_connection";
-    id: string;
-    email?: string;
-    name?: string;
-  };
-
-  // Additional context
-  context: {
-    organizationId?: string;
-    requestId?: string;
-    location?: string;
-    [key: string]: unknown;
-  };
-
-  // What changed (for updates)
-  changes?: {
-    before: Record<string, unknown>;
-    after: Record<string, unknown>;
-  };
+```json
+{
+  "id": "aud_01HXYZ...",
+  "action": "member.role_updated",
+  "timestamp": "2025-06-15T14:32:00.000Z",
+  "actor": {
+    "type": "admin",
+    "id": "usr_01ADMIN...",
+    "email": "admin@acme.com",
+    "ipAddress": "203.0.113.42"
+  },
+  "target": {
+    "type": "member",
+    "id": "mbr_01HXYZ...",
+    "email": "jane@acme.com"
+  },
+  "context": {
+    "organizationId": "org_01HXYZ..."
+  },
+  "changes": {
+    "before": { "role": "member" },
+    "after": { "role": "admin" }
+  }
 }
 ```
 
 ---
 
-## Auto-Tracked Events (30)
+## Auto-Tracked Events
 
-The audit log plugin automatically tracks these events:
+Banata tracks 30 events automatically, grouped into five categories.
 
 ### User Events
 
-| Action | Triggered When | Actor | Target |
-|---|---|---|---|
-| `user.created` | New user signs up | System or Admin | User |
-| `user.updated` | User profile updated | User or Admin | User |
-| `user.deleted` | User account deleted | Admin | User |
-| `user.banned` | User account banned | Admin | User |
-| `user.unbanned` | User account unbanned | Admin | User |
-| `user.impersonated` | Admin impersonates user | Admin | User |
+| Action | Triggered When |
+|---|---|
+| `user.created` | A new user signs up or is created by an admin |
+| `user.updated` | A user profile is updated |
+| `user.deleted` | A user account is deleted |
+| `user.banned` | A user account is banned |
+| `user.unbanned` | A user account is unbanned |
+| `user.impersonated` | An admin impersonates a user |
 
 ### Session Events
 
-| Action | Triggered When | Actor | Target |
-|---|---|---|---|
-| `session.created` | Sign-in (new session) | User | Session |
-| `session.revoked` | Sign-out | User or Admin | Session |
-| `session.refreshed` | Session token refreshed | System | Session |
+| Action | Triggered When |
+|---|---|
+| `session.created` | A user signs in and a new session starts |
+| `session.revoked` | A user signs out or an admin revokes a session |
+| `session.refreshed` | A session token is refreshed |
 
 ### Email & Password Events
 
-| Action | Triggered When | Actor | Target |
-|---|---|---|---|
-| `email.verified` | User verifies email | User | User |
-| `email.changed` | User changes email | User | User |
-| `password.changed` | User changes password | User | User |
-| `password.reset` | Password reset completed | User | User |
-| `password.reset_requested` | Password reset requested | User | User |
+| Action | Triggered When |
+|---|---|
+| `email.verified` | A user verifies their email address |
+| `email.changed` | A user changes their email address |
+| `password.changed` | A user changes their password |
+| `password.reset` | A password reset is completed |
+| `password.reset_requested` | A password reset is requested |
 
 ### Organization Events
 
-| Action | Triggered When | Actor | Target |
-|---|---|---|---|
-| `organization.created` | New org created | User | Organization |
-| `organization.updated` | Org details updated | User or Admin | Organization |
-| `organization.deleted` | Org deleted | Owner or Admin | Organization |
-| `member.added` | Member joined org | User or Admin | Member |
-| `member.removed` | Member removed from org | Admin | Member |
-| `member.role_updated` | Member role changed | Admin | Member |
-| `invitation.created` | Invitation sent | Admin | Invitation |
-| `invitation.accepted` | Invitation accepted | User | Invitation |
-| `invitation.revoked` | Invitation cancelled | Admin | Invitation |
+| Action | Triggered When |
+|---|---|
+| `organization.created` | A new organization is created |
+| `organization.updated` | Organization details are updated |
+| `organization.deleted` | An organization is deleted |
+| `member.added` | A member joins an organization |
+| `member.removed` | A member is removed from an organization |
+| `member.role_updated` | A member's role is changed |
+| `invitation.created` | An invitation is sent |
+| `invitation.accepted` | An invitation is accepted |
+| `invitation.revoked` | An invitation is cancelled |
 
 ### Security Events
 
-| Action | Triggered When | Actor | Target |
-|---|---|---|---|
-| `two_factor.enabled` | MFA enabled | User | User |
-| `two_factor.disabled` | MFA disabled | User | User |
-| `api_key.created` | API key generated | User or Admin | API Key |
-| `api_key.revoked` | API key revoked | User or Admin | API Key |
-| `sso_connection.created` | SSO connection added | Admin | SSO Connection |
-| `webhook.created` | Webhook endpoint added | Admin | Webhook |
-| `webhook.deleted` | Webhook endpoint removed | Admin | Webhook |
+| Action | Triggered When |
+|---|---|
+| `two_factor.enabled` | A user enables multi-factor authentication |
+| `two_factor.disabled` | A user disables multi-factor authentication |
+| `api_key.created` | An API key is generated |
+| `api_key.revoked` | An API key is revoked |
+| `sso_connection.created` | An SSO connection is added |
+| `webhook.created` | A webhook endpoint is added |
+| `webhook.deleted` | A webhook endpoint is removed |
 
 ---
 
-## Querying Audit Logs
+## Querying Audit Logs via the SDK
 
-### Via the Admin SDK
+Use `auditLogs.listEvents` to search and filter your audit trail programmatically.
+
+### Basic Queries
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
@@ -132,38 +126,33 @@ const banata = new BanataAuth({
   baseUrl: "https://your-deployment.convex.site",
 });
 
-// List recent audit events (paginated)
+// Get the 50 most recent events
 const { data: events, listMetadata } = await banata.auditLogs.listEvents({
   limit: 50,
 });
 
-// Filter by action
+// Filter by action — find all sign-ins
 const signIns = await banata.auditLogs.listEvents({
   action: "session.created",
   limit: 100,
 });
 
-// Filter by actor (user)
+// Filter by actor — see everything a specific user did
 const userActions = await banata.auditLogs.listEvents({
   actorId: "usr_01HXYZ...",
   limit: 50,
 });
 
-// Filter by organization
+// Filter by organization — audit a single workspace
 const orgEvents = await banata.auditLogs.listEvents({
   organizationId: "org_01HXYZ...",
   limit: 50,
-});
-
-// Get a specific event
-const event = await banata.auditLogs.getEvent({
-  eventId: "aud_01HXYZ...",
 });
 ```
 
 ### Pagination
 
-Audit logs use cursor-based pagination:
+Audit logs use cursor-based pagination. The `listMetadata` object returned with each response contains the cursors you need to move forward and backward through results.
 
 ```typescript
 // First page
@@ -182,15 +171,17 @@ const prevPage = await banata.auditLogs.listEvents({
 });
 ```
 
-### Via the Admin Dashboard
+---
 
-Navigate to **Audit Logs** in the dashboard sidebar to see a searchable, filterable view of all events.
+## Querying via the Dashboard
+
+You can also browse your audit trail in the Banata dashboard. Navigate to **Audit Logs** in the sidebar to see a searchable, filterable view of all events. The dashboard lets you filter by action type, actor, organization, and date range without writing any code.
 
 ---
 
 ## Custom Audit Events
 
-In addition to the 30 auto-tracked events, you can log custom events:
+The 30 auto-tracked events cover authentication and authorization. For business-specific actions — like exporting a document, approving a request, or changing a billing plan — you can log custom events through the SDK.
 
 ### Via the SDK
 
@@ -217,12 +208,12 @@ await banata.auditLogs.createEvent({
 
 ### Via the `logAuditEvent` Helper (Server-Side)
 
-Inside Convex functions, you can use the `logAuditEvent` helper directly:
+Inside Convex functions, you can log audit events directly using the `logAuditEvent` helper:
 
 ```typescript
 import { logAuditEvent } from "@banata-auth/convex";
 
-// Inside a Convex mutation or action:
+// Inside a Convex mutation or action
 await logAuditEvent(ctx, {
   action: "report.generated",
   actor: { type: "system", id: "system" },
@@ -231,21 +222,23 @@ await logAuditEvent(ctx, {
 });
 ```
 
+Custom events appear alongside auto-tracked events in the dashboard and SDK queries, so you get a single unified audit trail for your entire application.
+
 ---
 
 ## Exporting Audit Logs
 
-Export audit logs for compliance reporting or external analysis:
+You can export audit logs for compliance reporting, external analysis, or long-term archival.
 
 ```typescript
-// Export events as JSON
+// Export all events for a date range
 const exportData = await banata.auditLogs.exportEvents({
   startDate: "2025-01-01T00:00:00.000Z",
   endDate: "2025-01-31T23:59:59.999Z",
   format: "json",
 });
 
-// Export filtered events
+// Export only specific event types
 const securityExport = await banata.auditLogs.exportEvents({
   startDate: "2025-01-01T00:00:00.000Z",
   endDate: "2025-01-31T23:59:59.999Z",
@@ -258,13 +251,21 @@ const securityExport = await banata.auditLogs.exportEvents({
 
 ## Change Tracking
 
-For update events, audit logs capture what changed:
+For any update event, Banata captures a before-and-after snapshot so you can see exactly what changed. This is especially useful for investigating permission escalations, profile modifications, and configuration changes.
 
 ```json
 {
   "action": "user.updated",
-  "actor": { "type": "admin", "id": "usr_01ADMIN..." },
-  "target": { "type": "user", "id": "usr_01HXYZ..." },
+  "actor": {
+    "type": "admin",
+    "id": "usr_01ADMIN...",
+    "email": "admin@acme.com"
+  },
+  "target": {
+    "type": "user",
+    "id": "usr_01HXYZ...",
+    "email": "jane@acme.com"
+  },
   "changes": {
     "before": {
       "name": "Jane Doe",
@@ -278,52 +279,7 @@ For update events, audit logs capture what changed:
 }
 ```
 
-This makes it easy to answer "what exactly changed?" for any update event.
-
----
-
-## Audit Log Endpoints (API)
-
-The `auditLog` plugin exposes 3 endpoints:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/audit/list` | POST | List audit events with filters and pagination |
-| `/api/auth/audit/create` | POST | Create a custom audit event |
-| `/api/auth/audit/export` | POST | Export events for a date range |
-
----
-
-## Database Storage
-
-Audit events are stored in the `auditLog` table in Convex:
-
-```typescript
-// Simplified schema
-defineTable({
-  action: v.string(),
-  actor: v.object({
-    type: v.string(),
-    id: v.string(),
-    email: v.optional(v.string()),
-    name: v.optional(v.string()),
-    ipAddress: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
-  }),
-  target: v.object({
-    type: v.string(),
-    id: v.string(),
-    email: v.optional(v.string()),
-    name: v.optional(v.string()),
-  }),
-  context: v.optional(v.any()),
-  changes: v.optional(v.object({
-    before: v.any(),
-    after: v.any(),
-  })),
-  timestamp: v.string(),
-})
-```
+When reviewing an event like this, you can immediately answer "who changed what, and what was it before?" — no guesswork required.
 
 ---
 
@@ -331,39 +287,42 @@ defineTable({
 
 ### SOC 2
 
-SOC 2 requires logging of:
-- User authentication events (sign-in, sign-out) — **Covered by `session.created` and `session.revoked`**
-- Access control changes (role assignments) — **Covered by `member.role_updated` and `role.assigned`**
-- User account lifecycle (creation, deletion, banning) — **Covered by `user.created`, `user.deleted`, `user.banned`**
+SOC 2 requires logging of user authentication events, access control changes, and account lifecycle events. Banata covers these automatically:
+
+- **Authentication events** — `session.created` and `session.revoked` track every sign-in and sign-out.
+- **Access control changes** — `member.role_updated` records every role assignment and permission change.
+- **Account lifecycle** — `user.created`, `user.deleted`, and `user.banned` track the full lifecycle of every user account.
 
 ### HIPAA
 
-HIPAA requires:
-- Audit trails for electronic health information access — **Use custom events for PHI access**
-- Login monitoring — **Covered by `session.created`**
-- Access control audits — **Covered by RBAC events**
+HIPAA requires audit trails for access to electronic health information, login monitoring, and access control audits. Banata provides:
+
+- **Login monitoring** — `session.created` records every authentication attempt with IP address and user agent.
+- **Access control audits** — Organization and role-based access events are tracked automatically.
+- **PHI access tracking** — Use custom events to log access to protected health information specific to your application.
 
 ### GDPR
 
-GDPR requires:
-- Records of processing activities — **Custom events for data processing**
-- Account deletion tracking — **Covered by `user.deleted`**
-- Consent changes — **Use custom events**
+GDPR requires records of processing activities, account deletion tracking, and consent management. Banata helps with:
+
+- **Account deletion tracking** — `user.deleted` records when and by whom an account was removed.
+- **Data processing records** — Use custom events to log data processing activities relevant to your application.
+- **Consent changes** — Use custom events to record consent grants and withdrawals alongside your auth audit trail.
 
 ---
 
 ## Best Practices
 
-1. **Don't disable audit logging** — It's always-on for a reason. Compliance requirements don't have exceptions.
-2. **Add custom events for business actions** — Supplement the 30 auto-tracked events with custom events for important business operations.
-3. **Set up retention policies** — For large deployments, consider archiving old audit logs to external storage.
-4. **Monitor for anomalies** — Use webhook events to alert on suspicious patterns (many failed sign-ins, mass deletions, etc.).
-5. **Export regularly** — Keep offline copies of audit logs for disaster recovery and legal requirements.
+1. **Supplement with custom events.** The 30 auto-tracked events cover authentication and authorization. Add custom events for business-critical actions like data exports, billing changes, and approval workflows.
+2. **Set up a regular export schedule.** Keep offline copies of your audit logs for disaster recovery and legal hold requirements. Monthly exports are a good starting point.
+3. **Monitor for anomalies.** Use [webhooks](/docs/webhooks) to get real-time notifications for suspicious patterns — multiple failed sign-ins, mass deletions, or unexpected role escalations.
+4. **Archive old logs externally.** For high-volume deployments, periodically export and archive older audit logs to external storage to keep your primary database lean.
+5. **Never disable audit logging.** Audit logs are always on for a reason. Compliance frameworks require continuous, uninterrupted logging with no gaps.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Webhooks](/docs/webhooks)** — Get real-time notifications for audit events
-- **[API Keys](/docs/api-keys)** — Programmatic access management
-- **[Deploy](/docs/deploy)** — Production deployment with audit log monitoring
+- **[Webhooks](/docs/webhooks)** — Get real-time notifications when audit events occur
+- **[API Keys](/docs/api-keys)** — Manage programmatic access to your project
+- **[Deploy](/docs/deploy)** — Take your project to production with audit log monitoring in place

@@ -1,173 +1,135 @@
-﻿---
+---
 title: "Username Authentication"
-description: "Allow users to sign in with a username and password instead of email."
-section: "Authentication"
-order: 25
+description: "Sign in with a username and password instead of an email address."
+section: "Configure Authentication"
+order: 8
 ---
 
-Username authentication allows users to sign up and sign in using a **username and password** combination instead of (or in addition to) an email address. This is common in gaming platforms, social apps, internal tools, and any application where usernames are the primary identity rather than email addresses.
+Username authentication lets your users sign up and sign in with a **username and password** instead of an email address. This is ideal for apps where a handle or gamertag is the primary identity -- gaming platforms, social networks, internal tools, and developer communities.
 
-Banata Auth supports username auth via the `username` plugin, which adds username fields to the user model and provides dedicated sign-up/sign-in endpoints.
+You can use username auth on its own or combine it with email/password so users have the flexibility to sign in either way.
 
 ---
 
-## How It Works
+## When to Use Username Auth
 
-```
-1. User enters a desired username and password on the sign-up page
-2. Client calls authClient.signUp.username({ username, password })
-3. Server validates the username (format, length, uniqueness)
-4. Server validates the password (minimum length)
-5. Server creates the user record with the username
-6. Session is created and the user is authenticated
-7. On subsequent visits, user signs in with username + password
-```
-
-### When to Use Username Auth
-
-| Scenario | Recommended? | Reason |
+| Scenario | Recommended? | Why |
 |---|---|---|
-| Gaming platforms | Yes | Players identify by gamertag/handle, not email |
-| Social platforms | Yes | Usernames are the public identity |
-| Internal tools | Yes | Employees may use a handle instead of corporate email |
-| Developer platforms | Yes | Developers often prefer usernames (e.g., GitHub) |
+| Gaming platforms | Yes | Players identify by gamertag or handle |
+| Social apps | Yes | Usernames are the public identity |
+| Internal tools | Yes | Employees use a short handle instead of a full email |
+| Developer platforms | Yes | Developers expect username-based accounts (like GitHub) |
 | E-commerce | No | Email is needed for order confirmations and receipts |
 | Enterprise SaaS | No | Email is the standard identity in business contexts |
 
 ---
 
-## Configuration
+## Enabling Username Auth
 
-Enable username authentication in your `BanataAuthConfig`:
+### From the Dashboard
 
-```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+1. Open your project in the Banata Auth dashboard.
+2. Go to **Authentication > Methods**.
+3. Toggle on **Username & Password**.
+4. Click **Save**.
 
-    authMethods: {
-      username: true,  // Enable username/password authentication
-    },
-  };
-}
+That's it -- your project now accepts username-based sign-ups and sign-ins.
+
+### From the SDK
+
+You can also enable username auth programmatically:
+
+```ts
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    username: true,
+  },
+});
 ```
 
-No email callbacks are required for username-only auth, since there is no email to verify or send reset links to.
-
-### Username with Optional Email
-
-In many cases, you want to support both username and email. You can enable both methods and make email optional during sign-up:
-
-```typescript
-authMethods: {
-  username: true,        // Username/password sign-in
-  emailPassword: true,   // Email/password sign-in (optional email on sign-up)
-},
-```
-
-When both are enabled, users can sign up with a username and optionally provide an email. If an email is provided, it follows the standard email verification flow.
+No email provider is required for username-only auth, since there are no verification emails or password reset links to send.
 
 ---
 
 ## Username Validation Rules
 
-Banata Auth enforces the following rules on usernames:
+Banata Auth enforces the following rules on all usernames:
 
 | Rule | Value |
 |---|---|
 | Minimum length | **3 characters** |
 | Maximum length | **32 characters** |
-| Allowed characters | Lowercase letters (`a-z`), numbers (`0-9`), underscores (`_`), hyphens (`-`) |
 | Must start with | A letter (`a-z`) |
+| Allowed characters | Lowercase letters (`a-z`), numbers (`0-9`), underscores (`_`), hyphens (`-`) |
 | Case sensitivity | **Case-insensitive** -- `JaneDoe` and `janedoe` are treated as the same username |
-| Uniqueness | **Globally unique** -- no two users can have the same username |
+| Uniqueness | **Globally unique** -- no two users in your project can share a username |
 
-Usernames are stored in lowercase. When a user signs up with `JaneDoe`, it is normalized to `janedoe` for storage and comparison, but the original casing may be preserved for display purposes.
-
-### Reserved Usernames
-
-The following usernames are reserved and cannot be registered:
-
-- `admin`, `administrator`
-- `system`, `root`, `superuser`
-- `support`, `help`, `contact`
-- `null`, `undefined`, `anonymous`
-- Any username that matches a route in your application (e.g., `settings`, `dashboard`, `api`)
-
-> **Tip:** You can extend the reserved username list in your configuration to include application-specific terms.
+Usernames are normalized to lowercase before storage. If a user signs up as `JaneDoe`, it is stored and compared as `janedoe`.
 
 ---
 
-## Client-Side API
+## Client API
 
-### Sign Up with Username
+The auth client exposes three methods for username auth:
 
-```typescript
+- **`authClient.signUp.username()`** -- Create a new account with a username and password.
+- **`authClient.signIn.username()`** -- Sign in to an existing account.
+- **`authClient.username.checkAvailability()`** -- Check whether a username is already taken.
+
+### Sign Up
+
+```ts
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.signUp.username({
   username: "janedoe",
   password: "securePassword123",
-  name: "Jane Doe",              // Optional display name
-  email: "jane@example.com",     // Optional -- only if emailPassword is also enabled
+  name: "Jane Doe",              // optional display name
+  email: "jane@example.com",     // optional -- only relevant if email auth is also enabled
 });
 
 if (error) {
-  // Handle errors:
-  // - "Username already taken" (409)
-  // - "Invalid username format" (422)
-  // - "Username too short" (422)
-  // - "Username too long" (422)
-  // - "Password too short" (422)
   console.error(error.message);
 } else {
   console.log(data.user);     // { id, username, name, ... }
   console.log(data.session);  // { id, token, expiresAt, ... }
-  window.location.href = "/dashboard";
 }
 ```
 
-### Sign In with Username
+### Sign In
 
-```typescript
+```ts
 const { data, error } = await authClient.signIn.username({
   username: "janedoe",
   password: "securePassword123",
 });
 
 if (error) {
-  // Handle errors:
-  // - "Invalid username or password" (401)
-  // - "Account is banned" (403)
-  // - "Too many attempts" (429)
   console.error(error.message);
 } else {
   window.location.href = "/dashboard";
 }
 ```
 
-### Check Username Availability
+### Check Availability
 
-Before sign-up, you can check if a username is available:
+Before the user submits the sign-up form, you can check if their desired username is available:
 
-```typescript
-const { data, error } = await authClient.username.checkAvailability({
+```ts
+const { data } = await authClient.username.checkAvailability({
   username: "janedoe",
 });
 
-if (data) {
-  console.log(data.available); // true or false
-}
+console.log(data.available); // true or false
 ```
 
-This is useful for providing real-time feedback in the sign-up form as the user types.
+This is useful for showing real-time feedback as the user types.
 
 ---
 
-## Complete Sign-Up Form Example
+## Complete Sign-Up Form with Availability Checking
+
+Here is a full React example that debounces the availability check and disables the submit button when the username is taken:
 
 ```tsx
 "use client";
@@ -179,13 +141,12 @@ export default function UsernameSignUpPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken"
   >("idle");
 
-  // Check username availability with debounce
+  // Debounced availability check
   useEffect(() => {
     if (username.length < 3) {
       setUsernameStatus("idle");
@@ -211,11 +172,10 @@ export default function UsernameSignUpPage() {
       username,
       password,
       name: name || undefined,
-      email: email || undefined,
     });
 
     if (error) {
-      setError(error.message ?? "Sign up failed");
+      setError(error.message ?? "Sign-up failed");
     } else {
       window.location.href = "/dashboard";
     }
@@ -238,9 +198,7 @@ export default function UsernameSignUpPage() {
           pattern="[a-z][a-z0-9_-]*"
           required
         />
-        {usernameStatus === "checking" && (
-          <span style={{ color: "#888" }}>Checking...</span>
-        )}
+        {usernameStatus === "checking" && <span>Checking...</span>}
         {usernameStatus === "available" && (
           <span style={{ color: "green" }}>Available</span>
         )}
@@ -273,20 +231,6 @@ export default function UsernameSignUpPage() {
         />
       </div>
 
-      <div>
-        <label htmlFor="email">Email (optional)</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="jane@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <small>
-          Adding an email enables password reset and email notifications.
-        </small>
-      </div>
-
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <button
@@ -300,7 +244,11 @@ export default function UsernameSignUpPage() {
 }
 ```
 
-### Sign-In Form
+---
+
+## Sign-In Form Example
+
+A minimal sign-in form for username auth:
 
 ```tsx
 "use client";
@@ -323,7 +271,7 @@ export default function UsernameSignInPage() {
     });
 
     if (error) {
-      setError(error.message ?? "Sign in failed");
+      setError(error.message ?? "Sign-in failed");
     } else {
       window.location.href = "/dashboard";
     }
@@ -357,43 +305,32 @@ export default function UsernameSignInPage() {
 
 ---
 
-## Username Uniqueness Enforcement
+## Combining Username with Email/Password
 
-Usernames are enforced as globally unique across all users in your application. The uniqueness check is performed at the database level:
+You can enable both authentication methods so users can sign in with either a username or an email address:
 
-1. **On sign-up** -- The server checks if the normalized (lowercase) username already exists before creating the user.
-2. **On username change** -- If you allow users to change their username, the same uniqueness check applies.
-3. **Concurrent requests** -- The database enforces a unique index on the username field, preventing race conditions where two users attempt to claim the same username simultaneously.
+1. In the dashboard, toggle on both **Username & Password** and **Email & Password** under **Authentication > Methods**.
+2. Or via the SDK:
 
-### Handling Conflicts
-
-If a username is taken, the server returns a `ConflictError` (409):
-
-```typescript
-const { error } = await authClient.signUp.username({
-  username: "janedoe",
-  password: "securePassword123",
+```ts
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    username: true,
+    emailPassword: true,
+  },
 });
-
-if (error?.status === 409) {
-  // Username is taken -- prompt the user to choose another
-}
 ```
 
----
+When both are enabled, users can optionally provide an email during sign-up. If they do, they can sign in with either credential:
 
-## Combining Username with Email
-
-When both `username` and `emailPassword` are enabled, users can sign in with either their username or their email:
-
-```typescript
+```ts
 // Sign in with username
 await authClient.signIn.username({
   username: "janedoe",
   password: "securePassword123",
 });
 
-// Sign in with email (if provided during sign-up)
+// Sign in with email (if the user provided one at sign-up)
 await authClient.signIn.email({
   email: "jane@example.com",
   password: "securePassword123",
@@ -402,104 +339,68 @@ await authClient.signIn.email({
 
 Both methods authenticate the same user and create the same session.
 
-### Password Reset with Username Auth
+---
 
-If a user signed up with only a username (no email), password reset via email is not available. Consider these alternatives:
+## Password Reset Without Email
 
-1. **Require email on sign-up** -- Make email mandatory even with username auth, so password reset is always available.
-2. **Admin reset** -- Allow administrators to reset passwords via the admin SDK.
-3. **Security questions** -- Implement a custom recovery flow (not built-in).
+If a user signed up with only a username and no email, the standard "forgot password" email flow is not available. You have a few options:
 
-```typescript
-// Admin password reset via SDK
-const banata = new BanataAuth({
-  apiKey: "your-api-key",
-  baseUrl: "https://your-deployment.convex.site",
-});
+1. **Require an email at sign-up.** Even in a username-first flow, you can make email mandatory so password reset is always available.
+2. **Admin reset.** Use the server-side SDK to reset a user's password directly:
 
+```ts
 await banata.users.updateUser({
   userId: "usr_01HXYZ...",
   password: "newTemporaryPassword",
 });
 ```
 
----
+3. **Prompt the user to add an email.** If the user's account has no email, prompt them to add one before they can use self-service password reset.
 
-## Server-Side User Management
-
-Use the admin SDK to manage username-based users:
-
-```typescript
-import { BanataAuth } from "@banata-auth/sdk";
-
-const banata = new BanataAuth({
-  apiKey: "your-api-key",
-  baseUrl: "https://your-deployment.convex.site",
-});
-
-// Create a user with username
-const user = await banata.users.createUser({
-  projectId: "proj_01HXYZ...",
-  username: "janedoe",
-  password: "securePassword123",
-  name: "Jane Doe",
-});
-
-// Look up a user by username
-const user = await banata.users.getUserByUsername({
-  username: "janedoe",
-});
-
-// Update a username
-await banata.users.updateUser({
-  userId: "usr_01HXYZ...",
-  username: "jane_doe_2",
-});
-```
+> **Tip:** If your app targets an audience that may forget passwords often (like younger users in gaming), requiring an email at sign-up is strongly recommended even when username is the primary identifier.
 
 ---
 
-## Audit Events
+## Rate Limits
 
-| Event | When |
-|---|---|
-| `user.created` | New user signs up with username |
-| `session.created` | User signs in with username |
-| `user.updated` | Username is changed |
-| `session.revoked` | User signs out |
-
-See the [Audit Logs](/docs/audit-logs) guide for more details.
-
----
-
-## Error Handling
-
-| Error | HTTP Status | When |
-|---|---|---|
-| `AuthenticationError` | 401 | Invalid username or password |
-| `ForbiddenError` | 403 | Account banned |
-| `ConflictError` | 409 | Username already taken |
-| `ValidationError` | 422 | Invalid username format, too short/long, or password too short |
-| `RateLimitError` | 429 | Too many sign-in attempts |
-
-### Rate Limits
+Username auth endpoints are rate-limited to prevent brute-force attacks:
 
 | Endpoint | Limit |
 |---|---|
-| Sign In (username) | 30 requests per minute |
-| Sign Up (username) | 10 requests per minute |
-| Check Availability | 60 requests per minute |
+| Sign In (`signIn.username`) | 30 requests per minute |
+| Sign Up (`signUp.username`) | 10 requests per minute |
+| Check Availability (`username.checkAvailability`) | 60 requests per minute |
+
+When a limit is exceeded, the server returns a `429 Too Many Requests` response. Your client should display a message like "Too many attempts -- please try again in a moment."
 
 ---
 
-## Security Considerations
+## Error Reference
 
-1. **Username enumeration** -- The sign-in error message is intentionally vague ("Invalid username or password") to prevent attackers from determining whether a username exists. The `checkAvailability` endpoint is rate-limited for the same reason.
-2. **Case normalization** -- Usernames are case-insensitive to prevent confusion (e.g., `JaneDoe` and `janedoe` are the same user).
-3. **Rate limiting** -- Built-in rate limits prevent brute-force attacks against username/password combinations.
-4. **No email fallback** -- If a user signs up with only a username (no email), there is no automated password reset path. Plan your recovery strategy accordingly.
-5. **Reserved usernames** -- The reserved list prevents users from claiming system-level or potentially confusing usernames.
-6. **Password security** -- The same password validation rules apply as with email/password auth (minimum 8 characters, maximum 128 characters).
+| Error | HTTP Status | When It Occurs |
+|---|---|---|
+| `AuthenticationError` | 401 | Invalid username or password on sign-in |
+| `ForbiddenError` | 403 | The account has been banned |
+| `ConflictError` | 409 | The username is already taken on sign-up |
+| `ValidationError` | 422 | Invalid username format, username too short/long, or password too short |
+| `RateLimitError` | 429 | Too many requests to the endpoint |
+
+You can handle these by checking the `error.status` code:
+
+```ts
+const { error } = await authClient.signUp.username({
+  username: "janedoe",
+  password: "securePassword123",
+});
+
+if (error?.status === 409) {
+  // Username is taken -- suggest the user pick a different one
+}
+
+if (error?.status === 422) {
+  // Validation failed -- show the error message to the user
+}
+```
 
 ---
 
@@ -507,26 +408,29 @@ See the [Audit Logs](/docs/audit-logs) guide for more details.
 
 ### "Invalid username format"
 
-The username does not meet the validation rules. Ensure the username:
-- Is at least 3 characters long
-- Is at most 32 characters long
-- Starts with a letter
+The username does not meet the validation rules. Make sure it:
+
+- Is between 3 and 32 characters long
+- Starts with a letter (`a-z`)
 - Contains only lowercase letters, numbers, underscores, and hyphens
 
 ### "Username already taken"
 
-Another user has registered with the same username. Suggest alternatives or prompt the user to choose a different one. Remember that usernames are case-insensitive.
+Another user has already claimed that username. Remember that usernames are case-insensitive, so `JaneDoe` and `janedoe` count as the same name. Prompt the user to choose a different one, or use `checkAvailability` to give feedback before they submit.
 
 ### "Cannot reset password"
 
-The user signed up with username only and has no email address linked. Use the admin SDK to reset their password, or ask them to add an email to their account first.
+The user signed up with a username only and has no email on their account. Use the admin SDK to reset their password, or ask them to add an email address first.
+
+### Sign-in returns 401 but the username exists
+
+The most likely cause is an incorrect password. The error message is intentionally vague ("Invalid username or password") to prevent username enumeration. Double-check that the password is correct and that Caps Lock is not enabled.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Email & Password](/docs/email-password)** -- Traditional email-based authentication
-- **[Anonymous Auth](/docs/anonymous-auth)** -- Guest access with optional upgrade
-- **[Social OAuth](/docs/social-oauth)** -- Add Google, GitHub, etc. alongside username auth
-- **[Roles & Permissions](/docs/roles-permissions)** -- Fine-grained access control
-
+- **[Email & Password](/docs/email-password)** -- Add traditional email-based authentication alongside username auth
+- **[Social OAuth](/docs/social-oauth)** -- Let users link a Google, GitHub, or other social account
+- **[Anonymous Auth](/docs/anonymous-auth)** -- Allow guest access with optional upgrade to a full account
+- **[Roles & Permissions](/docs/roles-permissions)** -- Control what authenticated users can access

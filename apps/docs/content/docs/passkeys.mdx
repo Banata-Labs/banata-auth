@@ -1,102 +1,66 @@
 ---
 title: "Passkeys"
 description: "WebAuthn-based passwordless authentication using biometrics, security keys, or device credentials."
-section: "Authentication"
-order: 23
+section: "Configure Authentication"
+order: 6
 ---
 
-Passkeys provide **passwordless authentication** using the WebAuthn standard. Users authenticate with their device's biometric sensor (Face ID, Touch ID, Windows Hello), a hardware security key (YubiKey), or a device PIN. Passkeys are phishing-resistant, eliminate password reuse, and provide the strongest form of user authentication available today.
+Passkeys provide **passwordless authentication** using the WebAuthn standard. Instead of typing a password, your users authenticate with their device's biometric sensor (Face ID, Touch ID, Windows Hello), a hardware security key (YubiKey), or a device PIN. Passkeys are phishing-resistant, eliminate password reuse, and deliver the strongest form of user authentication available in web browsers today.
 
-Banata Auth supports passkeys via the `passkey` plugin, built on the WebAuthn / FIDO2 specification.
-
----
-
-## How It Works
-
-Passkeys involve two distinct flows: **registration** (creating a credential) and **authentication** (using a credential to sign in).
-
-### Registration Flow
-
-```
-1. User is signed in and navigates to security settings
-2. User clicks "Add Passkey"
-3. Client calls authClient.passkey.addPasskey()
-4. Server generates a challenge and returns registration options
-5. Browser triggers the WebAuthn API (navigator.credentials.create())
-6. User completes the biometric/PIN/security key prompt
-7. Browser returns the attestation response to the client
-8. Client sends the attestation to the server for verification
-9. Server validates the response and stores the credential public key
-10. Passkey is now registered and ready for authentication
-```
-
-### Authentication Flow
-
-```
-1. User navigates to the sign-in page
-2. User clicks "Sign in with Passkey"
-3. Client calls authClient.signIn.passkey()
-4. Server generates an authentication challenge
-5. Browser triggers the WebAuthn API (navigator.credentials.get())
-6. User completes the biometric/PIN/security key prompt
-7. Browser returns the assertion response to the client
-8. Client sends the assertion to the server for verification
-9. Server validates the signature against the stored public key
-10. Session is created and user is authenticated
-```
+Banata Auth supports passkeys via the WebAuthn / FIDO2 specification. The private key never leaves the user's device, and authentication requires physical presence -- making remote attacks effectively impossible.
 
 ---
 
-## Configuration
+## Enabling Passkeys
 
-Enable passkeys in your `BanataAuthConfig`:
+### From the Dashboard
 
-```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+1. Go to **Authentication > Methods** in your project.
+2. Toggle on **Passkeys**.
+3. Configure the **Passkey Settings** panel that appears (see below).
 
-    authMethods: {
-      passkey: true,  // Enable passkey (WebAuthn) authentication
-    },
+Because passkeys are bound to a specific domain and origin, you need to provide three values that cannot be auto-detected:
 
-    passkey: {
-      rpId: process.env.PASSKEY_RP_ID ?? "localhost",
-      rpName: "My App",
-      origin: process.env.PASSKEY_ORIGIN ?? "http://localhost:3000",
-    },
-  };
-}
+| Setting | Example (production) | Example (development) |
+|---|---|---|
+| **RP ID** | `myapp.com` | `localhost` |
+| **RP Name** | `My App` | `My App` |
+| **Origin** | `https://myapp.com` | `http://localhost:3000` |
+
+Fill these in and save.
+
+### From the SDK
+
+If you prefer to configure passkeys programmatically, use `saveDashboardConfig`:
+
+```ts
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    passkey: true,
+  },
+  passkey: {
+    rpId: "myapp.com",
+    rpName: "My App",
+    origin: "https://myapp.com",
+  },
+});
 ```
 
-### Passkey Configuration Options
+---
+
+## Configuration Options
 
 | Option | Type | Required | Description |
 |---|---|---|---|
 | `rpId` | `string` | Yes | Relying Party ID. Must be the domain of your app (e.g., `"myapp.com"`). Use `"localhost"` in development. |
-| `rpName` | `string` | Yes | Human-readable name shown in the browser's passkey prompt. |
-| `origin` | `string` | Yes | The full origin of your app (e.g., `"https://myapp.com"`). Must match the page origin exactly. |
+| `rpName` | `string` | Yes | Human-readable name shown in the browser's passkey prompt (e.g., `"My App"`). |
+| `origin` | `string` | Yes | The full origin of your app (e.g., `"https://myapp.com"`). Must match the page origin exactly, including protocol and port. |
 
 > **Important:** The `rpId` must be a valid domain that matches or is a registrable suffix of the page origin. For example, if your app is at `https://app.mycompany.com`, the `rpId` can be `"app.mycompany.com"` or `"mycompany.com"`, but not `"other.com"`.
 
-### Environment Variables
+### Environment-Specific Values
 
-```bash
-# .env
-PASSKEY_RP_ID=myapp.com
-PASSKEY_ORIGIN=https://myapp.com
-```
-
-In development:
-
-```bash
-# .env.local
-PASSKEY_RP_ID=localhost
-PASSKEY_ORIGIN=http://localhost:3000
-```
+In most setups, your RP ID and origin differ between development and production. A common pattern is to pass environment-specific values when calling `saveDashboardConfig`, or simply configure them separately in the dashboard for each environment.
 
 ---
 
@@ -104,34 +68,36 @@ PASSKEY_ORIGIN=http://localhost:3000
 
 Passkeys are supported on all modern browsers and platforms:
 
-| Platform | Support |
-|---|---|
-| Chrome (Desktop) | 67+ (Windows Hello, security keys) |
-| Chrome (Android) | 67+ (fingerprint, screen lock) |
-| Safari (macOS) | 13+ (Touch ID, security keys) |
-| Safari (iOS) | 14+ (Face ID, Touch ID) |
-| Firefox | 60+ (security keys); 122+ (platform authenticators) |
-| Edge | 18+ (Windows Hello, security keys) |
+| Platform | Version | Authenticator Types |
+|---|---|---|
+| Chrome (Desktop) | 67+ | Windows Hello, security keys |
+| Chrome (Android) | 67+ | Fingerprint, screen lock |
+| Safari (macOS) | 13+ | Touch ID, security keys |
+| Safari (iOS) | 14+ | Face ID, Touch ID |
+| Firefox | 60+ (security keys), 122+ (platform) | Security keys, platform authenticators |
+| Edge | 18+ | Windows Hello, security keys |
 
 ### Cross-Device Authentication
 
-Modern passkey implementations support **cross-device authentication**, where a user can use their phone to authenticate on a desktop browser via Bluetooth proximity. This is handled natively by the browser and operating system -- no additional configuration is required.
+Modern passkey implementations support **cross-device authentication** -- a user can use their phone to authenticate on a desktop browser via Bluetooth proximity. This is handled natively by the browser and operating system. No additional configuration is required on your end.
 
 ---
 
 ## Client-Side API
 
+Banata Auth provides four passkey methods on the auth client.
+
 ### Register a Passkey
 
-Users must be signed in to register a passkey. This is typically done in a security settings page:
+Users must be signed in to register a passkey. This is typically called from a security settings page:
 
-```typescript
+```ts
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.passkey.addPasskey();
 
 if (error) {
-  // Handle errors:
+  // Possible errors:
   // - "WebAuthn not supported" (browser doesn't support passkeys)
   // - "Registration failed" (user cancelled or hardware error)
   // - "Passkey already registered" (duplicate credential)
@@ -143,16 +109,16 @@ if (error) {
 
 ### Sign In with a Passkey
 
-```typescript
+```ts
 const { data, error } = await authClient.signIn.passkey();
 
 if (error) {
-  // Handle errors:
+  // Possible errors:
   // - "Authentication failed" (invalid credential or user cancelled)
   // - "No passkeys found" (no credentials registered for this rpId)
   console.error(error.message);
 } else {
-  // data contains the user and session
+  // data contains the authenticated user and session
   console.log(data.user);
   console.log(data.session);
   window.location.href = "/dashboard";
@@ -161,22 +127,21 @@ if (error) {
 
 ### List Registered Passkeys
 
-```typescript
+```ts
 const { data, error } = await authClient.passkey.listPasskeys();
 
 if (data) {
-  // data is an array of registered passkeys
   data.forEach((passkey) => {
-    console.log(passkey.id);          // Credential ID
-    console.log(passkey.createdAt);   // When it was registered
-    console.log(passkey.deviceType);  // "platform" or "cross-platform"
+    console.log(passkey.id);         // Credential ID
+    console.log(passkey.createdAt);  // When it was registered
+    console.log(passkey.deviceType); // "platform" or "cross-platform"
   });
 }
 ```
 
 ### Delete a Passkey
 
-```typescript
+```ts
 const { error } = await authClient.passkey.deletePasskey({
   id: "credential_id_here",
 });
@@ -188,7 +153,9 @@ if (!error) {
 
 ---
 
-## Complete Registration Component
+## Registration Component Example
+
+Here is a complete React component that lets users manage their passkeys from a settings page:
 
 ```tsx
 "use client";
@@ -271,7 +238,11 @@ export function PasskeySettings() {
 }
 ```
 
-### Sign-In Page with Passkey Option
+---
+
+## Sign-In with Passkey Example
+
+You can add a passkey sign-in button alongside your existing sign-in form:
 
 ```tsx
 "use client";
@@ -305,11 +276,13 @@ export function SignInPage() {
 
       <hr />
       <p>Or sign in with email and password:</p>
-      {/* Email/password form here */}
+      {/* Your email/password form here */}
     </div>
   );
 }
 ```
+
+A recommended UI pattern is to show the passkey option prominently as the primary action, with email/password as a secondary fallback.
 
 ---
 
@@ -317,64 +290,39 @@ export function SignInPage() {
 
 WebAuthn defines two types of credentials:
 
-| Type | Also Called | Description |
+| Type | Also Called | How It Works |
 |---|---|---|
 | **Resident** (discoverable) | Passkey | Stored on the device. The user does not need to provide a username first -- the browser can enumerate available credentials for the site. |
-| **Non-resident** (non-discoverable) | Server-side credential | The credential ID is stored on the server. The user must identify themselves first (e.g., enter their email), then the server provides the credential ID to the browser for the authentication challenge. |
+| **Non-resident** (non-discoverable) | Server-side credential | The credential ID is stored on the server. The user must identify themselves first (e.g., enter their email), then the server provides the credential ID to the browser. |
 
 Banata Auth defaults to **resident credentials** (true passkeys). This means:
 
-- Users can sign in by clicking "Sign in with Passkey" without entering an email first
-- The browser shows a credential picker if multiple passkeys are registered for the site
-- Credentials sync across devices via iCloud Keychain (Apple), Google Password Manager (Android/Chrome), or Windows Hello
+- Users can sign in by clicking "Sign in with Passkey" without entering an email first.
+- The browser shows a credential picker if multiple passkeys are registered for the site.
+- Credentials sync across devices via iCloud Keychain (Apple), Google Password Manager (Android/Chrome), or Windows Hello.
 
 ---
 
 ## Combining with Other Methods
 
-Passkeys work well alongside traditional authentication methods. Users can register a passkey after signing in with email/password, and then use the passkey for future sign-ins:
+Passkeys work well alongside other authentication methods. A common pattern is to let users sign up with email and password, then register a passkey from their account settings for faster future sign-ins.
 
-```typescript
-authMethods: {
-  emailPassword: true,   // Traditional fallback
-  passkey: true,          // Passwordless primary
-  magicLink: true,        // Another passwordless option
-},
+You can enable multiple methods in the dashboard by toggling them on under **Authentication > Methods**, or programmatically:
 
-passkey: {
-  rpId: process.env.PASSKEY_RP_ID ?? "localhost",
-  rpName: "My App",
-  origin: process.env.PASSKEY_ORIGIN ?? "http://localhost:3000",
-},
+```ts
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    emailPassword: true,  // Traditional fallback
+    passkey: true,         // Passwordless primary
+    magicLink: true,       // Another passwordless option
+  },
+  passkey: {
+    rpId: "myapp.com",
+    rpName: "My App",
+    origin: "https://myapp.com",
+  },
+});
 ```
-
-A recommended UI pattern is to show the passkey option prominently, with email/password as a secondary option:
-
-```
-+----------------------------------+
-|  [Sign in with Passkey]          |  <-- Primary, prominent
-+----------------------------------+
-|                                  |
-|  -------- or continue with ----- |
-|                                  |
-|  Email:    [____________]        |
-|  Password: [____________]        |
-|  [Sign In]                       |
-+----------------------------------+
-```
-
----
-
-## Audit Events
-
-| Event | When |
-|---|---|
-| `passkey.registered` | New passkey credential registered |
-| `passkey.deleted` | Passkey credential removed |
-| `passkey.authenticated` | Successful authentication via passkey |
-| `session.created` | Session created after passkey authentication |
-
-See the [Audit Logs](/docs/audit-logs) guide for more details.
 
 ---
 
@@ -388,25 +336,19 @@ See the [Audit Logs](/docs/audit-logs) guide for more details.
 | Data breaches | Leaked password hashes can be cracked | Public keys only -- useless to attackers |
 | User friction | High -- users must remember passwords | Low -- biometric or PIN, no memorization |
 
-Passkeys are the most secure user authentication method available in web browsers today. The private key never leaves the user's device, and authentication requires physical presence (biometric or security key interaction), making remote attacks effectively impossible.
-
----
-
-## Security Considerations
-
-1. **Always validate the origin** -- The `origin` in your passkey config must exactly match the page origin. Mismatches will cause authentication failures.
-2. **Use HTTPS in production** -- WebAuthn requires a secure context. It works on `localhost` for development but requires HTTPS in production.
-3. **Encourage multiple passkeys** -- Users should register passkeys on multiple devices to avoid lockout if a single device is lost.
-4. **Provide fallback methods** -- Not all users have passkey-capable devices. Always offer an alternative sign-in method (email/password, magic link, etc.).
-5. **Credential backup** -- Platform passkeys (iCloud Keychain, Google Password Manager) are backed up and sync across devices. Hardware security key credentials are not -- losing the key means losing access.
-
 ---
 
 ## Troubleshooting
 
 ### "WebAuthn not supported"
 
-The user's browser does not support the WebAuthn API. This is rare on modern browsers but can happen on older versions or certain embedded browser views. Check `window.PublicKeyCredential` before showing the passkey option.
+The user's browser does not support the WebAuthn API. This is rare on modern browsers but can occur in older versions or embedded browser views (e.g., in-app browsers). You can check for support before showing the passkey option:
+
+```ts
+if (window.PublicKeyCredential) {
+  // Safe to show passkey options
+}
+```
 
 ### "Registration cancelled"
 
@@ -414,20 +356,25 @@ The user dismissed the browser's passkey prompt. This is not an error -- simply 
 
 ### "Origin mismatch"
 
-The `origin` in your passkey config does not match the actual page origin. Ensure `PASSKEY_ORIGIN` matches exactly (including protocol and port).
+The `origin` in your passkey configuration does not match the actual page origin. Make sure it matches exactly, including protocol and port. For example, `http://localhost:3000` is not the same as `http://localhost:5173`.
 
 ### "Passkey not found"
 
 No registered credentials match the `rpId`. This can happen if:
-- The user hasn't registered a passkey for this site
-- The `rpId` changed between registration and authentication
-- The user's passkey was deleted from their device
+
+- The user hasn't registered a passkey for this site.
+- The `rpId` changed between registration and authentication.
+- The user deleted the passkey from their device or password manager.
+
+### Users locked out after losing a device
+
+If a user's only passkey was on a lost device, they need a fallback sign-in method. Always enable at least one alternative method (email/password, magic link, or social OAuth) so users can recover access and register a new passkey.
 
 ---
 
-## What's Next
+## Next Steps
 
 - **[Email OTP](/docs/email-otp)** -- Passwordless authentication via email codes
-- **[Multi-Factor Auth](/docs/mfa)** -- Add TOTP as a second factor
-- **[Email & Password](/docs/email-password)** -- Traditional authentication
-- **[Social OAuth](/docs/social-oauth)** -- Sign in with Google, GitHub, etc.
+- **[Multi-Factor Auth](/docs/mfa)** -- Add TOTP as a second factor alongside passkeys
+- **[Email & Password](/docs/email-password)** -- Traditional authentication as a fallback
+- **[Social OAuth](/docs/social-oauth)** -- Sign in with Google, GitHub, and more

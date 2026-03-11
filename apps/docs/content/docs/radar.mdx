@@ -1,64 +1,82 @@
 ---
-title: "Radar (Dashboard Feature)"
-description: "AI-powered bot detection with configurable providers (Vercel BotID, Cloudflare Turnstile, reCAPTCHA, hCaptcha), impossible travel detection, device fingerprinting, and rate limiting."
-section: "Configuration"
-order: 22
+title: "Radar"
+description: "Layered defense against bots, credential stuffing, and automated threats with configurable providers and detection rules."
+section: "Operate Your Project"
+order: 10
 ---
 
-> **Preview** — Radar detection rules (impossible travel, device fingerprinting) are under active development. Bot detection providers (BotID, Turnstile, reCAPTCHA, hCaptcha) are functional via dashboard configuration. APIs may change before stable release.
+Radar is Banata Auth's layered defense system against bots, credential stuffing, impossible travel attacks, and other automated threats. It combines configurable bot detection providers with built-in detection rules to protect your authentication endpoints from multiple angles.
 
-Banata Auth's **Radar** feature provides a layered defense against bots, credential stuffing, impossible travel attacks, and other automated threats. It supports multiple bot detection providers out of the box and lets you configure credentials through the dashboard — no code changes required.
-
----
-
-## How Radar Works
-
-```
-1. Admin configures bot detection provider + credentials in the dashboard
-2. Client-side: provider widget/script injects an invisible challenge
-3. User submits a sign-in, sign-up, or password reset request
-4. Server-side: @banata-auth/nextjs/bot-protection verifies the challenge
-5. If bot detected: request is rejected with 403
-6. If human verified: request proceeds to Better Auth
-7. Additional detection rules (impossible travel, fingerprinting,
-   rate limiting) provide defense-in-depth
-```
-
-Radar has two layers:
-
-- **Bot detection providers** — Configurable bot protection via Vercel BotID, Cloudflare Turnstile, Google reCAPTCHA, or hCaptcha. Credentials are managed through the dashboard.
-- **Detection rules** — Configurable rules for impossible travel, device fingerprinting, rate limiting, and behavioral bot detection.
+You configure everything from the dashboard — choose a provider, enter your credentials, toggle detection rules — and your app picks up the changes automatically. No redeployments required.
 
 ---
 
-## Supported Bot Detection Providers
+## Supported Providers
 
-| Provider | Fields Required | Hosting | Description |
+Radar supports four bot detection providers. You can switch between them at any time from the dashboard.
+
+| Provider | Credentials Required | Hosting | Description |
 |---|---|---|---|
-| **Vercel BotID** | API Key | Vercel only | Invisible CAPTCHA, zero user friction |
+| **Vercel BotID** | API Key | Vercel only | Invisible challenge with zero user friction |
 | **Cloudflare Turnstile** | Site Key, Secret Key | Any | Privacy-focused CAPTCHA alternative |
-| **Google reCAPTCHA** | Site Key, Secret Key | Any | v3 score-based detection |
+| **Google reCAPTCHA** | Site Key, Secret Key | Any | Score-based bot detection (v3) |
 | **hCaptcha** | Site Key, Secret Key | Any | Privacy-first CAPTCHA |
 
-### Configuring a Provider
+---
 
-1. Navigate to **Radar** in the dashboard sidebar
-2. Click **Enable protection** if not already enabled
-3. Go to the **Configuration** tab
-4. Toggle **Bot detection** on
-5. Under **Bot Detection Provider**, select your provider from the dropdown
-6. Enter your provider credentials (API keys, site keys, secret keys)
-7. Click **Save credentials**
+## Enable and Configure Radar in the Dashboard
 
-Credentials are stored securely in the Radar configuration and used by the `@banata-auth/nextjs/bot-protection` package to verify requests at runtime.
+### Turn on Radar
+
+1. Open your project in the dashboard
+2. Navigate to **Radar** in the sidebar
+3. Click **Enable protection**
+4. The status card turns green to confirm your project is protected
+
+### Configure Detection Rules
+
+1. Click the **Configuration** tab
+2. Toggle individual detection rules on or off (see the table below for what each rule does)
+3. Changes save automatically
+
+### Set Up a Bot Detection Provider
+
+1. In the **Configuration** tab, toggle **Bot detection** on
+2. Under **Bot Detection Provider**, select your provider from the dropdown
+3. Enter the required credentials for that provider
+4. Click **Save credentials**
+5. A success toast confirms the save
+
+### Review the Overview Tab
+
+The **Overview** tab shows detection statistics — total detections, allowed requests, challenged requests, and blocked requests — along with a timeline chart. These populate once Radar is handling real traffic.
+
+If a bot provider is configured, an info banner shows which one is active. If none is configured, a warning banner prompts you to set one up.
 
 ---
 
-## Using Bot Protection in Your App
+## Detection Rules
 
-### Option 1: Config-Aware (Recommended)
+Radar provides four detection rules that work alongside your chosen bot provider for defense in depth.
 
-Reads provider credentials from the dashboard configuration automatically:
+| Rule | Default | Description |
+|---|---|---|
+| **Impossible travel detection** | On | Flags sign-ins from geographically impossible locations within short time windows |
+| **Device fingerprinting** | On | Tracks device characteristics to identify suspicious sign-in patterns |
+| **Rate limiting** | Off | Limits authentication attempts from a single IP address or user account |
+| **Bot detection** | Off | Uses behavioral analysis to detect automated sign-in attempts |
+
+When you first enable Radar, impossible travel detection and device fingerprinting are turned on by default. Rate limiting and bot detection are off by default — enable them when you want stricter protection.
+
+---
+
+## Add Bot Protection to Your App
+
+Once you have configured a provider in the dashboard, wire up your Next.js route handler to verify requests at runtime.
+
+### Config-Aware Approach (Recommended)
+
+This approach reads your provider credentials from the dashboard automatically. When you change the provider or credentials in the dashboard, the change takes effect within one minute.
 
 ```typescript
 // app/api/auth/[...all]/route.ts
@@ -77,11 +95,9 @@ export const GET = handler.GET;
 export const POST = withBotProtection(handler.POST, { verify });
 ```
 
-With this approach, changing the provider or credentials in the dashboard takes effect within 1 minute (the default config cache TTL).
+### Direct Provider Approach (Vercel BotID)
 
-### Option 2: Direct Provider (Vercel BotID)
-
-For Vercel deployments with BotID installed directly:
+If you are deployed on Vercel with BotID installed, you can wire it up directly without reading from the dashboard config.
 
 ```typescript
 import { withBotProtection, createBotIdVerifier } from "@banata-auth/nextjs/bot-protection";
@@ -93,239 +109,28 @@ export const GET = handler.GET;
 export const POST = withBotProtection(handler.POST, { verify });
 ```
 
-> For full API reference and all provider details, see the **[Bot Protection](/docs/bot-protection)** documentation.
+> For the full API reference and all provider details, see the **[Bot Protection](/docs/bot-protection)** documentation.
 
 ---
 
-## Detection Rules
+## Combining with Rate Limiting
 
-Radar provides 4 configurable detection rules that work alongside bot providers:
-
-| Rule | Key | Default | Description |
-|---|---|---|---|
-| Impossible travel detection | `blockImpossibleTravel` | `true` | Flag sign-ins from geographically impossible locations within short time windows |
-| Device fingerprinting | `deviceFingerprinting` | `true` | Track device characteristics to identify suspicious sign-in patterns |
-| Rate limiting | `rateLimiting` | `false` | Limit authentication attempts from a single IP address or user account |
-| Bot detection | `botDetection` | `false` | Use behavioral analysis to detect automated sign-in attempts |
-
-### Detection Rule Defaults
-
-When Radar is first enabled, it ships with sensible defaults:
-
-```typescript
-{
-  enabled: false,                   // Radar is disabled by default
-  blockImpossibleTravel: true,      // On by default when Radar is enabled
-  deviceFingerprinting: true,       // On by default when Radar is enabled
-  rateLimiting: false,              // Off by default — enable for stricter protection
-  botDetection: false,              // Off by default — enable for stricter protection
-  botProvider: null,                // No bot provider selected
-  botProviderCredentials: {}        // No credentials configured
-}
-```
-
----
-
-## Radar Configuration Data Model
-
-```typescript
-interface RadarConfig {
-  enabled: boolean;                 // Master toggle for Radar
-  blockImpossibleTravel: boolean;   // Geographic anomaly detection
-  deviceFingerprinting: boolean;    // Device characteristic tracking
-  rateLimiting: boolean;            // Per-IP/per-user rate limits
-  botDetection: boolean;            // Behavioral analysis
-  botProvider: string | null;       // "botid" | "turnstile" | "recaptcha" | "hcaptcha"
-  botProviderCredentials: {
-    apiKey?: string;                // Used by BotID
-    siteKey?: string;               // Used by Turnstile, reCAPTCHA, hCaptcha
-    secretKey?: string;             // Used by Turnstile, reCAPTCHA, hCaptcha
-  };
-}
-```
-
----
-
-## Managing Radar via the Dashboard
-
-1. Navigate to **Radar** in the dashboard sidebar
-
-### Enabling Radar
-
-The Radar page shows a hero card with feature highlights when disabled:
-
-1. Click **Enable protection** to turn on Radar
-2. The hero card switches to a green "Your application is protected" state
-3. Detection rules become configurable in the **Configuration** tab
-
-### Configuring Detection Rules
-
-1. Click the **Configuration** tab
-2. Toggle individual detection rules on or off using the switches
-3. Changes are saved to the backend immediately with optimistic updates
-4. If a save fails, the toggle reverts to its previous state
-
-### Configuring Bot Detection Provider
-
-1. In the **Configuration** tab, scroll to **Bot Detection Provider**
-2. Select a provider from the dropdown (BotID, Turnstile, reCAPTCHA, hCaptcha)
-3. A description and docs link appear for the selected provider
-4. Enter the required credentials (varies by provider)
-5. Click **Save credentials**
-6. A success toast confirms the save
-
-### Overview Tab
-
-The **Overview** tab shows detection statistics (total detections, allowed, challenged, blocked) and a timeline chart. These populate with data once Radar is active in production.
-
-When a bot provider is configured, an info banner shows which provider is active. If no provider is configured, a warning banner prompts you to set one up.
-
----
-
-## API Endpoints
-
-The `configPlugin` exposes 2 Radar endpoints:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/banata/config/radar/get` | POST | Get current Radar configuration (including bot provider and credentials) |
-| `/api/auth/banata/config/radar/save` | POST | Update Radar configuration (partial updates supported) |
-
-All endpoints require **admin authentication**.
-
-### Get Radar Config
-
-```typescript
-// POST /api/auth/banata/config/radar/get
-// Body: {}
-// Response:
-{
-  "enabled": true,
-  "blockImpossibleTravel": true,
-  "deviceFingerprinting": true,
-  "rateLimiting": false,
-  "botDetection": true,
-  "botProvider": "turnstile",
-  "botProviderCredentials": {
-    "siteKey": "0x...",
-    "secretKey": "0x..."
-  }
-}
-```
-
-### Save Radar Config
-
-```typescript
-// POST /api/auth/banata/config/radar/save
-// Body (partial update — only include fields you want to change):
-{
-  "botProvider": "turnstile",
-  "botProviderCredentials": {
-    "siteKey": "0x...",
-    "secretKey": "0x..."
-  }
-}
-// Response: the full merged RadarConfig
-```
-
-The save endpoint uses a **merge pattern** — incoming fields are spread over the existing configuration. Fields not included in the request body are left unchanged.
-
----
-
-## Database Storage
-
-Radar configuration is stored as a **singleton row** in the `radarConfig` table:
-
-```typescript
-// Simplified schema
-defineTable({
-  configJson: v.string(),    // JSON-serialized RadarConfig (including botProvider + credentials)
-  createdAt: v.float64(),
-  updatedAt: v.float64(),
-})
-```
-
----
-
-## Using Radar Programmatically
-
-### Via the Dashboard API Client
-
-```typescript
-import { getRadarConfig, saveRadarConfig } from "@/lib/dashboard-api";
-
-// Get current configuration
-const config = await getRadarConfig();
-console.log(config.enabled);        // false
-console.log(config.botProvider);     // null
-
-// Enable Radar with Cloudflare Turnstile
-const updated = await saveRadarConfig({
-  enabled: true,
-  botDetection: true,
-  botProvider: "turnstile",
-  botProviderCredentials: {
-    siteKey: "0x...",
-    secretKey: "0x...",
-  },
-});
-```
-
----
-
-## Combining Radar with Rate Limiting
-
-Radar's rate limiting detection rule works alongside Banata Auth's built-in rate limiting (configured in `BanataAuthConfig`). The two are complementary:
-
-| Layer | Scope | Description |
-|---|---|---|
-| **Built-in rate limiting** | Per-endpoint | Limits requests per minute to specific auth endpoints (sign-in: 30/min, sign-up: 10/min) |
-| **Radar rate limiting** | Per-IP/per-user | Broader detection that considers patterns across multiple endpoints and time windows |
-
-For maximum protection, enable both.
-
----
-
-## Security Considerations
-
-1. **Defense in depth** — Radar provides multiple layers (bot providers, detection rules, rate limiting). Enable all layers in production.
-2. **Provider flexibility** — Not tied to a single provider. Switch providers through the dashboard without code changes.
-3. **Credentials are server-side only** — Bot provider credentials are stored in the config database and never exposed to the client-side.
-4. **Fail-open design** — If the bot detection provider is unavailable, requests are allowed through by default. Set `failOpen: false` for stricter enforcement.
-5. **Config caching** — The config-aware verifier caches radar config for 1 minute by default. Credential changes take up to 1 minute to take effect.
-6. **Admin-only configuration** — Only admins can enable/disable Radar, change detection rules, or update provider credentials.
+Radar's rate limiting detection rule complements Banata Auth's built-in per-endpoint rate limiting. The built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts per minute), while Radar's rate limiting looks at broader patterns across multiple endpoints and time windows. For maximum protection, enable both.
 
 ---
 
 ## Troubleshooting
 
-### "Bot detected. Access denied." (403)
+**"Bot detected. Access denied." (403)** — The provider flagged the request as automated. Verify that the provider's client-side widget loaded correctly in your layout or form, and check for browser extensions that might interfere with the challenge.
 
-The bot provider flagged the request as automated. This can happen if:
-1. The request is from an automated script without browser context
-2. The provider's client-side widget didn't load (check your layout/form setup)
-3. A browser extension is interfering with the challenge
+**"Radar enabled but no protection"** — Confirm that a bot provider is selected and credentials are saved in the dashboard. Then check that your route handler uses `withBotProtection()` with either `createConfigAwareVerifier()` or a direct verifier. For Vercel BotID, make sure `withBotId()` is in `next.config.ts` and `<BotIdClient>` is in the layout.
 
-### "Detection stats showing all zeros"
-
-Detection statistics populate once Radar is active in production and receives real traffic. In development, all requests pass through without recording statistics.
-
-### "Radar enabled but no protection"
-
-Check that:
-1. A bot provider is selected in the Radar configuration
-2. Credentials are saved for the selected provider
-3. Your route handler uses `withBotProtection()` with either `createConfigAwareVerifier()` or a direct verifier
-4. For Vercel BotID: `withBotId()` is in `next.config.ts` and `<BotIdClient>` is in the layout
-
-### "Credentials not taking effect"
-
-The config-aware verifier caches the radar config for 1 minute by default. Wait up to 1 minute after saving credentials, or set `cacheTtlMs: 0` for immediate effect (not recommended in production).
+**"Credentials not taking effect"** — The config-aware verifier caches the Radar config for one minute by default. Wait up to one minute after saving new credentials for them to take effect.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Bot Protection Package](/docs/bot-protection)** — Full API reference for `@banata-auth/nextjs/bot-protection`
+- **[Bot Protection](/docs/bot-protection)** — Full API reference for `@banata-auth/nextjs/bot-protection`
 - **[Settings](/docs/settings)** — Project-level configuration
 - **[Audit Logs](/docs/audit-logs)** — Track security events and suspicious activity

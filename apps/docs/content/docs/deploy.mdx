@@ -1,20 +1,19 @@
 ---
-title: "Deploying the Self-Hosted Stack"
-description: "Production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for Banata Auth."
-section: "Configuration"
-order: 19
+title: "Deploy to Production"
+description: "Step-by-step guide for deploying your self-hosted Banata Auth stack — Convex backend, Next.js frontend, security hardening, and a pre-launch checklist."
+section: "Platform Operators"
+order: 4
 ---
 
-This guide covers everything you need to deploy Banata Auth to production — environment configuration, security hardening, monitoring, and a comprehensive pre-launch checklist.
+This guide walks you through deploying your **self-hosted** Banata Auth stack to production. It covers the Convex backend, your Next.js frontend, security hardening, and everything you need to go live with confidence.
+
+> **Self-hosted only.** If you are using Banata as a managed service, you do not need to deploy the Convex auth runtime yourself. Create your project and API keys in the dashboard, then integrate with [`@banata-auth/sdk`](/docs/sdk).
 
 ---
 
 ## Deployment Architecture
-This page applies only to the **self-hosted Convex + Next.js** architecture.
 
-If you are using Banata as a managed service, create the project and API keys in the dashboard and integrate over HTTP with [`@banata-auth/sdk`](/docs/sdk). You do not deploy the Convex auth runtime yourself in that model.
-
-In production, Banata Auth has two main components:
+In production, your stack has two main components — a Next.js app (deployed to Vercel, Cloudflare, or your own servers) and a Convex backend that runs the auth engine and database.
 
 ```
 ┌──────────────────────────────────────┐
@@ -43,46 +42,45 @@ In production, Banata Auth has two main components:
 
 ---
 
-## Step 1: Convex Production Deployment
+## Step 1 — Deploy to Convex
 
-### Create a Production Deployment
+Start by pushing your Convex functions and schema to a production deployment.
 
 ```bash
-# Deploy to Convex cloud (production)
 npx convex deploy
 ```
 
-This creates a production deployment with its own database, separate from your development environment.
+This creates an isolated production deployment with its own database, completely separate from your dev environment.
 
-### Set Production Environment Variables
+### Set production environment variables
 
 ```bash
-# Generate a NEW secret for production (different from dev!)
+# Generate a unique auth secret (different from dev!)
 npx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)" --prod
 
-# Set the production URL
+# Your production domain
 npx convex env set SITE_URL "https://myapp.com" --prod
 
-# Set OAuth credentials for production
+# OAuth credentials (use production values)
 npx convex env set GITHUB_CLIENT_ID "prod-client-id" --prod
 npx convex env set GITHUB_CLIENT_SECRET "prod-client-secret" --prod
 npx convex env set GOOGLE_CLIENT_ID "prod-client-id" --prod
 npx convex env set GOOGLE_CLIENT_SECRET "prod-client-secret" --prod
 
-# Set email provider
+# Email provider
 npx convex env set RESEND_API_KEY "re_prod_..." --prod
 ```
 
-> **Critical:** Use a **different** `BETTER_AUTH_SECRET` in production than in development. If compromised, only one environment is affected.
+> **Important:** Always use a **different** `BETTER_AUTH_SECRET` in production than in development. If one is compromised, the other environment stays safe.
 
 ---
 
-## Step 2: Next.js Production Deployment
+## Step 2 — Deploy Next.js
 
 ### Vercel (Recommended)
 
-1. Connect your repo to [Vercel](https://vercel.com)
-2. Set environment variables in the Vercel dashboard:
+1. Connect your repository to [Vercel](https://vercel.com).
+2. Add these environment variables in the Vercel dashboard:
 
 ```bash
 CONVEX_DEPLOYMENT=prod:your-project-name
@@ -99,26 +97,26 @@ vercel --prod
 
 ### Cloudflare Pages
 
-1. Set up a Cloudflare Pages project
-2. Configure the same environment variables
+1. Create a Cloudflare Pages project.
+2. Set the same environment variables listed above.
 3. Build command: `next build`
 4. Output directory: `.next`
 
 ### Self-Hosted
 
 ```bash
-# Build
+# Build the app
 npm run build
 
-# Start (with process manager like PM2)
+# Run with a process manager like PM2
 pm2 start npm --name "myapp" -- start
 ```
 
 ---
 
-## Step 3: Update OAuth Callback URLs
+## Step 3 — Update OAuth Callback URLs
 
-Update every OAuth provider's callback URLs to your production domain:
+Head to each OAuth provider's developer console and update the callback URLs to your production domain.
 
 | Provider | Production Callback URL |
 |---|---|
@@ -126,67 +124,49 @@ Update every OAuth provider's callback URLs to your production domain:
 | GitHub | `https://myapp.com/api/auth/callback/github` |
 | Apple | `https://myapp.com/api/auth/callback/apple` |
 | Microsoft | `https://myapp.com/api/auth/callback/microsoft` |
-| Facebook | `https://myapp.com/api/auth/callback/facebook` |
-| Twitter | `https://myapp.com/api/auth/callback/twitter` |
-| Discord | `https://myapp.com/api/auth/callback/discord` |
 | Others | `https://myapp.com/api/auth/callback/{provider}` |
 
-> **Tip:** Most providers allow multiple callback URLs. Keep the `localhost` URL alongside the production URL so development continues to work.
+> **Tip:** Most providers let you register multiple callback URLs. Keep your `localhost` URL alongside the production one so local development keeps working.
 
 ---
 
 ## Security Hardening
 
+### HTTPS
+
+Production **requires HTTPS**. The `Secure` cookie flag is set automatically, so session cookies are only sent over encrypted connections. Vercel and Cloudflare provide HTTPS out of the box. If you are self-hosting, place your app behind a TLS-terminating reverse proxy.
+
+### Auth Secret
+
+- Generate with `openssl rand -base64 32` (minimum 32 bytes).
+- **Never share** between environments.
+- **Never commit** to source control.
+- Rotating the secret invalidates all active sessions — plan rotations during low-traffic windows.
+
 ### Session Security
 
 | Setting | Development | Production |
 |---|---|---|
-| Cookie `Secure` flag | No (HTTP) | **Yes (HTTPS required)** |
+| Cookie `Secure` flag | No (HTTP) | **Yes (HTTPS)** |
 | Cookie `SameSite` | Lax | **Lax** |
 | Session lifetime | 7 days | 7 days (reduce if needed) |
-| Access token lifetime | 15 minutes | 15 minutes |
-
-### Auth Secret
-
-- Generate with `openssl rand -base64 32` (minimum 32 bytes)
-- **Never share** between environments
-- **Never commit** to source control
-- Rotate periodically (note: this invalidates all existing sessions)
-
-### HTTPS
-
-Production **requires HTTPS**. The `Secure` cookie flag is set automatically in production, meaning:
-- Session cookies are only sent over HTTPS
-- HTTP connections cannot authenticate
-- Vercel and Cloudflare provide HTTPS by default
+| Access token lifetime | 15 min | 15 min |
 
 ### Rate Limiting
 
-Built-in rate limits protect against brute force attacks:
+Built-in rate limits protect against brute-force attacks by default:
 
-| Endpoint | Limit | Action on Exceed |
-|---|---|---|
-| Sign In | 30/minute | 429 Too Many Requests |
-| Sign Up | 10/minute | 429 Too Many Requests |
-| General | 600/minute | 429 Too Many Requests |
+| Endpoint | Limit |
+|---|---|
+| Sign In | 30 / minute |
+| Sign Up | 10 / minute |
+| General | 600 / minute |
 
-These are enforced by default. For additional protection, add rate limiting at the infrastructure level (Cloudflare WAF, Vercel Edge Middleware, etc.).
+Exceeding these returns a `429 Too Many Requests` response. For additional protection, add rate limiting at the infrastructure level (Cloudflare WAF, Vercel Edge Middleware, etc.).
 
 ### Trusted Origins
 
-Limit which origins can make authenticated requests:
-
-```typescript
-function buildConfig(): BanataAuthConfig {
-  return {
-    // ... other config
-    trustedOrigins: [
-      "https://myapp.com",
-      "https://admin.myapp.com",
-    ],
-  };
-}
-```
+Configure trusted origins to restrict which domains can make authenticated requests. Only list the origins your app actually runs on — for example, `https://myapp.com` and `https://admin.myapp.com`.
 
 ---
 
@@ -194,99 +174,34 @@ function buildConfig(): BanataAuthConfig {
 
 ### Convex Dashboard
 
-The [Convex Dashboard](https://dashboard.convex.dev) provides:
+The [Convex Dashboard](https://dashboard.convex.dev) gives you real-time visibility into your auth backend:
 
-- **Function logs** — See every auth operation, including errors
-- **Database explorer** — Browse auth tables (users, sessions, organizations)
-- **Metrics** — Function execution counts, latency, and error rates
-- **Deployment info** — Environment variables, deployment history
+- **Function logs** — Every auth operation, including errors.
+- **Database explorer** — Browse users, sessions, and organizations.
+- **Metrics** — Execution counts, latency, and error rates.
 
 ### Audit Logs
 
-Banata Auth automatically logs 30 auth events. Use these for security monitoring:
+Banata Auth automatically records 30 auth event types. Query them through the SDK to spot suspicious activity:
 
 ```typescript
-// Check for suspicious activity
 const failedLogins = await banata.auditLogs.listEvents({
   action: "session.created",
   limit: 100,
 });
-
-// Monitor for mass operations
-const deletions = await banata.auditLogs.listEvents({
-  action: "user.deleted",
-  limit: 50,
-});
 ```
 
-### Webhook Delivery
+### Webhooks
 
-Monitor webhook delivery via the admin dashboard or SDK:
-
-- **Success rate** — What percentage of webhook deliveries succeed?
-- **Retry count** — Are endpoints consistently failing?
-- **Latency** — How long do endpoints take to respond?
-
-### External Monitoring
-
-Set up webhooks to send events to your monitoring system:
-
-```typescript
-// Create a webhook for critical events
-await banata.webhooks.createEndpoint({
-  url: "https://myapp.com/api/monitoring/auth-events",
-  events: [
-    "user.banned",
-    "user.deleted",
-    "two_factor.disabled",
-    "api_key.created",
-  ],
-});
-```
-
-Pipe these events into **Datadog**, **PagerDuty**, **Slack**, or your alerting system.
+Set up webhook endpoints to pipe auth events into your monitoring stack (Datadog, PagerDuty, Slack, etc.). Monitor delivery success rates and retry counts through the admin dashboard.
 
 ---
 
 ## Scaling
 
-### Convex (Backend)
+Convex handles backend scaling automatically — serverless functions scale from zero to thousands of concurrent executions, the database is sharded and replicated, and there are no cold starts. You do not need to configure anything.
 
-Convex handles scaling automatically:
-- **Serverless functions** — Scale to zero, scale to thousands
-- **Database** — Automatically sharded and replicated
-- **No cold starts** — Functions are always warm
-- **Global deployment** — Data is replicated across regions
-
-You don't need to configure anything for scaling.
-
-### Next.js (Frontend)
-
-For the Next.js app:
-- **Vercel** — Automatic global edge deployment
-- **Self-hosted** — Use a load balancer with multiple instances
-- Session cookies are stateless on the Next.js side (stored in Convex), so any instance can serve any user
-
----
-
-## Backup & Recovery
-
-### Data Backup
-
-Convex provides automatic backups and point-in-time recovery. For additional protection:
-
-1. **Export audit logs regularly** — Use `banata.auditLogs.exportEvents()` to archive
-2. **Export user data** — Periodically export user records for disaster recovery
-3. **Store webhook secrets** — Keep a copy of webhook signing secrets in your secrets manager
-
-### Secret Rotation
-
-To rotate the `BETTER_AUTH_SECRET`:
-
-1. Generate a new secret: `openssl rand -base64 32`
-2. Set it on Convex: `npx convex env set BETTER_AUTH_SECRET "new-secret" --prod`
-3. **All existing sessions are invalidated** — Users must sign in again
-4. Plan rotations during low-traffic periods
+For the Next.js frontend, Vercel provides automatic global edge deployment. If you are self-hosting, use a load balancer across multiple instances. Session cookies are stateless on the Next.js side (all state lives in Convex), so any instance can serve any user.
 
 ---
 
@@ -296,59 +211,58 @@ To rotate the `BETTER_AUTH_SECRET`:
 
 - [ ] `BETTER_AUTH_SECRET` is set to a unique production value
 - [ ] `SITE_URL` matches your production domain (with `https://`)
-- [ ] All `NEXT_PUBLIC_*` variables point to production Convex deployment
-- [ ] OAuth callback URLs updated in all provider dashboards
+- [ ] All `NEXT_PUBLIC_*` variables point to the production Convex deployment
+- [ ] OAuth callback URLs updated in every provider dashboard
 - [ ] Email provider API key is set and sending works
-- [ ] Passkey `rpId` and `origin` match production domain
+- [ ] Passkey `rpId` and `origin` match your production domain
 
 ### Security
 
 - [ ] HTTPS is enabled (required for secure cookies)
 - [ ] `BETTER_AUTH_SECRET` is different from development
-- [ ] No development/test credentials in production
+- [ ] No development or test credentials in production
 - [ ] `.env.local` is in `.gitignore`
-- [ ] Trusted origins are configured (if needed)
-- [ ] Rate limiting is enabled (default — don't disable)
+- [ ] Trusted origins are configured
+- [ ] Rate limiting is enabled (on by default — do not disable)
 
-### Auth Methods
+### Auth Flows
 
-- [ ] Email/password sign-up flow works end-to-end
-- [ ] Email verification emails are received
-- [ ] Password reset emails are received
+- [ ] Email/password sign-up works end-to-end
+- [ ] Verification and password-reset emails are received
 - [ ] Social OAuth flows complete successfully
 - [ ] MFA setup and verification works (if enabled)
-- [ ] Organization creation and invitation flows work (if enabled)
+- [ ] Organization creation and invitations work (if enabled)
 
 ### Monitoring
 
-- [ ] Convex dashboard accessible
-- [ ] Audit logs are being recorded
+- [ ] Convex dashboard is accessible
+- [ ] Audit logs are recording events
 - [ ] Webhook endpoints are registered and receiving events
 - [ ] Error alerting is configured
 
 ### Compliance
 
 - [ ] Audit logging is active (always-on by default)
-- [ ] Data retention policy defined
-- [ ] Privacy policy updated to reflect auth data collection
-- [ ] Cookie consent banner added (if required by jurisdiction)
+- [ ] Data retention policy is defined
+- [ ] Privacy policy reflects auth data collection
+- [ ] Cookie consent banner is added (if required by jurisdiction)
 
 ---
 
 ## Post-Launch
 
-After launching:
+Once you are live:
 
-1. **Monitor the first 24 hours** — Watch Convex function logs for errors
-2. **Check webhook deliveries** — Ensure all endpoints are receiving events
-3. **Review audit logs** — Confirm events are being logged correctly
-4. **Test sign-up flow** — Create a test account through the production flow
-5. **Set up alerts** — Configure notifications for failed sign-ins, user bans, and system errors
+1. **Monitor the first 24 hours** — Watch Convex function logs for unexpected errors.
+2. **Verify webhook deliveries** — Confirm all endpoints are receiving events.
+3. **Test the production sign-up flow** — Create a real account through the live app.
+4. **Set up alerts** — Configure notifications for failed sign-ins, user bans, and system errors.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Environment Variables](/docs/env-vars)** — Complete variable reference
-- **[Webhooks](/docs/webhooks)** — Set up event monitoring
-- **[Audit Logs](/docs/audit-logs)** — Configure compliance logging
+- **[Environment Variables](/docs/env-vars)** — Full reference for every variable your deployment uses.
+- **[Webhooks](/docs/webhooks)** — Set up real-time event delivery to your systems.
+- **[Audit Logs](/docs/audit-logs)** — Configure compliance and security logging.
+- **[Rate Limiting](/docs/rate-limiting)** — Customize rate-limit thresholds for your use case.

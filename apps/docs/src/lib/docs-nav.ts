@@ -62,8 +62,8 @@ export const docsNav: DocNavSection[] = [
 			{ slug: "domains", title: "Domains" },
 			{ slug: "redirects", title: "Redirects" },
 			{ slug: "account", title: "Account Management" },
-			{ slug: "radar", title: "Radar (Dashboard Feature)" },
-			{ slug: "bot-protection", title: "Bot Protection SDK (Next.js)" },
+			{ slug: "radar", title: "Radar" },
+			{ slug: "bot-protection", title: "Bot Protection" },
 			{ slug: "addons", title: "Add-ons" },
 		],
 	},
@@ -78,11 +78,12 @@ export const docsNav: DocNavSection[] = [
 	{
 		section: "Platform Operators",
 		items: [
-			{ slug: "convex", title: "@banata-auth/convex" },
-			{ slug: "shared", title: "@banata-auth/shared" },
-			{ slug: "env-vars", title: "Self-Hosted Environment Variables" },
-			{ slug: "deploy", title: "Deploying the Self-Hosted Stack" },
+			{ slug: "convex", title: "Convex Integration" },
+			{ slug: "shared", title: "Shared Package" },
+			{ slug: "env-vars", title: "Environment Variables" },
+			{ slug: "deploy", title: "Deploy to Production" },
 			{ slug: "self-hosting", title: "Self-Hosting" },
+			{ slug: "hosted-ui", title: "Hosted Sign-In" },
 		],
 	},
 ];

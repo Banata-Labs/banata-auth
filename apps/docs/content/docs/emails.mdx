@@ -1,236 +1,108 @@
 ---
 title: "Emails"
-description: "Configure email providers, manage transactional email types, and monitor email delivery events in the Banata Auth dashboard."
-section: "Infrastructure"
-order: 15
+description: "Configure email providers and control which transactional emails Banata sends to your users."
+section: "Operate Your Project"
+order: 1
 ---
 
-The **Emails** section of the Banata Auth dashboard lets you configure email delivery providers, control which transactional emails are sent to your users, and monitor email events. It is the default delivery surface for Banata Auth. Your frontend triggers auth flows, but Banata sends the actual emails using the provider, branding, and templates configured here unless you explicitly override delivery in code.
-
----
-
-## Email Sub-Pages
-
-| Page | Path | Description |
-|---|---|---|
-| **Events** | `/emails/events` | Monitor email delivery, opens, and bounces |
-| **Providers** | `/emails/providers` | Configure third-party email delivery services |
-| **Configuration** | `/emails/configuration` | Toggle individual email types on or off |
-
-Navigating to `/emails` automatically redirects to `/emails/events`.
+Banata handles transactional email delivery for your authentication flows. You configure a provider, choose which email types to send, and Banata takes care of the rest — delivering magic links, verification emails, password resets, and more through the provider you selected.
 
 ---
 
 ## Email Providers
 
-Configure which third-party email delivery provider handles transactional emails for your Banata Auth instance. Five providers are supported out of the box:
+Banata supports five email delivery providers out of the box:
 
-| Provider | Key Label | Docs |
-|---|---|---|
-| **Resend** | Resend API Key | [resend.com/api-keys](https://resend.com/api-keys) |
-| **SendGrid** | SendGrid API Key | [app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys) |
-| **Amazon SES** | AWS Access Key ID | [AWS SES Documentation](https://docs.aws.amazon.com/ses/latest/dg/send-email.html) |
-| **Mailgun** | Mailgun API Key | [app.mailgun.com/settings/api_security](https://app.mailgun.com/settings/api_security) |
-| **Postmark** | Postmark Server Token | [account.postmarkapp.com/servers](https://account.postmarkapp.com/servers) |
+- **Resend** — [resend.com/api-keys](https://resend.com/api-keys)
+- **SendGrid** — [app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys)
+- **Amazon SES** — [AWS SES Documentation](https://docs.aws.amazon.com/ses/latest/dg/send-email.html)
+- **Mailgun** — [app.mailgun.com/settings/api_security](https://app.mailgun.com/settings/api_security)
+- **Postmark** — [account.postmarkapp.com/servers](https://account.postmarkapp.com/servers)
 
 ### Setting Up a Provider
 
-1. Navigate to **Emails > Providers**
-2. Click **Enable** on your preferred provider
-3. Enter your API key in the input field that appears
-4. Click **Save Key** to persist the credential
-5. The enabled provider becomes the **active** provider automatically
+1. Go to **Emails > Providers** in the dashboard.
+2. Click **Enable** on your preferred provider.
+3. Enter your API key in the field that appears.
+4. Click **Save Key**.
 
-Only one provider can be active at a time. Enabling a new provider makes it the active one. Disabling the active provider sets it to none.
+The provider you enable becomes your **active** provider automatically. Only one provider can be active at a time — enabling a new one switches delivery to it, and disabling the active provider sets it to none.
 
-### Sending Test Emails
+### Send a Test Email
 
-Once a provider is active, click the **Send test email** button in the page header. Enter a recipient email address and click **Send**. The test email is dispatched through your active provider to verify that delivery works correctly.
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/banata/config/email-providers/get` | POST | Get current provider configuration |
-| `/api/auth/banata/config/email-providers/save` | POST | Update provider configuration (partial) |
-| `/api/auth/banata/test-email` | POST | Send a test email via the active provider |
-
-### Provider Config Shape
-
-```typescript
-interface EmailProviderConfig {
-  providers: Record<string, {
-    enabled: boolean;
-    apiKey?: string;
-  }>;
-  activeProvider: string | null;
-}
-```
-
-### Example: Setting Up Resend
-
-```typescript
-import { saveEmailProviderConfig } from "@/lib/dashboard-api";
-
-await saveEmailProviderConfig({
-  providers: {
-    resend: { enabled: true, apiKey: "re_xxxxx..." }
-  },
-  activeProvider: "resend",
-});
-```
+Once your provider is active, click the **Send test email** button at the top of the Providers page. Enter a recipient address and click **Send**. This dispatches a real email through your active provider so you can verify that delivery is working before going live.
 
 ---
 
 ## Email Configuration
 
-Control which categories of transactional emails are sent to your users. Each email type can be independently enabled or disabled.
+You control which types of transactional emails Banata sends. Each type can be toggled on or off independently from **Emails > Configuration** in the dashboard.
 
 ### Authentication Emails
 
-| ID | Name | Description | Default |
-|---|---|---|---|
-| `magic-auth` | Magic Auth | Magic link and OTP authentication emails | Enabled |
-| `user-invitation` | User invitation | Invitation emails sent to new users | Enabled |
-| `email-verification` | Email verification | Verification for new sign-ups and email changes | Enabled |
-| `password-reset` | Password reset | Password reset request emails | Enabled |
+| Email Type | What It Does | Default |
+|---|---|---|
+| **Magic Auth** | Magic link and OTP authentication emails | Enabled |
+| **User Invitation** | Invitation emails sent to new users | Enabled |
+| **Email Verification** | Verification for new sign-ups and email changes | Enabled |
+| **Password Reset** | Password reset request emails | Enabled |
 
 ### Organization Emails
 
-| ID | Name | Description | Default |
-|---|---|---|---|
-| `critical-notifications` | Critical notifications | Important system notifications to org admins | Enabled |
-| `invitations` | Invitations | Organization membership invitation emails | Enabled |
-
-### Toggling an Email Type
-
-Each email type has a Switch toggle. Changes are saved immediately when toggled. The server returns the full updated configuration after each change.
-
-### API Endpoints
-
-| Endpoint | Method | Description |
+| Email Type | What It Does | Default |
 |---|---|---|
-| `/api/auth/banata/config/emails/list` | POST | Get all email toggle states |
-| `/api/auth/banata/config/emails/toggle` | POST | Toggle a specific email type |
+| **Critical Notifications** | Important system notifications to organization admins | Enabled |
+| **Invitations** | Organization membership invitation emails | Enabled |
 
-### Email Toggle Shape
-
-```typescript
-interface EmailToggle {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  category: "auth" | "org";
-}
-```
-
-### Example: Disabling Password Reset Emails
-
-```typescript
-import { toggleEmail } from "@/lib/dashboard-api";
-
-// Returns the full updated EmailToggle[] list
-const updated = await toggleEmail("password-reset", false);
-```
+Changes take effect immediately when you toggle an email type. If you disable a type, Banata will not send those emails even when your application triggers the corresponding auth flow.
 
 ---
 
 ## Email Events
 
-The Events page provides a real-time view of email-related activity in your Banata Auth instance. Events are filtered from the global audit log based on email-related action keywords.
+You can monitor email delivery from the dashboard under **Emails > Events**. This page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password resets, and invitation emails.
 
-### What's Tracked
+Each event shows the action type, the recipient address, and when it occurred.
 
-Events matching these keywords are displayed:
-
-- `email` — General email events
-- `verification` — Email verification sends and confirmations
-- `magic-link` — Magic link delivery
-- `otp` — One-time password emails
-- `password-reset` — Password reset emails
-- `invitation` — Invitation emails
-
-### Event Table Columns
-
-| Column | Description |
-|---|---|
-| **Event** | The action type displayed as a badge |
-| **Recipient** | The email address of the recipient |
-| **Time** | Relative timestamp (e.g., "2 hours ago") |
-
-### Empty State
-
-If no email events exist in the audit log, the page shows an empty state with the message: "No email events found in the last 30 days. Events will appear here once emails are sent through your configured provider."
-
-> **Note:** Email events are derived from the audit log. They appear once you have a provider configured and transactional emails are being sent through your auth flows.
+> **Note:** Events appear once you have a provider configured and your auth flows begin sending transactional emails. If no events have been recorded yet, you will see an empty state with a message confirming that events will appear once emails start flowing.
 
 ---
 
-## Data Model
+## SDK Usage
 
-Email configuration is stored in two separate config tables:
-
-### Email Toggles
-
-Stored in the `emailConfig` table as a JSON blob:
-
-```typescript
-defineTable({
-  configJson: v.string(),    // JSON array of EmailToggle objects
-  createdAt: v.float64(),
-  updatedAt: v.float64(),
-})
-```
-
-### Email Provider Config
-
-Stored in the `emailProviderConfig` table as a JSON blob:
-
-```typescript
-defineTable({
-  configJson: v.string(),    // JSON: { providers, activeProvider }
-  createdAt: v.float64(),
-  updatedAt: v.float64(),
-})
-```
-
-> **Note:** API keys are stored in the config JSON. In a production deployment, consider encrypting these values at rest or using a secrets manager.
-
----
-
-## Using Emails Programmatically
+You can also manage email provider configuration programmatically through the Banata SDK:
 
 ```typescript
 import {
-  getEmailConfig,
-  toggleEmail,
   getEmailProviderConfig,
   saveEmailProviderConfig,
 } from "@/lib/dashboard-api";
 
-// List all email toggle states
-const emails = await getEmailConfig();
-console.log(emails.find(e => e.id === "magic-auth")?.enabled); // true
-
-// Disable magic link emails
-const updated = await toggleEmail("magic-auth", false);
-
-// Get provider config
+// Get current provider configuration
 const providers = await getEmailProviderConfig();
 console.log(providers.activeProvider); // "resend"
 
 // Switch to SendGrid
-const newConfig = await saveEmailProviderConfig({
+await saveEmailProviderConfig({
   providers: { sendgrid: { enabled: true, apiKey: "SG.xxx" } },
   activeProvider: "sendgrid",
 });
+```
+
+For toggling email types in code:
+
+```typescript
+import { getEmailConfig, toggleEmail } from "@/lib/dashboard-api";
+
+// List all email toggle states
+const emails = await getEmailConfig();
+
+// Disable magic link emails
+await toggleEmail("magic-auth", false);
 ```
 
 ---
 
 ## What's Next
 
-- **[Notifications](/docs/notifications)** — Configure system notifications
-- **[Domains](/docs/domains)** — Set up custom domains for auth email links
-- **[Settings](/docs/settings)** — Configure project-level settings
+- **[Email Templates](/docs/email-templates)** — Customize the content and branding of the emails Banata sends

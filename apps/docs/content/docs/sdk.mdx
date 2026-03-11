@@ -1,18 +1,11 @@
 ---
 title: "SDK Reference"
-description: "Manage Banata projects, users, organizations, RBAC, and dashboard-backed configuration by code."
+description: "The admin SDK for managing users, organizations, roles, webhooks, and project configuration programmatically."
 section: "Build Your App"
 order: 3
 ---
 
-`@banata-auth/sdk` is the admin and configuration client for Banata.
-
-Use it when your backend needs to:
-
-- manage users, organizations, invitations, SSO, SCIM, and RBAC
-- manage API keys and webhooks
-- update auth, branding, and provider configuration by code
-- keep code-driven configuration and dashboard configuration in sync
+`@banata-auth/sdk` is the admin and configuration client for Banata Auth. Use it when your backend needs to manage Banata resources programmatically — users, organizations, roles, API keys, webhooks, branding, and more.
 
 ```bash
 npm install @banata-auth/sdk
@@ -20,7 +13,9 @@ npm install @banata-auth/sdk
 
 ---
 
-## Initialization
+## Getting Started
+
+Initialize the SDK with your project-scoped API key:
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -31,26 +26,158 @@ const banata = new BanataAuth({
 });
 ```
 
-Start by creating the project and API key in the Banata dashboard. Then use that project-scoped key in the SDK.
+The API key determines which project the SDK operates on. All operations are automatically scoped to that project.
 
 ---
 
-## Dashboard And Code Stay In Sync
+## Resource Managers
 
-Banata is dashboard-first, but configuration can also be updated by code.
+The SDK organizes its functionality into resource managers, each accessed as a property on the `BanataAuth` instance:
 
-There is no separate dashboard config store and SDK config store.
-
-That means you can:
-
-- change auth methods from code
-- update provider credentials from code
-- update branding from code
-- see those same values in the dashboard immediately
+| Manager | Purpose |
+|---|---|
+| `banata.userManagement` | List, create, update, ban, and delete users |
+| `banata.organizations` | Create and manage organizations, members, and invitations |
+| `banata.rbac` | Manage roles, permissions, and role assignments |
+| `banata.sso` | Configure SAML and OIDC SSO connections |
+| `banata.directorySync` | Manage SCIM directory integrations |
+| `banata.auditLogs` | Query and export audit events |
+| `banata.webhooks` | Create, update, and manage webhook endpoints |
+| `banata.emails` | Manage email templates and sending |
+| `banata.vault` | Encrypt and decrypt secrets |
+| `banata.domains` | Domain verification management |
+| `banata.apiKeys` | Create and manage API keys |
+| `banata.configuration` | Update auth methods, branding, and social provider credentials |
+| `banata.portal` | Generate admin portal links |
+| `banata.projects` | List and manage projects |
+| `banata.events` | Poll the event stream |
 
 ---
 
-## Configure Auth Methods By Code
+## User Management
+
+```ts
+// List users (paginated)
+const { data, listMetadata } = await banata.userManagement.listUsers({
+  limit: 20,
+});
+
+// Create a user
+const user = await banata.userManagement.createUser({
+  email: "jane@example.com",
+  password: "securePassword123",
+  name: "Jane Doe",
+  role: "admin",
+});
+
+// Get a specific user
+const user = await banata.userManagement.getUser({ userId: "usr_01..." });
+
+// Update a user
+await banata.userManagement.updateUser({
+  userId: "usr_01...",
+  name: "Jane Smith",
+  metadata: { plan: "pro" },
+});
+
+// Ban / unban a user
+await banata.userManagement.banUser({ userId: "usr_01..." });
+await banata.userManagement.unbanUser({ userId: "usr_01..." });
+
+// Delete a user
+await banata.userManagement.deleteUser({ userId: "usr_01..." });
+```
+
+---
+
+## Organizations
+
+```ts
+// Create an organization
+const org = await banata.organizations.createOrganization({
+  name: "Acme Corp",
+  slug: "acme-corp",
+});
+
+// List organizations
+const { data } = await banata.organizations.listOrganizations({ limit: 20 });
+
+// Get an organization with its members
+const org = await banata.organizations.getOrganization({
+  organizationId: "org_01...",
+});
+
+// Add a member
+await banata.organizations.addMember({
+  organizationId: "org_01...",
+  userId: "usr_01...",
+  role: "super_admin",
+});
+
+// Remove a member
+await banata.organizations.removeMember({
+  organizationId: "org_01...",
+  memberId: "mem_01...",
+});
+
+// Send an invitation
+await banata.organizations.createInvitation({
+  organizationId: "org_01...",
+  email: "bob@example.com",
+  role: "sandbox_viewer",
+});
+```
+
+---
+
+## Roles and Permissions
+
+```ts
+// List all roles
+const roles = await banata.rbac.listRoles();
+
+// Create a custom role
+const role = await banata.rbac.createRole({
+  name: "HR Admin",
+  slug: "hr_admin",
+  permissions: ["employee.read", "employee.manage", "leave.approve"],
+});
+
+// Update a role's permissions
+await banata.rbac.updateRole({
+  id: role.id,
+  permissions: ["employee.read", "employee.manage", "leave.approve", "payroll.read"],
+});
+
+// Create a custom permission
+await banata.rbac.createPermission({
+  name: "Approve Leave",
+  slug: "leave.approve",
+  description: "Can approve employee leave requests",
+});
+
+// Assign a role to a user in an organization
+await banata.rbac.assignRole({
+  organizationId: "org_01...",
+  userId: "usr_01...",
+  role: "hr_admin",
+});
+
+// Check if a user has a permission
+const allowed = await banata.rbac.checkPermission({
+  userId: "usr_01...",
+  permission: { resource: "leave", action: "approve" },
+  organizationId: "org_01...",
+});
+```
+
+---
+
+## Configuration
+
+The SDK can update the same project configuration that the dashboard manages:
+
+### Auth Methods
 
 ```ts
 await banata.configuration.saveDashboardConfig({
@@ -69,11 +196,7 @@ await banata.configuration.saveDashboardConfig({
 });
 ```
 
-This updates the same project config the dashboard reads under **Authentication**.
-
----
-
-## Configure Branding By Code
+### Branding
 
 ```ts
 await banata.configuration.saveBrandingConfig({
@@ -85,9 +208,7 @@ await banata.configuration.saveBrandingConfig({
 });
 ```
 
----
-
-## Configure Social Providers By Code
+### Social Provider Credentials
 
 ```ts
 await banata.configuration.saveSocialProviderCredential({
@@ -98,42 +219,90 @@ await banata.configuration.saveSocialProviderCredential({
 });
 ```
 
-That writes to the same provider configuration surfaced in the dashboard.
+Changes made through the SDK are reflected in the dashboard immediately, and vice versa.
 
 ---
 
-## Example Admin Workflow
+## Webhooks
 
 ```ts
-const role = await banata.rbac.createRole({
-  name: "HR Admin",
-  slug: "hr_admin",
-  permissions: ["employee.read", "employee.manage", "leave.approve"],
-});
-
-const users = await banata.users.listUsers({ limit: 20 });
-
+// Create a webhook endpoint
 const webhook = await banata.webhooks.createEndpoint({
   url: "https://example.com/api/webhooks",
-  eventTypes: ["user.created"],
+  eventTypes: ["user.created", "organization.created"],
+});
+
+// List endpoints
+const endpoints = await banata.webhooks.listEndpoints();
+
+// Update an endpoint
+await banata.webhooks.updateEndpoint({
+  id: webhook.id,
+  eventTypes: ["user.created", "user.updated", "organization.created"],
+});
+
+// Delete an endpoint
+await banata.webhooks.deleteEndpoint({ id: webhook.id });
+```
+
+---
+
+## Audit Logs
+
+```ts
+// List recent audit events
+const events = await banata.auditLogs.listEvents({ limit: 50 });
+
+// Create a custom audit event
+await banata.auditLogs.createEvent({
+  action: "document.published",
+  actor: { type: "user", id: "usr_01..." },
+  targets: [{ type: "document", id: "doc_01..." }],
+  metadata: { title: "Q4 Report" },
+});
+
+// Export audit logs
+const exported = await banata.auditLogs.exportEvents({
+  startDate: "2025-01-01",
+  endDate: "2025-03-01",
 });
 ```
 
 ---
 
-## Scope Rules
+## Error Handling
 
-- the project-scoped API key is the normal scope boundary
-- routine SDK calls should not require you to pass `projectId`
-- one project's key should not be able to read or mutate another project's data
+The SDK throws typed errors from `@banata-auth/shared`:
 
-If you are building a customer app, prefer letting the API key determine scope.
+```ts
+import { AuthenticationError, NotFoundError, RateLimitError } from "@banata-auth/shared";
+
+try {
+  await banata.userManagement.getUser({ userId: "invalid" });
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    console.log("User not found");
+  } else if (error instanceof RateLimitError) {
+    console.log("Too many requests, try again later");
+  }
+}
+```
+
+| Error Class | HTTP Status | When it occurs |
+|---|---|---|
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `ForbiddenError` | 403 | Insufficient permissions |
+| `NotFoundError` | 404 | Resource doesn't exist |
+| `ConflictError` | 409 | Duplicate resource (e.g., email already registered) |
+| `ValidationError` | 422 | Invalid input data |
+| `RateLimitError` | 429 | Too many requests |
+| `InternalError` | 500 | Server error |
 
 ---
 
-## Related Guides
+## Next Steps
 
-- [Quick Start](/docs/quickstart)
-- [API Keys](/docs/api-keys)
-- [Next.js](/docs/nextjs)
-- [Projects](/docs/projects-environments)
+- [API Keys](/docs/api-keys) — Creating and managing API keys
+- [Organizations](/docs/organizations-overview) — Multi-tenant workspaces
+- [Roles & Permissions](/docs/roles-permissions) — Access control
+- [Webhooks](/docs/webhooks) — Event-driven integrations

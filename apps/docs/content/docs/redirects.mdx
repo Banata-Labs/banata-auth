@@ -1,229 +1,110 @@
 ---
 title: "Redirects"
-description: "Configure redirect URIs, sign-in/sign-out endpoints, and Admin Portal callback URLs for authentication flows."
-section: "Configuration"
-order: 21
+description: "Control where users are sent after sign-in, sign-out, email verification, password reset, and Admin Portal operations."
+section: "Operate Your Project"
+order: 8
 ---
 
-Banata Auth uses **redirect configuration** to control where users are sent during authentication flows — after sign-in, sign-out, email verification, password reset, and Admin Portal operations. All redirect URIs are stored in the backend and managed through the dashboard.
+Redirects control where your users end up after completing authentication flows. When someone signs in, signs out, resets their password, or finishes an Admin Portal setup step, Banata Auth checks your redirect configuration and sends them to the right place.
 
----
-
-## How Redirects Work
-
-```
-1. User triggers an auth flow (sign-in, sign-out, password reset, etc.)
-2. Banata Auth checks the redirect configuration for the relevant URI
-3. User is redirected to the configured URL after the flow completes
-4. If no redirect is configured, the flow uses sensible defaults
-```
-
-Redirect configuration is stored as a **single JSON document** in the backend. This makes it easy to update multiple redirect URIs atomically and ensures consistency across all auth flows.
+You manage all redirect settings from the dashboard — no code changes required.
 
 ---
 
-## Redirect Settings
+## Application Redirects
 
-### Application Redirects
+These settings govern the core authentication experience for your end users.
 
-| Key | Title | Type | Description |
-|---|---|---|---|
-| `redirectUris` | Redirect URIs | **Multi-value** | Where users are redirected when they sign in. Supports multiple URIs for different clients. |
-| `appHomepage` | App homepage URL | Single | Link to your app homepage — shown in AuthKit pages and transactional emails |
-| `signInEndpoint` | Sign-in endpoint | Single | An endpoint at your app that redirects to the authorize endpoint |
-| `signOutRedirects` | Sign-out redirect | **Multi-value** | Where users are redirected when they sign out |
-| `externalSignUp` | External sign-up URI | Single | An optional external page where users can sign up |
-| `userInvitation` | User invitation URL | Single | Where to navigate the user from the user invitation email |
-| `passwordReset` | Password reset URL | Single | Where to navigate the user from the password reset email |
-
-### Admin Portal Redirects
-
-| Key | Label | Description |
+| Setting | Description | Multi-value |
 |---|---|---|
-| `logoUri` | Logo URI | Logo shown in the Admin Portal |
-| `ssoSuccess` | SSO success URI | Where to redirect after SSO configuration succeeds |
-| `dirSyncSuccess` | Directory Sync success URI | Where to redirect after Directory Sync setup succeeds |
-| `logStreamsSuccess` | Log Streams success URI | Where to redirect after Log Streams configuration succeeds |
-| `domainVerifySuccess` | Domain Verification success URI | Where to redirect after domain verification succeeds |
+| **Redirect URIs** | Where users are sent after signing in. Add one URI per client or environment (e.g., production, staging). | Yes |
+| **App Homepage URL** | A link to your app's homepage. Shown on AuthKit pages and in transactional emails. | No |
+| **Sign-in Endpoint** | An endpoint in your app that kicks off the authorization flow (redirects to the authorize endpoint). | No |
+| **Sign-out Redirects** | Where users land after signing out. You can configure multiple URIs if you have more than one client. | Yes |
+| **External Sign-up URI** | An optional URL to an external page where new users can create an account. | No |
+| **User Invitation URL** | The page users are taken to when they click a link in an invitation email. | No |
+| **Password Reset URL** | The page users are taken to when they click a link in a password-reset email. | No |
 
 ---
 
-## Redirect Data Model
+## Admin Portal Redirects
 
-The entire redirect configuration is stored as a flat key-value map:
+These settings control where organization admins are sent after completing setup tasks in the Admin Portal.
 
-```typescript
-type RedirectsData = Record<string, string | string[]>;
-```
-
-Single-value fields store a `string`. Multi-value fields (Redirect URIs, Sign-out redirects) store a `string[]`.
-
-Example:
-
-```json
-{
-  "redirectUris": ["https://myapp.com/callback", "https://staging.myapp.com/callback"],
-  "appHomepage": "https://myapp.com",
-  "signInEndpoint": "https://myapp.com/auth/signin",
-  "signOutRedirects": ["https://myapp.com/signed-out"],
-  "externalSignUp": "",
-  "userInvitation": "https://myapp.com/invite",
-  "passwordReset": "https://myapp.com/reset-password",
-  "logoUri": "https://myapp.com/logo.png",
-  "ssoSuccess": "https://myapp.com/admin/sso/success",
-  "dirSyncSuccess": "",
-  "logStreamsSuccess": "",
-  "domainVerifySuccess": ""
-}
-```
+| Setting | Description |
+|---|---|
+| **Logo URI** | URL of the logo displayed inside the Admin Portal. |
+| **SSO Success URI** | Where to redirect after SSO configuration completes successfully. |
+| **Directory Sync Success URI** | Where to redirect after Directory Sync setup completes successfully. |
+| **Log Streams Success URI** | Where to redirect after Log Streams configuration completes successfully. |
+| **Domain Verification Success URI** | Where to redirect after domain verification completes successfully. |
 
 ---
 
-## Managing Redirects via the Dashboard
+## Managing Redirects in the Dashboard
 
-1. Navigate to **Redirects** in the dashboard sidebar
-2. Each redirect setting is displayed as a card
+Open the **Redirects** page from the dashboard sidebar. Every redirect setting is displayed as its own card.
 
-### Editing Single-Value Redirects
+### Single-Value Settings
 
-1. Click **Edit** on any single-value redirect card
-2. Enter the URL in the inline input field
-3. Press **Enter** to save or **Escape** to cancel
-4. Changes are saved to the backend immediately
+1. Click **Edit** on the card you want to change.
+2. Enter the URL in the inline input field.
+3. Press **Enter** to save, or **Escape** to cancel.
 
-### Editing Multi-Value Redirects
+Your change is persisted immediately.
 
-Multi-value fields (Redirect URIs, Sign-out redirects) support multiple URLs:
+### Multi-Value Settings
 
-1. Each URI is displayed as a code block with edit and delete buttons
-2. Click the **pencil icon** to edit an existing URI inline
-3. Click the **X icon** to remove a URI
-4. Click **Add** to add a new URI via an inline input field
-5. Each modification is saved to the backend immediately
+Redirect URIs and Sign-out Redirects support multiple URLs:
 
-### Admin Portal Redirects
+1. Each existing URI is shown as a code block with edit and delete controls.
+2. Click the **pencil icon** to edit an existing URI inline.
+3. Click the **X icon** to remove a URI.
+4. Click **Add** to append a new URI.
 
-1. Click **Edit Admin Portal redirects** to switch all 5 Admin Portal fields to edit mode simultaneously
-2. Update the values as needed
-3. Click **Save** to persist all changes or **Cancel** to revert
+Each addition, edit, or deletion is saved immediately.
 
----
+### Admin Portal Settings
 
-## API Endpoints
-
-The `configPlugin` exposes 2 redirect endpoints:
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/banata/config/redirects/get` | POST | Get the current redirect configuration |
-| `/api/auth/banata/config/redirects/save` | POST | Save the entire redirect configuration |
-
-All endpoints require **admin authentication**.
-
-### Get Redirects
-
-```typescript
-// POST /api/auth/banata/config/redirects/get
-// Body: {}
-// Response: RedirectsData object (or {} if not configured)
-```
-
-### Save Redirects
-
-```typescript
-// POST /api/auth/banata/config/redirects/save
-// Body:
-{
-  "config": {
-    "redirectUris": ["https://myapp.com/callback"],
-    "appHomepage": "https://myapp.com",
-    "signInEndpoint": "https://myapp.com/auth/signin",
-    "signOutRedirects": ["https://myapp.com/signed-out"],
-    "passwordReset": "https://myapp.com/reset-password"
-  }
-}
-```
-
-The save endpoint overwrites the entire configuration document. The dashboard sends the full config object on every save to ensure consistency.
+1. Click **Edit Admin Portal redirects** to unlock all five Admin Portal fields at once.
+2. Update the values you need.
+3. Click **Save** to persist your changes, or **Cancel** to discard them.
 
 ---
 
-## Database Storage
+## Validation Rules
 
-Redirects are stored as a **singleton row** in the `redirectConfig` table in Convex:
+Keep these rules in mind when entering redirect URLs:
 
-```typescript
-// Simplified schema
-defineTable({
-  configJson: v.string(),    // JSON-serialized RedirectsData
-  createdAt: v.float64(),
-  updatedAt: v.float64(),
-})
-```
-
-The entire redirect configuration lives in a single `configJson` string field. This makes atomic updates straightforward — read the blob, merge changes, write it back.
+- **Use HTTPS in production.** HTTP is fine during local development, but production redirect URIs must use HTTPS.
+- **Use absolute URLs.** Every redirect URI must be a fully-qualified URL (e.g., `https://myapp.com/callback`, not `/callback`).
+- **Exact match only.** The URL your client requests must match a configured redirect URI character-for-character, including trailing slashes.
+- **Match your OAuth providers.** If you use social login, make sure the redirect URIs you configure here match what you have registered with each OAuth provider.
 
 ---
 
-## Using Redirects Programmatically
+## Security Best Practices
 
-### Via the Dashboard API Client
-
-```typescript
-import { getRedirects, saveRedirects } from "@/lib/dashboard-api";
-
-// Get current redirect configuration
-const redirects = await getRedirects();
-console.log(redirects.redirectUris);    // ["https://myapp.com/callback"]
-console.log(redirects.appHomepage);     // "https://myapp.com"
-
-// Update a single field (sends the full config)
-const updated = await saveRedirects({
-  ...redirects,
-  appHomepage: "https://newdomain.com",
-});
-```
-
----
-
-## Redirect Validation
-
-When configuring redirects, follow these rules:
-
-1. **Use HTTPS in production** — HTTP redirect URIs are acceptable in development but should never be used in production
-2. **Use absolute URLs** — All redirect URIs must be fully-qualified URLs (e.g., `https://myapp.com/callback`, not `/callback`)
-3. **Match your OAuth configuration** — If using social OAuth providers, ensure the redirect URIs match what's registered with each provider
-4. **Keep multi-value lists minimal** — Only add redirect URIs that are actively used by your clients
-
----
-
-## Security Considerations
-
-1. **Open redirect prevention** — Only redirect to URIs that are explicitly configured. Banata Auth does not allow dynamic redirect targets.
-2. **Admin-only access** — Redirect configuration requires admin authentication.
-3. **No wildcard support** — Each redirect URI must be an exact match. Wildcards are not supported to prevent redirect hijacking.
-4. **HTTPS enforcement** — In production, all redirect URIs should use HTTPS.
+- **No wildcard URIs.** Banata Auth requires every redirect URI to be an exact match. Wildcards are not supported, which prevents redirect-hijacking attacks.
+- **Open-redirect prevention.** Users can only be redirected to URIs you have explicitly configured. Dynamic or user-supplied redirect targets are not allowed.
+- **Admin-only access.** Only authenticated admins can view or modify redirect settings.
+- **Keep your lists lean.** Only add redirect URIs that are actively in use. Remove URIs for decommissioned environments promptly.
 
 ---
 
 ## Troubleshooting
 
-### "Redirect URI mismatch"
+**"Redirect URI mismatch"** — The URL your client is requesting does not match any entry in your Redirect URIs list. Open the Redirects page in the dashboard and verify the URL is present exactly as your client sends it (including any trailing slash).
 
-The URL your client is requesting doesn't match any configured redirect URI. Check the **Redirect URIs** field in the dashboard and ensure the requested URL is in the list (exact match, including trailing slashes).
+**All fields show "Not configured"** — Redirect settings are empty until you save at least one value. Head to the Redirects page and configure the fields your app needs.
 
-### "Not configured" showing for all fields
-
-Redirect configuration is empty until you save at least one value. Navigate to **Redirects** in the dashboard and configure the fields you need.
-
-### "Changes not persisting"
-
-Redirect configuration is saved to the backend on every edit. If changes aren't persisting, check that you have admin privileges and that the Convex backend is running.
+**Changes are not persisting** — Confirm that you are signed in as an admin. If the issue continues, check that your backend is running and reachable.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Domains](/docs/domains)** — Configure custom domains for auth services
-- **[Email & Password](/docs/email-password)** — Authentication flow that uses password reset redirects
-- **[Social OAuth](/docs/social-oauth)** — OAuth flows that use redirect URIs
+- **[Domains](/docs/domains)** — Set up custom domains for your authentication services.
+- **[Email & Password](/docs/email-password)** — Learn about the authentication flow that relies on password-reset redirects.
+- **[Social OAuth](/docs/social-oauth)** — Configure OAuth flows that use redirect URIs.
+- **[Settings](/docs/settings)** — Review other project-level configuration options.

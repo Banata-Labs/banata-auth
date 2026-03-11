@@ -1,100 +1,103 @@
 ---
 title: "Roles & Permissions"
-description: "Super-admin-first RBAC with dynamic custom roles, built-in permissions, and project-scoped permission catalogs."
-section: "Enterprise"
-order: 10
+description: "Define custom roles, create permissions, and control what users can do within organizations."
+section: "Organizations & RBAC"
+order: 2
 ---
 
-Banata Auth uses a **super-admin-first RBAC model** for organizations.
-
-- Every new project is seeded with exactly one visible default role: `super_admin`.
-- Organizations are created explicitly; when an organization is created, its creator is assigned `super_admin`.
-- Customers then create any additional roles and permissions they need.
+Banata uses a **super_admin-first RBAC model**. Every project starts with one default role (`super_admin`) and a set of built-in permissions. From there, you create custom roles and permissions that match your application's needs.
 
 ---
 
-## Role Model
+## The Default Role: super_admin
 
-### Visible default role
+When your project is created, Banata seeds a single role called `super_admin`. This role has full access to every built-in permission and serves as the starting point for your authorization model.
 
-| Role | Purpose |
-|---|---|
-| `super_admin` | Full access across the project and its organizations. |
+Key facts about `super_admin`:
 
-### Reserved role slugs
+- It is automatically assigned to the creator of each new organization.
+- It cannot be deleted or edited.
+- The slug `super_admin` is reserved — you cannot reuse it for a custom role.
 
-The following role slugs are reserved:
-
-- `super_admin`
-
-Custom roles cannot use these reserved slugs.
+Think of `super_admin` as the root account for each organization. You should keep its assignment limited to trusted org owners.
 
 ---
 
 ## Permission Model
 
-Permissions are **project-scoped** and shared by all organizations in that project.
+Permissions in Banata are **project-scoped**. That means the permission catalog you define is shared across all organizations in your project. Individual organizations do not maintain separate permission lists.
 
-Two categories:
+Permissions fall into two categories:
 
-1. **Built-in permissions** (seeded automatically)
-   - examples: `organization.read`, `member.invite`, `role.create`, `api_key.create`, `sandbox.create`, `browser.connect`, `billing.manage`
-2. **Custom permissions** (created by customers)
-   - examples: `document.publish`, `workspace.archive`, `model.deploy`
+### Built-in Permissions
 
-Built-in permissions are protected and cannot be deleted.
+These are seeded automatically when your project is created. They cover core platform operations and cannot be deleted or edited. Examples include:
 
----
+- `organization.read`
+- `member.invite`
+- `role.create`
+- `api_key.create`
 
-## Bootstrap Behavior
+The `super_admin` role is linked to every built-in permission by default.
 
-When a project is created (or default project is ensured):
+### Custom Permissions
 
-1. Built-in permissions are seeded.
-2. `super_admin` role is created (if missing).
-3. `super_admin` is linked to all built-in permissions.
-4. Organizations can then be created explicitly from the dashboard or API.
-5. The creator of each organization is assigned `super_admin` for that organization.
+These are the permissions you create for your own application logic. Use the `resource.action` naming convention to keep things consistent. Examples:
 
----
+- `document.publish`
+- `workspace.archive`
+- `invoice.approve`
+- `report.export`
 
-## Dashboard Management
-
-Use the dashboard in this order:
-
-1. Open `/authorization/permissions`
-2. Create the permission slugs your app will check, for example:
-   - `employee.read`
-   - `employee.manage`
-   - `leave.approve`
-   - `payroll.read`
-3. Open `/authorization/roles`
-4. Create a custom role such as `hr_admin` or `manager`
-5. From the role row, click **Manage permissions**
-6. On `/authorization/permissions?role=<role-slug>`, toggle the permission slugs that role should grant
-7. Save the role-permission assignment
-8. Open the organization member screen and assign that role slug to members
-
-What is editable:
-
-- custom roles can be created, updated, and deleted
-- custom permissions can be created, updated, and deleted
-- custom roles can have permission slugs assigned directly from the permissions screen
-
-What stays protected:
-
-- `super_admin` role cannot be deleted or edited
-- built-in permissions cannot be deleted or edited
-
-Important protections:
-
-- role assignment is organization-scoped
-- role and permission catalogs are project-scoped
-- permission checks should still be enforced on your server for sensitive actions
+You can create, update, and delete custom permissions at any time from the dashboard or the SDK.
 
 ---
 
-## SDK (`@banata-auth/sdk`)
+## Creating Roles and Permissions from the Dashboard
+
+The dashboard gives you a visual way to manage your entire authorization model. Follow these steps:
+
+### Step 1: Create Your Permissions
+
+1. Open your project in the dashboard.
+2. Navigate to **Authorization > Permissions**.
+3. Click **Create Permission**.
+4. Enter a slug using the `resource.action` format (for example, `employee.read`).
+5. Give it a human-readable name and optional description.
+6. Repeat for each permission your app needs.
+
+For example, an HR application might create:
+
+- `employee.read`
+- `employee.manage`
+- `leave.approve`
+- `payroll.read`
+
+### Step 2: Create Your Roles
+
+1. Navigate to **Authorization > Roles**.
+2. Click **Create Role**.
+3. Enter a slug (for example, `hr_manager`), a display name, and an optional description.
+
+### Step 3: Assign Permissions to Roles
+
+1. From the roles list, find the role you just created and click **Manage Permissions**.
+2. You will see the full list of available permissions (both built-in and custom).
+3. Toggle on the permissions that this role should grant.
+4. Save your changes.
+
+### Step 4: Assign Roles to Members
+
+1. Open the organization member screen.
+2. Select a member and assign them the appropriate role slug.
+
+---
+
+## Creating Roles and Permissions via the SDK
+
+You can also manage roles and permissions programmatically using the Banata SDK.
+
+### Initialize the Client
 
 ```typescript
 import { BanataAuth } from "@banata-auth/sdk";
@@ -105,115 +108,131 @@ const banata = new BanataAuth({
 });
 ```
 
-### Roles
+### Manage Roles
 
 ```typescript
+// List all roles in your project
 const roles = await banata.rbac.listRoles();
 
+// Create a new role
 const role = await banata.rbac.createRole({
-  name: "Sandbox Operator",
-  slug: "sandbox_operator",
-  description: "Can manage runtime sandboxes",
-  permissions: ["sandbox.create", "browser.connect"],
+  name: "HR Manager",
+  slug: "hr_manager",
+  description: "Can manage employees and approve leave requests",
+  permissions: ["employee.manage", "leave.approve", "employee.read"],
 });
 
+// Update a role (e.g., add more permissions)
 const updatedRole = await banata.rbac.updateRole({
   id: role.id,
-  permissions: ["sandbox.create", "browser.connect", "browser.launch"],
+  permissions: ["employee.manage", "leave.approve", "employee.read", "payroll.read"],
 });
 
+// Delete a custom role
 await banata.rbac.deleteRole(role.id);
 ```
 
-### Permissions
+### Manage Permissions
 
 ```typescript
+// List all permissions in your project
 const permissions = await banata.rbac.listPermissions();
 
+// Create a new permission
 const permission = await banata.rbac.createPermission({
-  name: "Terminate browser session",
-  slug: "browser.terminate",
-  description: "Allows terminating running browser sessions",
+  name: "Publish Document",
+  slug: "document.publish",
+  description: "Allows publishing draft documents",
 });
 
+// Update a permission
 const updatedPermission = await banata.rbac.updatePermission({
   id: permission.id,
-  name: "Terminate browser",
-  slug: "browser.terminate",
-  description: "Allows terminating running browser sessions",
+  name: "Publish Document",
+  slug: "document.publish",
+  description: "Allows publishing draft documents to the public site",
 });
 
+// Delete a custom permission
 await banata.rbac.deletePermission(permission.id);
 ```
 
-### Assign or Revoke Roles
+---
+
+## Assigning and Revoking Roles
+
+Roles are assigned at the organization level. A user can hold a role within a specific organization.
 
 ```typescript
+// Assign a role to a user within an organization
 await banata.rbac.assignRole({
   organizationId: "org_01...",
   userId: "usr_01...",
-  role: "sandbox_operator",
+  role: "hr_manager",
 });
 
+// Revoke a user's role within an organization
 await banata.rbac.revokeRole({
   organizationId: "org_01...",
   userId: "usr_01...",
-  fallbackRole: "super_admin",
-});
-```
-
-### Permission Checks
-
-Permission checks are project-scoped. You can pass a full slug string or `{ resource, action }`.
-
-```typescript
-const canLaunch = await banata.rbac.checkPermission({
-  projectId: "proj_01...",
-  permission: { resource: "sandbox", action: "create" },
-});
-
-const canOperate = await banata.rbac.checkPermissions({
-  projectId: "proj_01...",
-  permissions: [
-    { resource: "sandbox", action: "create" },
-    { resource: "browser", action: "connect" },
-  ],
-  operator: "all",
+  role: "hr_manager",
 });
 ```
 
 ---
 
-## API Endpoints
+## Permission Checks
 
-Role and permission management endpoints:
+Use permission checks to determine whether a user is allowed to perform a specific action. You can pass the permission as a `{ resource, action }` object.
 
-- `POST /api/auth/banata/config/roles/list`
-- `POST /api/auth/banata/config/roles/create`
-- `POST /api/auth/banata/config/roles/update`
-- `POST /api/auth/banata/config/roles/delete`
-- `POST /api/auth/banata/config/permissions/list`
-- `POST /api/auth/banata/config/permissions/create`
-- `POST /api/auth/banata/config/permissions/update`
-- `POST /api/auth/banata/config/permissions/delete`
+### Check a Single Permission
 
-Role assignment endpoint:
+```typescript
+const canPublish = await banata.rbac.checkPermission({
+  userId: "usr_01...",
+  permission: { resource: "document", action: "publish" },
+  organizationId: "org_01...",
+});
 
-- `POST /api/auth/organization/update-member-role`
+if (canPublish.allowed) {
+  // proceed with the action
+}
+```
+
+### Check Multiple Permissions
+
+Use the `operator` field to require that the user has **all** of the listed permissions:
+
+```typescript
+const canManageHR = await banata.rbac.checkPermissions({
+  userId: "usr_01...",
+  permissions: [
+    { resource: "employee", action: "manage" },
+    { resource: "leave", action: "approve" },
+  ],
+  operator: "all",
+  organizationId: "org_01...",
+});
+```
 
 ---
 
 ## Best Practices
 
-1. Keep `super_admin` limited to trusted org owners.
-2. Prefer capability-based roles (for example `sandbox_operator`, `billing_viewer`) over generic titles.
-3. Keep permissions granular and explicit (`resource.action` style slugs).
-4. Use server-side checks for all sensitive actions.
+1. **Keep `super_admin` limited.** Only assign it to trusted organization owners. Create purpose-built roles for everyone else.
+
+2. **Use capability-based role names.** Names like `hr_manager`, `billing_viewer`, or `content_editor` communicate intent better than generic titles like `admin` or `user`.
+
+3. **Keep permissions granular.** Stick to the `resource.action` slug format. Fine-grained permissions like `invoice.approve` and `invoice.read` give you more flexibility than a broad `invoice.manage`.
+
+4. **Always enforce checks server-side.** Client-side checks are useful for hiding UI elements, but your server (or serverless functions) should be the final authority on whether an action is allowed.
+
+5. **Create permissions before roles.** Permissions are the building blocks. Define your permission catalog first, then compose roles from those permissions.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Organizations](/docs/organizations-overview)**
-- **[Auth Configuration](/docs/auth-configuration)**
-- **[Resource Types](/docs/resource-types)**
+- **[Organizations Overview](/docs/organizations-overview)** — Learn how organizations work and how members are managed.
+- **[API Keys](/docs/api-keys)** — Set up API key authentication for your project.
+- **[Getting Started](/docs/getting-started)** — Return to the setup guide if you haven't integrated Banata yet.

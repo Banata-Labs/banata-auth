@@ -1,40 +1,41 @@
-﻿---
+---
 title: "Account Management"
-description: "Manage your admin profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard."
-section: "Configuration"
-order: 24
+description: "Manage your profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard."
+section: "Operate Your Project"
+order: 9
 ---
 
-The **Account** section lets dashboard administrators manage their own profile, security settings, and active sessions. It is split into two sub-pages: **Profile** and **Security**.
+Your **Account** page is where you manage your own profile and security settings as a dashboard administrator. It is split into two sub-pages:
 
----
+- **Profile** -- Your name, avatar, email, connected social accounts, and account deletion.
+- **Security** -- Your password, two-factor authentication, and active sessions.
 
-## Account Sub-Pages
-
-| Page | Path | Description |
-|---|---|---|
-| **Profile** | `/account/profile` | Name, avatar, email, connected accounts, delete account |
-| **Security** | `/account/security` | Password, two-factor authentication, active sessions |
-
-Navigating to `/account` automatically redirects to `/account/profile`.
+When you navigate to `/account`, you are automatically redirected to the Profile page.
 
 ---
 
 ## Profile
 
-The Profile page manages your personal information and connected accounts.
+The Profile page lets you update your personal information and manage the sign-in methods linked to your account.
 
-### Personal Information
+### Updating Your Name and Avatar
 
-- **Display name** â€” Editable text field (click "Edit" to enter edit mode)
-- **Avatar** â€” Upload an image (max 2MB, stored as a Data URL). Click the upload button on the avatar to change it, or "Remove" to clear it.
-- **Email** â€” Shown with a verified/unverified badge and your role (if set)
+You can change your display name and avatar directly from the dashboard:
 
-Changes are saved via `authClient.updateUser()` from Better Auth.
+1. Click **Edit** next to your name to enter edit mode, then save your changes.
+2. To update your avatar, click the upload button on the avatar image and choose a file (max 2 MB). To remove it, click **Remove**.
 
-### Email Address
+Behind the scenes, these changes call `authClient.updateUser()`.
 
-Change your email by clicking "Change email", entering a new address, and clicking "Send verification". Better Auth sends a verification email to the new address. Your email does not change until you click the verification link.
+### Changing Your Email
+
+To change your email address:
+
+1. Click **Change email** on the Profile page.
+2. Enter your new email address and click **Send verification**.
+3. Check your inbox for a verification email and click the link to confirm.
+
+Your email does not change until you complete the verification step.
 
 ```typescript
 await authClient.changeEmail({
@@ -45,17 +46,15 @@ await authClient.changeEmail({
 
 ### Connected Accounts
 
-Lists all sign-in methods linked to your account:
+The Connected Accounts section shows every sign-in method linked to your account:
 
-- **Email & Password** â€” Shows whether a password credential is set
-- **Social accounts** â€” Each linked OAuth provider (GitHub, Google, etc.) with an "Unlink" button
-- **Link new accounts** â€” Buttons to link GitHub or Google if not already connected
+- **Email & Password** -- Indicates whether you have a password credential set.
+- **Social accounts** -- Each linked OAuth provider (GitHub, Google, etc.) with an **Unlink** button to remove it.
+- **Link new accounts** -- Buttons to connect a GitHub or Google account if you have not already linked one.
 
-Powered by Better Auth's `listAccounts()`, `unlinkAccount()`, and `linkSocial()` methods.
+### Deleting Your Account
 
-### Delete Account
-
-Permanently deletes your account and all associated data. Requires typing `DELETE` to confirm. Triggers `authClient.deleteUser()` which sends a confirmation email before deletion.
+You can permanently delete your account from the bottom of the Profile page. To confirm, type `DELETE` in the confirmation field and submit. A confirmation email is sent before deletion is finalized.
 
 > **Warning:** Account deletion is irreversible. All your data, sessions, and linked accounts will be permanently removed.
 
@@ -63,11 +62,17 @@ Permanently deletes your account and all associated data. Requires typing `DELET
 
 ## Security
 
-The Security page manages authentication credentials and active sessions.
+The Security page is where you manage your authentication credentials and review active sessions.
 
-### Password
+### Changing Your Password
 
-Change your password by providing your current password and a new one (minimum 8 characters). The confirmation field validates that both entries match before enabling the submit button.
+To change your password:
+
+1. Enter your current password.
+2. Enter a new password (minimum 8 characters) and confirm it.
+3. Click **Change password**.
+
+The submit button is disabled until both password fields match.
 
 ```typescript
 await authClient.changePassword({
@@ -77,44 +82,42 @@ await authClient.changePassword({
 });
 ```
 
-### Two-Factor Authentication (TOTP)
+### Setting Up Two-Factor Authentication (TOTP)
 
-TOTP-based two-factor authentication adds an extra layer of security. The setup flow has multiple steps:
+TOTP-based two-factor authentication adds an extra layer of security to your account. Here is the step-by-step setup flow:
 
-**Enabling 2FA:**
+1. Click **Enable two-factor authentication** on the Security page.
+2. Enter your password to confirm your identity.
+3. A TOTP secret is generated. Copy the secret key into your authenticator app (Google Authenticator, Authy, 1Password, etc.).
+4. Enter the 6-digit code from your authenticator app to verify.
+5. Save the backup codes that are displayed after successful verification.
 
-1. Click "Enable two-factor authentication"
-2. Enter your password to confirm identity
-3. A TOTP secret is generated â€” copy the secret key into your authenticator app (Google Authenticator, Authy, 1Password, etc.)
-4. Enter the 6-digit code from your authenticator to verify
-5. Save the backup codes displayed after successful verification
+Once 2FA is enabled, you can:
 
-**When 2FA is enabled, you can:**
+- **Disable 2FA** -- Requires your password for confirmation.
+- **Regenerate backup codes** -- Also requires your password. This generates a fresh set and invalidates the previous codes.
 
-- **Disable 2FA** â€” Requires password confirmation
-- **Regenerate backup codes** â€” Requires password confirmation, generates a new set
+**About backup codes:** These are one-time-use codes for signing in when you lose access to your authenticator app. Copy them and store them somewhere secure. Each code can only be used once.
 
-**Backup codes** are one-time-use codes for signing in when you lose access to your authenticator app. Copy and store them securely. Each code can only be used once.
+### Managing Active Sessions
 
-### Active Sessions
+The Active Sessions section lists every device where you are currently signed in. Each entry shows:
 
-Lists all devices where you are currently signed in, showing:
+- **Browser and OS** -- For example, Chrome on Windows or Safari on macOS.
+- **IP address** -- When available.
+- **Session start date**.
+- **Current session badge** -- Highlights the session belonging to your current browser.
 
-- **Browser and OS** â€” Parsed from the user agent (Chrome, Firefox, Edge, Safari on Windows, macOS, Linux, iOS, Android)
-- **IP address** â€” When available
-- **Session start date**
-- **Current session badge** â€” Highlights which session belongs to your current browser
+You have two actions available:
 
-**Session management actions:**
-
-- **Revoke** â€” End a specific session (not available for the current session)
-- **Sign out other devices** â€” Revoke all sessions except the current one
+- **Revoke** -- End a specific session (not available for your current session).
+- **Sign out other devices** -- Revoke all sessions except the current one.
 
 ---
 
 ## Auth Client Methods
 
-The account pages use the Better Auth client directly. All methods follow the `{ data, error }` response convention.
+If you are building a custom account management UI, the following `authClient` methods are available. All methods return `{ data, error }`.
 
 | Method | Description |
 |---|---|
@@ -156,15 +159,14 @@ const authClient = createAuthClient({
 
 Additional client plugins re-exported from `@banata-auth/react/plugins`:
 
-- `adminClient()` - Typed `authClient.admin.*` helpers for user management and impersonation
-- `multiSessionClient()` â€” Multi-session support
-- `usernameClient()` â€” Username-based authentication
+- `adminClient()` -- Typed `authClient.admin.*` helpers for user management and impersonation.
+- `multiSessionClient()` -- Multi-session support.
+- `usernameClient()` -- Username-based authentication.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Settings](/docs/settings)** â€” Configure project name and team
-- **[Authentication](/docs/email-password)** â€” Set up authentication methods
-- **[Radar & Bot Protection](/docs/radar)** â€” Configure bot detection for your auth endpoints
-
+- **[Settings](/docs/settings)** -- Configure your project name and team.
+- **[Authentication](/docs/email-password)** -- Set up authentication methods for your project.
+- **[Radar & Bot Protection](/docs/radar)** -- Configure bot detection for your auth endpoints.

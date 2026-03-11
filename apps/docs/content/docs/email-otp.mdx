@@ -1,139 +1,59 @@
 ---
 title: "Email OTP"
-description: "Passwordless authentication using one-time passcodes sent via email."
-section: "Authentication"
-order: 22
+description: "Passwordless authentication using a 6-digit code sent to the user's email."
+section: "Configure Authentication"
+order: 5
 ---
 
-Email OTP provides **passwordless authentication** using one-time passcodes. Instead of clicking a link, users receive a **6-digit numeric code** via email and enter it directly in your application. This approach is familiar to most users, works well on mobile devices, and avoids issues with link-based authentication (broken URLs, email client previews consuming tokens, etc.).
+Email OTP lets your users sign in with a **6-digit numeric code** sent to their email instead of a password or a magic link. The user enters their email, receives a code, and types it into your app. That is it -- no passwords to remember, no links to click.
 
----
-
-## How It Works
-
-```
-1. User enters their email address
-2. Client calls authClient.signIn.emailOtp({ email })
-3. Server generates a 6-digit OTP and stores it with an expiry timestamp
-4. Server sends the OTP using the provider and template configured in Banata
-5. User checks their email and enters the 6-digit code in your app
-6. Client calls authClient.signIn.emailOtp({ email, otp })
-7. Server verifies the OTP matches and has not expired
-8. If no user exists with that email, a new user is created
-9. If the user exists, a session is created for the existing account
-10. User is authenticated and redirected
-```
-
-### New Users vs. Existing Users
-
-- **New email** -- A new user account is created automatically. No separate sign-up step is needed.
-- **Existing email** -- The existing user is signed in. Their account data is unchanged.
-- **Linked accounts** -- If the email matches a user who signed up with email/password or social OAuth, they are signed into that existing account.
+This approach works especially well on mobile devices and avoids common issues with link-based authentication such as broken URLs and email clients consuming tokens on preview.
 
 ---
 
-## Configuration
+## Enable Email OTP
 
-Enable email OTP in your `BanataAuthConfig`:
+### From the Dashboard
 
-```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+1. Open the Banata dashboard and select your project.
+2. Go to **Authentication > Methods**.
+3. Toggle **Email OTP** on.
+4. Make sure you have an active email provider configured under **Emails > Providers** (Resend, SendGrid, etc.) so that codes can actually be delivered.
 
-    authMethods: {
-      emailOtp: true,  // Enable email OTP authentication
-    },
+Changes take effect immediately.
 
-    emailOptions: {
-      fromAddress: "MyApp <noreply@myapp.com>",
-    },
-  };
-}
-```
+### From the SDK
 
-### Default Delivery Model
+You can also enable Email OTP programmatically:
 
-By default, Banata sends OTP emails automatically:
+```ts
+import { BanataAuth } from "@banata-auth/sdk";
 
-1. Configure an active provider in **Emails > Providers**
-2. Ensure **Magic Auth** is enabled in **Emails > Configuration**
-3. Customize the `email-otp` template in **Email Templates**
-4. Call `authClient.signIn.emailOtp(...)` from your frontend
+const banata = new BanataAuth({
+  apiKey: process.env.BANATA_API_KEY!,
+  baseUrl: "https://auth.banata.dev",
+});
 
-That is the normal setup. Your frontend starts the OTP flow, but the actual email delivery stays inside Banata.
-
-### Optional Code Override
-
-If you want to send OTP emails through your own code path instead of the dashboard-managed provider, add `email.sendOtp`:
-
-```typescript
-email: {
-  sendOtp: async ({ email, otp }) => {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "MyApp <noreply@myapp.com>",
-        to: email,
-        subject: "Your sign-in code",
-        html: `<p>${otp}</p>`,
-      }),
-    });
+await banata.configuration.saveDashboardConfig({
+  authMethods: {
+    emailOtp: true,
   },
-},
+});
 ```
 
-### Override Callback Parameters
-
-The `sendOtp` override receives:
-
-| Parameter | Type | Description |
-|---|---|---|
-| `email` | `string` | The recipient's email address |
-| `otp` | `string` | The 6-digit one-time passcode |
-
-> **Note:** Like magic links, the OTP override receives `email` (a string) rather than `user` (an object), because the user may not exist yet -- email OTP can create new accounts on first use.
-
----
-
-## OTP Properties
-
-| Property | Value |
-|---|---|
-| Length | **6 digits** |
-| Character set | **0-9** (numeric only) |
-| Expiry | **10 minutes** (600 seconds) |
-| Usage | **Single-use** -- consumed on successful verification |
-
-OTP expiry is defined alongside other token lifetimes in `@banata-auth/shared`:
-
-```typescript
-// @banata-auth/shared/constants.ts
-export const TOKEN_LIFETIMES = {
-  accessToken: 900,      // 15 minutes
-  session: 604800,       // 7 days
-  magicLink: 600,        // 10 minutes
-  otp: 600,              // 10 minutes
-  invitation: 604800,    // 7 days
-};
-```
-
-After expiration, the OTP is no longer valid and the user must request a new one.
+The SDK and dashboard share the same configuration, so a change in one is immediately visible in the other.
 
 ---
 
 ## Client-Side API
 
-### Step 1: Send the OTP
+Email OTP uses a **two-step flow** through a single method. The presence or absence of the `otp` parameter determines which step you are on.
 
-```typescript
+### Step 1 -- Send the Code
+
+Call `authClient.signIn.emailOtp` with just the user's email. Banata generates a 6-digit code and emails it to the user.
+
+```ts
 import { authClient } from "@/lib/auth-client";
 
 const { error } = await authClient.signIn.emailOtp({
@@ -141,30 +61,32 @@ const { error } = await authClient.signIn.emailOtp({
 });
 
 if (error) {
-  // Handle errors:
+  // Possible errors:
   // - "Rate limit exceeded" (429)
   // - "Invalid email" (422)
   console.error(error.message);
 } else {
-  // Show the OTP input form
+  // Code sent -- show the OTP input form
 }
 ```
 
-### Step 2: Verify the OTP
+### Step 2 -- Verify the Code
 
-```typescript
+Call the same method again, this time including the `otp` the user entered. If the code is valid, Banata creates a session and returns the user.
+
+```ts
 const { data, error } = await authClient.signIn.emailOtp({
   email: "user@example.com",
   otp: "123456",
 });
 
 if (error) {
-  // Handle errors:
+  // Possible errors:
   // - "Invalid or expired OTP" (400)
   // - "Too many attempts" (429)
   console.error(error.message);
 } else {
-  // data contains the user and session
+  // Authenticated -- data contains user and session
   console.log(data.user);
   console.log(data.session);
   window.location.href = "/dashboard";
@@ -173,7 +95,9 @@ if (error) {
 
 ---
 
-## Complete OTP Form Example
+## Complete Form Example
+
+Here is a full React component that walks the user through both steps: entering their email, then entering the code.
 
 ```tsx
 "use client";
@@ -181,18 +105,21 @@ if (error) {
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 
-export default function EmailOtpPage() {
+export default function EmailOtpSignIn() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleSendOtp(e: React.FormEvent) {
+  async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const { error } = await authClient.signIn.emailOtp({ email });
 
+    setLoading(false);
     if (error) {
       setError(error.message ?? "Failed to send code");
     } else {
@@ -200,15 +127,14 @@ export default function EmailOtpPage() {
     }
   }
 
-  async function handleVerifyOtp(e: React.FormEvent) {
+  async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const { data, error } = await authClient.signIn.emailOtp({
-      email,
-      otp,
-    });
+    const { data, error } = await authClient.signIn.emailOtp({ email, otp });
 
+    setLoading(false);
     if (error) {
       setError(error.message ?? "Invalid code");
     } else {
@@ -218,11 +144,10 @@ export default function EmailOtpPage() {
 
   if (step === "code") {
     return (
-      <form onSubmit={handleVerifyOtp}>
+      <form onSubmit={handleVerifyCode}>
         <h1>Enter your code</h1>
-        <p>
-          We sent a 6-digit code to <strong>{email}</strong>.
-        </p>
+        <p>We sent a 6-digit code to <strong>{email}</strong>.</p>
+
         <input
           type="text"
           inputMode="numeric"
@@ -236,11 +161,16 @@ export default function EmailOtpPage() {
             textAlign: "center",
             width: "200px",
           }}
+          autoFocus
           required
         />
+
         {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit">Verify</button>
-        <button type="button" onClick={() => setStep("email")}>
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Verifying..." : "Verify"}
+        </button>
+        <button type="button" onClick={() => { setStep("email"); setOtp(""); setError(""); }}>
           Use a different email
         </button>
       </form>
@@ -248,17 +178,22 @@ export default function EmailOtpPage() {
   }
 
   return (
-    <form onSubmit={handleSendOtp}>
+    <form onSubmit={handleSendCode}>
       <h1>Sign in with Email Code</h1>
+
       <input
         type="email"
-        placeholder="your@email.com"
+        placeholder="you@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <button type="submit">Send Code</button>
+
+      <button type="submit" disabled={loading}>
+        {loading ? "Sending..." : "Send Code"}
+      </button>
     </form>
   );
 }
@@ -266,53 +201,56 @@ export default function EmailOtpPage() {
 
 ---
 
-## Email Template Integration
+## How It Works
 
-Email OTP uses the **"magic-auth"** email category in the email configuration system. When you configure email types in the dashboard under **Emails > Configuration**, the "Magic Auth" toggle controls delivery of both magic link and OTP emails.
+Here is the full flow from start to finish:
 
-To use the built-in email template system instead of a custom `sendOtp` callback:
-
-1. Navigate to **Emails > Providers** and configure an active email provider (Resend, SendGrid, etc.)
-2. Ensure the **Magic Auth** email type is enabled under **Emails > Configuration**
-3. The system will use the built-in OTP email template, which includes your app name, the 6-digit code, and an expiry notice
-
-If you provide a custom `sendOtp` callback in your config, it takes precedence over the built-in delivery path.
+1. The user enters their email address in your app.
+2. Your client calls `authClient.signIn.emailOtp({ email })`.
+3. Banata generates a 6-digit numeric code and stores it with a 10-minute expiry.
+4. Banata sends the code to the user's email using the provider configured in your dashboard.
+5. The user opens their email and copies the code.
+6. Your client calls `authClient.signIn.emailOtp({ email, otp })`.
+7. Banata verifies the code matches and has not expired.
+8. If no account exists for that email, Banata creates a new user automatically.
+9. If the account already exists, Banata signs the user into the existing account.
+10. A session is created and returned to your client.
 
 ---
 
-## Rate Limiting
+## OTP Properties
 
-OTP requests are rate-limited to prevent abuse and brute-force attempts:
-
-| Operation | Limit |
+| Property | Value |
 |---|---|
-| Send OTP | 30 requests per minute (per IP) |
-| Verify OTP | 10 attempts per minute (per email) |
+| **Length** | 6 digits |
+| **Character set** | Numeric only (0--9) |
+| **Expiry** | 10 minutes |
+| **Usage** | Single-use -- consumed on successful verification |
+| **Regeneration** | Requesting a new code invalidates any previous code for that email |
 
-If the rate limit is exceeded, a `RateLimitError` (429) is returned. The verify limit is stricter to prevent brute-force guessing of 6-digit codes.
+---
+
+## New Users vs. Existing Users
+
+Email OTP handles both sign-in and sign-up in a single flow:
+
+- **New email** -- A new user account is created automatically when the code is verified. No separate sign-up step is needed.
+- **Existing email** -- The existing user is signed in. Their account data remains unchanged.
+- **Linked accounts** -- If the email matches a user who originally signed up with email/password or social OAuth, they are signed into that same account. Banata links by email address.
 
 ---
 
 ## Combining with Other Methods
 
-Email OTP works alongside other authentication methods. A common pattern is offering email OTP as the primary method:
+Email OTP works alongside any other authentication method. You can enable multiple methods in **Authentication > Methods** and let users choose.
 
-```typescript
-authMethods: {
-  emailPassword: true,   // Traditional sign-in
-  emailOtp: true,         // OTP-based sign-in
-  magicLink: true,        // Link-based sign-in
-  organization: true,     // Organizations
-},
-
-emailOptions: {
-  fromAddress: "MyApp <noreply@myapp.com>",
-},
-```
-
-In your UI:
+A common pattern is offering a toggle between OTP and password sign-in:
 
 ```tsx
+"use client";
+
+import { useState } from "react";
+
 export default function SignInPage() {
   const [mode, setMode] = useState<"otp" | "password">("otp");
 
@@ -323,39 +261,39 @@ export default function SignInPage() {
         <button onClick={() => setMode("password")}>Password</button>
       </div>
 
-      {mode === "otp" ? (
-        <EmailOtpForm />
-      ) : (
-        <PasswordForm />
-      )}
+      {mode === "otp" ? <EmailOtpSignIn /> : <PasswordSignIn />}
     </div>
   );
 }
 ```
 
+You can also combine Email OTP with MFA. For example, a user signs in with an OTP code and then completes a TOTP challenge as a second factor.
+
 ---
 
-## Audit Events
+## Rate Limits
 
-| Event | When |
-|---|---|
-| `otp.sent` | OTP email sent to user |
-| `otp.verified` | OTP successfully verified |
-| `session.created` | Session created after OTP verification |
-| `user.created` | New user created via OTP (first-time sign-in) |
+OTP endpoints are rate-limited to prevent abuse:
 
-See the [Audit Logs](/docs/audit-logs) guide for more details.
+| Operation | Limit | Scope |
+|---|---|---|
+| **Send OTP** | 30 requests per minute | Per IP address |
+| **Verify OTP** | 10 attempts per minute | Per email address |
+
+The verify limit is intentionally stricter. A 6-digit numeric code has 1,000,000 possible values, so limiting verification attempts is critical to prevent brute-force guessing.
+
+When a rate limit is exceeded, the API returns a `429` status with a `"Rate limit exceeded"` message. Consider showing a countdown timer in your UI so users know when they can retry.
 
 ---
 
 ## Security Considerations
 
-1. **Short expiry window** -- OTPs expire after 10 minutes, limiting the window for interception.
-2. **Single-use codes** -- Each OTP is consumed on verification and cannot be reused.
-3. **Rate limiting on verification** -- The verify endpoint has a stricter rate limit (10/min) to prevent brute-force attacks on the 6-digit code space (1,000,000 combinations).
-4. **Email account security** -- Like magic links, OTP security depends on the security of the user's email account. For higher-security applications, combine email OTP with MFA (TOTP).
-5. **No code reuse across requests** -- Each `sendOtp` call generates a new code and invalidates any previously issued code for that email.
-6. **Timing-safe comparison** -- OTP verification uses constant-time comparison to prevent timing attacks.
+1. **Short expiry window** -- Codes expire after 10 minutes, limiting the window for interception.
+2. **Single-use codes** -- Each code is consumed on verification and cannot be reused.
+3. **Strict verification rate limits** -- The 10 attempts/minute cap makes brute-force attacks against the 6-digit code space impractical.
+4. **Automatic invalidation** -- Requesting a new code invalidates any previously issued code for that email, so only the latest code works.
+5. **Timing-safe comparison** -- Verification uses constant-time string comparison to prevent timing attacks.
+6. **Email account dependency** -- Like all email-based authentication, security depends on the user's email account. For higher-security applications, consider pairing Email OTP with [MFA](/docs/mfa) (TOTP) as a second factor.
 
 ---
 
@@ -364,27 +302,30 @@ See the [Audit Logs](/docs/audit-logs) guide for more details.
 ### "Invalid or expired OTP"
 
 The code does not match or has expired. Common causes:
-- User entered the code incorrectly (check for typos)
-- More than 10 minutes passed since the code was sent
-- A newer code was requested, invalidating the previous one
 
-### "OTP email not received"
+- The user mistyped the code (check for typos, especially leading zeros).
+- More than 10 minutes passed since the code was sent.
+- The user requested a new code, which invalidated the previous one.
 
-1. Check **Emails > Providers** for an active provider
-2. Check **Emails > Configuration** and make sure **Magic Auth** is enabled
-3. Check the `email-otp` template in **Email Templates**
-4. If you overrode delivery in code, check your `sendOtp` callback for errors
-5. Check the spam/junk folder
+**Fix:** Ask the user to request a fresh code and enter it promptly.
+
+### OTP email not received
+
+1. Verify you have an active email provider in **Emails > Providers**.
+2. Check that **Magic Auth** is enabled under **Emails > Configuration** (this controls OTP email delivery).
+3. Have the user check their spam or junk folder.
+4. Confirm the `from` address in your email provider is verified and not being blocked.
 
 ### "Rate limit exceeded"
 
-The user has made too many requests. Wait one minute before retrying. If this happens frequently, consider showing a countdown timer in your UI.
+The user has sent too many requests in a short period. Wait one minute before retrying. If this happens frequently for legitimate users, consider adding a visible cooldown timer after sending a code.
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Magic Links](/docs/magic-links)** -- Link-based passwordless authentication
-- **[Passkeys](/docs/passkeys)** -- WebAuthn-based biometric authentication
-- **[Multi-Factor Auth](/docs/mfa)** -- Add TOTP as a second factor
-- **[Email & Password](/docs/email-password)** -- Traditional authentication
+- [Magic Links](/docs/magic-links) -- Link-based passwordless authentication as an alternative to OTP.
+- [Email & Password](/docs/email-password) -- Traditional authentication with email verification.
+- [Passkeys](/docs/passkeys) -- WebAuthn-based biometric and security key authentication.
+- [Multi-Factor Auth](/docs/mfa) -- Add TOTP as a second factor on top of Email OTP.
+- [Auth Configuration](/docs/auth-configuration) -- Manage all authentication methods from one place.

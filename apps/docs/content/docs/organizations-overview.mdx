@@ -1,61 +1,50 @@
 ---
 title: "Organizations"
-description: "Multi-tenant workspaces with members, roles, invitations, and organization switching — the foundation for B2B SaaS."
-section: "Enterprise"
-order: 8
+description: "Multi-tenant workspaces with members, roles, and invitations — the foundation for B2B applications."
+section: "Organizations & RBAC"
+order: 1
 ---
 
-Organizations enable **multi-tenancy** — the ability for users to create and belong to multiple workspaces (teams, companies, projects). This is the foundation for B2B SaaS applications where users collaborate within shared workspaces.
+Organizations give your application **multi-tenancy** — the ability for users to create and belong to multiple workspaces. Whether you call them teams, companies, or projects, organizations are the building block for any B2B SaaS where users collaborate within shared workspaces.
 
 Banata Auth uses an **explicit organization creation model**:
 
-- project bootstrap creates project + RBAC seeds only
-- organizations are created when developers call the create organization endpoint
-- the creator of each organization is assigned `super_admin`
-- role assignment is driven by your project's role catalog
+- Organizations are created when you or your users call the create organization endpoint.
+- The creator is automatically assigned a configurable role (defaults to `super_admin`).
+- Role assignment is driven by your project's role catalog.
 
 ---
 
-## Configuration
+## Enabling Organizations
 
-Enable organizations in your `BanataAuthConfig`:
+### 1. Turn it on in the dashboard
+
+Open your project in the Banata dashboard and navigate to **Authentication > Methods**. Toggle **Organization** to enabled.
+
+### 2. Configure options in your SDK client
+
+Once organizations are enabled in the dashboard, you can fine-tune behavior through the SDK configuration:
 
 ```typescript
-// convex/banataAuth/auth.ts
-function buildConfig(): BanataAuthConfig {
-  return {
-    appName: "My App",
-    siteUrl: process.env.SITE_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+import { createAuthClient } from "@banata-auth/react";
 
-    authMethods: {
-      emailPassword: true,
-      organization: true,   // Enable organizations
-    },
-
-    // Optional: customize organization behavior
-    organizationConfig: {
-      allowUserToCreateOrg: true,             // Users can create orgs
-      creatorRole: "super_admin",            // Role assigned to creator
-      maxOrganizations: 5,                    // Optional org cap per user
-    },
-
-    emailOptions: {
-      fromAddress: "MyApp <noreply@myapp.com>",
-    },
-  };
-}
+const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_AUTH_URL!,
+  // Organization options are configured in the dashboard,
+  // but you can override them in the SDK if needed:
+  plugins: [],
+});
 ```
 
-Invitation emails are dashboard-managed by default. Configure the provider in **Emails > Providers**, customize the `invitation` template in **Email Templates**, and Banata will send invitations automatically. Use `email.sendInvitationEmail` only if you intentionally want to override delivery in code.
+### Configuration Options
 
-### Organization Config Options
+These options are available in the dashboard under **Authentication > Methods > Organization**:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `allowUserToCreateOrg` | `boolean` | `true` | Whether users can create organizations |
 | `creatorRole` | `string` | `"super_admin"` | Role assigned to the organization creator |
-| `maxOrganizations` | `number` | _(unset)_ | Optional maximum organizations a user can create |
+| `maxOrganizations` | `number` | _(unset)_ | Maximum number of organizations a user can create |
 
 ---
 
@@ -89,22 +78,13 @@ interface Member {
 
 ### Invitation
 
-```typescript
-interface Invitation {
-  id: string;              // e.g., "inv_01HXYZ..."
-  email: string;           // Invitee's email
-  organizationId: string;
-  role: string;            // Role to assign on acceptance (e.g. "super_admin" or custom)
-  inviterId: string;       // User who sent the invitation
-  status: "pending" | "accepted" | "expired" | "revoked";
-  expiresAt: string;       // 7 days from creation
-  createdAt: string;
-}
-```
+Invitations track pending membership offers. For the full invitation lifecycle, see the [Invitations](/docs/invitations) guide.
 
 ---
 
 ## Client-Side API
+
+All client-side operations use the `authClient` you set up during installation.
 
 ### Create an Organization
 
@@ -128,33 +108,12 @@ const { data: orgs } = await authClient.organization.list();
 
 ### Set Active Organization
 
-When a user belongs to multiple organizations, they switch between them:
+When a user belongs to multiple organizations, they switch between them. The active organization is stored in the session:
 
 ```typescript
 await authClient.organization.setActive({
   organizationId: "org_01HXYZ...",
 });
-// The active organization is now stored in the session
-```
-
-### Get Active Organization
-
-```tsx
-import { useOrganization } from "@banata-auth/react";
-
-function OrgSwitcher() {
-  const { organization, isLoading } = useOrganization();
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!organization) return <div>No organization selected</div>;
-
-  return (
-    <div>
-      <h2>{organization.name}</h2>
-      <p>Slug: {organization.slug}</p>
-    </div>
-  );
-}
 ```
 
 ### Update an Organization
@@ -185,9 +144,11 @@ await authClient.organization.delete({
 
 ### `useOrganization()`
 
-Returns the current active organization:
+Returns the current active organization and loading state:
 
 ```typescript
+import { useOrganization } from "@banata-auth/react";
+
 const {
   organization,    // Organization | null — the active org
   isLoading,       // boolean — true while fetching
@@ -196,15 +157,17 @@ const {
 
 ### `useBanataAuth()`
 
-The full context includes organization data:
+The full auth context includes organization data alongside user and session:
 
 ```typescript
+import { useBanataAuth } from "@banata-auth/react";
+
 const {
   user,
   session,
-  organization,     // Active organization
+  organization,             // Active organization
   isLoading,
-  setActiveOrganization,  // Function to switch orgs
+  setActiveOrganization,    // Function to switch orgs
 } = useBanataAuth();
 ```
 
@@ -252,106 +215,9 @@ await authClient.organization.removeMember({
 
 ---
 
-## Invitation Management
-
-See the dedicated [Invitations](/docs/invitations) guide for the complete invitation lifecycle.
-
-### Send an Invitation
-
-```typescript
-await authClient.organization.inviteMember({
-  organizationId: "org_01HXYZ...",
-  email: "newuser@example.com",
-  role: "sandbox_viewer",
-});
-// Banata sends the invitation automatically using the configured provider/template
-```
-
-### Accept an Invitation
-
-```typescript
-await authClient.organization.acceptInvitation({
-  invitationId: "inv_01HXYZ...",
-});
-```
-
-### Revoke an Invitation
-
-```typescript
-await authClient.organization.revokeInvitation({
-  invitationId: "inv_01HXYZ...",
-});
-```
-
----
-
-## Server-Side Management (Admin SDK)
-
-Use the SDK to manage organizations from your backend:
-
-```typescript
-import { BanataAuth } from "@banata-auth/sdk";
-
-const banata = new BanataAuth({
-  apiKey: "your-api-key",
-  baseUrl: "https://your-deployment.convex.site",
-});
-
-// Create an organization
-const org = await banata.organizations.createOrganization({
-  name: "Enterprise Corp",
-  slug: "enterprise-corp",
-});
-
-// List all organizations (paginated)
-const { data, listMetadata } = await banata.organizations.listOrganizations({
-  limit: 20,
-});
-
-// Get a specific organization
-const org = await banata.organizations.getOrganization({
-  organizationId: "org_01HXYZ...",
-});
-
-// Update
-await banata.organizations.updateOrganization({
-  organizationId: "org_01HXYZ...",
-  name: "Updated Name",
-});
-
-// Manage members
-const members = await banata.organizations.listMembers({
-  organizationId: "org_01HXYZ...",
-});
-
-await banata.organizations.addMember({
-  organizationId: "org_01HXYZ...",
-  userId: "usr_01HXYZ...",
-  role: "super_admin",
-});
-
-await banata.organizations.removeMember({
-  organizationId: "org_01HXYZ...",
-  memberId: "mem_01HXYZ...",
-});
-
-// Manage invitations
-await banata.organizations.createInvitation({
-  organizationId: "org_01HXYZ...",
-  email: "user@example.com",
-  role: "sandbox_viewer",
-});
-
-await banata.organizations.revokeInvitation({
-  invitationId: "inv_01HXYZ...",
-});
-```
-
----
-
 ## Organization Switcher Component
 
-A common UI pattern is an organization switcher in the navigation:
+A common UI pattern is an organization switcher in your navigation. Here is a minimal example:
 
 ```tsx
 "use client";
@@ -374,7 +240,7 @@ export function OrgSwitcher() {
   async function switchOrg(orgId: string) {
     await authClient.organization.setActive({ organizationId: orgId });
     setOpen(false);
-    window.location.reload(); // Refresh to load new org data
+    window.location.reload(); // Refresh to load new org context
   }
 
   return (
@@ -418,36 +284,95 @@ export function OrgSwitcher() {
 
 ---
 
-## Database Tables
+## Server-Side Management (Admin SDK)
 
-Organizations use these Convex tables:
+You can manage organizations from your backend using the admin SDK. This is useful for admin panels, automated provisioning, or server-side workflows:
 
-| Table | Purpose |
-|---|---|
-| `organization` | Organization records (name, slug, logo, metadata) |
-| `member` | Organization memberships (userId, organizationId, role) |
-| `invitation` | Pending invitations (email, role, status, expiresAt) |
+```typescript
+import { BanataAuth } from "@banata-auth/sdk";
+
+const banata = new BanataAuth({
+  apiKey: "your-api-key",
+  baseUrl: "https://your-deployment.convex.site",
+});
+
+// Create an organization
+const org = await banata.organizations.createOrganization({
+  name: "Enterprise Corp",
+  slug: "enterprise-corp",
+});
+
+// List all organizations (paginated)
+const { data, listMetadata } = await banata.organizations.listOrganizations({
+  limit: 20,
+});
+
+// Get a specific organization
+const details = await banata.organizations.getOrganization({
+  organizationId: "org_01HXYZ...",
+});
+
+// Update an organization
+await banata.organizations.updateOrganization({
+  organizationId: "org_01HXYZ...",
+  name: "Updated Name",
+});
+
+// Manage members
+const members = await banata.organizations.listMembers({
+  organizationId: "org_01HXYZ...",
+});
+
+await banata.organizations.addMember({
+  organizationId: "org_01HXYZ...",
+  userId: "usr_01HXYZ...",
+  role: "super_admin",
+});
+
+await banata.organizations.removeMember({
+  organizationId: "org_01HXYZ...",
+  memberId: "mem_01HXYZ...",
+});
+```
 
 ---
 
-## Audit Events
+## Invitation Management
 
-| Event | When |
-|---|---|
-| `organization.created` | New organization created |
-| `organization.updated` | Organization details updated |
-| `organization.deleted` | Organization deleted |
-| `member.added` | Member added to organization |
-| `member.removed` | Member removed from organization |
-| `member.role_updated` | Member's role changed |
-| `invitation.created` | Invitation sent |
-| `invitation.accepted` | Invitation accepted |
-| `invitation.revoked` | Invitation revoked |
+You can send, accept, and revoke invitations from the client SDK. For the complete invitation lifecycle, email template configuration, and advanced flows, see the dedicated [Invitations](/docs/invitations) guide.
+
+### Send an Invitation
+
+```typescript
+await authClient.organization.inviteMember({
+  organizationId: "org_01HXYZ...",
+  email: "newuser@example.com",
+  role: "sandbox_viewer",
+});
+// Banata sends the invitation email automatically using the provider and template
+// configured in your dashboard under Emails > Providers and Email Templates
+```
+
+### Accept an Invitation
+
+```typescript
+await authClient.organization.acceptInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
+
+### Revoke an Invitation
+
+```typescript
+await authClient.organization.revokeInvitation({
+  invitationId: "inv_01HXYZ...",
+});
+```
 
 ---
 
-## What's Next
+## Next Steps
 
-- **[Invitations](/docs/invitations)** — Complete invitation lifecycle and flows
+- **[Invitations](/docs/invitations)** — Complete invitation lifecycle and email configuration
 - **[Roles & Permissions](/docs/roles-permissions)** — Fine-grained access control within organizations
 - **[Webhooks](/docs/webhooks)** — Get notified about organization events
