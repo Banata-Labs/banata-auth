@@ -1,94 +1,97 @@
 ---
 title: "Project Structure"
-description: "How Banata Auth is organized for dashboard-first usage and for self-hosting."
-section: "Getting Started"
-order: 3
+description: "What you add to your app, what Banata owns, and which files matter for the normal customer integration path."
+section: "Start Here"
+order: 5
 ---
 
-Banata Auth now needs to be read in two layers:
+Banata should be understood in two layers:
 
-1. **Public, dashboard-first surface**
-2. **Self-hosting implementation surface**
+1. **Your app integration**
+2. **The Banata platform**
 
-The first is what most users should integrate with. The second exists for Banata's own dogfooding and for teams that explicitly want to self-host.
+Most customers only need the first layer.
 
 ---
 
-## Public Surface
+## What Lives In Your App
 
-These are the packages that fit a dashboard-first model:
+For the normal integration path, your app only needs a small auth surface:
 
-| Package | Purpose |
+| File or package | Purpose |
 |---|---|
-| `@banata-auth/sdk` | Remote admin API client |
-| `@banata-auth/nextjs` | Next.js proxy and server helpers |
-| `@banata-auth/react` | React provider, hooks, and auth UI |
-| `@banata-auth/shared` | Shared types and errors |
+| `@banata-auth/nextjs` | Route proxy and server auth helpers |
+| `@banata-auth/react` | Sign-in/sign-up UI, provider, and auth hooks |
+| `@banata-auth/sdk` | Programmatic configuration and admin APIs |
+| `src/lib/auth-server.ts` | Server-side Banata binding |
+| `src/lib/auth-client.ts` | Browser client for `/api/auth` |
+| `src/app/api/auth/[...all]/route.ts` | Same-origin auth route in your app |
 
-In this model, your app talks to Banata endpoints over HTTP and Banata owns the auth system of record.
+Your app owns the application shell and the route surface. Banata owns the auth data and the runtime behind that route.
 
 ---
 
-## Self-Hosting Surface
+## What Lives In Banata
 
-`@banata-auth/convex` is the self-hosting kit. It exists so Banata can dogfood the runtime and so advanced users can run the auth engine inside their own Convex deployment.
+Banata owns these concerns per project:
 
-That path requires local backend files in the consumer app:
+- users and sessions
+- social accounts
+- organizations and invitations
+- roles, permissions, and resource types
+- auth methods and provider credentials
+- email templates and delivery configuration
+- project branding and redirect configuration
+- audit logs, webhooks, SSO, and SCIM
+
+---
+
+## Typical App Structure
 
 ```text
-convex/
-├── convex.config.ts
-├── auth.config.ts
-├── authNode.ts
-├── http.ts
-└── banataAuth/
-    ├── convex.config.ts
-    ├── schema.ts
-    ├── auth.ts
-    └── adapter.ts
+src/
+├── app/
+│   ├── api/auth/[...all]/route.ts
+│   ├── sign-in/page.tsx
+│   ├── sign-up/page.tsx
+│   └── page.tsx
+└── lib/
+    ├── auth-client.ts
+    └── auth-server.ts
 ```
 
-If you are self-hosting, use:
+That is the core of the customer integration. Everything else is normal app code.
+
+---
+
+## What You Do Not Add
+
+For the normal Banata integration path, you do **not** add:
+
+- a local auth database schema
+- a local Better Auth runtime
+- a local `convex/banataAuth` runtime inside your product app
+
+Those belong to the Banata platform, not to each customer app.
+
+---
+
+## Self-Hosting Changes Infrastructure, Not The Customer API
+
+If you self-host Banata, you deploy the Banata platform itself. Customer apps still:
+
+1. sign in to a Banata dashboard
+2. create projects
+3. create API keys
+4. connect through the same SDKs and route helpers
+
+The main difference is that the Banata URLs point to your self-hosted deployment instead of Banata's hosted cloud.
+
+---
+
+## Next Steps
 
 - [Quick Start](/docs/quickstart)
-- [Convex Integration](/docs/convex)
+- [Projects](/docs/projects-environments)
+- [Next.js](/docs/nextjs)
 - [Self-Hosting](/docs/self-hosting)
-
----
-
-## Monorepo Layout
-
-```text
-banata-auth/
-├── apps/
-│   ├── dashboard/
-│   ├── example-app/
-│   ├── auth-ui/
-│   ├── admin-portal/
-│   └── docs/
-├── packages/
-│   ├── sdk/
-│   ├── nextjs/
-│   ├── react/
-│   ├── convex/
-│   ├── shared/
-│   └── ui/
-└── tooling/
-```
-
-### What Each App Is For
-
-| App | Purpose |
-|---|---|
-| `apps/dashboard` | Banata admin dashboard |
-| `apps/example-app` | Reference self-hosted integration |
-| `apps/auth-ui` | Auth UI pages |
-| `apps/admin-portal` | End-user admin portal |
-| `apps/docs` | Documentation site |
-
----
-
-## Practical Rule
-
-- If a user only needs Banata as an auth service, point them to the dashboard and SDK.
-- If a user explicitly wants to run auth inside their own Convex deployment, point them to the self-hosting docs and GitHub examples.

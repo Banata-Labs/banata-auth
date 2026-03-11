@@ -1,86 +1,90 @@
 ---
 title: "Introduction"
-description: "Banata Auth is a dashboard-first auth platform with a self-hosted deployment option."
-section: "Getting Started"
+description: "Banata Auth is a project-scoped auth platform where the dashboard and API keys are the starting point."
+section: "Start Here"
 order: 1
 ---
 
-## What Banata Auth Is
+## What Banata Is
 
-Banata Auth is a managed auth platform for:
+Banata Auth is an authentication platform for products that need:
 
-- user management
+- users and sessions
 - organizations
-- SSO and directory sync
-- custom RBAC
-- audit logs
+- custom roles and permissions
+- SSO and SCIM
+- audit logs and webhooks
 - email delivery and templates
 - project-scoped API keys
 
-Banata is the system of record. Your customer data does **not** live in your app database by default. Your app talks to Banata over HTTP and Banata owns the auth runtime, similar to WorkOS or Clerk.
+Banata is the system of record. Your app does not store the primary auth data by default. Your app connects to Banata over HTTP, and Banata owns the auth runtime, configuration, and operational data.
 
 ---
 
 ## The Product Contract
 
-Banata has one primary operating model:
+Banata always starts the same way:
 
-1. Sign in to the Banata dashboard
-2. Create a project
-3. Create a project-scoped API key
-4. Bind your app to that project with the API key
-5. Start auth flows from your frontend through Banata's server-side helpers and SDKs
+1. Sign in to the Banata dashboard.
+2. Create or open a project.
+3. Configure auth methods, providers, emails, redirects, and branding for that project.
+4. Create a project-scoped API key.
+5. Bind your app to that project with the API key.
+6. Start auth flows from your app through Banata's route proxy, SDKs, and UI helpers.
 
-If you skip the dashboard bootstrap step, Banata should not become a usable auth runtime for that app.
+If you skip the dashboard and API key bootstrap, Banata should not become a usable auth runtime for that app.
 
 ---
 
-## Managed Vs Self-Hosted
+## Hosted Vs Self-Hosted
 
-These are not two different product shapes.
+These are deployment choices, not different integration models.
 
 - **Hosted Banata**: you use Banata's hosted dashboard and API.
-- **Self-hosted Banata**: you deploy the Banata platform yourself, but developers still sign in to a Banata dashboard, create a project, create an API key, and use the same SDKs.
+- **Self-hosted Banata**: you deploy the Banata platform yourself, but your developers still sign in to a Banata dashboard, create projects, create API keys, and use the same SDKs.
 
-Self-hosting is a deployment choice, not a different integration model.
+Self-hosting changes where Banata runs. It does not change how customer apps connect to it.
 
 ---
 
-## Recommended Starting Point
+## Read These Docs In Order
 
-For most teams:
+For a normal product integration, read these pages in this order:
 
-- create a project in the dashboard
-- create a project-scoped API key
-- use [`@banata-auth/sdk`](/docs/sdk) for admin and management APIs
-- use [`@banata-auth/nextjs`](/docs/nextjs) and [`@banata-auth/react`](/docs/react) for app-side auth flows
+1. [Quick Start](/docs/quickstart)
+2. [API Keys](/docs/api-keys)
+3. [Projects](/docs/projects-environments)
+4. [Next.js](/docs/nextjs)
+5. [React](/docs/react)
+6. [SDK Reference](/docs/sdk)
 
-Only use [`@banata-auth/convex`](/docs/convex) if you are operating the Banata platform itself.
+If you are operating the Banata platform itself, read the self-hosting material after that.
 
 ---
 
 ## Package Roles
 
-| Package | Primary Role |
+| Package | Role |
 |---|---|
-| `@banata-auth/sdk` | Remote dashboard/admin API client |
-| `@banata-auth/nextjs` | Next.js auth proxy and server helpers |
-| `@banata-auth/react` | React auth client plugins, provider, and UI helpers |
-| `@banata-auth/convex` | Internal/self-host platform runtime package |
+| `@banata-auth/nextjs` | App-side auth proxy and server helpers |
+| `@banata-auth/react` | App-side UI, provider, and auth hooks |
+| `@banata-auth/sdk` | Programmatic project configuration and admin APIs |
+| `@banata-auth/convex` | Platform runtime package for Banata operators |
 | `@banata-auth/shared` | Shared types, errors, and validation |
 
 ---
 
-## How To Read These Docs
+## What Matters First
 
-- **[SDK Reference](/docs/sdk)** is the main Banata integration surface.
-- **[Next.js](/docs/nextjs)** shows how to bind app auth routes to Banata with a server-side API key.
-- **[API Keys](/docs/api-keys)** explains project scoping and key management.
-- **[Self-Hosting](/docs/self-hosting)** is for operators deploying the Banata platform itself.
+- **Projects** are the isolation boundary.
+- **API keys** are how your app binds to a project.
+- **Dashboard config and SDK config are the same underlying config.**
+- **Your app does not own the auth database. Banata does.**
+- **Self-hosting changes infrastructure, not the customer integration model.**
 
 ---
 
-## Important Version Notes
+## Version Notes
 
 - The current Convex-backed platform runtime is tested against `better-auth@1.4.x`.
-- Published `@banata-auth/*@0.1.0` packages were released with broken `workspace:*` internal dependencies. Use `0.1.1+`.
+- Use published `@banata-auth/*` packages from `0.1.1+`.

@@ -1,58 +1,43 @@
 ---
 title: "Hosted Sign-In"
-description: "Use Banata's hosted auth UI while keeping the final session on your own app domain."
-section: "Authentication"
-order: 1
+description: "Reference guide for Banata's hosted auth UI. This is documented, but it is not the primary integration path right now."
+section: "Configure Authentication"
+order: 99
 ---
 
-Hosted sign-in is the default Banata experience.
+Hosted sign-in is available, but it is not the primary Banata integration path right now.
 
-Your app does **not** render the primary sign-in form itself. Instead:
+The main docs path focuses on:
+
+- configuring projects from the dashboard
+- binding apps with project-scoped API keys
+- rendering auth in your own app with `@banata-auth/nextjs` and `@banata-auth/react`
+
+Use hosted sign-in only when you specifically want Banata to render the primary auth surface.
+
+---
+
+## How It Works
+
+In the hosted model:
 
 1. your app links to Banata's hosted UI
 2. Banata authenticates the user on the Banata domain
-3. Banata redirects back to your app's `/auth/callback`
-4. your app finalizes the session cookie on **your** domain
-
-This is the closest Banata flow to WorkOS-style hosted auth.
-
-If you want to build a fully custom UI against Banata's APIs, treat that as an advanced path. The hosted UI is the primary path Banata optimizes for.
-
----
-
-## Required Inputs
-
-Your hosted sign-in URL needs:
-
-- `client_id`
-- `redirect_url`
-
-Example:
-
-```ts
-const url = new URL("/sign-in", process.env.BANATA_HOSTED_UI_URL!);
-url.searchParams.set("client_id", process.env.NEXT_PUBLIC_BANATA_CLIENT_ID!);
-url.searchParams.set("redirect_url", `${process.env.NEXT_PUBLIC_SITE_URL}/`);
-```
-
-`client_id` identifies the project for public config lookup.
-
-Use the **project client ID**, not the dashboard workspace slug. In a fresh dashboard account those are easy to confuse because the workspace name and default project name are different surfaces.
-
-`redirect_url` tells Banata where the user should end up after the hosted flow completes.
+3. Banata redirects back to your app
+4. your app finalizes the session on its own domain
 
 ---
 
 ## What Must Be Configured First
 
-Hosted UI only reflects what the dashboard has already enabled for that project.
+Hosted UI only reflects the configuration already saved for that project.
 
 Before you test it, make sure the project has:
 
 1. at least one enabled auth method
-2. provider credentials for any social method you expect to render
+2. provider credentials for the methods you expect to render
 3. email delivery configured for email-based flows
-4. branding configured if you want the hosted UI to match your project theme
+4. branding configured if you want the hosted pages to match the project
 
 ---
 
@@ -61,53 +46,22 @@ Before you test it, make sure the project has:
 Your app still needs:
 
 1. `/api/auth/[...all]` proxy route
-2. `/auth/callback` page
-3. a server-side project API key
+2. a valid project-scoped API key on the server
+3. the callback handling required by the hosted flow
 
-If your app is missing those pieces, the hosted UI may authenticate successfully on Banata but still fail to create a usable session on your app domain.
-
-See [Quick Start](/docs/quickstart) and [Next.js](/docs/nextjs).
+If your app is missing those pieces, hosted auth may succeed on Banata but still fail to create a usable session in the app.
 
 ---
 
-## Branding
+## Branding And Configuration
 
-Hosted sign-in pulls branding from the same dashboard-backed project config used elsewhere in Banata.
+Hosted UI uses the same project configuration the dashboard and SDK use.
 
 That means:
 
 - dashboard branding changes update the hosted UI
-- SDK branding changes update the hosted UI too
-- there is no separate "hosted UI theme file" to maintain in your app
-
----
-
-## Programmatic Updates
-
-You can update hosted-auth behavior by code with the SDK:
-
-```ts
-import { BanataAuth } from "@banata-auth/sdk";
-
-const banata = new BanataAuth({
-  apiKey: process.env.BANATA_API_KEY!,
-  baseUrl: "https://auth.banata.dev",
-});
-
-await banata.configuration.saveDashboardConfig({
-  authMethods: {
-    emailPassword: true,
-    emailOtp: true,
-    magicLink: true,
-  },
-  emailPassword: {
-    requireEmailVerification: true,
-    autoSignIn: true,
-  },
-});
-```
-
-These updates are visible in the dashboard because the SDK writes to the same project config.
+- SDK configuration writes update the hosted UI
+- there is no separate hosted-auth theme file to maintain
 
 ---
 
@@ -130,16 +84,20 @@ Check:
 
 Banata rate-limits sensitive auth endpoints per project, IP, path, and, for email-based flows, the submitted identifier.
 
-If you are repeatedly testing from one office/shared IP:
+If you are repeatedly testing from one shared IP:
 
 1. wait for the retry window to expire
 2. try again with a fresh email if you are testing sign-up
-3. avoid hammering the same hosted auth form while you are iterating on frontend code
+3. avoid hammering the same hosted auth form while you are iterating
 
-### The hosted page loads but returns the wrong Banata project
+### The hosted page loads but returns the wrong project
 
 Check that `client_id` is the project's client ID from the Banata dashboard, not the workspace slug or workspace name.
 
-### The hosted page does not match my app branding
+---
 
-Update the project branding in the dashboard or through `banata.configuration.saveBrandingConfig(...)`.
+## Current Positioning
+
+This page remains in the docs as a reference because the product supports it.
+
+It is intentionally de-emphasized in the main navigation until the hosted UI path reaches the same quality bar as the primary app-owned UI flow.

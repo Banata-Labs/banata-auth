@@ -1,19 +1,18 @@
 ---
 title: "Next.js"
-description: "Proxy Banata auth routes through your app, keep cookies on your domain, and support hosted sign-in handoff."
-section: "Packages"
-order: 16
+description: "Proxy Banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an API key."
+section: "Build Your App"
+order: 1
 ---
 
-`@banata-auth/nextjs` is the main customer-app package for Next.js.
+`@banata-auth/nextjs` is the main server-side package for customer apps.
 
 Use it to:
 
-- proxy `/api/auth/*` requests to Banata
-- keep the final session cookie on your own domain
-- bind the app to a Banata project with a server-side API key
-- finish hosted sign-in on your app's `/auth/callback`
-- read auth state in server components and server actions
+- proxy `/api/auth/*` through your app
+- keep cookies on your own domain
+- bind the app to one Banata project with a server-side API key
+- read auth state in server components, actions, and route handlers
 
 ```bash
 npm install @banata-auth/nextjs
@@ -27,23 +26,10 @@ npm install @banata-auth/nextjs
 2. Configure auth methods, providers, and emails for that project.
 3. Create a project-scoped API key.
 4. Store the key in your server environment.
-5. Proxy your app's `/api/auth` route to Banata.
-6. Start sign-in from Banata's hosted UI.
+5. Proxy `/api/auth` through your app.
+6. Render sign-in and sign-up UI in your own frontend.
 
 The browser never sees the API key.
-
-If you want a fully custom sign-in UI, that is a secondary integration style. The hosted UI is the primary path this package is designed to support.
-
----
-
-## Entry Points
-
-| Import | What It Provides |
-|---|---|
-| `@banata-auth/nextjs` | `createRouteHandler` |
-| `@banata-auth/nextjs/server` | `createBanataAuthServer` |
-| `@banata-auth/nextjs/client` | `HostedAuthCallback`, `completeHostedAuth`, `usePreloadedAuthQuery` |
-| `@banata-auth/nextjs/middleware` | `banataAuthProxy`, `banataAuthMiddleware` |
 
 ---
 
@@ -65,15 +51,10 @@ export const {
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
   apiKey: process.env.BANATA_API_KEY!,
-  allowedOrigins: [process.env.BANATA_HOSTED_UI_URL!],
 });
 ```
 
-This uses the same project-scoped API key for:
-
-- the auth route proxy
-- token refreshes
-- server-side Convex auth helpers
+This uses the same API key for the auth route, token refreshes, and server-side auth helpers.
 
 ---
 
@@ -86,59 +67,25 @@ import { handler } from "@/lib/auth-server";
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 ```
 
-Export `OPTIONS` when you use Banata's hosted UI. The hosted flow needs cross-origin access to your auth proxy during session handoff.
+Your app should talk to `/api/auth` on its own origin. Do not call the Banata backend URL directly from the browser.
 
 ---
 
-## Hosted Auth Callback
-
-Your app needs a callback page to finish the hosted Banata flow on your own domain:
+## Read Auth State On The Server
 
 ```tsx
-// src/app/auth/callback/page.tsx
-import { HostedAuthCallback } from "@banata-auth/nextjs/client";
+import { redirect } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth-server";
 
-export default function AuthCallbackPage() {
-  return <HostedAuthCallback apiPath="/api/auth" fallbackTo="/sign-in" />;
+export default async function DashboardPage() {
+  const signedIn = await isAuthenticated();
+
+  if (!signedIn) {
+    redirect("/sign-in");
+  }
+
+  return <div>Authenticated dashboard</div>;
 }
-```
-
-This page verifies the one-time handoff token against your own `/api/auth` route and lands the user back inside your app with a session cookie on your domain.
-
----
-
-## Starting Hosted Sign-In
-
-```tsx
-// src/app/sign-in/page.tsx
-function buildHostedSignInUrl() {
-  const url = new URL("/sign-in", process.env.BANATA_HOSTED_UI_URL!);
-  url.searchParams.set("client_id", process.env.NEXT_PUBLIC_BANATA_CLIENT_ID!);
-  url.searchParams.set("redirect_url", `${process.env.NEXT_PUBLIC_SITE_URL}/`);
-  return url.toString();
-}
-
-export default function SignInPage() {
-  return <a href={buildHostedSignInUrl()}>Continue with Banata</a>;
-}
-```
-
----
-
-## Middleware
-
-```ts
-// middleware.ts
-import { banataAuthProxy } from "@banata-auth/nextjs/middleware";
-
-export default banataAuthProxy({
-  publicRoutes: ["/", "/sign-in", "/auth/callback", "/api/webhooks/(.*)"],
-  signInUrl: "/sign-in",
-});
-
-export const config = {
-  matcher: ["/((?!_next|static|favicon.ico|.*\\..*).*)"],
-};
 ```
 
 ---
@@ -151,19 +98,15 @@ NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
 NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
 
 BANATA_API_KEY=sk_test_your_project_key
-BANATA_HOSTED_UI_URL=https://auth-ui.banata.dev
-NEXT_PUBLIC_BANATA_CLIENT_ID=your_project_client_id
 ```
 
 `BANATA_API_KEY` must stay server-side.
-
-`NEXT_PUBLIC_BANATA_CLIENT_ID` must be the Banata **project** client ID. Do not substitute the dashboard workspace slug.
 
 ---
 
 ## Programmatic Configuration
 
-`@banata-auth/nextjs` handles transport and cookies. If you want to change Banata project configuration by code, use the SDK:
+`@banata-auth/nextjs` handles transport and cookies. If you want to change the project's Banata configuration by code, use the SDK:
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -185,44 +128,39 @@ await banata.configuration.saveDashboardConfig({
 });
 ```
 
-That updates the same dashboard-backed project config the hosted UI reads.
+That updates the same project config the dashboard reads.
 
 ---
 
 ## Troubleshooting
 
-### Hosted sign-in loads but methods are missing
-
-The project configuration is incomplete. Check:
-
-1. **Authentication -> Methods**
-2. **Authentication -> Providers**
-3. **Emails** for email-based flows
-
-### Hosted UI resolves the wrong project
-
-Make sure the hosted sign-in URL uses the project `client_id`, not the workspace slug.
-
-### The user authenticates in Banata but not in my app
+### The frontend can render, but auth calls fail
 
 Check:
 
-1. `allowedOrigins` includes your hosted UI origin
-2. `/api/auth/[...all]/route.ts` exports `OPTIONS`
-3. `/auth/callback` exists
-4. the app is using a project-scoped API key
+1. the app is calling `/api/auth`
+2. the project API key is valid
+3. the target Banata project has the required methods enabled
+
+### The app has no session after sign-in
+
+Check:
+
+1. the auth route is mounted inside your app
+2. the app and auth route are on the same origin
+3. `/api/auth/get-session` works in the browser session
 
 ### Do I still need `projectId` or `clientId` in app code?
 
 Normally no.
 
-Project scope should come from the server-side API key. `client_id` is still used in hosted sign-in URLs for public config lookup, but it is not the main project-binding mechanism for your app backend.
+The API key is the main project-binding mechanism for the app backend.
 
 ---
 
 ## Related Guides
 
 - [Quick Start](/docs/quickstart)
-- [Hosted Sign-In](/docs/hosted-ui)
+- [React](/docs/react)
 - [SDK Reference](/docs/sdk)
 - [Self-Hosting](/docs/self-hosting)

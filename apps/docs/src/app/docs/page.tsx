@@ -18,27 +18,30 @@ export const metadata: Metadata = {
 };
 
 const sectionIcons: Record<string, React.ReactNode> = {
-	"Getting Started": <BookOpen className="size-4" />,
-	Authentication: <KeyRound className="size-4" />,
-	Organizations: <Users className="size-4" />,
-	Infrastructure: <Server className="size-4" />,
-	Packages: <Package className="size-4" />,
-	Deployment: <Rocket className="size-4" />,
+	"Start Here": <BookOpen className="size-4" />,
+	"Build Your App": <Package className="size-4" />,
+	"Configure Authentication": <KeyRound className="size-4" />,
+	"Organizations & RBAC": <Users className="size-4" />,
+	"Operate Your Project": <Server className="size-4" />,
+	Enterprise: <Users className="size-4" />,
+	"Platform Operators": <Rocket className="size-4" />,
 };
 
 const sectionDescriptions: Record<string, string> = {
-	"Getting Started":
-		"Choose your integration path: dashboard-first with API keys, or self-hosted on Convex.",
-	Authentication:
-		"Email/password, social OAuth, magic links, and multi-factor authentication.",
-	Organizations:
-		"Multi-tenant B2B patterns with invitations, roles, and permissions.",
-	Infrastructure:
-		"Webhooks, audit logging, and API key management for production apps.",
-	Packages:
-		"Dashboard-first SDK and app helpers, plus separate self-hosted Convex packages.",
-	Deployment:
-		"Environment variables, production deployment, and custom domains.",
+	"Start Here":
+		"Understand the product model, create a project, mint an API key, and connect your first app.",
+	"Build Your App":
+		"Use the app-side packages that proxy auth through your app while Banata stays the system of record.",
+	"Configure Authentication":
+		"Turn on methods, connect providers, and understand each authentication flow.",
+	"Organizations & RBAC":
+		"Set up organizations, invitations, custom roles, permissions, and resource types.",
+	"Operate Your Project":
+		"Run email delivery, webhooks, domains, redirects, settings, and security features in production.",
+	Enterprise:
+		"Configure SSO, SCIM, and encrypted secret storage for enterprise customers.",
+	"Platform Operators":
+		"Deploy and operate the Banata platform itself if you are self-hosting.",
 };
 
 export default function DocsPage() {
@@ -49,9 +52,9 @@ export default function DocsPage() {
 					Documentation
 				</h1>
 				<p className="mt-2 text-muted-foreground text-lg">
-					Start with the dashboard and project-scoped API keys for the managed
-					service path, or use the self-hosted Convex guides if you want to run
-					the auth runtime yourself.
+					Start with the dashboard, a project, and a project-scoped API key. Then
+					connect your app with the client packages and keep all auth data,
+					configuration, and user records inside Banata.
 				</p>
 			</header>
 

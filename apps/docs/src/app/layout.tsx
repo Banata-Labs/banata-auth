@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 		template: "%s - Banata Auth Docs",
 	},
 	description:
-		"Open-source authentication infrastructure. Drop-in WorkOS replacement built on Convex + Next.js.",
+		"Documentation for integrating Banata Auth into your product with projects, API keys, and dashboard-managed auth configuration.",
 	metadataBase: new URL("https://auth-docs.banata.dev"),
 };
 

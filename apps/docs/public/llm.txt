@@ -1,110 +1,22 @@
 # Banata Auth
 
-> Open-source authentication infrastructure — a drop-in WorkOS replacement built on Better Auth, Convex, and Next.js.
+> Project-scoped authentication infrastructure with dashboard-managed configuration, API keys, and app-side integration packages.
 
 ## Overview
 
-Banata Auth is an open-source, self-hostable authentication platform that provides enterprise-grade auth features: user management, organizations, SSO (SAML/OIDC), directory sync (SCIM), RBAC, audit logs, webhooks, API keys, MFA, passkeys, magic links, and more. It is fully type-safe, MIT-licensed, and free forever.
+Banata Auth is an authentication platform for products that want Banata to remain the system of record for auth. Teams create projects in the dashboard, configure authentication there or by code with the SDK, create project-scoped API keys, and connect their apps over HTTP.
 
-## Links
+## Primary Flow
 
-- Documentation: https://auth-docs.banata.dev
-- Dashboard: https://auth.banata.dev
-- Auth UI: https://auth-ui.banata.dev
-- Admin Portal: https://auth-admin.banata.dev
-- GitHub: https://github.com/Banata-Labs/banata-auth
-- npm: @banata-auth/convex, @banata-auth/nextjs, @banata-auth/react, @banata-auth/sdk, @banata-auth/shared
+1. Sign in to the Banata dashboard.
+2. Create or open a project.
+3. Configure auth methods, providers, emails, redirects, and branding.
+4. Create a project-scoped API key.
+5. Connect the app with `@banata-auth/nextjs`, `@banata-auth/react`, and `@banata-auth/sdk`.
 
-## Tech Stack
+## Core Concepts
 
-- Better Auth — TypeScript auth framework (the engine)
-- Convex — Real-time serverless backend (database + functions)
-- Next.js — React framework (frontend + auth proxy)
-- TypeScript — End-to-end type safety
-
-## Packages
-
-### @banata-auth/convex
-The backend auth engine. Runs inside Convex serverless functions. Handles sessions, OAuth, user management, and all auth logic. Includes 15 plugins (audit logs, webhooks, SSO, SCIM, organizations, RBAC, API keys, etc.), 14 database trigger hooks, and a 26-table schema.
-
-### @banata-auth/nextjs
-Next.js integration. Provides a reverse proxy route handler at /api/auth/[...all] that forwards requests to Convex (keeping cookies on your domain), middleware for route protection (banataAuthProxy), and server-side utilities (isAuthenticated, getToken, preloadAuthQuery).
-
-### @banata-auth/react
-React integration. BanataAuthProvider context provider, 4 hooks (useUser, useSession, useOrganization, useBanataAuth), 5 pre-built UI components (SignInForm, SignUpForm, AuthCard, AuthBoundary, SocialButtons), and BanataConvexProvider for JWT token exchange.
-
-### @banata-auth/sdk
-Server-side admin SDK. 14 resource classes for managing users, organizations, SSO connections, directory sync, audit logs, webhooks, portal sessions, vault secrets, domains, RBAC, API keys, emails, and projects. Automatic retries, webhook signature verification, cursor-based pagination.
-
-### @banata-auth/shared
-Foundation package. 87 exports: 21 interfaces (User, Session, Organization, etc.), 16 Zod validation schemas, 8 typed error classes with HTTP status codes, 7 constants (rate limits, token lifetimes), ULID-based ID generator with 22 resource-type prefixes.
-
-## Authentication Methods (12)
-
-1. Email & Password — Traditional signup with email verification
-2. Username & Password — Sign in with username
-3. Social OAuth — Google, GitHub, Apple, Microsoft, Facebook, Twitter, Discord, Spotify, Twitch, LinkedIn
-4. Magic Links — Passwordless email link sign-in
-5. Email OTP — One-time password via email
-6. Two-Factor (TOTP) — Authenticator app with backup codes
-7. Passkeys — WebAuthn biometric/hardware key auth
-8. Anonymous Auth — Start without credentials, link later
-9. Multi-Session — Multiple concurrent sessions
-10. API Keys — Programmatic access with scopes
-11. Bearer Token — Server-to-server auth
-12. Admin Access — Elevated admin operations
-
-## Enterprise Features
-
-- Organizations — Multi-tenant workspaces with members, roles, invitations
-- RBAC — Role-based access control with granular permissions
-- Audit Logs — 30 auto-logged auth events with actor/target tracking
-- Webhooks — HMAC-SHA256 signed event delivery with retries
-- API Keys — Scoped programmatic access
-- SSO — SAML/OIDC single sign-on
-- Directory Sync — SCIM user/group provisioning
-- Admin Portal — Self-serve portal for org IT admins
-- Vault — AES-256-GCM envelope encryption for secrets
-
-## Architecture
-
-```
-Your Next.js App
-├── @banata-auth/react → React hooks & UI
-├── @banata-auth/nextjs → Route handler (reverse proxy) & middleware
-└── /api/auth/[...all] → Proxies to Convex
-         │
-         ▼
-Convex Backend
-├── @banata-auth/convex → Auth engine (Better Auth + plugins)
-└── 26-table database (users, sessions, orgs, audit logs, etc.)
-```
-
-All auth logic runs inside Convex serverless functions. The Next.js route handler acts as a reverse proxy, forwarding auth requests to Convex while keeping session cookies on your domain.
-
-## Quick Start
-
-1. Install packages: `npm install @banata-auth/convex @banata-auth/nextjs @banata-auth/react @banata-auth/shared better-auth @convex-dev/better-auth convex`
-2. Set env vars: BETTER_AUTH_SECRET and SITE_URL on Convex, NEXT_PUBLIC_CONVEX_URL and NEXT_PUBLIC_CONVEX_SITE_URL in .env.local
-3. Create convex/banataAuth/auth.ts with your BanataAuthConfig
-4. Create convex/banataAuth/schema.ts re-exporting @banata-auth/convex/schema
-5. Create convex/auth.config.ts with getAuthConfigProvider()
-6. Register routes in convex/http.ts with authComponent.registerRoutes()
-7. Create /api/auth/[...all]/route.ts as the reverse proxy
-8. Create auth client with createAuthClient from better-auth/react
-9. Wrap app in BanataConvexProvider
-10. Use useUser(), useSession() hooks in components
-
-## Security
-
-- Server-side sessions in Convex (15min access token, 7-day session)
-- Rate limiting: 600/min general, 30/min sign-in, 10/min sign-up
-- HMAC-SHA256 webhook signatures with timing-safe verification
-- 16 Zod schemas for input validation
-- 7 typed error classes (401, 403, 404, 409, 422, 429, 500)
-- Configurable password requirements (default: 8-128 chars)
-- ULID-based IDs with resource-type prefixes
-
-## License
-
-MIT
+- Projects are the isolation boundary.
+- API keys determine project scope.
+- Dashboard changes and SDK configuration writes update the same underlying project config.
+- Self-hosting changes where Banata runs, not how customer apps integrate.

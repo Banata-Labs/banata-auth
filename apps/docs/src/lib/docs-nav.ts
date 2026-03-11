@@ -10,17 +10,27 @@ export interface DocNavSection {
 
 export const docsNav: DocNavSection[] = [
 	{
-		section: "Getting Started",
+		section: "Start Here",
 		items: [
 			{ slug: "introduction", title: "Introduction" },
-			{ slug: "project-structure", title: "Project Structure" },
 			{ slug: "quickstart", title: "Quick Start" },
+			{ slug: "api-keys", title: "API Keys" },
+			{ slug: "projects-environments", title: "Projects" },
+			{ slug: "project-structure", title: "Project Structure" },
 		],
 	},
 	{
-		section: "Authentication",
+		section: "Build Your App",
 		items: [
-			{ slug: "hosted-ui", title: "Hosted Sign-In" },
+			{ slug: "nextjs", title: "Next.js" },
+			{ slug: "react", title: "React" },
+			{ slug: "sdk", title: "SDK Reference" },
+		],
+	},
+	{
+		section: "Configure Authentication",
+		items: [
+			{ slug: "auth-configuration", title: "Auth Configuration" },
 			{ slug: "email-password", title: "Email & Password" },
 			{ slug: "social-oauth", title: "Social OAuth" },
 			{ slug: "magic-links", title: "Magic Links" },
@@ -32,25 +42,29 @@ export const docsNav: DocNavSection[] = [
 		],
 	},
 	{
-		section: "Organizations",
+		section: "Organizations & RBAC",
 		items: [
 			{ slug: "organizations-overview", title: "Overview" },
-			{ slug: "invitations", title: "Invitations" },
 			{ slug: "roles-permissions", title: "Roles & Permissions" },
 			{ slug: "resource-types", title: "Resource Types" },
-			{ slug: "auth-configuration", title: "Auth Configuration" },
+			{ slug: "invitations", title: "Invitations" },
 		],
 	},
 	{
-		section: "Infrastructure",
+		section: "Operate Your Project",
 		items: [
-			{ slug: "projects-environments", title: "Projects" },
 			{ slug: "emails", title: "Emails" },
 			{ slug: "email-templates", title: "Email Templates" },
 			{ slug: "webhooks", title: "Webhooks" },
 			{ slug: "audit-logs", title: "Audit Logs" },
 			{ slug: "notifications", title: "Notifications" },
-			{ slug: "api-keys", title: "API Keys" },
+			{ slug: "settings", title: "Settings" },
+			{ slug: "domains", title: "Domains" },
+			{ slug: "redirects", title: "Redirects" },
+			{ slug: "account", title: "Account Management" },
+			{ slug: "radar", title: "Radar (Dashboard Feature)" },
+			{ slug: "bot-protection", title: "Bot Protection SDK (Next.js)" },
+			{ slug: "addons", title: "Add-ons" },
 		],
 	},
 	{
@@ -62,30 +76,10 @@ export const docsNav: DocNavSection[] = [
 		],
 	},
 	{
-		section: "Configuration",
+		section: "Platform Operators",
 		items: [
-			{ slug: "account", title: "Account Management" },
-			{ slug: "settings", title: "Settings" },
-			{ slug: "domains", title: "Domains" },
-			{ slug: "redirects", title: "Redirects" },
-			{ slug: "radar", title: "Radar (Dashboard Feature)" },
-			{ slug: "bot-protection", title: "Bot Protection SDK (Next.js)" },
-			{ slug: "addons", title: "Add-ons" },
-		],
-	},
-	{
-		section: "Packages",
-		items: [
-			{ slug: "sdk", title: "@banata-auth/sdk" },
-			{ slug: "react", title: "@banata-auth/react" },
-			{ slug: "nextjs", title: "@banata-auth/nextjs" },
 			{ slug: "convex", title: "@banata-auth/convex" },
 			{ slug: "shared", title: "@banata-auth/shared" },
-		],
-	},
-	{
-		section: "Deployment",
-		items: [
 			{ slug: "env-vars", title: "Self-Hosted Environment Variables" },
 			{ slug: "deploy", title: "Deploying the Self-Hosted Stack" },
 			{ slug: "self-hosting", title: "Self-Hosting" },

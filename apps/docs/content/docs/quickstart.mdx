@@ -1,51 +1,50 @@
 ---
 title: "Quick Start"
-description: "Connect a Next.js app to hosted Banata Auth with a project-scoped API key and hosted sign-in."
-section: "Getting Started"
-order: 3
+description: "Connect a Next.js app to Banata with a project-scoped API key and app-owned auth routes."
+section: "Start Here"
+order: 2
 ---
 
-This is the normal Banata customer journey.
+This is the standard Banata integration path.
 
 You do **not** embed Banata's auth backend in your app. You:
 
-1. sign in to the Banata dashboard
-2. create or open a project
-3. configure auth methods, providers, and emails in the dashboard
-4. create a project-scoped API key
-5. connect your app to that project with `@banata-auth/nextjs`
-6. send users through Banata's hosted sign-in UI
+1. create a project in the Banata dashboard
+2. configure auth methods and providers for that project
+3. create a project-scoped API key
+4. proxy `/api/auth` through your app
+5. render auth UI inside your own frontend
 
-If you self-host Banata, the flow stays the same. The only difference is which Banata instance your app points to.
+If you self-host Banata, this flow stays the same. Only the Banata URLs change.
 
 ---
 
-## Prerequisites
+## Dashboard Prerequisites
 
-Before writing code, finish these dashboard steps first:
+Before you write code:
 
-1. Create a Banata project.
-2. Create a **project-scoped** API key.
+1. Sign in to the Banata dashboard.
+2. Open or create the project you want your app to use.
 3. Enable the auth methods you want under **Authentication -> Methods**.
-4. Configure any required provider credentials under **Authentication -> Providers**.
-5. If you enable email-based auth, configure an email provider and templates under **Emails**.
+4. Configure provider credentials under **Authentication -> Providers**.
+5. If you enable email-based auth, configure **Emails** and templates.
+6. Create a **project-scoped API key** under **API Keys**.
 
-If you skip steps 3-5, the hosted UI will load but it may show no usable auth method.
-
-Use the project's **client ID** for `NEXT_PUBLIC_BANATA_CLIENT_ID`. Do not use the dashboard workspace slug.
+If you skip steps 3 to 5, your frontend can still render forms, but the backend will reject flows that are not enabled for that project.
 
 ---
 
 ## Install Packages
 
 ```bash
-npm install @banata-auth/nextjs @banata-auth/sdk
+npm install @banata-auth/nextjs @banata-auth/react @banata-auth/sdk
 ```
 
 Use:
 
-- `@banata-auth/nextjs` for your app-side auth proxy and callback handoff
-- `@banata-auth/sdk` when you want to configure or manage Banata programmatically from your backend
+- `@banata-auth/nextjs` for the auth route proxy and server helpers
+- `@banata-auth/react` for sign-in and sign-up UI in your app
+- `@banata-auth/sdk` when you want to configure Banata by code
 
 ---
 
@@ -58,15 +57,13 @@ NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
 NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
 
 BANATA_API_KEY=sk_test_your_project_key
-BANATA_HOSTED_UI_URL=https://auth-ui.banata.dev
-NEXT_PUBLIC_BANATA_CLIENT_ID=your_project_client_id
 ```
 
 Notes:
 
 - `BANATA_API_KEY` must stay server-side.
-- `NEXT_PUBLIC_BANATA_CLIENT_ID` is used for public hosted-auth lookup.
-- `NEXT_PUBLIC_CONVEX_SITE_URL` is the Banata auth backend URL that your Next.js route proxies to.
+- `NEXT_PUBLIC_CONVEX_SITE_URL` is the Banata auth backend URL.
+- `NEXT_PUBLIC_CONVEX_URL` is used by server-side Convex helpers.
 
 ---
 
@@ -96,15 +93,14 @@ export const {
   convexUrl: requireEnv("NEXT_PUBLIC_CONVEX_URL"),
   convexSiteUrl: requireEnv("NEXT_PUBLIC_CONVEX_SITE_URL"),
   apiKey: requireEnv("BANATA_API_KEY"),
-  allowedOrigins: [requireEnv("BANATA_HOSTED_UI_URL")],
 });
 ```
 
-`apiKey` is what binds your app to a Banata project. Without it, customer auth should not start working.
+The API key is what binds this app to one Banata project.
 
 ---
 
-## Create The App Auth Route
+## Create The Auth Route
 
 ```ts
 // src/app/api/auth/[...all]/route.ts
@@ -113,56 +109,94 @@ import { handler } from "@/lib/auth-server";
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 ```
 
-This route keeps auth cookies on your own domain while Banata handles the auth backend.
+Your browser should call `/api/auth` on your own app origin, not the Banata backend URL directly.
 
 ---
 
-## Add The Hosted Callback Page
+## Create The Browser Auth Client
 
-When Banata finishes hosted auth, it hands the user back to your app's `/auth/callback` page so your app can mint its own session cookie on your domain.
+```ts
+// src/lib/auth-client.ts
+"use client";
 
-```tsx
-// src/app/auth/callback/page.tsx
-import { HostedAuthCallback } from "@banata-auth/nextjs/client";
+import { createAuthClient } from "@banata-auth/react/plugins";
 
-export default function AuthCallbackPage() {
-  return <HostedAuthCallback apiPath="/api/auth" fallbackTo="/sign-in" />;
-}
+export const authClient = createAuthClient({
+  baseURL: "/api/auth",
+});
 ```
 
 ---
 
-## Start Hosted Sign-In
+## Add Sign-In And Sign-Up Pages
 
 ```tsx
 // src/app/sign-in/page.tsx
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required.`);
-  }
-  return value;
-}
+"use client";
 
-function buildHostedSignInUrl() {
-  const url = new URL("/sign-in", requireEnv("BANATA_HOSTED_UI_URL"));
-  url.searchParams.set("client_id", requireEnv("NEXT_PUBLIC_BANATA_CLIENT_ID"));
-  url.searchParams.set("redirect_url", `${requireEnv("NEXT_PUBLIC_SITE_URL")}/`);
-  return url.toString();
-}
+import Link from "next/link";
+import { SignInForm } from "@banata-auth/react";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
-  return <a href={buildHostedSignInUrl()}>Continue with Banata</a>;
+  return (
+    <SignInForm
+      authClient={authClient}
+      callbackURL="/"
+      title="Sign in"
+      description="Use the methods enabled for this Banata project."
+      footer={<Link href="/sign-up">Create an account</Link>}
+    />
+  );
 }
 ```
 
-`redirect_url` should point to where you want the user to end up **after** Banata hands the session back to your app.
+```tsx
+// src/app/sign-up/page.tsx
+"use client";
+
+import Link from "next/link";
+import { SignUpForm } from "@banata-auth/react";
+import { authClient } from "@/lib/auth-client";
+
+export default function SignUpPage() {
+  return (
+    <SignUpForm
+      authClient={authClient}
+      callbackURL="/"
+      title="Create account"
+      description="This project is powered by Banata."
+      footer={<Link href="/sign-in">Already have an account?</Link>}
+    />
+  );
+}
+```
+
+---
+
+## Guard Your App
+
+```tsx
+// src/app/page.tsx
+import { redirect } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth-server";
+
+export default async function HomePage() {
+  const signedIn = await isAuthenticated();
+
+  if (!signedIn) {
+    redirect("/sign-in");
+  }
+
+  return <div>Authenticated app shell</div>;
+}
+```
 
 ---
 
 ## Configure Banata By Code
 
-The dashboard is still the source of truth, but you can update the same project config by code with the SDK:
+The dashboard is the main management surface, but it is not the only way to configure a project.
 
 ```ts
 import { BanataAuth } from "@banata-auth/sdk";
@@ -190,38 +224,33 @@ await banata.configuration.saveBrandingConfig({
 });
 ```
 
-These calls update the same dashboard-backed configuration rows, so the dashboard and hosted UI reflect the changes automatically.
-
-That means you can flip methods, policies, providers, and branding from code and immediately see the same state in:
-
-- the Banata dashboard
-- the hosted auth UI
-- SDK reads for that same project
+These writes update the same project config that the dashboard reads. If you change auth settings by code, the dashboard reflects those changes immediately.
 
 ---
 
-## What To Test First
+## What To Verify
 
 After wiring the app:
 
-1. Open the hosted sign-in link.
-2. Confirm the hosted UI shows the auth methods you enabled in the dashboard.
-3. Complete sign-in.
-4. Confirm the user lands back on your app origin, not on the Banata domain.
-5. Confirm `/api/auth/get-session` on your app returns a live session.
+1. Open `/sign-up` or `/sign-in` in your app.
+2. Create an account or sign in.
+3. Confirm `/api/auth/get-session` returns a live session.
+4. Confirm the same user appears in the Banata dashboard under **Users**.
+5. Confirm project configuration changes in the dashboard affect the app without local auth rewiring.
 
 ---
 
 ## Common First-Run Problems
 
-### Hosted UI shows no sign-in method
+### The frontend renders, but sign-in fails immediately
 
-You enabled neither:
+Check:
 
-- an auth method under **Authentication -> Methods**
-- nor the provider credentials needed for that method under **Authentication -> Providers**
+1. the project has the matching auth method enabled
+2. the required provider credentials are configured
+3. the app is using the correct `BANATA_API_KEY`
 
-### Email/password shows but sign-up is not practical
+### Email sign-up exists, but the flow is not practical
 
 Email delivery is not ready yet. Configure:
 
@@ -229,14 +258,14 @@ Email delivery is not ready yet. Configure:
 2. the relevant templates
 3. the email policy you want for that project
 
-### Hosted sign-in works but no session exists on your app domain
+### Sign-in succeeds, but the app still has no session
 
 Check:
 
-1. your app exports `OPTIONS` from `/api/auth/[...all]/route.ts`
-2. `allowedOrigins` includes the hosted UI origin
-3. `/auth/callback` exists in your app
-4. `redirect_url` points back to your app origin
+1. your browser is calling `/api/auth`, not the Banata backend directly
+2. the app and auth route are on the same origin
+3. `/api/auth/get-session` works in your browser session
+4. the project API key is valid and scoped correctly
 
 ### Repeated first-run testing starts hitting rate limits
 
@@ -252,8 +281,8 @@ If that happens:
 
 ## Next Steps
 
-- [Hosted Sign-In](/docs/hosted-ui)
-- [Next.js](/docs/nextjs)
-- [SDK Reference](/docs/sdk)
+- [API Keys](/docs/api-keys)
 - [Projects](/docs/projects-environments)
-- [Self-Hosting](/docs/self-hosting)
+- [Next.js](/docs/nextjs)
+- [React](/docs/react)
+- [SDK Reference](/docs/sdk)

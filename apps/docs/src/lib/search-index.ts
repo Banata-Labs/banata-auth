@@ -4,8 +4,8 @@
  * DO NOT EDIT MANUALLY -- regenerate with:
  *   bun run scripts/generate-search-index.ts
  *
- * Pages: 41
- * Total headings: 946
+ * Pages: 42
+ * Total headings: 817
  */
 
 export interface SearchIndexHeading {
@@ -26,333 +26,6 @@ export interface SearchIndexEntry {
 }
 
 export const SEARCH_INDEX: SearchIndexEntry[] = [
-  {
-    "slug": "introduction",
-    "title": "Introduction",
-    "description": "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS, built on Convex and Next.js.",
-    "section": "Getting Started",
-    "headings": [
-      {
-        "level": 2,
-        "text": "What is Banata Auth?",
-        "anchor": "what-is-banata-auth",
-        "snippet": "Banata Auth is an open-source authentication infrastructure platform — a drop-in replacement for WorkOS that gives you everything you need to add enterprise-grade authentication to your application: u"
-      },
-      {
-        "level": 2,
-        "text": "Why Banata Auth?",
-        "anchor": "why-banata-auth",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "The Problem",
-        "anchor": "the-problem",
-        "snippet": "Building authentication for modern SaaS applications means choosing between:"
-      },
-      {
-        "level": 3,
-        "text": "The Solution",
-        "anchor": "the-solution",
-        "snippet": "Banata Auth sits in the sweet spot: enterprise-grade auth infrastructure that you own and control. You get the developer experience of a managed service with the freedom of open source."
-      },
-      {
-        "level": 3,
-        "text": "Key Advantages",
-        "anchor": "key-advantages",
-        "snippet": "Open Source (MIT) — No vendor lock-in. Fork it, modify it, self-host it. No per-user pricing, ever. Enterprise-grade from Day One — Organizations, RBAC, audit logs, webhooks, and MFA are built in, not"
-      },
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": "Banata Auth integrates into your Next.js + Convex application through a set of npm packages. You install them, configure your auth settings, and you're ready to go."
-      },
-      {
-        "level": 2,
-        "text": "Packages",
-        "anchor": "packages",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Authentication Methods",
-        "anchor": "authentication-methods",
-        "snippet": "Banata Auth supports 12 authentication methods, all configurable via the BanataAuthConfig object:"
-      },
-      {
-        "level": 2,
-        "text": "Enterprise Features",
-        "anchor": "enterprise-features",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Security",
-        "anchor": "security",
-        "snippet": "Banata Auth implements defense-in-depth security:"
-      },
-      {
-        "level": 2,
-        "text": "How It Compares",
-        "anchor": "how-it-compares",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "vs. WorkOS",
-        "anchor": "vs-workos",
-        "snippet": "WorkOS is the primary inspiration for Banata Auth. Both provide authentication infrastructure with enterprise features. The key differences:"
-      },
-      {
-        "level": 3,
-        "text": "vs. Clerk",
-        "anchor": "vs-clerk",
-        "snippet": "Clerk excels at developer experience with polished pre-built UI components. Banata Auth differs in:"
-      },
-      {
-        "level": 3,
-        "text": "vs. Auth0",
-        "anchor": "vs-auth0",
-        "snippet": "Auth0 is the incumbent enterprise auth platform. Banata Auth differs in:"
-      },
-      {
-        "level": 2,
-        "text": "Next Steps",
-        "anchor": "next-steps",
-        "snippet": "<a href=\"/docs/quickstart\" className=\"block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors\"> <strong>Quick Start</strong>"
-      }
-    ],
-    "searchText": "introduction banata auth is an open-source authentication infrastructure platform — a drop-in replacement for workos, built on convex and next.js. what is banata auth? banata auth is an open-source authentication infrastructure platform — a drop-in replacement for workos that gives you everything you need to add enterprise-grade authentication to your application: u why banata auth? the problem building authentication for modern saas applications means choosing between: the solution banata auth sits in the sweet spot: enterprise-grade auth infrastructure that you own and control. you get the developer experience of a managed service with the freedom of open source. key advantages open source (mit) — no vendor lock-in. fork it, modify it, self-host it. no per-user pricing, ever. enterprise-grade from day one — organizations, rbac, audit logs, webhooks, and mfa are built in, not how it works banata auth integrates into your next.js + convex application through a set of npm packages. you install them, configure your auth settings, and you're ready to go. packages --- authentication methods banata auth supports 12 authentication methods, all configurable via the banataauthconfig object: enterprise features --- security banata auth implements defense-in-depth security: how it compares vs. workos workos is the primary inspiration for banata auth. both provide authentication infrastructure with enterprise features. the key differences: vs. clerk clerk excels at developer experience with polished pre-built ui components. banata auth differs in: vs. auth0 auth0 is the incumbent enterprise auth platform. banata auth differs in: next steps <a href=\"/docs/quickstart\" classname=\"block p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors\"> <strong>quick start</strong>"
-  },
-  {
-    "slug": "project-structure",
-    "title": "Project Structure",
-    "description": "Overview of the Banata Auth monorepo — packages, applications, and how they connect.",
-    "section": "Getting Started",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Packages",
-        "anchor": "packages",
-        "snippet": "Banata Auth ships as 5 npm packages that you install in your application:"
-      },
-      {
-        "level": 3,
-        "text": "How They Connect",
-        "anchor": "how-they-connect",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Your Project Structure",
-        "anchor": "your-project-structure",
-        "snippet": "After following the Quick Start, your project should look like this:"
-      },
-      {
-        "level": 2,
-        "text": "Key Files Explained",
-        "anchor": "key-files-explained",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Quick Start — Step-by-step setup guide Convex Integration — Backend configuration details Next.js Integration — Route handler and middleware Self-Hosting — Full architecture and deployment guide"
-      }
-    ],
-    "searchText": "project structure overview of the banata auth monorepo — packages, applications, and how they connect. packages banata auth ships as 5 npm packages that you install in your application: how they connect your project structure after following the quick start, your project should look like this: key files explained --- what's next quick start — step-by-step setup guide convex integration — backend configuration details next.js integration — route handler and middleware self-hosting — full architecture and deployment guide"
-  },
-  {
-    "slug": "quickstart",
-    "title": "Quick Start",
-    "description": "Get Banata Auth running in your Convex + Next.js project — from zero to authenticated users in under 10 minutes.",
-    "section": "Getting Started",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Prerequisites",
-        "anchor": "prerequisites",
-        "snippet": "Before you start, make sure you have:"
-      },
-      {
-        "level": 2,
-        "text": "Step 1: Install Packages",
-        "anchor": "step-1-install-packages",
-        "snippet": "Install the Banata Auth packages you need:"
-      },
-      {
-        "level": 2,
-        "text": "Step 2: Set Environment Variables",
-        "anchor": "step-2-set-environment-variables",
-        "snippet": "Banata Auth requires environment variables in two places: your Next.js .env.local file and your Convex deployment."
-      },
-      {
-        "level": 3,
-        "text": "Next.js Environment (.env.local)",
-        "anchor": "nextjs-environment-envlocal",
-        "snippet": "Add these to your .env.local:"
-      },
-      {
-        "level": 3,
-        "text": "Convex Environment Variables",
-        "anchor": "convex-environment-variables",
-        "snippet": "Auth secrets must be set on the Convex deployment (not in .env.local), because they're used by server-side Convex functions:"
-      },
-      {
-        "level": 2,
-        "text": "Step 3: Create the Convex Auth Configuration",
-        "anchor": "step-3-create-the-convex-auth-configuration",
-        "snippet": "This is the core of your Banata Auth setup. You need three files in your convex/ directory."
-      },
-      {
-        "level": 3,
-        "text": "3a. Auth Config (convex/auth.config.ts)",
-        "anchor": "3a-auth-config-convexauthconfigts",
-        "snippet": "This tells Convex how to validate JWTs issued by Better Auth:"
-      },
-      {
-        "level": 3,
-        "text": "3b. Component Schema (convex/banataAuth/schema.ts)",
-        "anchor": "3b-component-schema-convexbanataauthschemats",
-        "snippet": "Re-export the Banata Auth database schema. This defines the 26 tables used for auth data (users, sessions, accounts, organizations, etc.):"
-      },
-      {
-        "level": 3,
-        "text": "3c. Auth Factory (convex/banataAuth/auth.ts)",
-        "anchor": "3c-auth-factory-convexbanataauthauthts",
-        "snippet": "This is where you configure Banata Auth — authentication methods, social providers, email callbacks, and more:"
-      },
-      {
-        "level": 2,
-        "text": "Step 4: Register HTTP Routes",
-        "anchor": "step-4-register-http-routes",
-        "snippet": "Better Auth needs HTTP endpoints to handle sign-in, sign-up, OAuth callbacks, JWKS, and other auth flows. Register them in your Convex HTTP router:"
-      },
-      {
-        "level": 2,
-        "text": "Step 5: Create the Next.js Route Handler",
-        "anchor": "step-5-create-the-nextjs-route-handler",
-        "snippet": "The route handler acts as a reverse proxy — it forwards auth requests from your Next.js app to the Convex .site URL where Better Auth is running. This keeps auth cookies on your domain."
-      },
-      {
-        "level": 3,
-        "text": "5a. Server Auth Utilities (src/lib/auth-server.ts)",
-        "anchor": "5a-server-auth-utilities-srclibauth-serverts",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "5b. API Route Handler (src/app/api/auth/[...all]/route.ts)",
-        "anchor": "5b-api-route-handler-srcappapiauthallroutets",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Step 6: Create the Auth Client",
-        "anchor": "step-6-create-the-auth-client",
-        "snippet": "The client-side auth client is used by React components to call auth endpoints (sign in, sign up, sign out, etc.):"
-      },
-      {
-        "level": 2,
-        "text": "Step 7: Add the React Provider",
-        "anchor": "step-7-add-the-react-provider",
-        "snippet": "Wrap your app in the auth provider so hooks work throughout your component tree:"
-      },
-      {
-        "level": 2,
-        "text": "Step 8: Use Auth in Your Components",
-        "anchor": "step-8-use-auth-in-your-components",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign Up Form",
-        "anchor": "sign-up-form",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign In Form",
-        "anchor": "sign-in-form",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Using Auth State with Hooks",
-        "anchor": "using-auth-state-with-hooks",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Server-Side Auth Check",
-        "anchor": "server-side-auth-check",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Step 9: Start Development",
-        "anchor": "step-9-start-development",
-        "snippet": "Run both Next.js and Convex dev servers:"
-      },
-      {
-        "level": 2,
-        "text": "File Summary",
-        "anchor": "file-summary",
-        "snippet": "After completing this guide, your project should have these new/modified files:"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"BETTER_AUTH_SECRET environment variable is required\"",
-        "anchor": "betterauthsecret-environment-variable-is-required",
-        "snippet": "You haven't set the secret on your Convex deployment:"
-      },
-      {
-        "level": 3,
-        "text": "\"Failed to fetch\" or Network Errors on Sign In/Sign Up",
-        "anchor": "failed-to-fetch-or-network-errors-on-sign-insign-up",
-        "snippet": "Check that Convex dev server is running — You need npx convex dev running alongside your Next.js dev server. Check NEXT_PUBLIC_CONVEX_SITE_URL — This must point to your Convex HTTP actions URL (ending"
-      },
-      {
-        "level": 3,
-        "text": "OAuth Callback Errors",
-        "anchor": "oauth-callback-errors",
-        "snippet": "Callback URL must match — In your OAuth provider's settings (e.g., GitHub), set the callback URL to http://localhost:3000/api/auth/callback/github (or whichever provider)."
-      },
-      {
-        "level": 3,
-        "text": "Hooks Return undefined User",
-        "anchor": "hooks-return-undefined-user",
-        "snippet": "Make sure BanataConvexProvider wraps your app — Check that your layout includes the provider from Step 7. Wait for loading — Always check isLoading before reading user:"
-      },
-      {
-        "level": 3,
-        "text": "\"Module not found: @banata-auth/convex\"",
-        "anchor": "module-not-found-banata-authconvex",
-        "snippet": "If you're in a monorepo, make sure the packages are properly linked. With pnpm workspaces:"
-      },
-      {
-        "level": 3,
-        "text": "Session Cookie Not Being Set",
-        "anchor": "session-cookie-not-being-set",
-        "snippet": "Same-origin requirement — The auth route handler must be on the same domain as your app. Don't call the Convex .site URL directly from the browser. HTTPS in production — Cookies with Secure flag requi"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Now that you have basic authentication working, explore these guides:"
-      }
-    ],
-    "searchText": "quick start get banata auth running in your convex + next.js project — from zero to authenticated users in under 10 minutes. prerequisites before you start, make sure you have: step 1: install packages install the banata auth packages you need: step 2: set environment variables banata auth requires environment variables in two places: your next.js .env.local file and your convex deployment. next.js environment (.env.local) add these to your .env.local: convex environment variables auth secrets must be set on the convex deployment (not in .env.local), because they're used by server-side convex functions: step 3: create the convex auth configuration this is the core of your banata auth setup. you need three files in your convex/ directory. 3a. auth config (convex/auth.config.ts) this tells convex how to validate jwts issued by better auth: 3b. component schema (convex/banataauth/schema.ts) re-export the banata auth database schema. this defines the 26 tables used for auth data (users, sessions, accounts, organizations, etc.): 3c. auth factory (convex/banataauth/auth.ts) this is where you configure banata auth — authentication methods, social providers, email callbacks, and more: step 4: register http routes better auth needs http endpoints to handle sign-in, sign-up, oauth callbacks, jwks, and other auth flows. register them in your convex http router: step 5: create the next.js route handler the route handler acts as a reverse proxy — it forwards auth requests from your next.js app to the convex .site url where better auth is running. this keeps auth cookies on your domain. 5a. server auth utilities (src/lib/auth-server.ts) 5b. api route handler (src/app/api/auth/[...all]/route.ts) step 6: create the auth client the client-side auth client is used by react components to call auth endpoints (sign in, sign up, sign out, etc.): step 7: add the react provider wrap your app in the auth provider so hooks work throughout your component tree: step 8: use auth in your components sign up form sign in form using auth state with hooks server-side auth check step 9: start development run both next.js and convex dev servers: file summary after completing this guide, your project should have these new/modified files: troubleshooting \"better_auth_secret environment variable is required\" you haven't set the secret on your convex deployment: \"failed to fetch\" or network errors on sign in/sign up check that convex dev server is running — you need npx convex dev running alongside your next.js dev server. check next_public_convex_site_url — this must point to your convex http actions url (ending oauth callback errors callback url must match — in your oauth provider's settings (e.g., github), set the callback url to http://localhost:3000/api/auth/callback/github (or whichever provider). hooks return undefined user make sure banataconvexprovider wraps your app — check that your layout includes the provider from step 7. wait for loading — always check isloading before reading user: \"module not found: @banata-auth/convex\" if you're in a monorepo, make sure the packages are properly linked. with pnpm workspaces: session cookie not being set same-origin requirement — the auth route handler must be on the same domain as your app. don't call the convex .site url directly from the browser. https in production — cookies with secure flag requi what's next now that you have basic authentication working, explore these guides:"
-  },
   {
     "slug": "anonymous-auth",
     "title": "Anonymous Authentication",
@@ -532,9 +205,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Email Callback Parameters",
-        "anchor": "email-callback-parameters",
-        "snippet": "The sendOtp callback receives:"
+        "text": "Default Delivery Model",
+        "anchor": "default-delivery-model",
+        "snippet": "By default, Banata sends OTP emails automatically:"
+      },
+      {
+        "level": 3,
+        "text": "Optional Code Override",
+        "anchor": "optional-code-override",
+        "snippet": "If you want to send OTP emails through your own code path instead of the dashboard-managed provider, add email.sendOtp:"
+      },
+      {
+        "level": 3,
+        "text": "Override Callback Parameters",
+        "anchor": "override-callback-parameters",
+        "snippet": "The sendOtp override receives:"
       },
       {
         "level": 2,
@@ -612,7 +297,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "\"OTP email not received\"",
         "anchor": "otp-email-not-received",
-        "snippet": "Check your sendOtp callback for errors Check the spam/junk folder Verify the email provider API key is correct In development, log the OTP to the console instead of sending an email"
+        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure Magic Auth is enabled Check the email-otp template in Email Templates"
       },
       {
         "level": 3,
@@ -627,7 +312,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Magic Links -- Link-based passwordless authentication Passkeys -- WebAuthn-based biometric authentication Multi-Factor Auth -- Add TOTP as a second factor"
       }
     ],
-    "searchText": "email otp passwordless authentication using one-time passcodes sent via email. how it works new users vs. existing users new email -- a new user account is created automatically. no separate sign-up step is needed. existing email -- the existing user is signed in. their account data is unchanged. configuration enable email otp in your banataauthconfig: email callback parameters the sendotp callback receives: otp properties otp expiry is defined alongside other token lifetimes in @banata-auth/shared: client-side api step 1: send the otp step 2: verify the otp complete otp form example email template integration email otp uses the \"magic-auth\" email category in the email configuration system. when you configure email types in the dashboard under emails > configuration, the \"magic auth\" toggle controls deliver rate limiting otp requests are rate-limited to prevent abuse and brute-force attempts: combining with other methods email otp works alongside other authentication methods. a common pattern is offering email otp as the primary method: audit events see the audit logs guide for more details. security considerations short expiry window -- otps expire after 10 minutes, limiting the window for interception. single-use codes -- each otp is consumed on verification and cannot be reused. troubleshooting \"invalid or expired otp\" the code does not match or has expired. common causes: user entered the code incorrectly (check for typos) more than 10 minutes passed since the code was sent \"otp email not received\" check your sendotp callback for errors check the spam/junk folder verify the email provider api key is correct in development, log the otp to the console instead of sending an email \"rate limit exceeded\" the user has made too many requests. wait one minute before retrying. if this happens frequently, consider showing a countdown timer in your ui. what's next magic links -- link-based passwordless authentication passkeys -- webauthn-based biometric authentication multi-factor auth -- add totp as a second factor"
+    "searchText": "email otp passwordless authentication using one-time passcodes sent via email. how it works new users vs. existing users new email -- a new user account is created automatically. no separate sign-up step is needed. existing email -- the existing user is signed in. their account data is unchanged. configuration enable email otp in your banataauthconfig: default delivery model by default, banata sends otp emails automatically: optional code override if you want to send otp emails through your own code path instead of the dashboard-managed provider, add email.sendotp: override callback parameters the sendotp override receives: otp properties otp expiry is defined alongside other token lifetimes in @banata-auth/shared: client-side api step 1: send the otp step 2: verify the otp complete otp form example email template integration email otp uses the \"magic-auth\" email category in the email configuration system. when you configure email types in the dashboard under emails > configuration, the \"magic auth\" toggle controls deliver rate limiting otp requests are rate-limited to prevent abuse and brute-force attempts: combining with other methods email otp works alongside other authentication methods. a common pattern is offering email otp as the primary method: audit events see the audit logs guide for more details. security considerations short expiry window -- otps expire after 10 minutes, limiting the window for interception. single-use codes -- each otp is consumed on verification and cannot be reused. troubleshooting \"invalid or expired otp\" the code does not match or has expired. common causes: user entered the code incorrectly (check for typos) more than 10 minutes passed since the code was sent \"otp email not received\" check emails > providers for an active provider check emails > configuration and make sure magic auth is enabled check the email-otp template in email templates \"rate limit exceeded\" the user has made too many requests. wait one minute before retrying. if this happens frequently, consider showing a countdown timer in your ui. what's next magic links -- link-based passwordless authentication passkeys -- webauthn-based biometric authentication multi-factor auth -- add totp as a second factor"
   },
   {
     "slug": "email-password",
@@ -643,9 +328,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Email Callback Parameters",
-        "anchor": "email-callback-parameters",
-        "snippet": "> Development tip: In development, you can log to console instead of sending real emails: > ```typescript > sendVerificationEmail: async ({ user, url }) => {"
+        "text": "Default Delivery Model",
+        "anchor": "default-delivery-model",
+        "snippet": "Banata is dashboard-first here:"
+      },
+      {
+        "level": 3,
+        "text": "Optional Code Overrides",
+        "anchor": "optional-code-overrides",
+        "snippet": "If you want to bypass the dashboard-managed delivery path for a specific project, add callbacks in config.email. These callbacks override Banata's automatic sending for that email type."
+      },
+      {
+        "level": 3,
+        "text": "Override Callback Parameters",
+        "anchor": "override-callback-parameters",
+        "snippet": "> Development tip: In development, you can log to console instead of sending real emails if you intentionally want a local override: > ```typescript > sendVerificationEmail: async ({ user, url }) => {"
       },
       {
         "level": 2,
@@ -727,9 +424,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Email Providers",
-        "anchor": "email-providers",
-        "snippet": "You can use any email provider that supports HTTP APIs. Here are examples for popular services:"
+        "text": "Override Delivery With Your Own Provider Code",
+        "anchor": "override-delivery-with-your-own-provider-code",
+        "snippet": "Most teams should configure providers in the Banata dashboard and let Banata send auth emails automatically. Use code like this only if you deliberately want your app to own delivery."
       },
       {
         "level": 3,
@@ -780,7 +477,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Social OAuth â€” Add Google, GitHub, and more alongside email/password Magic Links â€” Offer passwordless sign-in via email Multi-Factor Auth â€” Add TOTP-based two-factor authentication"
       }
     ],
-    "searchText": "email & password configure email/password authentication with email verification, password reset, and customizable validation rules. configuration enable email/password authentication in your banataauthconfig: email callback parameters > development tip: in development, you can log to console instead of sending real emails: > ```typescript > sendverificationemail: async ({ user, url }) => { client-side api sign up use the better auth client to sign up with email and password: sign in sign out request password reset reset password (with token from email) verify email email verification typically happens automatically when the user clicks the link in the verification email. the link hits the /api/auth/verify-email endpoint with the token, and better auth handles th password validation banata auth validates passwords using the passwordschema from @banata-auth/shared: custom password rules to enforce additional rules (uppercase, numbers, special characters), you can add custom validation in your sign-up form before calling the api: pre-built ui components banata auth ships a signupform and signinform in @banata-auth/react that handle the entire email/password flow: sign up form sign in form server-side user management use the admin sdk to manage users from your backend: email providers you can use any email provider that supports http apis. here are examples for popular services: resend sendgrid aws ses (via fetch) audit events when email/password auth is enabled, the following events are automatically logged to the audit log: error handling all auth endpoints return typed errors from @banata-auth/shared: rate limits --- security best practices always enable email verification â€” without it, anyone can sign up with someone else's email. use https in production â€” session cookies are secure-flagged and won't work over http. what's next social oauth â€” add google, github, and more alongside email/password magic links â€” offer passwordless sign-in via email multi-factor auth â€” add totp-based two-factor authentication"
+    "searchText": "email & password configure email/password authentication with email verification, password reset, and customizable validation rules. configuration enable email/password authentication in your banataauthconfig: default delivery model banata is dashboard-first here: optional code overrides if you want to bypass the dashboard-managed delivery path for a specific project, add callbacks in config.email. these callbacks override banata's automatic sending for that email type. override callback parameters > development tip: in development, you can log to console instead of sending real emails if you intentionally want a local override: > ```typescript > sendverificationemail: async ({ user, url }) => { client-side api sign up use the better auth client to sign up with email and password: sign in sign out request password reset reset password (with token from email) verify email email verification typically happens automatically when the user clicks the link in the verification email. the link hits the /api/auth/verify-email endpoint with the token, and better auth handles th password validation banata auth validates passwords using the passwordschema from @banata-auth/shared: custom password rules to enforce additional rules (uppercase, numbers, special characters), you can add custom validation in your sign-up form before calling the api: pre-built ui components banata auth ships a signupform and signinform in @banata-auth/react that handle the entire email/password flow: sign up form sign in form server-side user management use the admin sdk to manage users from your backend: override delivery with your own provider code most teams should configure providers in the banata dashboard and let banata send auth emails automatically. use code like this only if you deliberately want your app to own delivery. resend sendgrid aws ses (via fetch) audit events when email/password auth is enabled, the following events are automatically logged to the audit log: error handling all auth endpoints return typed errors from @banata-auth/shared: rate limits --- security best practices always enable email verification â€” without it, anyone can sign up with someone else's email. use https in production â€” session cookies are secure-flagged and won't work over http. what's next social oauth â€” add google, github, and more alongside email/password magic links â€” offer passwordless sign-in via email multi-factor auth â€” add totp-based two-factor authentication"
   },
   {
     "slug": "magic-links",
@@ -796,9 +493,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Email Callback Parameters",
-        "anchor": "email-callback-parameters",
-        "snippet": "The sendMagicLink callback receives:"
+        "text": "Default Delivery Model",
+        "anchor": "default-delivery-model",
+        "snippet": "Banata's normal magic-link setup is:"
+      },
+      {
+        "level": 3,
+        "text": "Optional Code Override",
+        "anchor": "optional-code-override",
+        "snippet": "If you want to deliver magic links through your own provider code, add email.sendMagicLink:"
+      },
+      {
+        "level": 3,
+        "text": "Override Callback Parameters",
+        "anchor": "override-callback-parameters",
+        "snippet": "The sendMagicLink override receives:"
       },
       {
         "level": 2,
@@ -900,7 +609,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Magic Link Email Not Received",
         "anchor": "magic-link-email-not-received",
-        "snippet": "Check your sendMagicLink callback for errors Check the spam/junk folder Verify the email provider API key is correct In development, check the console for [DEV] log output"
+        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure Magic Auth is enabled Check the magic-link template in Email Templates"
       },
       {
         "level": 2,
@@ -909,7 +618,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Multi-Factor Auth — Add TOTP as a second factor Email & Password — Traditional authentication Social OAuth — Sign in with Google, GitHub, etc."
       }
     ],
-    "searchText": "magic links passwordless authentication via email — users click a link to sign in without needing a password. configuration enable magic links in your banataauthconfig: email callback parameters the sendmagiclink callback receives: token lifetime magic link tokens expire after 10 minutes (600 seconds) by default. this is defined in @banata-auth/shared: client-side api send magic link magic link form example how it works here's the complete magic link flow: new users vs. existing users new email — a new user account is created automatically. no separate sign-up step needed. existing email — the existing user is signed in. their account is unchanged. combining with other methods magic links work well alongside other authentication methods. a common pattern is offering magic links as the primary method with email/password as a fallback: security considerations token security tokens are cryptographically signed using the better_auth_secret. tokens are single-use — once verified, they cannot be reused. tokens expire after 10 minutes — a narrow window limits exposure. email security magic links are as secure as the user's email account. if someone has access to the email, they can sign in. for higher-security applications, consider combining magic links with mfa (totp) for a pass rate limiting magic link requests are rate-limited to prevent abuse: email otp alternative if you prefer one-time codes instead of links, banata auth also supports email otp (one-time password): audit events --- troubleshooting \"magic link expired\" the token is only valid for 10 minutes. ask the user to request a new one. common causes: user took too long to check their email email was delayed by the provider \"invalid magic link\" the token signature doesn't match. this can happen if: the better_auth_secret was changed after the link was generated the link url was modified or truncated (some email clients break long urls) magic link email not received check your sendmagiclink callback for errors check the spam/junk folder verify the email provider api key is correct in development, check the console for [dev] log output what's next multi-factor auth — add totp as a second factor email & password — traditional authentication social oauth — sign in with google, github, etc."
+    "searchText": "magic links passwordless authentication via email — users click a link to sign in without needing a password. configuration enable magic links in your banataauthconfig: default delivery model banata's normal magic-link setup is: optional code override if you want to deliver magic links through your own provider code, add email.sendmagiclink: override callback parameters the sendmagiclink override receives: token lifetime magic link tokens expire after 10 minutes (600 seconds) by default. this is defined in @banata-auth/shared: client-side api send magic link magic link form example how it works here's the complete magic link flow: new users vs. existing users new email — a new user account is created automatically. no separate sign-up step needed. existing email — the existing user is signed in. their account is unchanged. combining with other methods magic links work well alongside other authentication methods. a common pattern is offering magic links as the primary method with email/password as a fallback: security considerations token security tokens are cryptographically signed using the better_auth_secret. tokens are single-use — once verified, they cannot be reused. tokens expire after 10 minutes — a narrow window limits exposure. email security magic links are as secure as the user's email account. if someone has access to the email, they can sign in. for higher-security applications, consider combining magic links with mfa (totp) for a pass rate limiting magic link requests are rate-limited to prevent abuse: email otp alternative if you prefer one-time codes instead of links, banata auth also supports email otp (one-time password): audit events --- troubleshooting \"magic link expired\" the token is only valid for 10 minutes. ask the user to request a new one. common causes: user took too long to check their email email was delayed by the provider \"invalid magic link\" the token signature doesn't match. this can happen if: the better_auth_secret was changed after the link was generated the link url was modified or truncated (some email clients break long urls) magic link email not received check emails > providers for an active provider check emails > configuration and make sure magic auth is enabled check the magic-link template in email templates what's next multi-factor auth — add totp as a second factor email & password — traditional authentication social oauth — sign in with google, github, etc."
   },
   {
     "slug": "mfa",
@@ -1902,829 +1611,37 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "searchText": "emails configure email providers, manage transactional email types, and monitor email delivery events in the banata auth dashboard. email sub-pages navigating to /emails automatically redirects to /emails/events. email providers configure which third-party email delivery provider handles transactional emails for your banata auth instance. five providers are supported out of the box: setting up a provider navigate to emails > providers click enable on your preferred provider enter your api key in the input field that appears click save key to persist the credential sending test emails once a provider is active, click the send test email button in the page header. enter a recipient email address and click send. the test email is dispatched through your active provider to verify that api endpoints provider config shape example: setting up resend email configuration control which categories of transactional emails are sent to your users. each email type can be independently enabled or disabled. authentication emails organization emails toggling an email type each email type has a switch toggle. changes are saved immediately when toggled. the server returns the full updated configuration after each change. api endpoints email toggle shape example: disabling password reset emails email events the events page provides a real-time view of email-related activity in your banata auth instance. events are filtered from the global audit log based on email-related action keywords. what's tracked events matching these keywords are displayed: event table columns empty state if no email events exist in the audit log, the page shows an empty state with the message: \"no email events found in the last 30 days. events will appear here once emails are sent through your configu data model email configuration is stored in two separate config tables: email toggles stored in the emailconfig table as a json blob: email provider config stored in the emailproviderconfig table as a json blob: using emails programmatically what's next notifications — configure system notifications domains — set up custom domains for auth email links settings — configure project-level settings"
   },
   {
-    "slug": "projects-environments",
-    "title": "Projects",
-    "description": "Multi-tenant project isolation with per-project users, organizations, branding, and configuration.",
-    "section": "Infrastructure",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Why Projects?",
-        "anchor": "why-projects",
-        "snippet": "Consider a software engineering firm that builds and operates authentication for several client products from a single dashboard. Without project isolation, all users, organizations, email templates, "
-      },
-      {
-        "level": 2,
-        "text": "Concepts",
-        "anchor": "concepts",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Project",
-        "anchor": "project",
-        "snippet": "A project is a fully isolated auth tenant. Everything that constitutes an application's auth system lives within a project boundary:"
-      },
-      {
-        "level": 2,
-        "text": "Data Model",
-        "anchor": "data-model",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Project",
-        "anchor": "project",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Project Scoping",
-        "anchor": "project-scoping",
-        "snippet": "Every record in the database (except the project table itself) has an optional projectId field. This field links the record to its parent project. Records without a projectId are excluded from dashboa"
-      },
-      {
-        "level": 2,
-        "text": "Default Bootstrapping",
-        "anchor": "default-bootstrapping",
-        "snippet": "On the first dashboard load, the dashboard calls the ensure-default endpoint. If no projects exist in the database and autoCreateDefault is enabled (the default), Banata Auth automatically creates:"
-      },
-      {
-        "level": 3,
-        "text": "Plugin Options",
-        "anchor": "plugin-options",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Dashboard Usage",
-        "anchor": "dashboard-usage",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Project Switcher",
-        "anchor": "project-switcher",
-        "snippet": "The dashboard sidebar includes a ProjectSwitcher component that lists all projects. Selecting a project updates the active scope, and all subsequent API calls from the dashboard are automatically scop"
-      },
-      {
-        "level": 3,
-        "text": "Automatic Scope Injection",
-        "anchor": "automatic-scope-injection",
-        "snippet": "The dashboard API layer automatically injects the active projectId into every outgoing POST request body, unless the endpoint is scope-exempt (project management endpoints themselves are exempt). This"
-      },
-      {
-        "level": 2,
-        "text": "SDK Usage",
-        "anchor": "sdk-usage",
-        "snippet": "The @banata-auth/sdk provides a Projects resource for programmatic management of projects."
-      },
-      {
-        "level": 3,
-        "text": "Initialize the SDK",
-        "anchor": "initialize-the-sdk",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "List All Projects",
-        "anchor": "list-all-projects",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Create a Project",
-        "anchor": "create-a-project",
-        "snippet": "Creating a project seeds RBAC permissions and a super_admin role automatically."
-      },
-      {
-        "level": 3,
-        "text": "Get a Project",
-        "anchor": "get-a-project",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Update a Project",
-        "anchor": "update-a-project",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Delete a Project",
-        "anchor": "delete-a-project",
-        "snippet": "Deleting a project removes the project record. Note that this does not cascade-delete project-scoped data (users, organizations, etc.) which requires a separate migration."
-      },
-      {
-        "level": 3,
-        "text": "Bootstrap Default Project",
-        "anchor": "bootstrap-default-project",
-        "snippet": "Typically called by the dashboard on first load. If no projects exist, creates a \"Default Project\" with seeded RBAC permissions."
-      },
-      {
-        "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "All project management endpoints are under /api/auth/banata/projects/. Every endpoint requires admin authentication."
-      },
-      {
-        "level": 3,
-        "text": "Validation Rules",
-        "anchor": "validation-rules",
-        "snippet": "Project slug: 1-100 characters, lowercase alphanumeric with hyphens (/^[a-z0-9-]+$/), must be unique across all projects. Project name: 1-100 characters."
-      },
-      {
-        "level": 3,
-        "text": "Response Examples",
-        "anchor": "response-examples",
-        "snippet": "Create Project"
-      },
-      {
-        "level": 2,
-        "text": "Migrations",
-        "anchor": "migrations",
-        "snippet": "Banata Auth includes built-in migrations for managing project data. These run inside the Convex component via CLI."
-      },
-      {
-        "level": 3,
-        "text": "Backfill Project IDs",
-        "anchor": "backfill-project-ids",
-        "snippet": "If you have existing records that were created before project isolation was enforced, they may be missing projectId. These records are hidden from dashboard views. To assign them to a project:"
-      },
-      {
-        "level": 3,
-        "text": "Clear All Data",
-        "anchor": "clear-all-data",
-        "snippet": "For a complete fresh start (wipes ALL records from ALL tables):"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Admin-only access: All project management endpoints require admin authentication. Regular users cannot create, modify, or delete projects."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "API Keys -- Programmatic access with scoped API keys SDK Reference -- Complete API reference for all SDK methods Webhooks -- Configure webhook endpoints per project"
-      }
-    ],
-    "searchText": "projects multi-tenant project isolation with per-project users, organizations, branding, and configuration. why projects? consider a software engineering firm that builds and operates authentication for several client products from a single dashboard. without project isolation, all users, organizations, email templates,  concepts project a project is a fully isolated auth tenant. everything that constitutes an application's auth system lives within a project boundary: data model project project scoping every record in the database (except the project table itself) has an optional projectid field. this field links the record to its parent project. records without a projectid are excluded from dashboa default bootstrapping on the first dashboard load, the dashboard calls the ensure-default endpoint. if no projects exist in the database and autocreatedefault is enabled (the default), banata auth automatically creates: plugin options dashboard usage project switcher the dashboard sidebar includes a projectswitcher component that lists all projects. selecting a project updates the active scope, and all subsequent api calls from the dashboard are automatically scop automatic scope injection the dashboard api layer automatically injects the active projectid into every outgoing post request body, unless the endpoint is scope-exempt (project management endpoints themselves are exempt). this sdk usage the @banata-auth/sdk provides a projects resource for programmatic management of projects. initialize the sdk list all projects create a project creating a project seeds rbac permissions and a super_admin role automatically. get a project update a project delete a project deleting a project removes the project record. note that this does not cascade-delete project-scoped data (users, organizations, etc.) which requires a separate migration. bootstrap default project typically called by the dashboard on first load. if no projects exist, creates a \"default project\" with seeded rbac permissions. api endpoints all project management endpoints are under /api/auth/banata/projects/. every endpoint requires admin authentication. validation rules project slug: 1-100 characters, lowercase alphanumeric with hyphens (/^[a-z0-9-]+$/), must be unique across all projects. project name: 1-100 characters. response examples create project migrations banata auth includes built-in migrations for managing project data. these run inside the convex component via cli. backfill project ids if you have existing records that were created before project isolation was enforced, they may be missing projectid. these records are hidden from dashboard views. to assign them to a project: clear all data for a complete fresh start (wipes all records from all tables): security considerations admin-only access: all project management endpoints require admin authentication. regular users cannot create, modify, or delete projects. what's next api keys -- programmatic access with scoped api keys sdk reference -- complete api reference for all sdk methods webhooks -- configure webhook endpoints per project"
-  },
-  {
     "slug": "convex",
     "title": "Convex Integration",
-    "description": "Complete reference for @banata-auth/convex — auth factory, plugin system, triggers, database schema, and HTTP route registration.",
+    "description": "Platform-runtime reference for self-hosting Banata on Convex.",
     "section": "Packages",
     "headings": [
       {
         "level": 2,
-        "text": "Entry Points",
-        "anchor": "entry-points",
-        "snippet": "---"
+        "text": "What It Is Responsible For",
+        "anchor": "what-it-is-responsible-for",
+        "snippet": "Inside a Banata platform deployment, @banata-auth/convex provides:"
       },
       {
         "level": 2,
-        "text": "Setup",
-        "anchor": "setup",
-        "snippet": "You need 4 files in your convex/ directory to set up the backend:"
-      },
-      {
-        "level": 3,
-        "text": "1. Auth Config (convex/auth.config.ts)",
-        "anchor": "1-auth-config-convexauthconfigts",
-        "snippet": "Tells Convex how to validate JWTs issued by Better Auth:"
-      },
-      {
-        "level": 3,
-        "text": "2. Schema (convex/banataAuth/schema.ts)",
-        "anchor": "2-schema-convexbanataauthschemats",
-        "snippet": "Re-export the auth database schema:"
-      },
-      {
-        "level": 3,
-        "text": "3. Auth Factory (convex/banataAuth/auth.ts)",
-        "anchor": "3-auth-factory-convexbanataauthauthts",
-        "snippet": "Configure and create the auth instance:"
-      },
-      {
-        "level": 3,
-        "text": "4. HTTP Router (convex/http.ts)",
-        "anchor": "4-http-router-convexhttpts",
-        "snippet": "Register auth routes:"
-      },
-      {
-        "level": 2,
-        "text": "BanataAuthConfig Reference",
-        "anchor": "banataauthconfig-reference",
-        "snippet": "The complete configuration type:"
-      },
-      {
-        "level": 2,
-        "text": "Plugin System",
-        "anchor": "plugin-system",
-        "snippet": "Banata Auth uses Better Auth's plugin system to add features. Plugins are assembled automatically based on your config."
-      },
-      {
-        "level": 3,
-        "text": "Always-On Plugins (7)",
-        "anchor": "always-on-plugins-7",
-        "snippet": "These are always enabled — you can't turn them off:"
-      },
-      {
-        "level": 3,
-        "text": "Conditionally-Enabled Plugins (8)",
-        "anchor": "conditionally-enabled-plugins-8",
-        "snippet": "These are enabled based on your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "SSO and SCIM (Disabled)",
-        "anchor": "sso-and-scim-disabled",
-        "snippet": "The SSO (SAML/OIDC) and SCIM (directory sync) plugins are not currently available because they depend on Node.js built-ins (XML parsing, crypto operations) that aren't available in the Convex runtime."
-      },
-      {
-        "level": 2,
-        "text": "Trigger System",
-        "anchor": "trigger-system",
-        "snippet": "Triggers let you execute custom logic when auth events occur. They're defined in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Available Triggers (14)",
-        "anchor": "available-triggers-14",
-        "snippet": "> Note: Only 6 of the 14 triggers are currently wired to Better Auth's databaseHooks system (the user and session triggers). The remaining 8 are defined but need to be connected to plugin hooks."
-      },
-      {
-        "level": 2,
-        "text": "Database Schema (26 Tables)",
-        "anchor": "database-schema-26-tables",
-        "snippet": "The schema is defined at @banata-auth/convex/schema and includes these tables:"
-      },
-      {
-        "level": 3,
-        "text": "Core Auth Tables",
-        "anchor": "core-auth-tables",
+        "text": "Minimal Local Files",
+        "anchor": "minimal-local-files",
         "snippet": ""
       },
       {
-        "level": 3,
-        "text": "Organization Tables",
-        "anchor": "organization-tables",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "RBAC Tables",
-        "anchor": "rbac-tables",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Security Tables",
-        "anchor": "security-tables",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Infrastructure Tables",
-        "anchor": "infrastructure-tables",
-        "snippet": "Plus ~9 additional internal Better Auth tables for OAuth state, anonymous sessions, multi-session management, etc."
+        "level": 2,
+        "text": "Product Boundary",
+        "anchor": "product-boundary",
+        "snippet": "The important product rule is:"
       },
       {
         "level": 2,
-        "text": "HTTP Route Registration",
-        "anchor": "http-route-registration",
-        "snippet": "authComponent.registerRoutes(http, createAuth) registers all Better Auth HTTP routes:"
-      },
-      {
-        "level": 2,
-        "text": "Custom Convex Functions",
-        "anchor": "custom-convex-functions",
-        "snippet": "You can write Convex queries and mutations that access auth data:"
-      },
-      {
-        "level": 2,
-        "text": "Environment Variables",
-        "anchor": "environment-variables",
-        "snippet": "The Convex backend needs these environment variables (set via npx convex env set):"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Environment Variables — Complete reference for all variables SDK Reference — Server-side admin SDK Deploy — Production deployment guide"
+        "text": "Related Docs",
+        "anchor": "related-docs",
+        "snippet": "Self-Hosted Quick Start Self-Hosting API Keys"
       }
     ],
-    "searchText": "convex integration complete reference for @banata-auth/convex — auth factory, plugin system, triggers, database schema, and http route registration. entry points --- setup you need 4 files in your convex/ directory to set up the backend: 1. auth config (convex/auth.config.ts) tells convex how to validate jwts issued by better auth: 2. schema (convex/banataauth/schema.ts) re-export the auth database schema: 3. auth factory (convex/banataauth/auth.ts) configure and create the auth instance: 4. http router (convex/http.ts) register auth routes: banataauthconfig reference the complete configuration type: plugin system banata auth uses better auth's plugin system to add features. plugins are assembled automatically based on your config. always-on plugins (7) these are always enabled — you can't turn them off: conditionally-enabled plugins (8) these are enabled based on your banataauthconfig: sso and scim (disabled) the sso (saml/oidc) and scim (directory sync) plugins are not currently available because they depend on node.js built-ins (xml parsing, crypto operations) that aren't available in the convex runtime. trigger system triggers let you execute custom logic when auth events occur. they're defined in your banataauthconfig: available triggers (14) > note: only 6 of the 14 triggers are currently wired to better auth's databasehooks system (the user and session triggers). the remaining 8 are defined but need to be connected to plugin hooks. database schema (26 tables) the schema is defined at @banata-auth/convex/schema and includes these tables: core auth tables organization tables rbac tables security tables infrastructure tables plus ~9 additional internal better auth tables for oauth state, anonymous sessions, multi-session management, etc. http route registration authcomponent.registerroutes(http, createauth) registers all better auth http routes: custom convex functions you can write convex queries and mutations that access auth data: environment variables the convex backend needs these environment variables (set via npx convex env set): what's next environment variables — complete reference for all variables sdk reference — server-side admin sdk deploy — production deployment guide"
-  },
-  {
-    "slug": "nextjs",
-    "title": "Next.js",
-    "description": "Complete reference for @banata-auth/nextjs — reverse proxy route handler, middleware, server auth utilities, and preloaded queries.",
-    "section": "Packages",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Entry Points",
-        "anchor": "entry-points",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Route Handler (Reverse Proxy)",
-        "anchor": "route-handler-reverse-proxy",
-        "snippet": "The route handler acts as a reverse proxy — it forwards auth requests from your Next.js app to the Convex .site URL where Better Auth is running. This keeps session cookies on your domain."
-      },
-      {
-        "level": 3,
-        "text": "createRouteHandler(options)",
-        "anchor": "createroutehandleroptions",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "How the Proxy Works",
-        "anchor": "how-the-proxy-works",
-        "snippet": "Browser sends request to /api/auth/sign-in/email Route handler receives the request Forwards to {CONVEX_SITE_URL}/api/auth/sign-in/email Preserves all headers and body"
-      },
-      {
-        "level": 2,
-        "text": "Middleware (Route Protection)",
-        "anchor": "middleware-route-protection",
-        "snippet": "The middleware checks for the Better Auth session cookie on incoming requests and redirects unauthenticated users."
-      },
-      {
-        "level": 3,
-        "text": "banataAuthProxy(options) / banataAuthMiddleware(options)",
-        "anchor": "banataauthproxyoptions-banataauthmiddlewareoptions",
-        "snippet": "These are aliases for the same function:"
-      },
-      {
-        "level": 3,
-        "text": "Route Matching",
-        "anchor": "route-matching",
-        "snippet": "Routes are matched using regex with ^...$ anchoring. This means:"
-      },
-      {
-        "level": 3,
-        "text": "How Middleware Works",
-        "anchor": "how-middleware-works",
-        "snippet": "Request comes in Check if the route matches any publicRoutes → Allow through Check for Better Auth session cookie (via getSessionCookie()) Cookie found → Set x-pathname header and allow through"
-      },
-      {
-        "level": 3,
-        "text": "The x-pathname Header",
-        "anchor": "the-x-pathname-header",
-        "snippet": "The middleware sets an x-pathname header on authenticated requests. You can use this in your server components to know the current path:"
-      },
-      {
-        "level": 2,
-        "text": "Server Utilities",
-        "anchor": "server-utilities",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "createBanataAuthServer(options)",
-        "anchor": "createbanataauthserveroptions",
-        "snippet": "A factory that returns server-side auth utilities:"
-      },
-      {
-        "level": 3,
-        "text": "isAuthenticated()",
-        "anchor": "isauthenticated",
-        "snippet": "Check if the current request has a valid session. Use in server components and server actions:"
-      },
-      {
-        "level": 3,
-        "text": "getToken()",
-        "anchor": "gettoken",
-        "snippet": "Get a Convex-compatible JWT token for making authenticated queries:"
-      },
-      {
-        "level": 3,
-        "text": "preloadAuthQuery(query, args)",
-        "anchor": "preloadauthqueryquery-args",
-        "snippet": "Preload an authenticated Convex query in a server component, then consume it client-side without waterfalls:"
-      },
-      {
-        "level": 3,
-        "text": "fetchAuthQuery(query, args) / fetchAuthMutation(mutation, args) / fetchAuthAction(action, args)",
-        "anchor": "fetchauthqueryquery-args-fetchauthmutationmutation-args-fetchauthactionaction-args",
-        "snippet": "Execute authenticated Convex operations from server components and server actions:"
-      },
-      {
-        "level": 2,
-        "text": "Client Hook",
-        "anchor": "client-hook",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "usePreloadedAuthQuery(preloadedQuery)",
-        "anchor": "usepreloadedauthquerypreloadedquery",
-        "snippet": "Consume a preloaded auth query on the client side:"
-      },
-      {
-        "level": 2,
-        "text": "Two Route Handler Approaches",
-        "anchor": "two-route-handler-approaches",
-        "snippet": "There are two ways to set up the auth route handler:"
-      },
-      {
-        "level": 3,
-        "text": "Approach 1: createRouteHandler (from @banata-auth/nextjs)",
-        "anchor": "approach-1-createroutehandler-from-banata-authnextjs",
-        "snippet": "Simple proxy — just forwards requests:"
-      },
-      {
-        "level": 3,
-        "text": "Approach 2: convexBetterAuthNextJs (from @convex-dev/better-auth)",
-        "anchor": "approach-2-convexbetterauthnextjs-from-convex-devbetter-auth",
-        "snippet": "Full-featured — provides the handler plus server utilities:"
-      },
-      {
-        "level": 2,
-        "text": "Complete Setup Example",
-        "anchor": "complete-setup-example",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Convex — Backend configuration and plugin system React — Client-side hooks and components Environment Variables — All configuration options"
-      }
-    ],
-    "searchText": "next.js complete reference for @banata-auth/nextjs — reverse proxy route handler, middleware, server auth utilities, and preloaded queries. entry points --- route handler (reverse proxy) the route handler acts as a reverse proxy — it forwards auth requests from your next.js app to the convex .site url where better auth is running. this keeps session cookies on your domain. createroutehandler(options) how the proxy works browser sends request to /api/auth/sign-in/email route handler receives the request forwards to {convex_site_url}/api/auth/sign-in/email preserves all headers and body middleware (route protection) the middleware checks for the better auth session cookie on incoming requests and redirects unauthenticated users. banataauthproxy(options) / banataauthmiddleware(options) these are aliases for the same function: route matching routes are matched using regex with ^...$ anchoring. this means: how middleware works request comes in check if the route matches any publicroutes → allow through check for better auth session cookie (via getsessioncookie()) cookie found → set x-pathname header and allow through the x-pathname header the middleware sets an x-pathname header on authenticated requests. you can use this in your server components to know the current path: server utilities createbanataauthserver(options) a factory that returns server-side auth utilities: isauthenticated() check if the current request has a valid session. use in server components and server actions: gettoken() get a convex-compatible jwt token for making authenticated queries: preloadauthquery(query, args) preload an authenticated convex query in a server component, then consume it client-side without waterfalls: fetchauthquery(query, args) / fetchauthmutation(mutation, args) / fetchauthaction(action, args) execute authenticated convex operations from server components and server actions: client hook usepreloadedauthquery(preloadedquery) consume a preloaded auth query on the client side: two route handler approaches there are two ways to set up the auth route handler: approach 1: createroutehandler (from @banata-auth/nextjs) simple proxy — just forwards requests: approach 2: convexbetterauthnextjs (from @convex-dev/better-auth) full-featured — provides the handler plus server utilities: complete setup example what's next convex — backend configuration and plugin system react — client-side hooks and components environment variables — all configuration options"
-  },
-  {
-    "slug": "react",
-    "title": "React",
-    "description": "Complete reference for @banata-auth/react — provider, hooks, pre-built components, and Convex integration.",
-    "section": "Packages",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Entry Points",
-        "anchor": "entry-points",
-        "snippet": "The package has 3 entry points:"
-      },
-      {
-        "level": 2,
-        "text": "BanataAuthProvider",
-        "anchor": "banataauthprovider",
-        "snippet": "The provider supplies auth context to your entire component tree. It supports two modes."
-      },
-      {
-        "level": 3,
-        "text": "Adapter Mode",
-        "anchor": "adapter-mode",
-        "snippet": "Provide callback functions that the provider calls to fetch auth state:"
-      },
-      {
-        "level": 3,
-        "text": "Controlled Mode",
-        "anchor": "controlled-mode",
-        "snippet": "Pass auth state as props directly (useful when you manage state externally):"
-      },
-      {
-        "level": 3,
-        "text": "BanataAuthAdapter Interface",
-        "anchor": "banataauthadapter-interface",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Hooks",
-        "anchor": "hooks",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "useBanataAuth()",
-        "anchor": "usebanataauth",
-        "snippet": "Returns the full auth context:"
-      },
-      {
-        "level": 3,
-        "text": "useUser()",
-        "anchor": "useuser",
-        "snippet": "Returns only the user:"
-      },
-      {
-        "level": 3,
-        "text": "useSession()",
-        "anchor": "usesession",
-        "snippet": "Returns only the session:"
-      },
-      {
-        "level": 3,
-        "text": "useOrganization()",
-        "anchor": "useorganization",
-        "snippet": "Returns the active organization:"
-      },
-      {
-        "level": 2,
-        "text": "UI Components",
-        "anchor": "ui-components",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "AuthBoundary",
-        "anchor": "authboundary",
-        "snippet": "Renders children only when the user is authenticated. Shows a fallback during loading and when unauthenticated:"
-      },
-      {
-        "level": 3,
-        "text": "AuthCard",
-        "anchor": "authcard",
-        "snippet": "A styled card wrapper for auth forms:"
-      },
-      {
-        "level": 3,
-        "text": "SignInForm",
-        "anchor": "signinform",
-        "snippet": "Pre-built sign-in form with email/password inputs:"
-      },
-      {
-        "level": 3,
-        "text": "SignUpForm",
-        "anchor": "signupform",
-        "snippet": "Pre-built sign-up form with name, email, and password inputs:"
-      },
-      {
-        "level": 3,
-        "text": "SocialButtons",
-        "anchor": "socialbuttons",
-        "snippet": "Renders OAuth sign-in buttons for configured social providers:"
-      },
-      {
-        "level": 2,
-        "text": "AuthClientLike Interface",
-        "anchor": "authclientlike-interface",
-        "snippet": "The components accept any object matching the AuthClientLike interface, which is a loose typing against Better Auth's client:"
-      },
-      {
-        "level": 2,
-        "text": "Convex Integration",
-        "anchor": "convex-integration",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "BanataConvexProvider",
-        "anchor": "banataconvexprovider",
-        "snippet": "The Convex provider wraps ConvexBetterAuthProvider to handle JWT token exchange between your auth system and Convex:"
-      },
-      {
-        "level": 2,
-        "text": "Plugin Re-exports",
-        "anchor": "plugin-re-exports",
-        "snippet": "Import client-side plugins from @banata-auth/react/plugins:"
-      },
-      {
-        "level": 2,
-        "text": "Type Reference",
-        "anchor": "type-reference",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "User",
-        "anchor": "user",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Session",
-        "anchor": "session",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Organization",
-        "anchor": "organization",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Next.js — Server-side utilities and middleware SDK Reference — Server-side admin SDK Convex — Backend configuration"
-      }
-    ],
-    "searchText": "react complete reference for @banata-auth/react — provider, hooks, pre-built components, and convex integration. entry points the package has 3 entry points: banataauthprovider the provider supplies auth context to your entire component tree. it supports two modes. adapter mode provide callback functions that the provider calls to fetch auth state: controlled mode pass auth state as props directly (useful when you manage state externally): banataauthadapter interface hooks usebanataauth() returns the full auth context: useuser() returns only the user: usesession() returns only the session: useorganization() returns the active organization: ui components authboundary renders children only when the user is authenticated. shows a fallback during loading and when unauthenticated: authcard a styled card wrapper for auth forms: signinform pre-built sign-in form with email/password inputs: signupform pre-built sign-up form with name, email, and password inputs: socialbuttons renders oauth sign-in buttons for configured social providers: authclientlike interface the components accept any object matching the authclientlike interface, which is a loose typing against better auth's client: convex integration banataconvexprovider the convex provider wraps convexbetterauthprovider to handle jwt token exchange between your auth system and convex: plugin re-exports import client-side plugins from @banata-auth/react/plugins: type reference user session organization what's next next.js — server-side utilities and middleware sdk reference — server-side admin sdk convex — backend configuration"
-  },
-  {
-    "slug": "sdk",
-    "title": "SDK Reference",
-    "description": "Complete API reference for @banata-auth/sdk -- the TypeScript admin SDK with 14 resource classes for server-side auth management.",
-    "section": "Packages",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Initialization",
-        "anchor": "initialization",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "BanataAuthOptions",
-        "anchor": "banataauthoptions",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "HTTP Client Behavior",
-        "anchor": "http-client-behavior",
-        "snippet": "All SDK methods use POST requests (Convex HTTP actions accept POST bodies). The internal HttpClient provides:"
-      },
-      {
-        "level": 3,
-        "text": "Error Handling",
-        "anchor": "error-handling",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Pagination",
-        "anchor": "pagination",
-        "snippet": "All list methods return paginated results:"
-      },
-      {
-        "level": 2,
-        "text": "Resource Classes",
-        "anchor": "resource-classes",
-        "snippet": "The SDK exposes 14 resource classes via the BanataAuth instance:"
-      },
-      {
-        "level": 2,
-        "text": "UserManagement",
-        "anchor": "usermanagement",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "listUsers(options?)",
-        "anchor": "listusersoptions",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "getUser(userId)",
-        "anchor": "getuseruserid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "createUser(data)",
-        "anchor": "createuserdata",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "updateUser({ userId, ...data })",
-        "anchor": "updateuser-userid-data",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "deleteUser(userId)",
-        "anchor": "deleteuseruserid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "banUser({ userId, ... }) / unbanUser(userId)",
-        "anchor": "banuser-userid-unbanuseruserid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "listUserSessions(userId)",
-        "anchor": "listusersessionsuserid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "revokeSession(sessionId) / revokeAllSessions(userId)",
-        "anchor": "revokesessionsessionid-revokeallsessionsuserid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "setRole(userId, role)",
-        "anchor": "setroleuserid-role",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "impersonateUser(userId) / stopImpersonating()",
-        "anchor": "impersonateuseruserid-stopimpersonating",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "setUserPassword(userId, newPassword)",
-        "anchor": "setuserpassworduserid-newpassword",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "hasPermission(...)",
-        "anchor": "haspermission",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Organizations",
-        "anchor": "organizations",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "CRUD",
-        "anchor": "crud",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Members",
-        "anchor": "members",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Invitations",
-        "anchor": "invitations",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "SSO",
-        "anchor": "sso",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "DirectorySync",
-        "anchor": "directorysync",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "AuditLogs",
-        "anchor": "auditlogs",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Webhooks",
-        "anchor": "webhooks",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Rbac",
-        "anchor": "rbac",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Events",
-        "anchor": "events",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Portal",
-        "anchor": "portal",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Vault",
-        "anchor": "vault",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Domains",
-        "anchor": "domains",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "React -- Client-side hooks and components Next.js -- Server utilities and middleware Convex -- Backend configuration reference"
-      }
-    ],
-    "searchText": "sdk reference complete api reference for @banata-auth/sdk -- the typescript admin sdk with 14 resource classes for server-side auth management. initialization banataauthoptions --- http client behavior all sdk methods use post requests (convex http actions accept post bodies). the internal httpclient provides: error handling pagination all list methods return paginated results: resource classes the sdk exposes 14 resource classes via the banataauth instance: usermanagement listusers(options?) getuser(userid) createuser(data) updateuser({ userid, ...data }) deleteuser(userid) banuser({ userid, ... }) / unbanuser(userid) listusersessions(userid) revokesession(sessionid) / revokeallsessions(userid) setrole(userid, role) impersonateuser(userid) / stopimpersonating() setuserpassword(userid, newpassword) haspermission(...) organizations crud members invitations sso directorysync auditlogs webhooks rbac events portal vault domains what's next react -- client-side hooks and components next.js -- server utilities and middleware convex -- backend configuration reference"
+    "searchText": "convex integration platform-runtime reference for self-hosting banata on convex. what it is responsible for inside a banata platform deployment, @banata-auth/convex provides: minimal local files product boundary the important product rule is: related docs self-hosted quick start self-hosting api keys"
   },
   {
     "slug": "shared",
@@ -2958,6 +1875,33 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "searchText": "@banata-auth/shared shared types, constants, validation utilities, and email block definitions used across all banata auth packages. installation package structure the shared package exports 6 modules: typescript interfaces core resources organization resources sso resources directory sync resources other resources constants id_prefixes every banata auth resource uses a prefixed ulid for its identifier. the prefix makes ids self-documenting and debuggable: rate limits default rate limits per endpoint category (requests per minute): token lifetimes default token and session lifetimes in seconds: size limits webhook constants id generation generateid generate a prefixed ulid for any resource type: ulid generate a raw ulid without a prefix: getresourcetype extract the resource type from a prefixed id: validateid check if an id has the correct prefix for a given resource type: generaterandomtoken generate a url-safe base64 random token: generateotp generate a random numeric otp: validation schemas all validation schemas are built with zod and are used throughout the backend for input validation. they can also be used in client applications for form validation. primitive schemas resource schemas input types each schema exports a corresponding typescript type: error classes all banata auth errors extend banataautherror, which provides structured error information with http status codes, error codes, and request ids. banataautherror (base) specialized error classes usage fielderror email block system the shared package defines the complete email block type system used by the template editor, sdk, and backend renderer. see the email templates documentation for full details. key exports factory helpers variable interpolation built-in template blocks pagination types all list endpoints use a cursor-based pagination model: what's next sdk reference — the typescript sdk that consumes these shared types email templates — full documentation on the block-based email system vault & encryption — encryption layer using shared vaultsecret "
   },
   {
+    "slug": "self-hosting",
+    "title": "Self-Hosting",
+    "description": "Run the full Banata platform on your own infrastructure.",
+    "section": "Deployment",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Product Shape",
+        "anchor": "product-shape",
+        "snippet": "The hosted and self-hosted models are intended to match:"
+      },
+      {
+        "level": 2,
+        "text": "Convex Wiring",
+        "anchor": "convex-wiring",
+        "snippet": "The self-hosted platform keeps a small amount of local Convex wiring:"
+      },
+      {
+        "level": 2,
+        "text": "Infrastructure",
+        "anchor": "infrastructure",
+        "snippet": "To self-host Banata, you still need:"
+      }
+    ],
+    "searchText": "self-hosting run the full banata platform on your own infrastructure. product shape the hosted and self-hosted models are intended to match: convex wiring the self-hosted platform keeps a small amount of local convex wiring: infrastructure to self-host banata, you still need:"
+  },
+  {
     "slug": "account",
     "title": "Account Management",
     "description": "Manage your admin profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard.",
@@ -3188,134 +2132,56 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
   {
     "slug": "api-keys",
     "title": "API Keys",
-    "description": "Programmatic access with scoped API keys — create, manage, and authenticate server-to-server requests.",
-    "section": "Enterprise",
+    "description": "Project-scoped API keys are how your app authenticates to Banata and how Banata determines project scope.",
+    "section": "Start Here",
     "headings": [
       {
         "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable API keys in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "API Key Config Options",
-        "anchor": "api-key-config-options",
-        "snippet": "---"
+        "text": "Why API Keys Matter",
+        "anchor": "why-api-keys-matter",
+        "snippet": "The API key does two jobs:"
       },
       {
         "level": 2,
-        "text": "How API Keys Work",
-        "anchor": "how-api-keys-work",
-        "snippet": ""
+        "text": "Create A Key In The Dashboard",
+        "anchor": "create-a-key-in-the-dashboard",
+        "snippet": "For the normal product path:"
       },
       {
         "level": 2,
-        "text": "Creating API Keys",
-        "anchor": "creating-api-keys",
+        "text": "Use The Key In Code",
+        "anchor": "use-the-key-in-code",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Via the Client SDK (Authenticated User)",
-        "anchor": "via-the-client-sdk-authenticated-user",
+        "text": "Next.js server helpers",
+        "anchor": "nextjs-server-helpers",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Via the Admin SDK (Server-Side)",
-        "anchor": "via-the-admin-sdk-server-side",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Admin Dashboard",
-        "anchor": "via-the-admin-dashboard",
-        "snippet": "Navigate to a User's detail page Go to the API Keys tab Click Create API Key Enter a name and select permissions Copy the key and save it securely"
-      },
-      {
-        "level": 2,
-        "text": "Using API Keys",
-        "anchor": "using-api-keys",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Authorization Header",
-        "anchor": "authorization-header",
-        "snippet": "Include the API key in the Authorization header:"
-      },
-      {
-        "level": 3,
-        "text": "In Application Code",
-        "anchor": "in-application-code",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "With the Admin SDK",
-        "anchor": "with-the-admin-sdk",
-        "snippet": "The admin SDK itself uses API keys for authentication:"
-      },
-      {
-        "level": 2,
-        "text": "Managing API Keys",
-        "anchor": "managing-api-keys",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "List Keys",
-        "anchor": "list-keys",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Revoke a Key",
-        "anchor": "revoke-a-key",
+        "text": "SDK",
+        "anchor": "sdk",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Permission Scoping",
-        "anchor": "permission-scoping",
-        "snippet": "API keys can be scoped to specific permissions, limiting what they can do:"
+        "text": "Scope Rules",
+        "anchor": "scope-rules",
+        "snippet": "With the normal managed-service flow:"
       },
       {
         "level": 2,
-        "text": "Client-Side Plugin",
-        "anchor": "client-side-plugin",
-        "snippet": "To use API key features from the client, import the apiKeyClient plugin:"
+        "text": "Security Model",
+        "anchor": "security-model",
+        "snippet": "Banata stores a hash of the key, not the raw key itself."
       },
       {
         "level": 2,
-        "text": "Key Storage & Security",
-        "anchor": "key-storage-security",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "How Keys Are Stored",
-        "anchor": "how-keys-are-stored",
-        "snippet": "The raw key is never stored — only its hash. This means: If your database is compromised, the keys cannot be recovered Lost keys cannot be retrieved — they must be revoked and replaced"
-      },
-      {
-        "level": 3,
-        "text": "Best Practices",
-        "anchor": "best-practices",
-        "snippet": "Rotate keys regularly — Create new keys and revoke old ones periodically (e.g., every 90 days). Use separate keys per integration — Don't share a single key across multiple services. If one is comprom"
-      },
-      {
-        "level": 2,
-        "text": "API Key Data Model",
-        "anchor": "api-key-data-model",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "---"
+        "text": "Rotate And Revoke",
+        "anchor": "rotate-and-revoke",
+        "snippet": "Use separate keys for separate integrations. That lets you revoke one surface without breaking everything else."
       },
       {
         "level": 2,
@@ -3325,30 +2191,30 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "\"Invalid API Key\"",
-        "anchor": "invalid-api-key",
-        "snippet": "Check that the key hasn't been revoked Check that the key hasn't expired Verify you're using the complete key string (including the prefix) Make sure the Authorization header format is Bearer {key}"
+        "text": "Requests authenticate, but hit the wrong project",
+        "anchor": "requests-authenticate-but-hit-the-wrong-project",
+        "snippet": "Check that the app is using the correct project-scoped key."
       },
       {
         "level": 3,
-        "text": "\"Insufficient Permissions\"",
-        "anchor": "insufficient-permissions",
-        "snippet": "The API key doesn't have the required permission for this action. Either: Create a new key with the needed permissions Use an unrestricted key (no permissions specified)"
+        "text": "The dashboard works, but the app does not",
+        "anchor": "the-dashboard-works-but-the-app-does-not",
+        "snippet": "Check:"
       },
       {
         "level": 3,
-        "text": "\"API Keys Not Enabled\"",
-        "anchor": "api-keys-not-enabled",
-        "snippet": "Make sure apiKeyConfig.enabled is true in your BanataAuthConfig."
+        "text": "A key works locally but not in production",
+        "anchor": "a-key-works-locally-but-not-in-production",
+        "snippet": "Check:"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "SDK Reference — Complete API reference for all SDK methods Roles & Permissions — Configure the permissions that API keys use Webhooks — Get notified about API key events"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Quick Start Projects Next.js SDK Reference"
       }
     ],
-    "searchText": "api keys programmatic access with scoped api keys — create, manage, and authenticate server-to-server requests. configuration enable api keys in your banataauthconfig: api key config options --- how api keys work creating api keys via the client sdk (authenticated user) via the admin sdk (server-side) via the admin dashboard navigate to a user's detail page go to the api keys tab click create api key enter a name and select permissions copy the key and save it securely using api keys authorization header include the api key in the authorization header: in application code with the admin sdk the admin sdk itself uses api keys for authentication: managing api keys list keys revoke a key permission scoping api keys can be scoped to specific permissions, limiting what they can do: client-side plugin to use api key features from the client, import the apikeyclient plugin: key storage & security how keys are stored the raw key is never stored — only its hash. this means: if your database is compromised, the keys cannot be recovered lost keys cannot be retrieved — they must be revoked and replaced best practices rotate keys regularly — create new keys and revoke old ones periodically (e.g., every 90 days). use separate keys per integration — don't share a single key across multiple services. if one is comprom api key data model audit events --- troubleshooting \"invalid api key\" check that the key hasn't been revoked check that the key hasn't expired verify you're using the complete key string (including the prefix) make sure the authorization header format is bearer {key} \"insufficient permissions\" the api key doesn't have the required permission for this action. either: create a new key with the needed permissions use an unrestricted key (no permissions specified) \"api keys not enabled\" make sure apikeyconfig.enabled is true in your banataauthconfig. what's next sdk reference — complete api reference for all sdk methods roles & permissions — configure the permissions that api keys use webhooks — get notified about api key events"
+    "searchText": "api keys project-scoped api keys are how your app authenticates to banata and how banata determines project scope. why api keys matter the api key does two jobs: create a key in the dashboard for the normal product path: use the key in code next.js server helpers sdk scope rules with the normal managed-service flow: security model banata stores a hash of the key, not the raw key itself. rotate and revoke use separate keys for separate integrations. that lets you revoke one surface without breaking everything else. troubleshooting requests authenticate, but hit the wrong project check that the app is using the correct project-scoped key. the dashboard works, but the app does not check: a key works locally but not in production check: next steps quick start projects next.js sdk reference"
   },
   {
     "slug": "audit-logs",
@@ -3535,9 +2401,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Organization API Key Permissions",
-        "anchor": "organization-api-key-permissions",
-        "snippet": "When enabled, you can control which specific permissions are available to organization-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within an or"
+        "text": "Project API Key Permissions",
+        "anchor": "project-api-key-permissions",
+        "snippet": "When enabled, you can control which specific permissions are available to project-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within the curren"
       },
       {
         "level": 2,
@@ -3642,7 +2508,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Roles & Permissions — Define roles and check permissions Resource Types — Define what can be protected API Keys — Programmatic access with scoped permissions"
       }
     ],
-    "searchText": "auth configuration configure authorization behavior — role assignment, multiple roles, and api key permissions via the admin dashboard. configuration settings role assignment in admin portal when enabled, organization administrators can configure role mapping rules based on identity provider (idp) groups. this is useful for enterprises that manage user roles in their idp (e.g., okta, azur multiple roles by default, a user has exactly one role per organization. enabling multiple roles allows users to hold several roles simultaneously: organization api key permissions when enabled, you can control which specific permissions are available to organization-scoped api keys. this lets you create narrowly-scoped api keys that can only perform certain actions within an or auth configuration data model managing auth configuration via the dashboard navigate to authorization > configuration in the dashboard sidebar each setting is displayed as a card with a title, description, and toggle switch a badge shows the current state: \"enabled\" or \"disab api endpoints the configplugin exposes 2 auth configuration endpoints: get auth configuration save auth configuration database storage auth configuration is stored inside the dashboardconfig singleton row — the same row that stores branding and other dashboard settings. the authconfiguration key holds the configuration object: using auth configuration programmatically via the dashboard api client how settings affect behavior multiple roles disabled (default) multiple roles enabled security considerations principle of least privilege — only enable settings that your application needs. multiple roles and api key permissions expand the authorization surface. troubleshooting \"configuration not persisting\" auth configuration is stored in the dashboardconfig singleton. if changes aren't persisting, check that the convex backend is running and that your user has admin privileges. \"multiple roles not working\" ensure the multipleroles setting is enabled. when disabled, assigning a new role replaces the existing one. \"toggle reverted unexpectedly\" the dashboard uses optimistic updates — if the backend save fails, the toggle reverts. check the browser console for error details and ensure the convex backend is reachable. what's next roles & permissions — define roles and check permissions resource types — define what can be protected api keys — programmatic access with scoped permissions"
+    "searchText": "auth configuration configure authorization behavior — role assignment, multiple roles, and api key permissions via the admin dashboard. configuration settings role assignment in admin portal when enabled, organization administrators can configure role mapping rules based on identity provider (idp) groups. this is useful for enterprises that manage user roles in their idp (e.g., okta, azur multiple roles by default, a user has exactly one role per organization. enabling multiple roles allows users to hold several roles simultaneously: project api key permissions when enabled, you can control which specific permissions are available to project-scoped api keys. this lets you create narrowly-scoped api keys that can only perform certain actions within the curren auth configuration data model managing auth configuration via the dashboard navigate to authorization > configuration in the dashboard sidebar each setting is displayed as a card with a title, description, and toggle switch a badge shows the current state: \"enabled\" or \"disab api endpoints the configplugin exposes 2 auth configuration endpoints: get auth configuration save auth configuration database storage auth configuration is stored inside the dashboardconfig singleton row — the same row that stores branding and other dashboard settings. the authconfiguration key holds the configuration object: using auth configuration programmatically via the dashboard api client how settings affect behavior multiple roles disabled (default) multiple roles enabled security considerations principle of least privilege — only enable settings that your application needs. multiple roles and api key permissions expand the authorization surface. troubleshooting \"configuration not persisting\" auth configuration is stored in the dashboardconfig singleton. if changes aren't persisting, check that the convex backend is running and that your user has admin privileges. \"multiple roles not working\" ensure the multipleroles setting is enabled. when disabled, assigning a new role replaces the existing one. \"toggle reverted unexpectedly\" the dashboard uses optimistic updates — if the backend save fails, the toggle reverts. check the browser console for error details and ensure the convex backend is reachable. what's next roles & permissions — define roles and check permissions resource types — define what can be protected api keys — programmatic access with scoped permissions"
   },
   {
     "slug": "bot-protection",
@@ -3763,7 +2629,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
   },
   {
     "slug": "deploy",
-    "title": "Deploy",
+    "title": "Deploying the Self-Hosted Stack",
     "description": "Production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for Banata Auth.",
     "section": "Configuration",
     "headings": [
@@ -3771,7 +2637,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Deployment Architecture",
         "anchor": "deployment-architecture",
-        "snippet": "In production, Banata Auth has two main components:"
+        "snippet": "This page applies only to the self-hosted Convex + Next.js architecture."
       },
       {
         "level": 2,
@@ -3972,7 +2838,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Environment Variables — Complete variable reference Webhooks — Set up event monitoring Audit Logs — Configure compliance logging"
       }
     ],
-    "searchText": "deploy production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for banata auth. deployment architecture in production, banata auth has two main components: step 1: convex production deployment create a production deployment set production environment variables step 2: next.js production deployment vercel (recommended) connect your repo to vercel set environment variables in the vercel dashboard: cloudflare pages set up a cloudflare pages project configure the same environment variables build command: next build output directory: .next self-hosted step 3: update oauth callback urls update every oauth provider's callback urls to your production domain: security hardening session security auth secret generate with openssl rand -base64 32 (minimum 32 bytes) never share between environments never commit to source control rotate periodically (note: this invalidates all existing sessions) https production requires https. the secure cookie flag is set automatically in production, meaning: session cookies are only sent over https http connections cannot authenticate rate limiting built-in rate limits protect against brute force attacks: trusted origins limit which origins can make authenticated requests: monitoring convex dashboard the convex dashboard provides: audit logs banata auth automatically logs 30 auth events. use these for security monitoring: webhook delivery monitor webhook delivery via the admin dashboard or sdk: external monitoring set up webhooks to send events to your monitoring system: scaling convex (backend) convex handles scaling automatically: serverless functions — scale to zero, scale to thousands database — automatically sharded and replicated no cold starts — functions are always warm next.js (frontend) for the next.js app: vercel — automatic global edge deployment self-hosted — use a load balancer with multiple instances session cookies are stateless on the next.js side (stored in convex), so any in backup & recovery data backup convex provides automatic backups and point-in-time recovery. for additional protection: secret rotation to rotate the better_auth_secret: pre-launch checklist environment [ ] better_auth_secret is set to a unique production value [ ] site_url matches your production domain (with https://) [ ] all next_public_* variables point to production convex deployment security [ ] https is enabled (required for secure cookies) [ ] better_auth_secret is different from development [ ] no development/test credentials in production auth methods [ ] email/password sign-up flow works end-to-end [ ] email verification emails are received [ ] password reset emails are received [ ] social oauth flows complete successfully monitoring [ ] convex dashboard accessible [ ] audit logs are being recorded [ ] webhook endpoints are registered and receiving events [ ] error alerting is configured compliance [ ] audit logging is active (always-on by default) [ ] data retention policy defined [ ] privacy policy updated to reflect auth data collection [ ] cookie consent banner added (if required by jurisdic post-launch after launching: what's next environment variables — complete variable reference webhooks — set up event monitoring audit logs — configure compliance logging"
+    "searchText": "deploying the self-hosted stack production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for banata auth. deployment architecture this page applies only to the self-hosted convex + next.js architecture. step 1: convex production deployment create a production deployment set production environment variables step 2: next.js production deployment vercel (recommended) connect your repo to vercel set environment variables in the vercel dashboard: cloudflare pages set up a cloudflare pages project configure the same environment variables build command: next build output directory: .next self-hosted step 3: update oauth callback urls update every oauth provider's callback urls to your production domain: security hardening session security auth secret generate with openssl rand -base64 32 (minimum 32 bytes) never share between environments never commit to source control rotate periodically (note: this invalidates all existing sessions) https production requires https. the secure cookie flag is set automatically in production, meaning: session cookies are only sent over https http connections cannot authenticate rate limiting built-in rate limits protect against brute force attacks: trusted origins limit which origins can make authenticated requests: monitoring convex dashboard the convex dashboard provides: audit logs banata auth automatically logs 30 auth events. use these for security monitoring: webhook delivery monitor webhook delivery via the admin dashboard or sdk: external monitoring set up webhooks to send events to your monitoring system: scaling convex (backend) convex handles scaling automatically: serverless functions — scale to zero, scale to thousands database — automatically sharded and replicated no cold starts — functions are always warm next.js (frontend) for the next.js app: vercel — automatic global edge deployment self-hosted — use a load balancer with multiple instances session cookies are stateless on the next.js side (stored in convex), so any in backup & recovery data backup convex provides automatic backups and point-in-time recovery. for additional protection: secret rotation to rotate the better_auth_secret: pre-launch checklist environment [ ] better_auth_secret is set to a unique production value [ ] site_url matches your production domain (with https://) [ ] all next_public_* variables point to production convex deployment security [ ] https is enabled (required for secure cookies) [ ] better_auth_secret is different from development [ ] no development/test credentials in production auth methods [ ] email/password sign-up flow works end-to-end [ ] email verification emails are received [ ] password reset emails are received [ ] social oauth flows complete successfully monitoring [ ] convex dashboard accessible [ ] audit logs are being recorded [ ] webhook endpoints are registered and receiving events [ ] error alerting is configured compliance [ ] audit logging is active (always-on by default) [ ] data retention policy defined [ ] privacy policy updated to reflect auth data collection [ ] cookie consent banner added (if required by jurisdic post-launch after launching: what's next environment variables — complete variable reference webhooks — set up event monitoring audit logs — configure compliance logging"
   },
   {
     "slug": "domains",
@@ -4093,7 +2959,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
   },
   {
     "slug": "env-vars",
-    "title": "Environment Variables",
+    "title": "Self-Hosted Environment Variables",
     "description": "Complete reference for every environment variable used by Banata Auth — Convex backend, Next.js frontend, and OAuth providers.",
     "section": "Configuration",
     "headings": [
@@ -4194,7 +3060,91 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Deploy — Production deployment guide Quick Start — Set up a new project from scratch Convex — Backend configuration reference"
       }
     ],
-    "searchText": "environment variables complete reference for every environment variable used by banata auth — convex backend, next.js frontend, and oauth providers. quick reference --- convex environment variables these are set on the convex deployment using npx convex env set. they're available to convex functions via process.env. core social oauth providers set these only for the providers you've enabled in socialproviders: email provider passkey (webauthn) listing all convex variables next.js environment variables (.env.local) these are set in your .env.local file and are available to your next.js app. core example .env.local local development for local convex development (npx convex dev): next_public_ prefix variables starting with next_public_ are embedded in the client-side javascript bundle and visible to users. never put secrets in next_public_ variables. dashboard-specific variables the admin dashboard (apps/dashboard) uses additional variables: production checklist before deploying to production, verify: template .env.local copy this template for new projects: what's next deploy — production deployment guide quick start — set up a new project from scratch convex — backend configuration reference"
+    "searchText": "self-hosted environment variables complete reference for every environment variable used by banata auth — convex backend, next.js frontend, and oauth providers. quick reference --- convex environment variables these are set on the convex deployment using npx convex env set. they're available to convex functions via process.env. core social oauth providers set these only for the providers you've enabled in socialproviders: email provider passkey (webauthn) listing all convex variables next.js environment variables (.env.local) these are set in your .env.local file and are available to your next.js app. core example .env.local local development for local convex development (npx convex dev): next_public_ prefix variables starting with next_public_ are embedded in the client-side javascript bundle and visible to users. never put secrets in next_public_ variables. dashboard-specific variables the admin dashboard (apps/dashboard) uses additional variables: production checklist before deploying to production, verify: template .env.local copy this template for new projects: what's next deploy — production deployment guide quick start — set up a new project from scratch convex — backend configuration reference"
+  },
+  {
+    "slug": "hosted-ui",
+    "title": "Hosted Sign-In",
+    "description": "Reference guide for Banata's hosted auth UI. This is documented, but it is not the primary integration path right now.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "How It Works",
+        "anchor": "how-it-works",
+        "snippet": "In the hosted model:"
+      },
+      {
+        "level": 2,
+        "text": "What Must Be Configured First",
+        "anchor": "what-must-be-configured-first",
+        "snippet": "Hosted UI only reflects the configuration already saved for that project."
+      },
+      {
+        "level": 2,
+        "text": "Customer App Requirements",
+        "anchor": "customer-app-requirements",
+        "snippet": "Your app still needs:"
+      },
+      {
+        "level": 2,
+        "text": "Current Positioning",
+        "anchor": "current-positioning",
+        "snippet": "This page remains in the docs as a reference because the product supports it."
+      }
+    ],
+    "searchText": "hosted sign-in reference guide for banata's hosted auth ui. this is documented, but it is not the primary integration path right now. how it works in the hosted model: what must be configured first hosted ui only reflects the configuration already saved for that project. customer app requirements your app still needs: current positioning this page remains in the docs as a reference because the product supports it."
+  },
+  {
+    "slug": "introduction",
+    "title": "Introduction",
+    "description": "Banata Auth is a project-scoped auth platform where the dashboard and API keys are the starting point.",
+    "section": "Start Here",
+    "headings": [
+      {
+        "level": 2,
+        "text": "What Banata Is",
+        "anchor": "what-banata-is",
+        "snippet": "Banata Auth is an authentication platform for products that need:"
+      },
+      {
+        "level": 2,
+        "text": "The Product Contract",
+        "anchor": "the-product-contract",
+        "snippet": "Banata always starts the same way:"
+      },
+      {
+        "level": 2,
+        "text": "Hosted Vs Self-Hosted",
+        "anchor": "hosted-vs-self-hosted",
+        "snippet": "These are deployment choices, not different integration models."
+      },
+      {
+        "level": 2,
+        "text": "Read These Docs In Order",
+        "anchor": "read-these-docs-in-order",
+        "snippet": "For a normal product integration, read these pages in this order:"
+      },
+      {
+        "level": 2,
+        "text": "Package Roles",
+        "anchor": "package-roles",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "What Matters First",
+        "anchor": "what-matters-first",
+        "snippet": "Projects are the isolation boundary. API keys are how your app binds to a project. Dashboard config and SDK config are the same underlying config. Your app does not own the auth database. Banata does."
+      },
+      {
+        "level": 2,
+        "text": "Version Notes",
+        "anchor": "version-notes",
+        "snippet": "The current Convex-backed platform runtime is tested against better-auth@1.4.x. Use published @banata-auth/* packages from 0.1.1+."
+      }
+    ],
+    "searchText": "introduction banata auth is a project-scoped auth platform where the dashboard and api keys are the starting point. what banata is banata auth is an authentication platform for products that need: the product contract banata always starts the same way: hosted vs self-hosted these are deployment choices, not different integration models. read these docs in order for a normal product integration, read these pages in this order: package roles --- what matters first projects are the isolation boundary. api keys are how your app binds to a project. dashboard config and sdk config are the same underlying config. your app does not own the auth database. banata does. version notes the current convex-backed platform runtime is tested against better-auth@1.4.x. use published @banata-auth/* packages from 0.1.1+."
   },
   {
     "slug": "invitations",
@@ -4224,13 +3174,25 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Configuration",
         "anchor": "configuration",
-        "snippet": "The invitation email callback is part of the email configuration:"
+        "snippet": "Enable organizations, then configure invitation delivery in the dashboard:"
       },
       {
         "level": 3,
-        "text": "Callback Parameters",
-        "anchor": "callback-parameters",
-        "snippet": "The sendInvitationEmail callback receives an object with:"
+        "text": "Default Delivery Model",
+        "anchor": "default-delivery-model",
+        "snippet": "The default invitation flow is dashboard-first:"
+      },
+      {
+        "level": 3,
+        "text": "Optional Code Override",
+        "anchor": "optional-code-override",
+        "snippet": "If you want your app to own invitation delivery, add email.sendInvitationEmail:"
+      },
+      {
+        "level": 3,
+        "text": "Override Callback Parameters",
+        "anchor": "override-callback-parameters",
+        "snippet": "The sendInvitationEmail override receives an object with:"
       },
       {
         "level": 2,
@@ -4302,7 +3264,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Invitation Email Not Sent",
         "anchor": "invitation-email-not-sent",
-        "snippet": "Check that sendInvitationEmail is configured in your email callbacks Check the Convex function logs for errors in the email sending Make sure authMethods.organization is true"
+        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure invitation emails are enabled Check the invitation template in Email Templates"
       },
       {
         "level": 3,
@@ -4323,7 +3285,82 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Roles & Permissions — Control what members can do within an organization Organizations — Full organization management guide Webhooks — Get notified about invitation events"
       }
     ],
-    "searchText": "invitations complete invitation lifecycle — sending, accepting, expiring, and revoking organization invitations. how invitations work invitation data model status lifecycle configuration the invitation email callback is part of the email configuration: callback parameters the sendinvitationemail callback receives an object with: client-side api send an invitation list pending invitations accept an invitation revoke an invitation invitation acceptance page build a page at /invite/[id] that handles invitation acceptance: server-side management (admin sdk) expiration invitations expire after 7 days (604,800 seconds), as defined in @banata-auth/shared: bulk invitations to invite multiple users at once, iterate over the emails: audit events --- troubleshooting invitation email not sent check that sendinvitationemail is configured in your email callbacks check the convex function logs for errors in the email sending make sure authmethods.organization is true \"invitation already pending\" an invitation with the same email already exists for this organization. either: wait for it to expire (7 days) revoke the existing invitation first, then send a new one \"organization membership limit reached\" the organization has reached the membershiplimit (default: 100). increase it in your config: what's next roles & permissions — control what members can do within an organization organizations — full organization management guide webhooks — get notified about invitation events"
+    "searchText": "invitations complete invitation lifecycle — sending, accepting, expiring, and revoking organization invitations. how invitations work invitation data model status lifecycle configuration enable organizations, then configure invitation delivery in the dashboard: default delivery model the default invitation flow is dashboard-first: optional code override if you want your app to own invitation delivery, add email.sendinvitationemail: override callback parameters the sendinvitationemail override receives an object with: client-side api send an invitation list pending invitations accept an invitation revoke an invitation invitation acceptance page build a page at /invite/[id] that handles invitation acceptance: server-side management (admin sdk) expiration invitations expire after 7 days (604,800 seconds), as defined in @banata-auth/shared: bulk invitations to invite multiple users at once, iterate over the emails: audit events --- troubleshooting invitation email not sent check emails > providers for an active provider check emails > configuration and make sure invitation emails are enabled check the invitation template in email templates \"invitation already pending\" an invitation with the same email already exists for this organization. either: wait for it to expire (7 days) revoke the existing invitation first, then send a new one \"organization membership limit reached\" the organization has reached the membershiplimit (default: 100). increase it in your config: what's next roles & permissions — control what members can do within an organization organizations — full organization management guide webhooks — get notified about invitation events"
+  },
+  {
+    "slug": "nextjs",
+    "title": "Next.js",
+    "description": "Proxy Banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an API key.",
+    "section": "Build Your App",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Recommended Model",
+        "anchor": "recommended-model",
+        "snippet": "Create a project in the Banata dashboard. Configure auth methods, providers, and emails for that project. Create a project-scoped API key. Store the key in your server environment."
+      },
+      {
+        "level": 2,
+        "text": "Server Helpers",
+        "anchor": "server-helpers",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Route File",
+        "anchor": "route-file",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Read Auth State On The Server",
+        "anchor": "read-auth-state-on-the-server",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Environment Variables",
+        "anchor": "environment-variables",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Programmatic Configuration",
+        "anchor": "programmatic-configuration",
+        "snippet": "@banata-auth/nextjs handles transport and cookies. If you want to change the project's Banata configuration by code, use the SDK:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "The frontend can render, but auth calls fail",
+        "anchor": "the-frontend-can-render-but-auth-calls-fail",
+        "snippet": "Check:"
+      },
+      {
+        "level": 3,
+        "text": "The app has no session after sign-in",
+        "anchor": "the-app-has-no-session-after-sign-in",
+        "snippet": "Check:"
+      },
+      {
+        "level": 3,
+        "text": "Do I still need projectId or clientId in app code?",
+        "anchor": "do-i-still-need-projectid-or-clientid-in-app-code",
+        "snippet": "Normally no."
+      },
+      {
+        "level": 2,
+        "text": "Related Guides",
+        "anchor": "related-guides",
+        "snippet": "Quick Start React SDK Reference Self-Hosting"
+      }
+    ],
+    "searchText": "next.js proxy banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an api key. recommended model create a project in the banata dashboard. configure auth methods, providers, and emails for that project. create a project-scoped api key. store the key in your server environment. server helpers route file read auth state on the server environment variables programmatic configuration @banata-auth/nextjs handles transport and cookies. if you want to change the project's banata configuration by code, use the sdk: troubleshooting the frontend can render, but auth calls fail check: the app has no session after sign-in check: do i still need projectid or clientid in app code? normally no. related guides quick start react sdk reference self-hosting"
   },
   {
     "slug": "notifications",
@@ -4632,6 +3669,207 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "searchText": "organizations multi-tenant workspaces with members, roles, invitations, and organization switching — the foundation for b2b saas. configuration enable organizations in your banataauthconfig: organization config options --- data model organization member invitation client-side api create an organization list user's organizations set active organization when a user belongs to multiple organizations, they switch between them: get active organization update an organization delete an organization react hooks useorganization() returns the current active organization: usebanataauth() the full context includes organization data: member management list members add a member update member role remove a member invitation management see the dedicated invitations guide for the complete invitation lifecycle. send an invitation accept an invitation revoke an invitation server-side management (admin sdk) use the sdk to manage organizations from your backend: organization switcher component a common ui pattern is an organization switcher in the navigation: database tables organizations use these convex tables: audit events --- what's next invitations — complete invitation lifecycle and flows roles & permissions — fine-grained access control within organizations webhooks — get notified about organization events"
   },
   {
+    "slug": "project-structure",
+    "title": "Project Structure",
+    "description": "What you add to your app, what Banata owns, and which files matter for the normal customer integration path.",
+    "section": "Start Here",
+    "headings": [
+      {
+        "level": 2,
+        "text": "What Lives In Your App",
+        "anchor": "what-lives-in-your-app",
+        "snippet": "For the normal integration path, your app only needs a small auth surface:"
+      },
+      {
+        "level": 2,
+        "text": "What Lives In Banata",
+        "anchor": "what-lives-in-banata",
+        "snippet": "Banata owns these concerns per project:"
+      },
+      {
+        "level": 2,
+        "text": "Typical App Structure",
+        "anchor": "typical-app-structure",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "What You Do Not Add",
+        "anchor": "what-you-do-not-add",
+        "snippet": "For the normal Banata integration path, you do not add:"
+      },
+      {
+        "level": 2,
+        "text": "Self-Hosting Changes Infrastructure, Not The Customer API",
+        "anchor": "self-hosting-changes-infrastructure-not-the-customer-api",
+        "snippet": "If you self-host Banata, you deploy the Banata platform itself. Customer apps still:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Quick Start Projects Next.js Self-Hosting"
+      }
+    ],
+    "searchText": "project structure what you add to your app, what banata owns, and which files matter for the normal customer integration path. what lives in your app for the normal integration path, your app only needs a small auth surface: what lives in banata banata owns these concerns per project: typical app structure what you do not add for the normal banata integration path, you do not add: self-hosting changes infrastructure, not the customer api if you self-host banata, you deploy the banata platform itself. customer apps still: next steps quick start projects next.js self-hosting"
+  },
+  {
+    "slug": "projects-environments",
+    "title": "Projects",
+    "description": "Projects are the isolation boundary for users, organizations, roles, branding, and configuration.",
+    "section": "Start Here",
+    "headings": [
+      {
+        "level": 2,
+        "text": "What A Project Is",
+        "anchor": "what-a-project-is",
+        "snippet": "A project is not just a label in the sidebar. It is the scope boundary for:"
+      },
+      {
+        "level": 2,
+        "text": "What The Default Project Actually Means",
+        "anchor": "what-the-default-project-actually-means",
+        "snippet": "On the first dashboard load, Banata calls ensure-default for the signed-in dashboard admin."
+      },
+      {
+        "level": 2,
+        "text": "Why The Project Switcher Exists",
+        "anchor": "why-the-project-switcher-exists",
+        "snippet": "The project switcher exists because nearly every management surface in Banata is project-scoped."
+      },
+      {
+        "level": 2,
+        "text": "How App Scope Works",
+        "anchor": "how-app-scope-works",
+        "snippet": "For a customer app, the normal scope rules are:"
+      },
+      {
+        "level": 2,
+        "text": "What Is Shared Across Projects",
+        "anchor": "what-is-shared-across-projects",
+        "snippet": "The main thing shared across projects is the dashboard admin identity: the person who signs in to the Banata dashboard and manages projects."
+      },
+      {
+        "level": 2,
+        "text": "What To Verify In Production",
+        "anchor": "what-to-verify-in-production",
+        "snippet": "When you are testing project isolation, verify all of these:"
+      },
+      {
+        "level": 2,
+        "text": "Programmatic Access",
+        "anchor": "programmatic-access",
+        "snippet": "The SDK exposes project lifecycle operations, but the normal product flow is still dashboard-first:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "API Keys Quick Start SDK Reference Roles & Permissions"
+      }
+    ],
+    "searchText": "projects projects are the isolation boundary for users, organizations, roles, branding, and configuration. what a project is a project is not just a label in the sidebar. it is the scope boundary for: what the default project actually means on the first dashboard load, banata calls ensure-default for the signed-in dashboard admin. why the project switcher exists the project switcher exists because nearly every management surface in banata is project-scoped. how app scope works for a customer app, the normal scope rules are: what is shared across projects the main thing shared across projects is the dashboard admin identity: the person who signs in to the banata dashboard and manages projects. what to verify in production when you are testing project isolation, verify all of these: programmatic access the sdk exposes project lifecycle operations, but the normal product flow is still dashboard-first: next steps api keys quick start sdk reference roles & permissions"
+  },
+  {
+    "slug": "quickstart",
+    "title": "Quick Start",
+    "description": "Connect a Next.js app to Banata with a project-scoped API key and app-owned auth routes.",
+    "section": "Start Here",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Dashboard Prerequisites",
+        "anchor": "dashboard-prerequisites",
+        "snippet": "Before you write code:"
+      },
+      {
+        "level": 2,
+        "text": "Install Packages",
+        "anchor": "install-packages",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Environment Variables",
+        "anchor": "environment-variables",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Create Server Auth Helpers",
+        "anchor": "create-server-auth-helpers",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Create The Auth Route",
+        "anchor": "create-the-auth-route",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Create The Browser Auth Client",
+        "anchor": "create-the-browser-auth-client",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Add Sign-In And Sign-Up Pages",
+        "anchor": "add-sign-in-and-sign-up-pages",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Guard Your App",
+        "anchor": "guard-your-app",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Configure Banata By Code",
+        "anchor": "configure-banata-by-code",
+        "snippet": "The dashboard is the main management surface, but it is not the only way to configure a project."
+      },
+      {
+        "level": 2,
+        "text": "What To Verify",
+        "anchor": "what-to-verify",
+        "snippet": "After wiring the app:"
+      },
+      {
+        "level": 2,
+        "text": "Common First-Run Problems",
+        "anchor": "common-first-run-problems",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "The frontend renders, but sign-in fails immediately",
+        "anchor": "the-frontend-renders-but-sign-in-fails-immediately",
+        "snippet": "Check:"
+      },
+      {
+        "level": 3,
+        "text": "Email sign-up exists, but the flow is not practical",
+        "anchor": "email-sign-up-exists-but-the-flow-is-not-practical",
+        "snippet": "Email delivery is not ready yet. Configure:"
+      },
+      {
+        "level": 3,
+        "text": "Sign-in succeeds, but the app still has no session",
+        "anchor": "sign-in-succeeds-but-the-app-still-has-no-session",
+        "snippet": "Check:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "API Keys Projects Next.js React SDK Reference"
+      }
+    ],
+    "searchText": "quick start connect a next.js app to banata with a project-scoped api key and app-owned auth routes. dashboard prerequisites before you write code: install packages environment variables create server auth helpers create the auth route create the browser auth client add sign-in and sign-up pages guard your app configure banata by code the dashboard is the main management surface, but it is not the only way to configure a project. what to verify after wiring the app: common first-run problems the frontend renders, but sign-in fails immediately check: email sign-up exists, but the flow is not practical email delivery is not ready yet. configure: sign-in succeeds, but the app still has no session check: next steps api keys projects next.js react sdk reference"
+  },
+  {
     "slug": "radar",
     "title": "Radar (Dashboard Feature)",
     "description": "AI-powered bot detection with configurable providers (Vercel BotID, Cloudflare Turnstile, reCAPTCHA, hCaptcha), impossible travel detection, device fingerprinting, and rate limiting.",
@@ -4807,6 +4045,57 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       }
     ],
     "searchText": "radar (dashboard feature) ai-powered bot detection with configurable providers (vercel botid, cloudflare turnstile, recaptcha, hcaptcha), impossible travel detection, device fingerprinting, and rate limiting. how radar works supported bot detection providers configuring a provider navigate to radar in the dashboard sidebar click enable protection if not already enabled go to the configuration tab toggle bot detection on under bot detection provider, select your provider from th using bot protection in your app option 1: config-aware (recommended) reads provider credentials from the dashboard configuration automatically: option 2: direct provider (vercel botid) for vercel deployments with botid installed directly: detection rules radar provides 4 configurable detection rules that work alongside bot providers: detection rule defaults when radar is first enabled, it ships with sensible defaults: radar configuration data model managing radar via the dashboard navigate to radar in the dashboard sidebar enabling radar the radar page shows a hero card with feature highlights when disabled: configuring detection rules click the configuration tab toggle individual detection rules on or off using the switches changes are saved to the backend immediately with optimistic updates configuring bot detection provider in the configuration tab, scroll to bot detection provider select a provider from the dropdown (botid, turnstile, recaptcha, hcaptcha) a description and docs link appear for the selected provider overview tab the overview tab shows detection statistics (total detections, allowed, challenged, blocked) and a timeline chart. these populate with data once radar is active in production. api endpoints the configplugin exposes 2 radar endpoints: get radar config save radar config database storage radar configuration is stored as a singleton row in the radarconfig table: using radar programmatically via the dashboard api client combining radar with rate limiting radar's rate limiting detection rule works alongside banata auth's built-in rate limiting (configured in banataauthconfig). the two are complementary: security considerations defense in depth — radar provides multiple layers (bot providers, detection rules, rate limiting). enable all layers in production. provider flexibility — not tied to a single provider. switch provide troubleshooting \"bot detected. access denied.\" (403) the bot provider flagged the request as automated. this can happen if: the request is from an automated script without browser context the provider's client-side widget didn't load (check your layout/ \"detection stats showing all zeros\" detection statistics populate once radar is active in production and receives real traffic. in development, all requests pass through without recording statistics. \"radar enabled but no protection\" check that: a bot provider is selected in the radar configuration credentials are saved for the selected provider your route handler uses withbotprotection() with either createconfigawareverifier() or \"credentials not taking effect\" the config-aware verifier caches the radar config for 1 minute by default. wait up to 1 minute after saving credentials, or set cachettlms: 0 for immediate effect (not recommended in production). what's next bot protection package — full api reference for @banata-auth/nextjs/bot-protection settings — project-level configuration audit logs — track security events and suspicious activity"
+  },
+  {
+    "slug": "react",
+    "title": "React",
+    "description": "Use Banata's React package for auth UI, provider state, and client-side organization helpers.",
+    "section": "Build Your App",
+    "headings": [
+      {
+        "level": 2,
+        "text": "What It Provides",
+        "anchor": "what-it-provides",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Create The Browser Client",
+        "anchor": "create-the-browser-client",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Use The Prebuilt Forms",
+        "anchor": "use-the-prebuilt-forms",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Provider And Hooks",
+        "anchor": "provider-and-hooks",
+        "snippet": "If you want auth state inside client components, wrap your app with BanataAuthProvider and provide an adapter:"
+      },
+      {
+        "level": 2,
+        "text": "Organization Client",
+        "anchor": "organization-client",
+        "snippet": "Banata re-exports an organization client wrapper that accepts your project's custom role slugs."
+      },
+      {
+        "level": 2,
+        "text": "Convex Bridge",
+        "anchor": "convex-bridge",
+        "snippet": "If your frontend also talks to Convex directly, use BanataConvexProvider from @banata-auth/react/convex to bridge Banata auth tokens into your Convex client."
+      },
+      {
+        "level": 2,
+        "text": "Related Guides",
+        "anchor": "related-guides",
+        "snippet": "Quick Start Next.js SDK Reference Roles & Permissions"
+      }
+    ],
+    "searchText": "react use banata's react package for auth ui, provider state, and client-side organization helpers. what it provides --- create the browser client use the prebuilt forms provider and hooks if you want auth state inside client components, wrap your app with banataauthprovider and provide an adapter: organization client banata re-exports an organization client wrapper that accepts your project's custom role slugs. convex bridge if your frontend also talks to convex directly, use banataconvexprovider from @banata-auth/react/convex to bridge banata auth tokens into your convex client. related guides quick start next.js sdk reference roles & permissions"
   },
   {
     "slug": "redirects",
@@ -5178,7 +4467,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Dashboard Management",
         "anchor": "dashboard-management",
-        "snippet": "Use:"
+        "snippet": "Use the dashboard in this order:"
       },
       {
         "level": 2,
@@ -5208,7 +4497,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Permission Checks",
         "anchor": "permission-checks",
-        "snippet": "Permission checks use { resource, action } shape."
+        "snippet": "Permission checks are project-scoped. You can pass a full slug string or { resource, action }."
       },
       {
         "level": 2,
@@ -5229,7 +4518,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Organizations Auth Configuration Resource Types"
       }
     ],
-    "searchText": "roles & permissions super-admin-first rbac with dynamic custom roles, built-in permissions, and project-scoped permission catalogs. role model visible default role reserved role slugs the following role slugs are reserved: permission model permissions are project-scoped and shared by all organizations in that project. bootstrap behavior when a project is created (or default project is ensured): dashboard management use: sdk (@banata-auth/sdk) roles permissions assign or revoke roles permission checks permission checks use { resource, action } shape. api endpoints role and permission management endpoints: best practices keep super_admin limited to trusted org owners. prefer capability-based roles (for example sandbox_operator, billing_viewer) over generic titles. keep permissions granular and explicit (resource.actio what's next organizations auth configuration resource types"
+    "searchText": "roles & permissions super-admin-first rbac with dynamic custom roles, built-in permissions, and project-scoped permission catalogs. role model visible default role reserved role slugs the following role slugs are reserved: permission model permissions are project-scoped and shared by all organizations in that project. bootstrap behavior when a project is created (or default project is ensured): dashboard management use the dashboard in this order: sdk (@banata-auth/sdk) roles permissions assign or revoke roles permission checks permission checks are project-scoped. you can pass a full slug string or { resource, action }. api endpoints role and permission management endpoints: best practices keep super_admin limited to trusted org owners. prefer capability-based roles (for example sandbox_operator, billing_viewer) over generic titles. keep permissions granular and explicit (resource.actio what's next organizations auth configuration resource types"
   },
   {
     "slug": "scim",
@@ -5379,115 +4668,61 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "searchText": "directory sync (scim) automated user provisioning and deprovisioning via scim 2.0 directory synchronization. overview directory sync enables automated user provisioning and deprovisioning between your identity provider (idp) and banata auth using the scim 2.0 protocol. when an employee is added, updated, or removed i how it works directories and organizations each scim directory is tied to a specific organization in banata auth. this means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped an push-based synchronization banata auth exposes a scim 2.0-compliant endpoint for each directory. the idp is configured to push user and group changes to this endpoint. whenever a change occurs in the idp (a new hire, a terminat authentication all scim endpoints are authenticated using a bearer token. each directory has its own unique token, generated at the time of directory creation. the idp must include this token in the authorization he supported scim events banata auth processes the following scim operations: dashboard setup step 1: navigate to directory sync open the banata auth dashboard and navigate to the directory sync section under your project settings. this page lists all configured scim directories across your organizations. step 2: create a directory click create directory and fill in the required fields: step 3: copy the scim endpoint and bearer token after creating the directory, banata auth will display: step 4: configure your identity provider use the scim endpoint url and bearer token to configure provisioning in your idp. the exact steps vary by provider: sdk usage the banata auth sdk provides methods for managing scim directories programmatically. initialize the client list scim directories retrieve all configured scim directories across your project: get a specific directory retrieve details about a single directory by its id: create a directory delete a directory api endpoints create a scim directory list all directories directory object each scim directory is represented by the following object: scim events when the idp pushes changes to the scim endpoint, banata auth processes each operation and triggers the corresponding internal action. the table below summarizes the supported events and their effects webhooks for scim events you can subscribe to scim-related events via webhooks to trigger custom logic in your application when directory changes occur. the following webhook event types are available:"
   },
   {
-    "slug": "self-hosting",
-    "title": "Self-Hosting",
-    "description": "Run Banata Auth on your own infrastructure — architecture overview, project structure, deployment, and configuration.",
-    "section": "Advanced",
+    "slug": "sdk",
+    "title": "SDK Reference",
+    "description": "Manage Banata projects, users, organizations, RBAC, and dashboard-backed configuration by code.",
+    "section": "Build Your App",
     "headings": [
       {
         "level": 2,
-        "text": "Architecture",
-        "anchor": "architecture",
-        "snippet": "Banata Auth follows a four-layer architecture where each layer has a clear responsibility:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 1: Convex Backend (@banata-auth/convex)",
-        "anchor": "layer-1-convex-backend-banata-authconvex",
-        "snippet": "All authentication logic runs inside Convex functions. Better Auth is instantiated server-side with a Convex database adapter, meaning:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 2: Next.js Proxy (@banata-auth/nextjs)",
-        "anchor": "layer-2-nextjs-proxy-banata-authnextjs",
-        "snippet": "A reverse proxy route handler at /api/auth/[...all] forwards browser requests to the Convex backend. This is necessary because:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 3: React Client (@banata-auth/react)",
-        "anchor": "layer-3-react-client-banata-authreact",
-        "snippet": "The React layer provides:"
-      },
-      {
-        "level": 3,
-        "text": "Layer 4: Admin SDK (@banata-auth/sdk)",
-        "anchor": "layer-4-admin-sdk-banata-authsdk",
-        "snippet": "The TypeScript SDK provides server-side management of your entire auth system:"
-      },
-      {
-        "level": 2,
-        "text": "Monorepo Structure",
-        "anchor": "monorepo-structure",
-        "snippet": "Banata Auth is organized as a Turborepo monorepo with 5 npm packages, 4 applications, and shared tooling."
-      },
-      {
-        "level": 3,
-        "text": "Package Dependency Graph",
-        "anchor": "package-dependency-graph",
+        "text": "Initialization",
+        "anchor": "initialization",
         "snippet": ""
       },
       {
-        "level": 3,
-        "text": "Package Details",
-        "anchor": "package-details",
-        "snippet": "---"
+        "level": 2,
+        "text": "Dashboard And Code Stay In Sync",
+        "anchor": "dashboard-and-code-stay-in-sync",
+        "snippet": "Banata is dashboard-first, but configuration can also be updated by code."
       },
       {
         "level": 2,
-        "text": "Database Schema (26 Tables)",
-        "anchor": "database-schema-26-tables",
-        "snippet": "The Convex backend uses 26 tables to store all auth data:"
-      },
-      {
-        "level": 2,
-        "text": "Plugin System (15 Plugins)",
-        "anchor": "plugin-system-15-plugins",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Build System",
-        "anchor": "build-system",
-        "snippet": "The monorepo uses Turborepo for build orchestration with Bun as the package manager."
-      },
-      {
-        "level": 3,
-        "text": "Commands",
-        "anchor": "commands",
+        "text": "Configure Auth Methods By Code",
+        "anchor": "configure-auth-methods-by-code",
         "snippet": ""
       },
       {
-        "level": 3,
-        "text": "Package Publishing",
-        "anchor": "package-publishing",
-        "snippet": "Packages are published to npm using Changesets:"
+        "level": 2,
+        "text": "Configure Branding By Code",
+        "anchor": "configure-branding-by-code",
+        "snippet": ""
       },
       {
         "level": 2,
-        "text": "CI/CD",
-        "anchor": "cicd",
-        "snippet": "---"
+        "text": "Configure Social Providers By Code",
+        "anchor": "configure-social-providers-by-code",
+        "snippet": ""
       },
       {
         "level": 2,
-        "text": "Self-Hosting Deployment",
-        "anchor": "self-hosting-deployment",
-        "snippet": "To self-host Banata Auth, you need:"
-      },
-      {
-        "level": 3,
-        "text": "Required Infrastructure",
-        "anchor": "required-infrastructure",
-        "snippet": "---"
+        "text": "Example Admin Workflow",
+        "anchor": "example-admin-workflow",
+        "snippet": ""
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Quick Start — Set up Banata Auth in your project Deploy — Production deployment guide Environment Variables — Complete variable reference Convex Integration — Backend configuration deep dive"
+        "text": "Scope Rules",
+        "anchor": "scope-rules",
+        "snippet": "the project-scoped API key is the normal scope boundary routine SDK calls should not require you to pass projectId one project's key should not be able to read or mutate another project's data"
+      },
+      {
+        "level": 2,
+        "text": "Related Guides",
+        "anchor": "related-guides",
+        "snippet": "Quick Start API Keys Next.js Projects"
       }
     ],
-    "searchText": "self-hosting run banata auth on your own infrastructure — architecture overview, project structure, deployment, and configuration. architecture banata auth follows a four-layer architecture where each layer has a clear responsibility: layer 1: convex backend (@banata-auth/convex) all authentication logic runs inside convex functions. better auth is instantiated server-side with a convex database adapter, meaning: layer 2: next.js proxy (@banata-auth/nextjs) a reverse proxy route handler at /api/auth/[...all] forwards browser requests to the convex backend. this is necessary because: layer 3: react client (@banata-auth/react) the react layer provides: layer 4: admin sdk (@banata-auth/sdk) the typescript sdk provides server-side management of your entire auth system: monorepo structure banata auth is organized as a turborepo monorepo with 5 npm packages, 4 applications, and shared tooling. package dependency graph package details --- database schema (26 tables) the convex backend uses 26 tables to store all auth data: plugin system (15 plugins) --- build system the monorepo uses turborepo for build orchestration with bun as the package manager. commands package publishing packages are published to npm using changesets: ci/cd --- self-hosting deployment to self-host banata auth, you need: required infrastructure --- what's next quick start — set up banata auth in your project deploy — production deployment guide environment variables — complete variable reference convex integration — backend configuration deep dive"
+    "searchText": "sdk reference manage banata projects, users, organizations, rbac, and dashboard-backed configuration by code. initialization dashboard and code stay in sync banata is dashboard-first, but configuration can also be updated by code. configure auth methods by code configure branding by code configure social providers by code example admin workflow scope rules the project-scoped api key is the normal scope boundary routine sdk calls should not require you to pass projectid one project's key should not be able to read or mutate another project's data related guides quick start api keys next.js projects"
   },
   {
     "slug": "settings",
@@ -5517,7 +4752,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Client ID",
         "anchor": "client-id",
-        "snippet": "A read-only identifier for your project. This is derived from the appName in your BanataAuthConfig and is used by SDKs to identify which Banata Auth instance to connect to. You can copy it to your cli"
+        "snippet": "A read-only identifier for your project. Banata uses it in callback URLs, public configuration lookups, and internal project metadata. The normal SDK flow does not use clientId to choose a project; pr"
       },
       {
         "level": 3,
@@ -5598,7 +4833,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Radar & Bot Protection — Configure bot detection with provider credentials Bot Protection Package — Integrate bot detection in your Next.js app Domains — Configure custom domains for auth services"
       }
     ],
-    "searchText": "settings configure your banata auth project name, auth method overview, team management, and danger zone. settings sub-pages navigating to /settings automatically redirects to /settings/general. general settings the general page manages your project identity. project identity project name — a human-readable name for your project (max 100 characters). shown in the dashboard header. description — an optional description of your project (max 500 characters). client id a read-only identifier for your project. this is derived from the appname in your banataauthconfig and is used by sdks to identify which banata auth instance to connect to. you can copy it to your cli saving changes to project name and description are persisted to the backend when you click save changes. the save button is disabled when there are no unsaved changes. auth overview a read-only dashboard showing the current state of your authentication configuration. this page does not allow editing — it links to the appropriate configuration pages for changes. what's displayed summary stats — count of enabled auth methods, social providers, and features authentication methods — all 9 methods (email & password, magic link, email otp, passkey, two-factor auth, organizations,  team team management is coming soon. currently the page shows: danger zone contains destructive, irreversible actions that affect your entire project. reset configuration resets all dashboard configuration to defaults: branding settings email configuration detection rules (radar) all custom configuration delete project permanently deletes the project and all associated data: users and sessions organizations and memberships api keys and webhooks all configuration api endpoints the settings backend uses the configplugin with project config endpoints: get project config save project config data model project configuration is stored as a singleton row in the projectconfig table: using settings programmatically what's next radar & bot protection — configure bot detection with provider credentials bot protection package — integrate bot detection in your next.js app domains — configure custom domains for auth services"
+    "searchText": "settings configure your banata auth project name, auth method overview, team management, and danger zone. settings sub-pages navigating to /settings automatically redirects to /settings/general. general settings the general page manages your project identity. project identity project name — a human-readable name for your project (max 100 characters). shown in the dashboard header. description — an optional description of your project (max 500 characters). client id a read-only identifier for your project. banata uses it in callback urls, public configuration lookups, and internal project metadata. the normal sdk flow does not use clientid to choose a project; pr saving changes to project name and description are persisted to the backend when you click save changes. the save button is disabled when there are no unsaved changes. auth overview a read-only dashboard showing the current state of your authentication configuration. this page does not allow editing — it links to the appropriate configuration pages for changes. what's displayed summary stats — count of enabled auth methods, social providers, and features authentication methods — all 9 methods (email & password, magic link, email otp, passkey, two-factor auth, organizations,  team team management is coming soon. currently the page shows: danger zone contains destructive, irreversible actions that affect your entire project. reset configuration resets all dashboard configuration to defaults: branding settings email configuration detection rules (radar) all custom configuration delete project permanently deletes the project and all associated data: users and sessions organizations and memberships api keys and webhooks all configuration api endpoints the settings backend uses the configplugin with project config endpoints: get project config save project config data model project configuration is stored as a singleton row in the projectconfig table: using settings programmatically what's next radar & bot protection — configure bot detection with provider credentials bot protection package — integrate bot detection in your next.js app domains — configure custom domains for auth services"
   },
   {
     "slug": "sso",
