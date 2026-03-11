@@ -2,7 +2,7 @@
 
 import { LogoMark } from "@/components/logo";
 import { ProjectSwitcher } from "@/components/project-switcher";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,6 +157,7 @@ export function Sidebar() {
 	const { data } = authClient.useSession();
 	const userName = data?.user?.name ?? "User";
 	const userEmail = data?.user?.email ?? "user@example.com";
+	const userImage = data?.user?.image;
 	const userInitial = userName.charAt(0).toUpperCase();
 
 	const isPathActive = (href: string) => {
@@ -221,9 +222,13 @@ export function Sidebar() {
 								className="h-auto w-full justify-start gap-2.5 px-2 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50"
 							>
 								<Avatar size="sm">
-									<AvatarFallback className="bg-primary/20 text-[10px] font-bold text-primary">
-										{userInitial}
-									</AvatarFallback>
+									{userImage ? (
+										<AvatarImage src={userImage} alt={userName} />
+									) : (
+										<AvatarFallback className="bg-primary/20 text-[10px] font-bold text-primary">
+											{userInitial}
+										</AvatarFallback>
+									)}
 								</Avatar>
 								<div className="flex flex-1 flex-col items-start truncate">
 									<span className="truncate text-[13px] font-medium leading-tight text-sidebar-primary">

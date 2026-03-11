@@ -273,10 +273,10 @@ export default function SecurityPage() {
 	}, [currentSessionToken]);
 
 	return (
-		<div className="grid gap-6">
+		<div className="grid gap-5">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Security</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
+				<h2 className="text-lg font-semibold tracking-tight">Security</h2>
+				<p className="text-sm text-muted-foreground">
 					Manage your password, two-factor authentication, and active sessions.
 				</p>
 			</div>

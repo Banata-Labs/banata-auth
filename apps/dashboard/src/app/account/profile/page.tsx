@@ -1,9 +1,17 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -61,7 +69,9 @@ export default function ProfilePage() {
 	const [loadingAccounts, setLoadingAccounts] = useState(true);
 
 	// Delete account
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deleteConfirm, setDeleteConfirm] = useState("");
+	const [deletePassword, setDeletePassword] = useState("");
 	const [deleting, setDeleting] = useState(false);
 
 	// Image upload ref
@@ -184,28 +194,34 @@ export default function ProfilePage() {
 	}, []);
 
 	const handleDeleteAccount = useCallback(async () => {
+		if (deleteConfirm !== "DELETE") return;
 		setDeleting(true);
 		try {
 			const res = await authClient.deleteUser({
 				callbackURL: "/sign-in",
-			});
+				password: deletePassword || undefined,
+			} as Parameters<typeof authClient.deleteUser>[0]);
 			if (res.error) {
 				toast.error(res.error.message ?? "Failed to delete account");
 			} else {
-				toast.success("Account deletion initiated. Check your email for confirmation.");
+				toast.success("Account deleted. Redirecting...");
+				setShowDeleteDialog(false);
+				setTimeout(() => {
+					window.location.href = "/sign-in";
+				}, 1500);
 			}
-		} catch {
-			toast.error("Failed to delete account");
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Failed to delete account";
+			toast.error(message);
 		} finally {
 			setDeleting(false);
 		}
-	}, []);
+	}, [deleteConfirm, deletePassword]);
 
 	if (isPending) {
 		return (
 			<div className="grid gap-6">
 				<SkeletonHeader />
-				{/* Avatar + info card */}
 				<SkeletonCard lines={0}>
 					<div className="flex items-center gap-4">
 						<Skeleton className="size-16 rounded-full" />
@@ -216,16 +232,13 @@ export default function ProfilePage() {
 						</div>
 					</div>
 				</SkeletonCard>
-				{/* Email card */}
 				<SkeletonCard lines={1} />
-				{/* Connected accounts card */}
 				<SkeletonCard lines={0}>
 					<div className="space-y-3">
 						<SkeletonListRow />
 						<SkeletonListRow />
 					</div>
 				</SkeletonCard>
-				{/* Delete account card */}
 				<SkeletonCard lines={0}>
 					<SkeletonInput width="w-[200px]" />
 				</SkeletonCard>
@@ -240,17 +253,17 @@ export default function ProfilePage() {
 	const hasPassword = accounts.some((a) => a.providerId === "credential");
 
 	return (
-		<div className="grid gap-6">
+		<div className="grid gap-5">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-					Manage your personal information, connected accounts, and account settings.
+				<h2 className="text-lg font-semibold tracking-tight">Profile</h2>
+				<p className="text-sm text-muted-foreground">
+					Manage your personal information and account settings.
 				</p>
 			</div>
 
 			{/* Profile Card */}
 			<Card>
-				<CardHeader>
+				<CardHeader className="pb-3">
 					<div className="flex items-center justify-between">
 						<CardTitle className="text-sm">Personal Information</CardTitle>
 						{!editing && (
@@ -264,16 +277,11 @@ export default function ProfilePage() {
 				<CardContent>
 					{editing ? (
 						<div className="space-y-4">
-							{/* Avatar upload */}
 							<div className="flex items-center gap-4">
 								<div className="relative">
-									<Avatar className="size-16">
+									<Avatar className="size-14">
 										{editImage ? (
-											<img
-												src={editImage}
-												alt={editName}
-												className="size-full rounded-full object-cover"
-											/>
+											<AvatarImage src={editImage} alt={editName} />
 										) : (
 											<AvatarFallback className="bg-primary/20 text-lg font-bold text-primary">
 												{editName.charAt(0).toUpperCase() || userInitial}
@@ -339,13 +347,9 @@ export default function ProfilePage() {
 						</div>
 					) : (
 						<div className="flex items-center gap-4">
-							<Avatar className="size-16">
+							<Avatar className="size-14">
 								{user.image ? (
-									<img
-										src={user.image}
-										alt={user.name ?? ""}
-										className="size-full rounded-full object-cover"
-									/>
+									<AvatarImage src={user.image} alt={user.name ?? ""} />
 								) : (
 									<AvatarFallback className="bg-primary/20 text-lg font-bold text-primary">
 										{userInitial}
@@ -380,11 +384,11 @@ export default function ProfilePage() {
 
 			{/* Email Section */}
 			<Card>
-				<CardHeader>
+				<CardHeader className="pb-3">
 					<div className="flex items-center justify-between">
 						<div>
 							<CardTitle className="text-sm">Email Address</CardTitle>
-							<CardDescription>
+							<CardDescription className="text-xs">
 								{user.email}
 								{user.emailVerified ? " (verified)" : " (unverified)"}
 							</CardDescription>
@@ -392,7 +396,7 @@ export default function ProfilePage() {
 						{!changingEmail && (
 							<Button variant="outline" size="sm" onClick={() => setChangingEmail(true)}>
 								<Mail className="size-3.5" />
-								Change email
+								Change
 							</Button>
 						)}
 					</div>
@@ -411,8 +415,7 @@ export default function ProfilePage() {
 								/>
 							</div>
 							<p className="text-xs text-muted-foreground">
-								A verification email will be sent to your new address. Your email will not change
-								until you verify it.
+								A verification email will be sent to your new address.
 							</p>
 							<div className="flex gap-2">
 								<Button onClick={handleChangeEmail} disabled={savingEmail || !newEmail} size="sm">
@@ -443,9 +446,11 @@ export default function ProfilePage() {
 
 			{/* Connected Accounts */}
 			<Card>
-				<CardHeader>
+				<CardHeader className="pb-3">
 					<CardTitle className="text-sm">Connected Accounts</CardTitle>
-					<CardDescription>Manage your linked social accounts and sign-in methods.</CardDescription>
+					<CardDescription className="text-xs">
+						Manage linked social accounts and sign-in methods.
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					{loadingAccounts ? (
@@ -455,7 +460,6 @@ export default function ProfilePage() {
 						</div>
 					) : (
 						<div className="space-y-3">
-							{/* Credential account */}
 							<div className="flex items-center justify-between rounded-lg border px-4 py-3">
 								<div className="flex items-center gap-3">
 									<Mail className="size-4 text-muted-foreground" />
@@ -478,7 +482,6 @@ export default function ProfilePage() {
 								</Badge>
 							</div>
 
-							{/* Social accounts */}
 							{socialAccounts.map((account) => (
 								<div
 									key={account.id}
@@ -503,7 +506,6 @@ export default function ProfilePage() {
 								</div>
 							))}
 
-							{/* Link new account */}
 							<Separator />
 							<div className="flex flex-wrap gap-2 pt-1">
 								<p className="text-xs text-muted-foreground w-full mb-1">Link a new account:</p>
@@ -531,17 +533,53 @@ export default function ProfilePage() {
 
 			{/* Delete Account */}
 			<Card className="border-red-500/20">
-				<CardHeader>
+				<CardHeader className="pb-3">
 					<div className="flex items-center gap-2">
 						<AlertTriangle className="size-4 text-red-400" />
-						<CardTitle className="text-sm text-red-400">Delete Account</CardTitle>
+						<CardTitle className="text-sm text-red-400">Danger Zone</CardTitle>
 					</div>
-					<CardDescription>
-						Permanently delete your account and all associated data. This action cannot be undone.
+					<CardDescription className="text-xs">
+						Permanently delete your account and all associated data.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="space-y-3">
+					<Button
+						variant="destructive"
+						size="sm"
+						onClick={() => setShowDeleteDialog(true)}
+					>
+						<Trash2 className="size-3.5" />
+						Delete my account
+					</Button>
+				</CardContent>
+			</Card>
+
+			{/* Delete Account Confirmation Dialog */}
+			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-400">
+							<AlertTriangle className="size-4" />
+							Delete Account
+						</DialogTitle>
+						<DialogDescription>
+							This action is permanent and cannot be undone. All your data, sessions, and
+							connected accounts will be removed.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4">
+						<div className="grid gap-2">
+							<Label htmlFor="delete-password" className="text-xs text-muted-foreground">
+								Enter your password to confirm
+							</Label>
+							<Input
+								id="delete-password"
+								type="password"
+								value={deletePassword}
+								onChange={(e) => setDeletePassword(e.target.value)}
+								placeholder="Your current password"
+							/>
+						</div>
 						<div className="grid gap-2">
 							<Label htmlFor="delete-account-confirm" className="text-xs text-muted-foreground">
 								Type <span className="font-mono font-bold text-red-400">DELETE</span> to confirm
@@ -551,12 +589,22 @@ export default function ProfilePage() {
 								value={deleteConfirm}
 								onChange={(e) => setDeleteConfirm(e.target.value)}
 								placeholder="DELETE"
-								className="max-w-[200px]"
 							/>
 						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setShowDeleteDialog(false);
+								setDeleteConfirm("");
+								setDeletePassword("");
+							}}
+						>
+							Cancel
+						</Button>
 						<Button
 							variant="destructive"
-							size="sm"
 							disabled={deleteConfirm !== "DELETE" || deleting}
 							onClick={handleDeleteAccount}
 						>
@@ -568,13 +616,13 @@ export default function ProfilePage() {
 							) : (
 								<>
 									<Trash2 className="size-3.5" />
-									Delete my account
+									Delete permanently
 								</>
 							)}
 						</Button>
-					</div>
-				</CardContent>
-			</Card>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
