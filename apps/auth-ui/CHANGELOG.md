@@ -1,5 +1,12 @@
 # @banata-auth/auth-ui
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`5ffbae0`](https://github.com/Banata-Labs/banata-auth/commit/5ffbae04dca303a55efb748b2ee0adf4fdcf675a)]:
+  - @banata-auth/nextjs@0.2.1
+
 ## 0.0.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @banata-auth/nextjs
 
+## 0.2.1
+
+### Patch Changes
+
+- [`5ffbae0`](https://github.com/Banata-Labs/banata-auth/commit/5ffbae04dca303a55efb748b2ee0adf4fdcf675a) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Fix the hosted auth callback helper so it can be used in a normal Next.js page without forcing consumers to wrap it in `Suspense` just to avoid a `useSearchParams()` prerender error.
+
 ## 0.2.0
 
 ### Minor Changes
