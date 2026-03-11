@@ -111,13 +111,37 @@ function getPlatformSocialProviders(): BanataAuthSocialProviders | undefined {
 	};
 }
 
+function resolveHostedUiUrl(siteUrl: string): string {
+	const configuredHostedUiUrl = process.env.AUTH_UI_URL?.trim();
+	if (configuredHostedUiUrl) {
+		return configuredHostedUiUrl;
+	}
+
+	try {
+		const site = new URL(siteUrl);
+		if (site.hostname === "localhost" || site.hostname === "127.0.0.1") {
+			return "http://localhost:3003";
+		}
+
+		if (site.hostname.startsWith("auth.")) {
+			site.hostname = `auth-ui.${site.hostname.slice("auth.".length)}`;
+			return site.toString().replace(/\/$/, "");
+		}
+	} catch {
+		// Fall back to local dev below if siteUrl is not parseable.
+	}
+
+	return "http://localhost:3003";
+}
+
 function getPlatformConfig(): BanataAuthConfig {
 	const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+	const hostedUiUrl = resolveHostedUiUrl(siteUrl);
 
 	return {
 		appName: "Banata Auth Dashboard",
 		siteUrl,
-		hostedUiUrl: process.env.AUTH_UI_URL ?? "http://localhost:3003",
+		hostedUiUrl,
 		secret: process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
@@ -203,10 +227,12 @@ export function getPluginDb(
 }
 
 function buildProjectConfig(projectName: string, secret: string): BanataAuthConfig {
+	const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+
 	return {
 		appName: projectName,
-		siteUrl: process.env.SITE_URL ?? "http://localhost:3000",
-		hostedUiUrl: process.env.AUTH_UI_URL ?? "http://localhost:3003",
+		siteUrl,
+		hostedUiUrl: resolveHostedUiUrl(siteUrl),
 		secret,
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
