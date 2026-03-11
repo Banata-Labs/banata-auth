@@ -833,6 +833,8 @@ export function createBanataAuthOptions(
 		// from brute-force and credential-stuffing attacks.
 		rateLimit: {
 			enabled: false,
+			storage: "database",
+			modelName: "rateLimit",
 		},
 		...(socialProviders != null && { socialProviders }),
 		plugins: [
