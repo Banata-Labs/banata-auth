@@ -13,23 +13,6 @@ type RateLimitRecord = {
 	lastRequest: number;
 };
 
-type RawDatabaseAdapter = {
-	findMany: (input: {
-		model: string;
-		where?: Array<{ field: string; value: unknown }>;
-		limit?: number;
-	}) => Promise<RateLimitRecord[]>;
-	create: (input: {
-		model: string;
-		data: Record<string, unknown>;
-	}) => Promise<unknown>;
-	updateMany: (input: {
-		model: string;
-		where?: Array<{ field: string; value: unknown }>;
-		update: Record<string, unknown>;
-	}) => Promise<unknown>;
-};
-
 const DEFAULT_RULE: RateLimitRule = {
 	window: 60,
 	max: RATE_LIMITS.general,
@@ -44,6 +27,30 @@ const PATH_RULES: Array<{ pattern: string; rule: RateLimitRule }> = [
 	{ pattern: "/magic-link/*", rule: { window: 60, max: RATE_LIMITS.emailOperations } },
 	{ pattern: "/admin/*", rule: { window: 60, max: RATE_LIMITS.admin } },
 ];
+
+function normalizeScopeValue(value: string | null | undefined): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readProjectIdFromUrl(urlValue: string): string | null {
+	try {
+		const url = new URL(urlValue, "http://localhost");
+		return (
+			normalizeScopeValue(url.searchParams.get("projectId")) ??
+			normalizeScopeValue(url.searchParams.get("project_id"))
+		);
+	} catch {
+		return null;
+	}
+}
+
+function resolveProjectScopeId(request: Request): string {
+	return (
+		normalizeScopeValue(request.headers.get("x-banata-project-id")) ??
+		readProjectIdFromUrl(request.url) ??
+		"__platform__"
+	);
+}
 
 function normalizePathname(urlValue: string, baseUrl: string): string {
 	try {
@@ -112,11 +119,11 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 
 			const path = normalizePathname(request.url, ctx.baseURL);
 			const rule = resolveRule(path);
-			const key = `${ip}|${path}`;
-			const database = ctx.options.database as unknown as RawDatabaseAdapter;
+			const projectScopeId = resolveProjectScopeId(request);
+			const key = `${projectScopeId}|${ip}|${path}`;
 			const where = [{ field: "key", value: key }];
 
-			const existing = ((await database.findMany({
+			const existing = ((await ctx.adapter.findMany({
 				model: "rateLimit",
 				where,
 				limit: 1,
@@ -124,7 +131,7 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 
 			const now = Date.now();
 			if (!existing) {
-				await database.create({
+				await ctx.adapter.create({
 					model: "rateLimit",
 					data: {
 						key,
@@ -143,7 +150,7 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 			}
 
 			const nextCount = now - existing.lastRequest > windowMs ? 1 : existing.count + 1;
-			await database.updateMany({
+			await ctx.adapter.updateMany({
 				model: "rateLimit",
 				where,
 				update: {
