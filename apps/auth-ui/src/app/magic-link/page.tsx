@@ -6,6 +6,7 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,15 +23,15 @@ export default function MagicLinkPage() {
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
-		return <MissingProjectScopeCard />;
+		return <MissingProjectScopeCard branding={config?.branding} />;
 	}
 
 	if (isLoading) {
-		return <LoadingProjectAuthCard title="Magic Link" />;
+		return <LoadingProjectAuthCard title="Magic Link" branding={config?.branding} />;
 	}
 
 	if (error) {
-		return <ProjectAuthErrorCard title="Magic Link" message={error} />;
+		return <ProjectAuthErrorCard title="Magic Link" message={error} branding={config?.branding} />;
 	}
 
 	if (!(config?.authMethods.magicLink ?? false)) {
@@ -39,19 +40,24 @@ export default function MagicLinkPage() {
 				title="Magic Link"
 				description="Request a secure sign-in link by email."
 				backHref={scopedPath("/sign-in")}
+				branding={config?.branding}
 			/>
 		);
 	}
 
 	return (
-		<AuthCard title="Magic Link" description="Get a secure sign-in link sent to your inbox.">
+		<AuthCard
+			title="Magic Link"
+			description="Get a secure sign-in link sent to your inbox."
+			logo={<ProjectAuthLogo branding={config?.branding} />}
+		>
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();
 					if (!customerAuthBaseUrl) return;
 					await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/magic-link", {
 						email,
-						callbackURL: scopedPath("/org-selector"),
+						callbackURL: scopedPath("/callback"),
 					});
 					setSent(true);
 				}}

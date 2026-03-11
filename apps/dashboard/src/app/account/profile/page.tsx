@@ -543,11 +543,7 @@ export default function ProfilePage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Button
-						variant="destructive"
-						size="sm"
-						onClick={() => setShowDeleteDialog(true)}
-					>
+					<Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
 						<Trash2 className="size-3.5" />
 						Delete my account
 					</Button>
@@ -563,8 +559,8 @@ export default function ProfilePage() {
 							Delete Account
 						</DialogTitle>
 						<DialogDescription>
-							This action is permanent and cannot be undone. All your data, sessions, and
-							connected accounts will be removed.
+							This action is permanent and cannot be undone. All your data, sessions, and connected
+							accounts will be removed.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="grid gap-4">

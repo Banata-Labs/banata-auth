@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +16,15 @@ export default function ResetPasswordPage() {
 			: (new URLSearchParams(window.location.search).get("token") ?? "");
 	const [password, setPassword] = useState("");
 	const [done, setDone] = useState(false);
-	const { customerAuthBaseUrl } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl } = useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	return (
-		<AuthCard title="Set a new password" description="Password reset tokens expire in 1 hour.">
+		<AuthCard
+			title="Set a new password"
+			description="Password reset tokens expire in 1 hour."
+			logo={<ProjectAuthLogo branding={config?.branding} />}
+		>
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();

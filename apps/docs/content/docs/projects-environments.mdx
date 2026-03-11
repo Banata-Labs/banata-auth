@@ -60,6 +60,11 @@ The only entities shared across projects are **dashboard admin users** (the peop
 
 Project-scoped API keys enforce the same boundary programmatically. A key created for one project should not be able to list, mutate, or configure auth data for another project.
 
+Hosted sign-in uses the same model:
+
+- `client_id` selects the project for public hosted-auth lookup
+- the server-side API key is the hard scope boundary for customer app traffic
+
 ---
 
 ## Data Model

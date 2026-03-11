@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ function getOttFromWindow(): string | null {
 }
 
 export default function CallbackPage() {
-	const { customerAuthBaseUrl, customerCallbackUrl, scopedPath } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl, customerCallbackUrl, scopedPath } = useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 	const { data: session, isPending } = authClient.useSession();
 	const [status, setStatus] = useState<"verifying" | "redirecting" | "idle" | "error">("verifying");
@@ -104,7 +105,11 @@ export default function CallbackPage() {
 	const ott = params.get("ott");
 
 	return (
-		<AuthCard title="Auth callback" description="Finalizing authentication.">
+		<AuthCard
+			title="Auth callback"
+			description="Finalizing authentication."
+			logo={<ProjectAuthLogo branding={config?.branding} />}
+		>
 			<p className="text-sm text-muted-foreground">
 				Authorization code:{" "}
 				<Badge variant={code ? "default" : "secondary"}>{code ? "received" : "not used"}</Badge>

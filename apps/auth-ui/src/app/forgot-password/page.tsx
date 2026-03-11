@@ -6,6 +6,7 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,15 +23,17 @@ export default function ForgotPasswordPage() {
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
-		return <MissingProjectScopeCard />;
+		return <MissingProjectScopeCard branding={config?.branding} />;
 	}
 
 	if (isLoading) {
-		return <LoadingProjectAuthCard title="Reset password" />;
+		return <LoadingProjectAuthCard title="Reset password" branding={config?.branding} />;
 	}
 
 	if (error) {
-		return <ProjectAuthErrorCard title="Reset password" message={error} />;
+		return (
+			<ProjectAuthErrorCard title="Reset password" message={error} branding={config?.branding} />
+		);
 	}
 
 	if (!(config?.authMethods.emailPassword ?? false)) {
@@ -39,12 +42,17 @@ export default function ForgotPasswordPage() {
 				title="Reset password"
 				description="Send a secure reset link by email."
 				backHref={scopedPath("/sign-in")}
+				branding={config?.branding}
 			/>
 		);
 	}
 
 	return (
-		<AuthCard title="Reset password" description="Send a secure reset link by email.">
+		<AuthCard
+			title="Reset password"
+			description="Send a secure reset link by email."
+			logo={<ProjectAuthLogo branding={config?.branding} />}
+		>
 			<form
 				onSubmit={async (event) => {
 					event.preventDefault();

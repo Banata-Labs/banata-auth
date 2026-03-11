@@ -35,6 +35,8 @@ const banata = new BanataAuth({
 
 Start by creating the project and API key in the Banata dashboard. Then use that project-scoped key in the SDK.
 
+This mirrors WorkOS-style usage: the dashboard bootstraps the project, then the SDK operates inside that project.
+
 ---
 
 ## What The SDK Controls
@@ -84,7 +86,7 @@ await banata.configuration.saveDashboardConfig({
   },
   emailPassword: {
     requireEmailVerification: true,
-    autoSignInAfterVerification: true,
+    autoSignIn: true,
     minPasswordLength: 10,
     maxPasswordLength: 128,
   },
@@ -94,6 +96,8 @@ await banata.configuration.saveDashboardConfig({
 This updates the same project config the dashboard reads under:
 
 - **Authentication -> Methods**
+- **Authentication -> Providers** when you update provider credentials
+- **Branding**
 - the hosted auth UI
 
 ---

@@ -1,5 +1,6 @@
 "use client";
 
+import { applyBrandingToDocument } from "@/lib/branding";
 import type { RuntimeAuthConfig } from "@banata-auth/shared";
 import { useEffect, useMemo, useState } from "react";
 
@@ -220,31 +221,7 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 	);
 
 	useEffect(() => {
-		if (typeof document === "undefined") {
-			return;
-		}
-
-		const root = document.documentElement;
-		const branding = config?.branding;
-		if (!branding) {
-			return;
-		}
-
-		root.classList.toggle("dark", branding.darkMode);
-		root.classList.toggle("light", !branding.darkMode);
-		root.style.setProperty("--primary", branding.primaryColor);
-		root.style.setProperty("--ring", branding.primaryColor);
-		root.style.setProperty("--background", branding.bgColor);
-		root.style.setProperty("--radius", `${branding.borderRadius / 16}rem`);
-
-		const styleId = "banata-auth-custom-css";
-		let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
-		if (!styleEl) {
-			styleEl = document.createElement("style");
-			styleEl.id = styleId;
-			document.head.appendChild(styleEl);
-		}
-		styleEl.textContent = branding.customCss || "";
+		applyBrandingToDocument(config?.branding);
 	}, [config]);
 
 	return {

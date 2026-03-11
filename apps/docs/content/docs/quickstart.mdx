@@ -32,6 +32,8 @@ Before writing code, finish these dashboard steps first:
 
 If you skip steps 3-5, the hosted UI will load but it may show no usable auth method.
 
+Use the project's **client ID** for `NEXT_PUBLIC_BANATA_CLIENT_ID`. Do not use the dashboard workspace slug.
+
 ---
 
 ## Install Packages
@@ -177,7 +179,7 @@ await banata.configuration.saveDashboardConfig({
   },
   emailPassword: {
     requireEmailVerification: true,
-    autoSignInAfterVerification: true,
+    autoSignIn: true,
   },
 });
 
@@ -189,6 +191,12 @@ await banata.configuration.saveBrandingConfig({
 ```
 
 These calls update the same dashboard-backed configuration rows, so the dashboard and hosted UI reflect the changes automatically.
+
+That means you can flip methods, policies, providers, and branding from code and immediately see the same state in:
+
+- the Banata dashboard
+- the hosted auth UI
+- SDK reads for that same project
 
 ---
 

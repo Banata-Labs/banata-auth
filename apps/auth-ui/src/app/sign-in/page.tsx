@@ -6,6 +6,7 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,22 +94,28 @@ export default function SignInPage() {
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
-		return <MissingProjectScopeCard />;
+		return <MissingProjectScopeCard branding={config?.branding} />;
 	}
 
 	if (isLoading) {
-		return <LoadingProjectAuthCard title="Sign in" />;
+		return <LoadingProjectAuthCard title="Sign in" branding={config?.branding} />;
 	}
 
 	if (configError) {
-		return <ProjectAuthErrorCard title="Sign in" message={configError} />;
+		return (
+			<ProjectAuthErrorCard title="Sign in" message={configError} branding={config?.branding} />
+		);
 	}
 
 	const viewModel = getSignInViewModel(config, enabledSocialProviders.length, scopedPath);
 
 	return (
 		<div className="mt-14">
-			<AuthCard title="Sign in" description="Use the methods enabled for this Banata project.">
+			<AuthCard
+				title="Sign in"
+				description="Use the methods enabled for this Banata project."
+				logo={<ProjectAuthLogo branding={config?.branding} />}
+			>
 				{!viewModel.hasAnyMethod ? (
 					<p className="text-sm text-muted-foreground">
 						No sign-in methods are enabled for this project yet.

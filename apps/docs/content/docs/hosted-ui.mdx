@@ -16,6 +16,8 @@ Your app does **not** render the primary sign-in form itself. Instead:
 
 This is the closest Banata flow to WorkOS-style hosted auth.
 
+If you want to build a fully custom UI against Banata's APIs, treat that as an advanced path. The hosted UI is the primary path Banata optimizes for.
+
 ---
 
 ## Required Inputs
@@ -34,6 +36,8 @@ url.searchParams.set("redirect_url", `${process.env.NEXT_PUBLIC_SITE_URL}/`);
 ```
 
 `client_id` identifies the project for public config lookup.
+
+Use the **project client ID**, not the dashboard workspace slug. In a fresh dashboard account those are easy to confuse because the workspace name and default project name are different surfaces.
 
 `redirect_url` tells Banata where the user should end up after the hosted flow completes.
 
@@ -98,7 +102,7 @@ await banata.configuration.saveDashboardConfig({
   },
   emailPassword: {
     requireEmailVerification: true,
-    autoSignInAfterVerification: true,
+    autoSignIn: true,
   },
 });
 ```
@@ -121,6 +125,10 @@ Check:
 2. `OPTIONS` is exported from your auth route
 3. your auth route allows the hosted UI origin
 4. your app uses a real project-scoped API key
+
+### The hosted page loads but returns the wrong Banata project
+
+Check that `client_id` is the project's client ID from the Banata dashboard, not the workspace slug or workspace name.
 
 ### The hosted page does not match my app branding
 

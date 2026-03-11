@@ -32,6 +32,8 @@ npm install @banata-auth/nextjs
 
 The browser never sees the API key.
 
+If you want a fully custom sign-in UI, that is a secondary integration style. The hosted UI is the primary path this package is designed to support.
+
 ---
 
 ## Entry Points
@@ -155,6 +157,8 @@ NEXT_PUBLIC_BANATA_CLIENT_ID=your_project_client_id
 
 `BANATA_API_KEY` must stay server-side.
 
+`NEXT_PUBLIC_BANATA_CLIENT_ID` must be the Banata **project** client ID. Do not substitute the dashboard workspace slug.
+
 ---
 
 ## Programmatic Configuration
@@ -174,6 +178,10 @@ await banata.configuration.saveDashboardConfig({
     emailPassword: true,
     emailOtp: true,
   },
+  emailPassword: {
+    requireEmailVerification: false,
+    autoSignIn: true,
+  },
 });
 ```
 
@@ -190,6 +198,10 @@ The project configuration is incomplete. Check:
 1. **Authentication -> Methods**
 2. **Authentication -> Providers**
 3. **Emails** for email-based flows
+
+### Hosted UI resolves the wrong project
+
+Make sure the hosted sign-in URL uses the project `client_id`, not the workspace slug.
 
 ### The user authenticates in Banata but not in my app
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
@@ -23,7 +24,7 @@ export default function OrgSelectorPage() {
 	const [orgs, setOrgs] = useState<Org[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { customerAuthBaseUrl, scopedPath } = useProjectAuthConfig();
+	const { config, customerAuthBaseUrl, scopedPath } = useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	useEffect(() => {
@@ -47,6 +48,14 @@ export default function OrgSelectorPage() {
 				const list = Array.isArray(payload)
 					? payload
 					: (payload.organizations ?? payload.data ?? []);
+				const firstOrg = list[0];
+				if (list.length === 1 && firstOrg) {
+					await (authClient as unknown as OrganizationClient).organization.setActive({
+						organizationId: firstOrg.id,
+					});
+					window.location.href = scopedPath("/callback");
+					return;
+				}
 				setOrgs(list);
 			} catch {
 				setError("Unable to load organizations.");
@@ -54,18 +63,34 @@ export default function OrgSelectorPage() {
 				setIsLoading(false);
 			}
 		})();
-	}, [authClient, customerAuthBaseUrl]);
+	}, [authClient, customerAuthBaseUrl, scopedPath]);
 
 	return (
 		<div className="mt-14">
 			<AuthCard
 				title="Choose organization"
 				description="Switch active org context for your session."
+				logo={<ProjectAuthLogo branding={config?.branding} />}
 			>
 				{isLoading ? (
 					<p className="text-sm text-muted-foreground">Loading organizations...</p>
 				) : null}
 				{error ? <p className="text-sm text-destructive">{error}</p> : null}
+				{!isLoading && !error && orgs.length === 0 ? (
+					<div className="grid gap-3">
+						<p className="text-sm text-muted-foreground">
+							No organizations are linked to this account yet. Continue back to the app.
+						</p>
+						<Button
+							type="button"
+							onClick={() => {
+								window.location.href = scopedPath("/callback");
+							}}
+						>
+							Continue
+						</Button>
+					</div>
+				) : null}
 				{orgs.map((org) => (
 					<Button
 						key={org.id}

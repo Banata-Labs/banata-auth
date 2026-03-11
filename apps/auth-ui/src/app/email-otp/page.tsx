@@ -6,6 +6,7 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,15 +24,15 @@ export default function EmailOtpPage() {
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
-		return <MissingProjectScopeCard />;
+		return <MissingProjectScopeCard branding={config?.branding} />;
 	}
 
 	if (isLoading) {
-		return <LoadingProjectAuthCard title="Email OTP" />;
+		return <LoadingProjectAuthCard title="Email OTP" branding={config?.branding} />;
 	}
 
 	if (error) {
-		return <ProjectAuthErrorCard title="Email OTP" message={error} />;
+		return <ProjectAuthErrorCard title="Email OTP" message={error} branding={config?.branding} />;
 	}
 
 	if (!(config?.authMethods.emailOtp ?? false)) {
@@ -40,12 +41,17 @@ export default function EmailOtpPage() {
 				title="Email OTP"
 				description="Use a one-time code sent to your email."
 				backHref={scopedPath("/sign-in")}
+				branding={config?.branding}
 			/>
 		);
 	}
 
 	return (
-		<AuthCard title="Email OTP" description="Use a one-time code sent to your email.">
+		<AuthCard
+			title="Email OTP"
+			description="Use a one-time code sent to your email."
+			logo={<ProjectAuthLogo branding={config?.branding} />}
+		>
 			{step === "request" ? (
 				<form
 					onSubmit={async (event) => {
@@ -80,9 +86,9 @@ export default function EmailOtpPage() {
 						await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/email-otp", {
 							email,
 							otp,
-							callbackURL: scopedPath("/org-selector"),
+							callbackURL: scopedPath("/callback"),
 						});
-						window.location.href = scopedPath("/org-selector");
+						window.location.href = scopedPath("/callback");
 					}}
 					className="grid gap-3"
 				>

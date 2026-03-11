@@ -6,6 +6,7 @@ import {
 	MissingProjectScopeCard,
 	ProjectAuthErrorCard,
 } from "@/components/project-auth-state";
+import { ProjectAuthLogo } from "@/components/project-branding";
 import { useProjectAuthClient } from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard, SignUpForm, SocialButtons } from "@banata-auth/react";
@@ -24,15 +25,17 @@ export default function SignUpPage() {
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
 
 	if (!hasScope) {
-		return <MissingProjectScopeCard />;
+		return <MissingProjectScopeCard branding={config?.branding} />;
 	}
 
 	if (isLoading) {
-		return <LoadingProjectAuthCard title="Create account" />;
+		return <LoadingProjectAuthCard title="Create account" branding={config?.branding} />;
 	}
 
 	if (error) {
-		return <ProjectAuthErrorCard title="Create account" message={error} />;
+		return (
+			<ProjectAuthErrorCard title="Create account" message={error} branding={config?.branding} />
+		);
 	}
 
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
@@ -45,6 +48,7 @@ export default function SignUpPage() {
 				title="Create account"
 				description="This project is not accepting new sign-ups with hosted auth."
 				backHref={scopedPath("/sign-in")}
+				branding={config?.branding}
 			/>
 		);
 	}
@@ -55,6 +59,7 @@ export default function SignUpPage() {
 				<AuthCard
 					title="Create account"
 					description="Use one of the providers enabled for this Banata project."
+					logo={<ProjectAuthLogo branding={config?.branding} />}
 				>
 					<SocialButtons
 						authClient={authClient}
@@ -78,6 +83,7 @@ export default function SignUpPage() {
 				authClient={authClient}
 				callbackURL={callbackURL}
 				socialProviders={enabledSocialProviders}
+				logo={<ProjectAuthLogo branding={config?.branding} />}
 				description={
 					verificationRequired
 						? "Email verification is required before the account can sign in."
