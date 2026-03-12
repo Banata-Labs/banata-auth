@@ -86,6 +86,11 @@ function toReactStyle(style?: EmailBlockStyle): React.CSSProperties {
 	if (style.borderRadius) s.borderRadius = style.borderRadius;
 	if (style.width) s.width = style.width;
 	if (style.maxWidth) s.maxWidth = style.maxWidth;
+	if (style.paddingTop != null) s.paddingTop = `${style.paddingTop}px`;
+	if (style.paddingBottom != null) s.paddingBottom = `${style.paddingBottom}px`;
+	if (style.paddingLeft != null) s.paddingLeft = `${style.paddingLeft}px`;
+	if (style.paddingRight != null) s.paddingRight = `${style.paddingRight}px`;
+	if (style.textDecoration) s.textDecoration = style.textDecoration;
 	return s;
 }
 
@@ -152,7 +157,17 @@ function RenderButton({
 	const variant = block.variant ?? "primary";
 
 	const bg = variant === "primary" ? pc : "transparent";
-	const color = variant === "primary" ? "#ffffff" : pc;
+	// Compute contrast color for primary buttons so text stays readable on light backgrounds
+	const pcHsl = (() => {
+		const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(pc);
+		if (!m?.[1] || !m[2] || !m[3]) return null;
+		const rv = Number.parseInt(m[1], 16) / 255;
+		const gv = Number.parseInt(m[2], 16) / 255;
+		const bv = Number.parseInt(m[3], 16) / 255;
+		const mx = Math.max(rv, gv, bv), mn = Math.min(rv, gv, bv);
+		return { l: ((mx + mn) / 2) * 100 };
+	})();
+	const color = variant === "primary" ? ((pcHsl && pcHsl.l > 55) ? "#000000" : "#ffffff") : pc;
 	const border = variant === "outline" ? `1px solid ${pc}` : "none";
 
 	return (

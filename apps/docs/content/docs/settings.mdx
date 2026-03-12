@@ -80,9 +80,25 @@ Deleting your project permanently removes everything associated with it:
 
 **This cannot be undone.** To confirm, type `DELETE MY PROJECT` when prompted.
 
-<Callout type="warn">
-  Take a moment before using either action. Resetting configuration can disrupt live auth flows, and deleting a project removes all data permanently.
-</Callout>
+> **Warning:** Take a moment before using either action. Resetting configuration can disrupt live auth flows, and deleting a project removes all data permanently.
+
+---
+
+## Branding
+
+Branding is configured from the **Branding** page in the dashboard sidebar (not under Settings). From there you control how your sign-in/sign-up forms and transactional emails look. See the [Email Templates](/docs/email-templates) docs for how branding applies to emails.
+
+Key branding options:
+
+- **Primary color** — Applied to buttons, links, and active states. Button text automatically adjusts for contrast.
+- **Background color** — Page and email body background.
+- **Font family** — Choose from system, Inter, Roboto, Open Sans, Lato, or Poppins. Fonts load dynamically in the preview.
+- **Border radius** — Applied to buttons, cards, and containers.
+- **Card width** — Control the width of the sign-in/sign-up card (320–560px).
+- **Logo URL** — Displayed in the card header and email header.
+- **Dark mode** — Toggle dark mode styling for previews and emails.
+
+The branding preview dynamically reflects your enabled authentication methods (email/password, magic link, email OTP, passkeys) and social providers, showing exactly what your users will see.
 
 ---
 
@@ -92,3 +108,4 @@ Deleting your project permanently removes everything associated with it:
 - **[Bot Protection Package](/docs/bot-protection)** — Integrate bot detection into your Next.js app.
 - **[Domains](/docs/domains)** — Configure custom domains for your auth services.
 - **[API Keys](/docs/api-keys)** — Create and manage project-scoped API keys.
+- **[Email Templates](/docs/email-templates)** — Customize transactional email content and branding.

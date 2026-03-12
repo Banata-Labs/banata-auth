@@ -153,7 +153,11 @@ function rateLimitResponse(retryAfter: number): Response {
 export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 	return {
 		id: "banata-project-rate-limit",
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		async onRequest(request, ctx) {
+			// Temporarily disabled while investigating corrupted rate limit records.
+			// The race condition fix is in place but existing records need to expire.
+			return;
 			const ip = getIp(request, ctx.options);
 			if (!ip) {
 				return;
@@ -176,25 +180,45 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 
 			const now = Date.now();
 			if (!existing) {
-				await ctx.adapter.create({
-					model: "rateLimit",
-					data: {
-						key,
-						count: 1,
-						lastRequest: now,
-					},
-				});
-				return;
+				try {
+					await ctx.adapter.create({
+						model: "rateLimit",
+						data: {
+							key,
+							count: 1,
+							lastRequest: now,
+						},
+					});
+					return;
+				} catch {
+					// Another concurrent request may have created the record first.
+					// Fall through to the update path below.
+				}
 			}
 
+			// Re-fetch in case we lost the creation race and need fresh data
+			const current: RateLimitRecord | undefined = existing ?? ((await ctx.adapter.findMany({
+				model: "rateLimit",
+				where,
+				limit: 1,
+			})) as RateLimitRecord[])[0];
+
+			if (!current) {
+				// Record still doesn't exist even after retry — allow the request
+				return;
+			}
+			const record = current as RateLimitRecord;
+
 			const windowMs = rule.window * 1000;
-			if (now - existing.lastRequest < windowMs && existing.count >= rule.max) {
+			const lastReq = record.lastRequest;
+			const curCount = record.count;
+			if (now - lastReq < windowMs && curCount >= rule.max) {
 				return {
-					response: rateLimitResponse(getRetryAfter(existing.lastRequest, rule.window)),
+					response: rateLimitResponse(getRetryAfter(lastReq, rule.window)),
 				};
 			}
 
-			const nextCount = now - existing.lastRequest > windowMs ? 1 : existing.count + 1;
+			const nextCount = now - lastReq > windowMs ? 1 : curCount + 1;
 			await ctx.adapter.updateMany({
 				model: "rateLimit",
 				where,

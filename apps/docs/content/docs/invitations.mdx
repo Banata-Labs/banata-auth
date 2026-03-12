@@ -66,15 +66,38 @@ pending ─────────┤
 
 ## Email Delivery
 
-Banata sends invitation emails automatically when you configure email delivery in the dashboard. No custom email-sending code is required.
+Banata sends invitation emails automatically using the **branded template system**. Invitation emails use the `invitation` system template and inherit your project's branding (logo, colors, fonts) — no custom email-sending code is required.
 
 ### Setting Up Email Delivery
 
 1. **Configure an email provider** — Go to **Emails > Providers** in the dashboard and add an active provider (e.g. Resend, SendGrid, or Postmark).
 2. **Enable invitation emails** — In **Emails > Configuration**, make sure invitation emails are turned on.
-3. **Customize the template** — Go to **Email Templates** and edit the `invitation` template to match your brand. You can customize the subject line, body text, and call-to-action button.
+3. **Customize the template** — Go to **Email Templates** and edit the `invitation` system template to match your brand. You can customize the subject line, body text, and call-to-action button.
 
-Once configured, every call to `authClient.organization.inviteMember(...)` triggers an invitation email automatically.
+Once configured, every call to `authClient.organization.inviteMember(...)` triggers a branded invitation email automatically.
+
+### Overriding Invitation Emails
+
+If you need full control over invitation email delivery, you can provide a custom callback:
+
+```typescript
+import { banataAuth } from "@banata-auth/convex";
+
+export const auth = banataAuth({
+  email: {
+    sendInvitationEmail: async ({ to, data }) => {
+      // data includes: email, invitationId, organizationName, inviterName, acceptUrl
+      await myEmailService.send({
+        to,
+        subject: `Join ${data.organizationName}`,
+        html: myCustomTemplate(data),
+      });
+    },
+  },
+});
+```
+
+When you provide this callback, Banata uses it instead of the built-in branded template. If you don't provide it, the branded template system handles everything automatically.
 
 ---
 

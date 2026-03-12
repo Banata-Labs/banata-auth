@@ -958,6 +958,7 @@ export interface BrandingConfig {
 	customCss: string;
 	font: string;
 	logoUrl: string;
+	cardWidth?: number;
 }
 
 export async function getBrandingConfig(): Promise<BrandingConfig> {

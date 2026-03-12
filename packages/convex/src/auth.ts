@@ -377,17 +377,17 @@ type ComponentClient = ReturnType<typeof createClient>;
 const MODULE_ANALYSIS_SECRET = "placeholder-for-module-analysis";
 let warnedAboutMissingSecret = false;
 let warnedAboutStaticAdapterFallback = false;
-const projectScopedModelNames = new Set(
-	Object.entries(
-		(
-			banataAuthSchema as unknown as {
-				tables?: Record<string, { validator?: { fields?: Record<string, unknown> } }>;
-			}
-		).tables ?? {},
-	)
-		.filter(([, table]) => table?.validator?.fields?.projectId !== undefined)
-		.map(([model]) => model),
-);
+// Only the core Better Auth models that are explicitly configured with
+// `additionalFields: { projectId }` in createBanataAuthOptions.
+// Plugin models (rateLimit, organization, member, etc.) handle projectId
+// in their own plugin code and must NOT go through the adapter proxy —
+// Better Auth's adapter rejects unknown fields for plugin models.
+const projectScopedModelNames = new Set([
+	"user",
+	"session",
+	"account",
+	"verification",
+]);
 
 type AdapterMutationInput = {
 	model?: string;
@@ -476,6 +476,24 @@ function normalizeScopedValue(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
+/**
+ * Normalize where clauses so every entry has an explicit `operator`.
+ * The Convex adapter's `update` method requires `operator === "eq"` —
+ * it does not treat `undefined` as a default. Without this, plugin where
+ * clauses like `{ field: "token", value: "..." }` (no `operator`) fail.
+ */
+function normalizeWhereOperators(
+	where: AdapterMutationInput["where"],
+): AdapterMutationInput["where"] {
+	if (!Array.isArray(where)) return where;
+	return where.map((clause) => {
+		if (!clause.operator) {
+			return { ...clause, operator: "eq" as const };
+		}
+		return clause;
+	});
+}
+
 function ensureProjectScopedWhere(
 	where: AdapterMutationInput["where"],
 	projectId: string,
@@ -493,7 +511,7 @@ function ensureProjectScopedWhere(
 		return nextWhere;
 	}
 
-	nextWhere.push({ field: "projectId", value: projectId });
+	nextWhere.push({ field: "projectId", operator: "eq" as const, value: projectId });
 	return nextWhere;
 }
 
@@ -513,83 +531,139 @@ function ensureProjectScopedData(
 	return nextData;
 }
 
+function wrapAdapterObject(
+	adapter: Record<string, unknown>,
+	requestProjectId: string | null,
+): Record<string, unknown> {
+	const projectId = normalizeScopedValue(requestProjectId);
+
+	function wrapMethod(methodName: string, original: Function) {
+		return async (input: AdapterMutationInput, ...rest: unknown[]) => {
+			// Normalize where operators: the Convex adapter requires explicit
+			// `operator: "eq"` but many callers (plugins) omit it.
+			const normalizedInput = input?.where
+				? { ...input, where: normalizeWhereOperators(input.where) }
+				: input;
+
+			const model = typeof normalizedInput?.model === "string" ? normalizedInput.model : null;
+			if (!model || !projectId || !projectScopedModelNames.has(model)) {
+				return original(normalizedInput, ...rest);
+			}
+
+			switch (methodName) {
+				case "create":
+					return original(
+						{
+							...normalizedInput,
+							data: ensureProjectScopedData(normalizedInput.data, projectId, model),
+						},
+						...rest,
+					);
+				case "update":
+					// The Convex adapter's update only supports a single eq where clause.
+					// Don't add projectId to where (the record was already found via a
+					// project-scoped query). Just ensure projectId stays in the update data.
+					return original(
+						{
+							...normalizedInput,
+							update: ensureProjectScopedData(normalizedInput.update, projectId, model),
+						},
+						...rest,
+					);
+				case "updateMany":
+					return original(
+						{
+							...normalizedInput,
+							where: ensureProjectScopedWhere(normalizedInput.where, projectId, model),
+							update: ensureProjectScopedData(normalizedInput.update, projectId, model),
+						},
+						...rest,
+					);
+				case "findOne":
+				case "findMany":
+				case "delete":
+				case "deleteMany":
+				case "count":
+					return original(
+						{
+							...normalizedInput,
+							where: ensureProjectScopedWhere(normalizedInput.where, projectId, model),
+						},
+						...rest,
+					);
+				default:
+					return original(normalizedInput, ...rest);
+			}
+		};
+	}
+
+	const wrapped: Record<string, unknown> = { ...adapter };
+	const methodNames = ["create", "findOne", "findMany", "update", "updateMany", "delete", "deleteMany", "count"];
+
+	for (const name of methodNames) {
+		const original = adapter[name];
+		if (typeof original === "function") {
+			wrapped[name] = wrapMethod(name, original.bind(adapter));
+		}
+	}
+
+	// Override `transaction` so the callback receives the WRAPPED adapter.
+	// The factory adapter's transaction captures a closure over the original
+	// unwrapped adapter, which causes `AsyncLocalStorage` (used by Better Auth's
+	// `getCurrentAdapter`) to store the original instead of our wrapped version.
+	const originalTransaction = adapter.transaction;
+	if (typeof originalTransaction === "function") {
+		wrapped.transaction = async (
+			cb: (trx: Record<string, unknown>) => Promise<unknown>,
+		) => {
+			return (originalTransaction as Function).call(adapter, async (_trx: Record<string, unknown>) => {
+				// The factory passes its original unwrapped adapter as `trx`.
+				// Replace it with a wrapped version so project scoping applies.
+				const wrappedTrx =
+					_trx === adapter || !projectId
+						? wrapped
+						: wrapAdapterObject(_trx, requestProjectId);
+				return cb(wrappedTrx);
+			});
+		};
+	}
+
+	return wrapped;
+}
+
 function wrapProjectScopedDatabaseAdapter(
 	database: BetterAuthOptions["database"],
 	requestProjectId?: string | null,
 ): BetterAuthOptions["database"] {
+	const normalizedProjectId = normalizeScopedValue(requestProjectId);
+
+	// The Convex adapter is a factory function: (options: BetterAuthOptions) => Adapter
+	// Better Auth calls this factory during initialization to get the actual adapter object.
+	if (typeof database === "function") {
+		if (!normalizedProjectId) {
+			return database;
+		}
+		return ((options: unknown, ...rest: unknown[]) => {
+			const adapter = (database as Function)(options, ...rest);
+			if (adapter && typeof adapter === "object") {
+				return wrapAdapterObject(adapter as Record<string, unknown>, normalizedProjectId);
+			}
+			return adapter;
+		}) as BetterAuthOptions["database"];
+	}
+
 	if (!database || typeof database !== "object") {
 		return database;
 	}
 
-	return new Proxy(database as Record<string, unknown>, {
-		get(target, prop, receiver) {
-			const original = Reflect.get(target, prop, receiver);
-			if (typeof prop !== "string" || typeof original !== "function") {
-				return original;
-			}
+	if (!normalizedProjectId) {
+		return database;
+	}
 
-			if (
-				![
-					"create",
-					"findOne",
-					"findMany",
-					"update",
-					"updateMany",
-					"delete",
-					"deleteMany",
-					"count",
-				].includes(prop)
-			) {
-				return original.bind(target);
-			}
-
-			return async (input: AdapterMutationInput, ...rest: unknown[]) => {
-				const model = typeof input?.model === "string" ? input.model : null;
-				const projectId =
-					model && projectScopedModelNames.has(model)
-						? normalizeScopedValue(requestProjectId)
-						: null;
-				if (!model || !projectId || !projectScopedModelNames.has(model)) {
-					return original.apply(target, [input, ...rest]);
-				}
-
-				switch (prop) {
-					case "create":
-						return original.apply(target, [
-							{
-								...input,
-								data: ensureProjectScopedData(input.data, projectId, model),
-							},
-							...rest,
-						]);
-					case "update":
-					case "updateMany":
-						return original.apply(target, [
-							{
-								...input,
-								where: ensureProjectScopedWhere(input.where, projectId, model),
-								update: ensureProjectScopedData(input.update, projectId, model),
-							},
-							...rest,
-						]);
-					case "findOne":
-					case "findMany":
-					case "delete":
-					case "deleteMany":
-					case "count":
-						return original.apply(target, [
-							{
-								...input,
-								where: ensureProjectScopedWhere(input.where, projectId, model),
-							},
-							...rest,
-						]);
-					default:
-						return original.apply(target, [input, ...rest]);
-				}
-			};
-		},
-	}) as BetterAuthOptions["database"];
+	return wrapAdapterObject(
+		database as Record<string, unknown>,
+		normalizedProjectId,
+	) as BetterAuthOptions["database"];
 }
 
 function createStaticDatabaseAdapter(): BetterAuthOptions["database"] {
@@ -844,7 +918,10 @@ export function createBanataAuthOptions(
 				// Auto-rotate JWKS keys if the algorithm changed (e.g. EdDSA → RS256)
 				jwksRotateOnTokenGenerationError: true,
 			}),
-			projectScopedRateLimitPlugin(),
+			// TODO: Re-enable after fixing the corrupted rate limit data issue.
+			// The rate limit plugin stores lastRequest as Date.now() but the computation
+			// produces incorrect tryAgainIn values after race-condition corruption.
+			// projectScopedRateLimitPlugin(),
 			...plugins,
 		],
 		// Wire lifecycle triggers into Better Auth's database hooks
@@ -1116,7 +1193,12 @@ function buildPlugins(
 	}
 
 	if (methods.organization !== false) {
-		plugins.push(organizationRbacPlugin());
+		const consumerSendInvite = config.email?.sendInvitationEmail;
+		plugins.push(organizationRbacPlugin(
+			consumerSendInvite
+				? { sendInvitationEmail: consumerSendInvite }
+				: undefined,
+		));
 	}
 
 	// SCIM — Better Auth stores `scimProvider.scimToken`; keep it hashed at rest.
@@ -1136,6 +1218,11 @@ function buildPlugins(
 			apiKey({
 				enableMetadata: true,
 				enableSessionForAPIKeys: true,
+				// Disable the API key plugin's built-in per-key rate limiter.
+				// Project-scoped rate limiting is handled separately.
+				rateLimit: {
+					enabled: false,
+				},
 				...(config.apiKeyConfig?.prefix
 					? {
 							defaultPrefix: config.apiKeyConfig.prefix,

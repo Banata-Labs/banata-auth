@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { ProviderIcon } from "@/components/provider-icons";
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -12,9 +13,18 @@ export interface BrandingValues {
 	font: string;
 	logoUrl: string;
 	customCss: string;
+	cardWidth?: number;
 }
 
 export type CanvasView = "sign-in" | "sign-up" | "email";
+
+export interface AuthPreviewConfig {
+	emailPasswordEnabled: boolean;
+	magicLinkEnabled: boolean;
+	emailOtpEnabled: boolean;
+	passkeyEnabled: boolean;
+	enabledSocialProviders: { id: string; label?: string }[];
+}
 
 export type EmailTemplateId =
 	| "verification"
@@ -93,10 +103,20 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
 	return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
+/** Compute a contrasting foreground color for a given background hex. */
+function contrastForeground(hex: string): string {
+	const hsl = hexToHsl(hex);
+	if (!hsl) return "#ffffff";
+	// Use WCAG relative luminance heuristic: light bg → dark text, dark bg → light text
+	return hsl.l > 55 ? "#000000" : "#ffffff";
+}
+
 export function deriveCssVariables(branding: BrandingValues): Record<string, string> {
 	const primary = hexToHsl(branding.primaryColor) ?? { h: 238, s: 84, l: 67 };
 	const bg = hexToHsl(branding.bgColor) ?? { h: 0, s: 0, l: 4 };
 	const fontStack = getFontStack(branding.font);
+	// Compute primary foreground based on primary lightness
+	const primaryFg = primary.l > 55 ? "0 0% 0%" : "0 0% 100%";
 
 	if (branding.darkMode) {
 		return {
@@ -105,7 +125,7 @@ export function deriveCssVariables(branding: BrandingValues): Record<string, str
 			"--card": `${bg.h} ${bg.s}% ${Math.min(bg.l + 4, 100)}%`,
 			"--card-foreground": "0 0% 95%",
 			"--primary": `${primary.h} ${primary.s}% ${primary.l}%`,
-			"--primary-foreground": "0 0% 100%",
+			"--primary-foreground": primaryFg,
 			"--secondary": `${bg.h} ${bg.s}% ${Math.min(bg.l + 10, 100)}%`,
 			"--secondary-foreground": "0 0% 95%",
 			"--muted": `${bg.h} ${bg.s}% ${Math.min(bg.l + 8, 100)}%`,
@@ -123,7 +143,7 @@ export function deriveCssVariables(branding: BrandingValues): Record<string, str
 		"--card": "0 0% 100%",
 		"--card-foreground": "0 0% 4%",
 		"--primary": `${primary.h} ${primary.s}% ${primary.l}%`,
-		"--primary-foreground": "0 0% 100%",
+		"--primary-foreground": primaryFg,
 		"--secondary": "0 0% 96%",
 		"--secondary-foreground": "0 0% 9%",
 		"--muted": "0 0% 96%",
@@ -164,71 +184,139 @@ export function parseCssVariables(css: string): Record<string, string> {
 	return vars;
 }
 
+// ─── Inline SVG Icons ──────────────────────────────────────────────
+
+function FingerprintIcon() {
+	return (
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+			<path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+			<path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+			<path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+			<path d="M2 12a10 10 0 0 1 18-6" />
+			<path d="M2 16h.01" />
+			<path d="M21.8 16c.2-2 .131-5.354 0-6" />
+			<path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" />
+			<path d="M8.65 22c.21-.66.45-1.32.57-2" />
+			<path d="M9 6.8a6 6 0 0 1 9 5.2v2" />
+		</svg>
+	);
+}
+
+function MailIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+			<rect width="20" height="16" x="2" y="4" rx="2" />
+			<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+		</svg>
+	);
+}
+
+function KeyIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+			<path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+			<path d="m21 2-9.6 9.6" />
+			<circle cx="7.5" cy="15.5" r="5.5" />
+		</svg>
+	);
+}
+
 // ─── Shared Mock Primitives ────────────────────────────────────────
 
 function MockInput({
 	label,
 	placeholder,
 	type = "text",
-}: { label: string; placeholder: string; type?: string }) {
+	icon,
+}: { label: string; placeholder: string; type?: string; icon?: React.ReactNode }) {
 	return (
 		<div style={{ display: "grid", gap: 6 }}>
-			<span style={{ fontSize: 14, fontWeight: 500, color: "hsl(var(--foreground))" }}>
+			<span style={{ fontSize: 13, fontWeight: 500, color: "hsl(var(--foreground))", letterSpacing: "-0.01em" }}>
 				{label}
 			</span>
-			<input
-				type={type}
-				placeholder={placeholder}
-				readOnly
-				style={{
-					height: 40,
-					width: "100%",
-					borderRadius: "var(--radius)",
-					padding: "0 12px",
-					fontSize: 14,
-					outline: "none",
-					backgroundColor: "hsl(var(--background))",
-					border: "1px solid hsl(var(--input))",
-					color: "hsl(var(--foreground))",
-					boxSizing: "border-box",
-				}}
-			/>
+			<div style={{ position: "relative" }}>
+				{icon && (
+					<span style={{
+						position: "absolute",
+						left: 12,
+						top: "50%",
+						transform: "translateY(-50%)",
+						color: "hsl(var(--muted-foreground))",
+						display: "inline-flex",
+						opacity: 0.5,
+					}}>
+						{icon}
+					</span>
+				)}
+				<input
+					type={type}
+					placeholder={placeholder}
+					readOnly
+					tabIndex={-1}
+					style={{
+						height: 42,
+						width: "100%",
+						borderRadius: "var(--radius)",
+						padding: icon ? "0 12px 0 36px" : "0 12px",
+						fontSize: 14,
+						outline: "none",
+						backgroundColor: "hsl(var(--background))",
+						border: "1px solid hsl(var(--input))",
+						color: "hsl(var(--foreground))",
+						boxSizing: "border-box",
+						transition: "border-color 0.15s",
+					}}
+				/>
+			</div>
 		</div>
 	);
 }
 
-function MockBtn({ label, primary, r }: { label: string; primary?: boolean; r: number }) {
+function MockBtn({
+	label,
+	primary,
+	r,
+	icon,
+	outline,
+}: { label: string; primary?: boolean; r: number; icon?: React.ReactNode; outline?: boolean }) {
+	const isPrimary = primary && !outline;
 	return (
 		<button
 			type="button"
+			tabIndex={-1}
 			style={{
-				marginTop: 4,
+				marginTop: 2,
 				display: "inline-flex",
-				height: 40,
+				height: 42,
 				width: "100%",
 				cursor: "default",
 				alignItems: "center",
 				justifyContent: "center",
+				gap: 8,
 				borderRadius: `${r}px`,
 				fontSize: 14,
 				fontWeight: 600,
-				border: primary ? "none" : "1px solid hsl(var(--input))",
-				backgroundColor: primary ? "hsl(var(--primary))" : "hsl(var(--background))",
-				color: primary ? "#fff" : "hsl(var(--foreground))",
+				letterSpacing: "-0.01em",
+				border: isPrimary ? "none" : "1px solid hsl(var(--border))",
+				backgroundColor: isPrimary ? "hsl(var(--primary))" : "transparent",
+				color: isPrimary ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+				transition: "all 0.15s",
 			}}
 		>
+			{icon}
 			{label}
 		</button>
 	);
 }
 
-function MockSocial({ icon, label, r }: { icon: string; label: string; r: number }) {
+function MockSocial({ providerId, label, r }: { providerId: string; label: string; r: number }) {
 	return (
 		<button
 			type="button"
+			tabIndex={-1}
 			style={{
 				display: "inline-flex",
-				height: 40,
+				height: 42,
 				width: "100%",
 				cursor: "default",
 				alignItems: "center",
@@ -237,27 +325,13 @@ function MockSocial({ icon, label, r }: { icon: string; label: string; r: number
 				borderRadius: `${r}px`,
 				fontSize: 14,
 				fontWeight: 500,
-				border: "1px solid hsl(var(--input))",
-				backgroundColor: "hsl(var(--background))",
+				border: "1px solid hsl(var(--border))",
+				backgroundColor: "transparent",
 				color: "hsl(var(--foreground))",
+				transition: "all 0.15s",
 			}}
 		>
-			<span
-				style={{
-					display: "inline-flex",
-					width: 18,
-					height: 18,
-					alignItems: "center",
-					justifyContent: "center",
-					fontSize: 11,
-					fontWeight: 700,
-					borderRadius: 4,
-					backgroundColor: "hsl(var(--muted))",
-					color: "hsl(var(--muted-foreground))",
-				}}
-			>
-				{icon}
-			</span>
+			<ProviderIcon provider={providerId} size={18} />
 			{label}
 		</button>
 	);
@@ -286,9 +360,68 @@ function OrDivider() {
 	);
 }
 
+// ─── Loading Skeleton ──────────────────────────────────────────────
+
+function MockCardSkeleton({ b }: { b: BrandingValues }) {
+	const bar = (w: string, h = 10) => (
+		<div style={{
+			width: w,
+			height: h,
+			borderRadius: 4,
+			backgroundColor: "hsl(var(--muted))",
+			opacity: 0.5,
+		}} />
+	);
+	const field = () => (
+		<div style={{ display: "grid", gap: 6 }}>
+			{bar("60px", 8)}
+			<div style={{
+				height: 42,
+				width: "100%",
+				borderRadius: `${b.borderRadius}px`,
+				backgroundColor: "hsl(var(--muted))",
+				opacity: 0.3,
+			}} />
+		</div>
+	);
+
+	return (
+		<div style={getCardStyle(b)}>
+			<div style={{ textAlign: "center", marginBottom: 24 }}>
+				<div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>{bar("100px", 14)}</div>
+				<div style={{ display: "flex", justifyContent: "center" }}>{bar("180px", 10)}</div>
+			</div>
+			<div style={{ display: "grid", gap: 16 }}>
+				{field()}
+				{field()}
+				<div style={{
+					height: 42,
+					width: "100%",
+					borderRadius: `${b.borderRadius}px`,
+					backgroundColor: "hsl(var(--primary))",
+					opacity: 0.3,
+				}} />
+				<OrDivider />
+				<div style={{
+					height: 42,
+					width: "100%",
+					borderRadius: `${b.borderRadius}px`,
+					backgroundColor: "hsl(var(--muted))",
+					opacity: 0.2,
+				}} />
+			</div>
+		</div>
+	);
+}
+
 // ─── Auth Form Mocks ───────────────────────────────────────────────
 
-function MockSignIn({ b }: { b: BrandingValues }) {
+function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPreviewConfig }) {
+	// While loading (authConfig not yet set), show skeleton
+	if (!authConfig) {
+		return <MockCardSkeleton b={b} />;
+	}
+
 	const logo = b.logoUrl ? (
 		<div style={{ marginBottom: 20, display: "flex", justifyContent: "center" }}>
 			<img
@@ -299,41 +432,106 @@ function MockSignIn({ b }: { b: BrandingValues }) {
 		</div>
 	) : null;
 
+	const socialProviders = authConfig.enabledSocialProviders;
+	const showEmail = authConfig.emailPasswordEnabled;
+	const showMagicLink = authConfig.magicLinkEnabled;
+	const showOtp = authConfig.emailOtpEnabled;
+	const showPasskey = authConfig.passkeyEnabled;
+	const showEmailField = showEmail || showMagicLink || showOtp;
+	const showPasswordField = showEmail;
+	const hasTopSection = showEmailField || showPasskey;
+	const hasAnySections = hasTopSection || socialProviders.length > 0;
+
 	return (
-		<div style={cardStyle}>
+		<div style={getCardStyle(b)}>
 			{logo}
 			<div style={{ textAlign: "center", marginBottom: 24 }}>
-				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))" }}>
+				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
 					Sign in
 				</h2>
 				<p style={{ margin: "8px 0 0", fontSize: 14, color: "hsl(var(--muted-foreground))" }}>
 					Welcome back to your account
 				</p>
 			</div>
-			<div style={{ display: "grid", gap: 16 }}>
-				<MockInput label="Email" placeholder="you@example.com" />
-				<MockInput label="Password" placeholder="Password" type="password" />
-				<MockBtn label="Continue" primary r={b.borderRadius} />
-				<OrDivider />
-				<MockSocial icon="G" label="Continue with Google" r={b.borderRadius} />
-				<MockSocial icon="GH" label="Continue with GitHub" r={b.borderRadius} />
+			<div style={{ display: "grid", gap: 14 }}>
+				{showEmailField && (
+					<MockInput label="Email" placeholder="you@example.com" icon={<MailIcon />} />
+				)}
+				{showPasswordField && (
+					<>
+						<MockInput label="Password" placeholder="Password" type="password" icon={<KeyIcon />} />
+						<div style={{ display: "flex", justifyContent: "flex-end", marginTop: -6 }}>
+							<span style={{ fontSize: 13, color: "hsl(var(--primary))", cursor: "pointer" }}>
+								Forgot password?
+							</span>
+						</div>
+					</>
+				)}
+				{showEmailField && (
+					<MockBtn
+						label={showEmail ? "Continue" : showMagicLink ? "Send magic link" : "Send verification code"}
+						primary
+						r={b.borderRadius}
+					/>
+				)}
+				{showPasskey && (
+					<MockBtn
+						label="Sign in with passkey"
+						primary={!showEmailField}
+						outline={showEmailField}
+						r={b.borderRadius}
+						icon={<FingerprintIcon />}
+					/>
+				)}
+				{hasTopSection && socialProviders.length > 0 && (
+					<OrDivider />
+				)}
+				{socialProviders.map((p) => (
+					<MockSocial
+						key={p.id}
+						providerId={p.id}
+						label={`Continue with ${p.label ?? p.id.charAt(0).toUpperCase() + p.id.slice(1)}`}
+						r={b.borderRadius}
+					/>
+				))}
+				{!hasAnySections && (
+					<div style={{
+						textAlign: "center",
+						padding: "24px 16px",
+						fontSize: 13,
+						color: "hsl(var(--muted-foreground))",
+						backgroundColor: "hsl(var(--muted))",
+						borderRadius: `${b.borderRadius}px`,
+						lineHeight: 1.5,
+					}}>
+						No auth methods enabled.
+						<br />
+						<span style={{ fontSize: 12, opacity: 0.7 }}>
+							Enable methods in Authentication to preview them here.
+						</span>
+					</div>
+				)}
 				<div
 					style={{
-						paddingTop: 8,
+						paddingTop: 4,
 						textAlign: "center",
 						fontSize: 14,
 						color: "hsl(var(--muted-foreground))",
 					}}
 				>
 					Don't have an account?{" "}
-					<span style={{ color: "hsl(var(--primary))", cursor: "pointer" }}>Sign up</span>
+					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>Sign up</span>
 				</div>
 			</div>
 		</div>
 	);
 }
 
-function MockSignUp({ b }: { b: BrandingValues }) {
+function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPreviewConfig }) {
+	if (!authConfig) {
+		return <MockCardSkeleton b={b} />;
+	}
+
 	const logo = b.logoUrl ? (
 		<div style={{ marginBottom: 20, display: "flex", justifyContent: "center" }}>
 			<img
@@ -344,50 +542,113 @@ function MockSignUp({ b }: { b: BrandingValues }) {
 		</div>
 	) : null;
 
+	const socialProviders = authConfig.enabledSocialProviders;
+	const showEmail = authConfig.emailPasswordEnabled;
+	const showMagicLink = authConfig.magicLinkEnabled;
+	const showOtp = authConfig.emailOtpEnabled;
+	const showPasskey = authConfig.passkeyEnabled;
+	const showEmailField = showEmail || showMagicLink || showOtp;
+	const showPasswordField = showEmail;
+	const hasTopSection = showEmailField || showPasskey;
+	const hasAnySections = hasTopSection || socialProviders.length > 0;
+
 	return (
-		<div style={cardStyle}>
+		<div style={getCardStyle(b)}>
 			{logo}
 			<div style={{ textAlign: "center", marginBottom: 24 }}>
-				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))" }}>
+				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
 					Create account
 				</h2>
 				<p style={{ margin: "8px 0 0", fontSize: 14, color: "hsl(var(--muted-foreground))" }}>
 					Get started with your new account
 				</p>
 			</div>
-			<div style={{ display: "grid", gap: 16 }}>
-				<MockInput label="Full name" placeholder="Your name" />
-				<MockInput label="Email" placeholder="you@example.com" />
-				<MockInput label="Password" placeholder="Create a password" type="password" />
-				<MockBtn label="Create account" primary r={b.borderRadius} />
+			<div style={{ display: "grid", gap: 14 }}>
+				{showEmailField && (
+					<>
+						{showEmail && <MockInput label="Full name" placeholder="Your name" />}
+						<MockInput label="Email" placeholder="you@example.com" icon={<MailIcon />} />
+					</>
+				)}
+				{showPasswordField && (
+					<MockInput label="Password" placeholder="Create a password" type="password" icon={<KeyIcon />} />
+				)}
+				{showEmailField && (
+					<MockBtn
+						label={showEmail ? "Create account" : showMagicLink ? "Send magic link" : "Send verification code"}
+						primary
+						r={b.borderRadius}
+					/>
+				)}
+				{showPasskey && (
+					<MockBtn
+						label="Sign up with passkey"
+						primary={!showEmailField}
+						outline={showEmailField}
+						r={b.borderRadius}
+						icon={<FingerprintIcon />}
+					/>
+				)}
+				{hasTopSection && socialProviders.length > 0 && (
+					<OrDivider />
+				)}
+				{socialProviders.map((p) => (
+					<MockSocial
+						key={p.id}
+						providerId={p.id}
+						label={`Continue with ${p.label ?? p.id.charAt(0).toUpperCase() + p.id.slice(1)}`}
+						r={b.borderRadius}
+					/>
+				))}
+				{!hasAnySections && (
+					<div style={{
+						textAlign: "center",
+						padding: "24px 16px",
+						fontSize: 13,
+						color: "hsl(var(--muted-foreground))",
+						backgroundColor: "hsl(var(--muted))",
+						borderRadius: `${b.borderRadius}px`,
+						lineHeight: 1.5,
+					}}>
+						No auth methods enabled.
+						<br />
+						<span style={{ fontSize: 12, opacity: 0.7 }}>
+							Enable methods in Authentication to preview them here.
+						</span>
+					</div>
+				)}
 				<div
 					style={{
-						paddingTop: 8,
+						paddingTop: 4,
 						textAlign: "center",
 						fontSize: 14,
 						color: "hsl(var(--muted-foreground))",
 					}}
 				>
 					Already have an account?{" "}
-					<span style={{ color: "hsl(var(--primary))", cursor: "pointer" }}>Sign in</span>
+					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>Sign in</span>
 				</div>
 			</div>
 		</div>
 	);
 }
 
-const cardStyle: React.CSSProperties = {
-	borderRadius: 16,
+const staticCardStyle: React.CSSProperties = {
 	border: "1px solid hsl(var(--border))",
 	backgroundColor: "hsl(var(--card))",
-	padding: 32,
+	padding: "36px 32px 28px",
 	boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.04)",
 };
+
+function getCardStyle(b: BrandingValues): React.CSSProperties {
+	return { ...staticCardStyle, borderRadius: Math.max(b.borderRadius, 8) };
+}
 
 // ─── Email Template Mock ───────────────────────────────────────────
 
 function EmailBody({ t, b }: { t: EmailTemplateId; b: BrandingValues }) {
 	const pc = b.primaryColor;
+	const pcFg = contrastForeground(pc);
 	const r = b.borderRadius;
 
 	const cta = (label: string) => (
@@ -395,9 +656,9 @@ function EmailBody({ t, b }: { t: EmailTemplateId; b: BrandingValues }) {
 			<span
 				style={{
 					display: "inline-block",
-					padding: "10px 28px",
+					padding: "12px 32px",
 					backgroundColor: pc,
-					color: "#fff",
+					color: pcFg,
 					fontSize: 14,
 					fontWeight: 600,
 					borderRadius: r,
@@ -633,10 +894,12 @@ export function BrandingCanvas({
 	branding,
 	view,
 	emailTemplate,
+	authConfig,
 }: {
 	branding: BrandingValues;
 	view: CanvasView;
 	emailTemplate: EmailTemplateId;
+	authConfig?: AuthPreviewConfig;
 }) {
 	const cssVars = useMemo(() => {
 		const derived = deriveCssVariables(branding);
@@ -646,6 +909,40 @@ export function BrandingCanvas({
 		}
 		return derived;
 	}, [branding]);
+
+	// Dynamically load Google Fonts for the preview
+	useEffect(() => {
+		const fontMap: Record<string, string> = {
+			inter: "Inter:wght@400;500;600;700",
+			roboto: "Roboto:wght@400;500;700",
+			"open-sans": "Open+Sans:wght@400;600;700",
+			lato: "Lato:wght@400;700",
+			poppins: "Poppins:wght@400;500;600;700",
+		};
+		const fontParam = fontMap[branding.font];
+		if (!fontParam) return; // "system" or unknown — no loading needed
+
+		const linkId = "branding-preview-font";
+		let link = document.getElementById(linkId) as HTMLLinkElement | null;
+		const href = `https://fonts.googleapis.com/css2?family=${fontParam}&display=swap`;
+
+		if (link) {
+			if (link.href === href) return; // already loaded
+			link.href = href;
+		} else {
+			link = document.createElement("link");
+			link.id = linkId;
+			link.rel = "stylesheet";
+			link.href = href;
+			document.head.appendChild(link);
+		}
+
+		return () => {
+			// Cleanup on unmount
+			const el = document.getElementById(linkId);
+			if (el) el.remove();
+		};
+	}, [branding.font]);
 
 	const containerStyle = useMemo(() => {
 		const style: Record<string, string> = {};
@@ -689,9 +986,9 @@ export function BrandingCanvas({
 				padding: "40px 24px",
 			}}
 		>
-			<div style={{ width: "100%", maxWidth: 420 }}>
-				{view === "sign-in" && <MockSignIn b={branding} />}
-				{view === "sign-up" && <MockSignUp b={branding} />}
+			<div style={{ width: "100%", maxWidth: branding.cardWidth ?? 420 }}>
+				{view === "sign-in" && <MockSignIn b={branding} authConfig={authConfig} />}
+				{view === "sign-up" && <MockSignUp b={branding} authConfig={authConfig} />}
 			</div>
 		</div>
 	);

@@ -7,13 +7,13 @@ order: 2
 
 Banata uses a **block-based email template system** to power every transactional email your project sends. You build templates by combining blocks -- heading, text, button, image, divider, spacer, code, link, and columns -- using the visual editor in your dashboard. At send time, Banata renders the blocks to HTML and automatically applies your project branding (colors, fonts, logo) so every email looks consistent without extra work.
 
-For authentication flows, Banata ships with six built-in templates that work out of the box. You can customize them to match your voice and style, or create entirely new templates for marketing, onboarding, and other workflows.
+Templates are organized into two categories: **System Templates** that power authentication flows, and **Custom Templates** that you create for your own use cases.
 
 ---
 
-## Built-in Templates
+## System Templates
 
-Banata includes **six built-in templates** that cover the standard authentication flows. These are created automatically when you set up your project. You can customize them freely in the dashboard editor, but you cannot delete them.
+Banata ships with **six system templates** that power built-in authentication flows. These are created automatically when you set up your project. You can customize their content and styling in the editor, but you cannot delete or rename them. System templates are marked with a lock icon in the dashboard.
 
 ### verification
 
@@ -41,7 +41,7 @@ Sent for email-based one-time password verification.
 
 ### invitation
 
-Sent when a user is invited to join an organization.
+Sent when a user is invited to join an organization. Organization invitations are now sent through the branded template system automatically — no custom email-sending code is required.
 
 **Variables:** `email`, `invitationId`, `organizationName`, `inviterName`, `acceptUrl`
 
@@ -53,13 +53,30 @@ Sent after successful account creation.
 
 ---
 
+## Custom Templates
+
+Custom templates are templates you create for your own use cases — marketing emails, onboarding sequences, notifications, or anything else. You have full control over custom templates: create, edit, rename, and delete them freely.
+
+### Creating a Custom Template
+
+1. Go to **Email Templates** in the dashboard sidebar.
+2. Click **Create Template**.
+3. A new template named "Untitled Template" is created with a blank heading and text block.
+4. Edit the name, subject line, and blocks to match your needs.
+
+### Variables in Custom Templates
+
+When you use `{{variableName}}` placeholders in your custom template blocks, the dashboard auto-detects them and displays them in the **Variables** panel. You can add descriptions and default values for each variable to help your team understand what data to pass when sending the email.
+
+---
+
 ## Block Types
 
 Every template is an ordered list of blocks. You can mix and match these nine types to build any layout you need.
 
 - **Heading** -- Renders a heading (`h1` through `h6`). Set the level, text, and optional styles.
 - **Text** -- A paragraph of body text. Supports `{{variable}}` interpolation and basic inline HTML like `<strong>` and `<em>`.
-- **Button** -- A call-to-action button with a label, URL, and variant (`primary`, `secondary`, or `outline`).
+- **Button** -- A call-to-action button with a label, URL, and variant (`primary`, `secondary`, or `outline`). Button text color automatically adjusts for contrast against the primary color.
 - **Image** -- An inline image with a source URL, alt text, and optional width/height.
 - **Divider** -- A horizontal rule to visually separate sections.
 - **Spacer** -- Empty vertical space with a configurable height in pixels.
@@ -67,7 +84,29 @@ Every template is an ordered list of blocks. You can mix and match these nine ty
 - **Link** -- An inline hyperlink with display text and a URL.
 - **Columns** -- A multi-column layout (2 to 4 columns). Each column has a width and its own nested array of blocks, so you can build side-by-side layouts.
 
-All blocks that support styling accept optional properties like `color`, `backgroundColor`, `fontSize`, `fontWeight`, `textAlign`, `padding`, `margin`, and `borderRadius`.
+### Block Styling
+
+All blocks that support styling accept optional properties:
+
+| Property | Description |
+|---|---|
+| `color` | Text color |
+| `backgroundColor` | Background color |
+| `fontSize` | Font size |
+| `fontWeight` | Font weight (normal, bold, etc.) |
+| `fontStyle` | Font style (normal, italic) |
+| `textAlign` | Text alignment (left, center, right) |
+| `textDecoration` | Text decoration (underline, none) |
+| `lineHeight` | Line height |
+| `padding` | Shorthand padding |
+| `paddingTop` | Top padding in pixels |
+| `paddingBottom` | Bottom padding in pixels |
+| `paddingLeft` | Left padding in pixels |
+| `paddingRight` | Right padding in pixels |
+| `margin` | Margin |
+| `borderRadius` | Border radius |
+| `width` | Element width |
+| `maxWidth` | Maximum width |
 
 ---
 
@@ -90,6 +129,12 @@ await banata.emails.send({
 
 If a variable appears in the template but you don't provide a value for it, the raw placeholder (e.g., `{{promoCode}}`) is left in the output. This makes it easy to spot missing data during development.
 
+### Variable Quick-Insert
+
+In the email editor, text and heading blocks have a **Variable** button in their inspector panel. Click it to see a dropdown of available variables and insert `{{variableName}}` directly into the block content.
+
+For system templates, the variable list is fixed and shows descriptions for each variable. For custom templates, variables are auto-detected from your block content.
+
 ---
 
 ## Dashboard Editor
@@ -101,155 +146,186 @@ The editor gives you:
 1. **Block palette** -- Add blocks from the sidebar. All nine block types are available with labels and descriptions.
 2. **Live preview** -- See the rendered email update in real time as you edit.
 3. **Block properties** -- Click any block to edit its content, URL, style, and other settings in the inspector panel.
-4. **Variable hints** -- The editor highlights `{{variable}}` placeholders and shows which variables are available for built-in templates.
-5. **Reorder** -- Drag blocks to rearrange them within the template.
-6. **Preview and test** -- Send a test email to yourself using sample data to verify the final result.
+4. **Style inspector** -- Configure `backgroundColor`, `fontWeight`, `textDecoration`, and directional padding (top, bottom, left, right) on any block.
+5. **Variable hints** -- The editor highlights `{{variable}}` placeholders and shows which variables are available.
+6. **Reorder** -- Drag blocks to rearrange them within the template.
+7. **Preview and test** -- Send a test email to yourself using sample data to verify the final result.
 
 ---
 
 ## Branding Integration
 
-Your email templates automatically inherit your project's **branding configuration** when rendered. You configure branding once in the dashboard under **Settings**, and every email -- built-in and custom -- picks it up:
+Your email templates automatically inherit your project's **branding configuration** when rendered. You configure branding once in the dashboard under **Branding**, and every email -- system and custom -- picks it up:
 
-- **Primary color** -- Applied to buttons, links, and headings
+- **Primary color** -- Applied to buttons, links, and headings. Button text automatically contrasts against the primary color (white text on dark backgrounds, black text on light backgrounds).
 - **Background color** -- Used for the email body background
 - **Font family** -- Applied to all text blocks
 - **Logo URL** -- Displayed in the email header
 - **Border radius** -- Applied to buttons and containers
-- **Dark mode** -- Optional dark mode rendering
+- **Dark mode** -- Optional dark mode rendering with appropriate color adjustments
 
 This means you never have to set colors or fonts on individual templates. Update your branding in one place and every email reflects the change.
 
 ---
 
-## SDK Usage
+## Modifying Templates from Code
 
-### Send an Email
+You can manage templates entirely from code without using the dashboard. All template operations use the HTTP API, so they work from **any backend** — Node.js, Bun, Deno, Hono, Express, or any runtime.
 
-Use the SDK to send emails programmatically with any built-in or custom template:
+### Create a Template
 
 ```typescript
-import { BanataAuth } from "@banata-auth/sdk";
+const BASE = "https://your-deployment.convex.site/api/auth";
+const headers = {
+  "Content-Type": "application/json",
+  "x-api-key": "sk_live_...",
+};
 
-const banata = new BanataAuth({
-  apiKey: "sk_live_...",
-  baseUrl: "https://your-deployment.convex.site",
+// Create a custom template
+const res = await fetch(`${BASE}/banata/emails/templates/create`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    name: "Marketing Welcome",
+    slug: "marketing-welcome",
+    subject: "Welcome to {{appName}}, {{userName}}!",
+    previewText: "Your account is ready",
+    category: "custom",
+    description: "Sent to new marketing leads after signup",
+    blocksJson: JSON.stringify([
+      { id: "1", type: "heading", as: "h1", text: "Welcome, {{userName}}!" },
+      { id: "2", type: "text", text: "Thanks for joining {{appName}}." },
+      { id: "3", type: "button", text: "Get Started", href: "{{dashboardUrl}}", variant: "primary" },
+    ]),
+    variablesJson: JSON.stringify([
+      { name: "userName", description: "User's display name", required: true },
+      { name: "appName", description: "Application name", required: true },
+    ]),
+  }),
 });
-
-// Send a built-in auth email
-await banata.emails.send({
-  to: "user@example.com",
-  template: "verification",
-  data: {
-    userName: "Jane Doe",
-    verificationUrl: "https://app.example.com/verify?token=abc123",
-    token: "abc123",
-  },
-});
-
-// Send a custom template by slug
-await banata.emails.send({
-  to: "user@example.com",
-  template: "marketing-welcome",
-  data: { userName: "Jane", promoCode: "WELCOME10" },
-});
+const { template } = await res.json();
 ```
 
-### Preview a Template
-
-Render a template with sample data without actually sending it:
+You can also use the `@banata-auth/shared` package to generate block structures:
 
 ```typescript
-const preview = await banata.emails.preview("welcome", {
-  userName: "Jane Doe",
-  dashboardUrl: "https://app.example.com",
-});
+import { createDefaultBlock, getBlankTemplateBlocks } from "@banata-auth/shared";
 
-console.log(preview.subject); // "Welcome to My App"
-console.log(preview.html);    // Full rendered HTML
-console.log(preview.text);    // Plain text version
+// Start with blank template blocks (heading + text)
+const blocks = getBlankTemplateBlocks();
+
+// Or build blocks individually
+const button = createDefaultBlock("button");
+```
+
+### Update a Template
+
+```typescript
+await fetch(`${BASE}/banata/emails/templates/update`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    id: "etpl_01HXYZ...",
+    subject: "Welcome aboard, {{userName}}!",
+    previewText: "Let's get started",
+  }),
+});
 ```
 
 ### List and Get Templates
 
 ```typescript
 // List all templates
-const allTemplates = await banata.emails.templates.list();
+const { templates } = await fetch(`${BASE}/banata/emails/templates/list`, {
+  method: "POST", headers, body: "{}",
+}).then(r => r.json());
 
-// Filter by category
-const authTemplates = await banata.emails.templates.list("auth");
-
-// Get a specific template by ID or slug
-const template = await banata.emails.templates.get("marketing-welcome");
-```
-
-### Create a Custom Template
-
-```typescript
-import type { EmailBlock } from "@banata-auth/shared";
-import { createDefaultBlock } from "@banata-auth/shared";
-
-const blocks: EmailBlock[] = [
-  createDefaultBlock("heading"),
-  createDefaultBlock("text"),
-  createDefaultBlock("button"),
-  createDefaultBlock("divider"),
-];
-
-// Customize the blocks
-blocks[0] = { ...blocks[0], text: "Welcome, {{userName}}!" } as EmailBlock;
-
-const template = await banata.emails.templates.create({
-  name: "Marketing Welcome",
-  slug: "marketing-welcome",
-  subject: "Welcome to {{appName}}, {{userName}}!",
-  previewText: "Your account is ready",
-  category: "marketing",
-  description: "Sent to new marketing leads after signup",
-  blocksJson: JSON.stringify(blocks),
-  variablesJson: JSON.stringify([
-    { name: "userName", description: "User's display name", required: true },
-    { name: "appName", description: "Application name", required: true },
-  ]),
-});
-```
-
-### Update a Template
-
-```typescript
-await banata.emails.templates.update("etpl_01HXYZ...", {
-  subject: "Welcome aboard, {{userName}}!",
-  previewText: "Let's get started",
-});
+// Get a specific template by slug
+const { template } = await fetch(`${BASE}/banata/emails/templates/get`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ idOrSlug: "marketing-welcome" }),
+}).then(r => r.json());
 ```
 
 ### Delete a Template
 
 ```typescript
-await banata.emails.templates.delete("etpl_01HXYZ...");
+await fetch(`${BASE}/banata/emails/templates/delete`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ id: "etpl_01HXYZ..." }),
+});
 ```
 
-> Built-in templates (verification, password-reset, magic-link, email-otp, invitation, welcome) cannot be deleted. You can only customize them.
+> System templates (verification, password-reset, magic-link, email-otp, invitation, welcome) cannot be deleted. You can only customize their content and styling.
+
+### Send an Email
+
+```typescript
+// Send using a system or custom template
+await fetch(`${BASE}/banata/emails/send`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    to: "user@example.com",
+    template: "welcome",   // any template slug
+    data: {
+      userName: "Jane Doe",
+      dashboardUrl: "https://app.example.com",
+      appName: "My App",
+    },
+  }),
+});
+```
+
+### Preview a Template
+
+Render to HTML without sending — useful for testing or custom delivery:
+
+```typescript
+const { subject, html, text } = await fetch(`${BASE}/banata/emails/preview`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    template: "welcome",
+    data: { userName: "Jane", dashboardUrl: "https://example.com", appName: "Acme" },
+  }),
+}).then(r => r.json());
+```
 
 ---
 
-## Template Categories
+## System Template Variable Reference
 
-You can organize your templates into categories to keep things manageable as your project grows:
+Each system template has a fixed set of variables. Here's the complete reference:
 
-- **auth** -- Authentication-related emails (verification, password reset, magic link, OTP, invitation, welcome)
-- **marketing** -- Promotional and marketing emails
-- **transactional** -- Order confirmations, receipts, and emails triggered by user actions
-- **onboarding** -- User onboarding sequences and getting-started guides
-- **notification** -- System notifications, alerts, and status updates
-- **custom** -- Any other template type that doesn't fit the categories above
-
-Categories are set when you create a template and can be changed later. Use them to filter templates in both the dashboard and the SDK.
+| Template | Variable | Description |
+|---|---|---|
+| **verification** | `userName` | User's display name |
+| | `verificationUrl` | Full verification link |
+| | `token` | Verification token |
+| **password-reset** | `userName` | User's display name |
+| | `resetUrl` | Password reset link |
+| | `token` | Reset token |
+| **magic-link** | `email` | User's email address |
+| | `magicLinkUrl` | Magic link URL |
+| | `token` | Magic link token |
+| **email-otp** | `email` | User's email address |
+| | `otp` | One-time password code |
+| **invitation** | `email` | Invitee's email address |
+| | `invitationId` | Invitation record ID |
+| | `organizationName` | Name of the inviting organization |
+| | `inviterName` | Name of the person who sent the invite |
+| | `acceptUrl` | Invitation acceptance link |
+| **welcome** | `userName` | User's display name |
+| | `dashboardUrl` | Link to the application dashboard |
+| | `appName` | Application name |
 
 ---
 
 ## Next Steps
 
-- **[Emails](/docs/emails)** -- Configure email providers (SendGrid, Resend, Postmark, and more)
-- **[SDK Reference](/docs/sdk)** -- Complete API reference for the Emails resource
-- **[Settings](/docs/settings)** -- Configure project branding used by email templates
+- **[Emails](/docs/emails)** — Configure email providers and send branded emails from code
+- **[SDK Reference](/docs/sdk)** — Complete API reference for the Emails resource
+- **[Branding](/docs/branding)** — Configure project branding used by email templates

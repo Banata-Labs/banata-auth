@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-	entry: ["src/index.ts", "src/convex-provider.tsx", "src/client-plugins.ts"],
+	entry: ["src/index.ts", "src/convex-provider.tsx", "src/client-plugins.ts", "src/convex-plugins.ts"],
 	format: ["esm"],
 	dts: true,
 	splitting: false,

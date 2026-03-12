@@ -194,8 +194,11 @@ export default function EmailProvidersPage() {
 			const response = await fetch("/api/auth/banata/test-email", {
 				method: "POST",
 				credentials: "include",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ to: testEmail.trim() }),
+				headers: {
+					"content-type": "application/json",
+					...(activeProjectId ? { "x-banata-project-id": activeProjectId } : {}),
+				},
+				body: JSON.stringify({ to: testEmail.trim(), projectId: activeProjectId }),
 			});
 
 			if (response.ok) {
@@ -215,7 +218,7 @@ export default function EmailProvidersPage() {
 		} finally {
 			setSendingTest(false);
 		}
-	}, [testEmail]);
+	}, [testEmail, activeProjectId]);
 
 	const activeProviderMeta = PROVIDERS.find((p) => p.id === config.activeProvider);
 

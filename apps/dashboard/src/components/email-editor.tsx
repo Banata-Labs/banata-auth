@@ -303,11 +303,20 @@ export function EmailEditor({ blocks, onBlocksChange, branding, variables }: Ema
 														</button>
 													</div>
 
-													{/* Clickable area to select */}
+													{/* Clickable area to select — preventDefault stops <a> tags inside blocks from navigating */}
 													<button
 														type="button"
 														className="block w-full cursor-pointer text-left"
-														onClick={() => setSelectedBlockId(block.id)}
+														onClick={(e) => {
+															e.preventDefault();
+															setSelectedBlockId(block.id);
+														}}
+														onClickCapture={(e) => {
+															// Prevent any nested <a> (e.g. Button blocks) from navigating
+															if ((e.target as HTMLElement).closest("a")) {
+																e.preventDefault();
+															}
+														}}
 														onKeyDown={(e) => {
 															if (e.key === "Delete" || e.key === "Backspace") {
 																removeBlock(block.id);
@@ -420,6 +429,33 @@ function InspectorField({ label, children }: { label: string; children: React.Re
 	);
 }
 
+function VariableInsert({ text, onTextChange }: { text: string; onTextChange: (t: string) => void }) {
+	return (
+		<div className="grid gap-1 px-3 py-1.5">
+			<Label className="text-[10px] text-muted-foreground">Insert Variable</Label>
+			<Select
+				value=""
+				onValueChange={(varName) => {
+					onTextChange(text + `{{${varName}}}`);
+				}}
+			>
+				<SelectTrigger className="h-6 text-[10px]">
+					<SelectValue placeholder="{{variable}}" />
+				</SelectTrigger>
+				<SelectContent>
+					{["userName", "appName", "verificationUrl", "resetUrl", "magicLinkUrl", "otp", "inviterName", "organizationName", "acceptUrl", "dashboardUrl"].map(
+						(v) => (
+							<SelectItem key={v} value={v} className="text-[10px]">
+								{`{{${v}}}`}
+							</SelectItem>
+						),
+					)}
+				</SelectContent>
+			</Select>
+		</div>
+	);
+}
+
 function HeadingInspector({
 	block,
 	onChange,
@@ -433,6 +469,7 @@ function HeadingInspector({
 					className="h-7 text-[11px]"
 				/>
 			</InspectorField>
+			<VariableInsert text={block.text} onTextChange={(t) => onChange({ text: t })} />
 			<InspectorField label="Level">
 				<Select value={block.as} onValueChange={(v) => onChange({ as: v as HeadingBlock["as"] })}>
 					<SelectTrigger className="h-7 text-[11px]">
@@ -467,6 +504,7 @@ function TextInspector({
 					placeholder="Supports {{variables}} and basic HTML (<strong>, <em>)"
 				/>
 			</InspectorField>
+			<VariableInsert text={block.text} onTextChange={(t) => onChange({ text: t })} />
 			<p className="px-3 text-[9px] leading-relaxed text-muted-foreground/50">
 				Use {"{{variableName}}"} for dynamic content. Supports &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;
 				HTML tags.
@@ -751,6 +789,93 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 					</SelectContent>
 				</Select>
 			</InspectorField>
+			<div className="grid gap-1 px-3 py-1.5">
+				<Label className="text-[10px] text-muted-foreground">Decoration</Label>
+				<div className="flex gap-1">
+					<button
+						type="button"
+						className={`h-7 w-7 rounded-md border text-[11px] ${
+							style.textDecoration === "underline" ? "border-primary bg-primary/10" : "border-border"
+						}`}
+						onClick={() =>
+							updateStyle({
+								textDecoration: style.textDecoration === "underline" ? "none" : "underline",
+							})
+						}
+						title="Underline"
+					>
+						U̲
+					</button>
+					<button
+						type="button"
+						className={`h-7 w-7 rounded-md border text-[11px] ${
+							style.fontWeight === "bold" || style.fontWeight === "700" ? "border-primary bg-primary/10" : "border-border"
+						}`}
+						onClick={() =>
+							updateStyle({
+								fontWeight: style.fontWeight === "bold" || style.fontWeight === "700" ? "normal" : "bold",
+							})
+						}
+						title="Bold"
+					>
+						<strong>B</strong>
+					</button>
+				</div>
+			</div>
+			<div className="grid gap-1 px-3 py-1.5">
+				<Label className="text-[10px] text-muted-foreground">Padding</Label>
+				<div className="grid grid-cols-2 gap-1">
+					{(["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"] as const).map(
+						(side) => (
+							<div key={side} className="flex items-center gap-1">
+								<span className="text-[8px] text-muted-foreground/60 w-3">
+									{side === "paddingTop" ? "T" : side === "paddingBottom" ? "B" : side === "paddingLeft" ? "L" : "R"}
+								</span>
+								<Input
+									type="number"
+									value={style[side] ?? ""}
+									onChange={(e) =>
+										updateStyle({
+											[side]: e.target.value ? Number(e.target.value) : undefined,
+										})
+									}
+									className="h-6 text-[10px] w-full"
+									placeholder="0"
+									min={0}
+									max={60}
+								/>
+							</div>
+						),
+					)}
+				</div>
+			</div>
+			<div className="grid gap-1 px-3 py-1.5">
+				<Label className="text-[10px] text-muted-foreground">Background</Label>
+				<div className="flex items-center gap-1.5">
+					<div className="relative">
+						<input
+							type="color"
+							value={style.backgroundColor ?? "#ffffff"}
+							onChange={(e) =>
+								updateStyle({ backgroundColor: e.target.value })
+							}
+							className="absolute inset-0 cursor-pointer opacity-0"
+						/>
+						<div
+							className="size-6 rounded-md border border-border"
+							style={{ backgroundColor: style.backgroundColor ?? "#ffffff" }}
+						/>
+					</div>
+					<Input
+						value={style.backgroundColor ?? ""}
+						onChange={(e) =>
+							updateStyle({ backgroundColor: e.target.value || undefined })
+						}
+						className="h-6 flex-1 font-mono text-[9px]"
+						placeholder="transparent"
+					/>
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -137,7 +137,7 @@ const createTemplateSchema = z
 		slug: z.string().min(1).max(200),
 		subject: z.string().min(1).max(500),
 		previewText: z.string().max(200).optional(),
-		category: templateCategoryEnum,
+		category: templateCategoryEnum.default("custom"),
 		description: z.string().max(1000).optional(),
 		blocksJson: z.string(),
 		variablesJson: z.string().optional(),
@@ -555,6 +555,25 @@ async function sendOneEmail(
 	);
 
 	return result;
+}
+
+/**
+ * Send a branded email using the dashboard-configured provider and branding.
+ *
+ * This is the public entry-point for plugins (e.g. organization-rbac) that
+ * need to send branded emails outside the auto-callback flow.
+ */
+export async function sendBrandedEmail(
+	db: PluginDBAdapter,
+	to: string,
+	data: EmailData,
+	options: BanataEmailOptions,
+	projectWhere?: WhereClause[],
+): Promise<{ success: boolean; error?: string }> {
+	return sendOneEmail(db, to, data, options, {
+		envWhere: projectWhere,
+		projectWhere,
+	});
 }
 
 /**

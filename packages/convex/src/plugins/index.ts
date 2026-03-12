@@ -28,6 +28,7 @@ export {
 export {
 	banataEmail,
 	createAutoEmailCallbacks,
+	sendBrandedEmail,
 	type BanataEmailOptions,
 } from "./email";
 export { domainsPlugin } from "./domains";
@@ -51,7 +52,7 @@ export {
 } from "./projects";
 export { enterpriseProvisioningPlugin } from "./enterprise";
 export { portalPlugin } from "./portal";
-export { organizationRbacPlugin } from "./organization-rbac";
+export { organizationRbacPlugin, type OrganizationRbacPluginOptions } from "./organization-rbac";
 export { userManagementPlugin } from "./user-management";
 export {
 	renderEmail,

@@ -14,6 +14,9 @@ import {
 	projectScopeSchema,
 	requireAuthenticated,
 } from "./types";
+import { sendBrandedEmail } from "./email";
+import type { BanataEmailOptions } from "./email";
+import type { EmailData } from "./email-templates";
 
 interface OrganizationRow extends Record<string, unknown> {
 	id: string;
@@ -152,9 +155,18 @@ async function setActiveOrganizationIfPossible(
 	organizationId: string | null,
 ): Promise<void> {
 	if (!token) return;
+	// Find the session first, then update by id.
+	// The Convex adapter's update only supports a single eq where clause,
+	// and looking up by token via update can fail with compound where clauses.
+	const session = await db.findOne<{ id: string }>({
+		model: "session",
+		where: [{ field: "token", operator: "eq", value: token }],
+		select: ["id"],
+	});
+	if (!session) return;
 	await db.update({
 		model: "session",
-		where: [{ field: "token", value: token }],
+		where: [{ field: "id", operator: "eq", value: session.id }],
 		update: {
 			activeOrganizationId: organizationId,
 			updatedAt: new Date(),
@@ -227,6 +239,8 @@ async function ensureRoleExistsForProject(
 	roles: string[],
 ): Promise<void> {
 	if (!projectId) return;
+	// Ensure default roles (super_admin, admin, member) exist first
+	await ensureDefaultRoles(db, projectId);
 	const rows = await db.findMany<RoleDefinitionRow>({
 		model: "roleDefinition",
 		where: [{ field: "projectId", value: projectId }],
@@ -357,43 +371,142 @@ async function ensureOrganizationRetainsSuperAdmin(
 	}
 }
 
-async function ensureSuperAdminRole(
+const DEFAULT_ROLES: Array<{
+	slug: string;
+	name: string;
+	description: string;
+	isDefault: boolean;
+	/** When true, this role inherits all project permissions. */
+	allPermissions: boolean;
+}> = [
+	{
+		slug: SUPER_ADMIN_ROLE_SLUG,
+		name: "Super Admin",
+		description: "Full access across this project and its organizations.",
+		isDefault: true,
+		allPermissions: true,
+	},
+	{
+		slug: "admin",
+		name: "Admin",
+		description: "Manage organization settings and members.",
+		isDefault: false,
+		allPermissions: false,
+	},
+	{
+		slug: "member",
+		name: "Member",
+		description: "Standard organization member.",
+		isDefault: false,
+		allPermissions: false,
+	},
+];
+
+async function ensureDefaultRoles(
 	db: PluginDBAdapter,
 	projectId: string | undefined,
 ): Promise<void> {
 	if (!projectId) return;
 	const now = Date.now();
-	const roles = await db.findMany<RoleDefinitionRow>({
+	const existing = await db.findMany<RoleDefinitionRow>({
 		model: "roleDefinition",
-		where: [
-			{ field: "projectId", value: projectId },
-			{ field: "slug", value: SUPER_ADMIN_ROLE_SLUG },
-		],
-		limit: 1,
+		where: [{ field: "projectId", value: projectId }],
+		limit: 1000,
 	});
-	if (roles[0]) return;
+	const existingSlugs = new Set(existing.map((r) => r.slug));
 
 	const perms = await db.findMany<PermissionDefinitionRow>({
 		model: "permissionDefinition",
 		where: [{ field: "projectId", value: projectId }],
 		limit: 1000,
 	});
-	await db.create<RoleDefinitionRow>({
-		model: "roleDefinition",
-		data: {
-			projectId,
-			name: "Super Admin",
-			slug: SUPER_ADMIN_ROLE_SLUG,
-			description: "Full access across this project and its organizations.",
-			permissions: JSON.stringify(perms.map((p) => p.slug).sort()),
-			isDefault: true,
-			createdAt: now,
-			updatedAt: now,
-		},
-	});
+	const allPermJson = JSON.stringify(perms.map((p) => p.slug).sort());
+
+	for (const role of DEFAULT_ROLES) {
+		if (existingSlugs.has(role.slug)) continue;
+		await db.create<RoleDefinitionRow>({
+			model: "roleDefinition",
+			data: {
+				projectId,
+				name: role.name,
+				slug: role.slug,
+				description: role.description,
+				permissions: role.allPermissions ? allPermJson : "[]",
+				isDefault: role.isDefault,
+				createdAt: now,
+				updatedAt: now,
+			},
+		});
+	}
 }
 
-export function organizationRbacPlugin(): BetterAuthPlugin {
+export interface OrganizationRbacPluginOptions {
+	/**
+	 * Called after an invitation is created or resent.
+	 * Implement this to deliver the invitation email.
+	 */
+	sendInvitationEmail?: (params: {
+		email: string;
+		organizationName: string;
+		inviterName: string;
+		invitationId: string;
+		role: string;
+	}) => Promise<void>;
+}
+
+async function trySendInvitationEmail(
+	pluginOptions: OrganizationRbacPluginOptions | undefined,
+	params: {
+		email: string;
+		organizationName: string;
+		inviterName: string;
+		invitationId: string;
+		role: string;
+	},
+	db?: PluginDBAdapter,
+	emailOptions?: BanataEmailOptions,
+	projectWhere?: WhereClause[],
+): Promise<void> {
+	// Consumer-provided callback takes priority
+	if (pluginOptions?.sendInvitationEmail) {
+		try {
+			await pluginOptions.sendInvitationEmail(params);
+		} catch (err) {
+			console.error("[BanataAuth] Error sending invitation email:", err);
+		}
+		return;
+	}
+
+	// Fall back to the branded email system
+	if (!db) return;
+	try {
+		const emailData: EmailData = {
+			type: "invitation",
+			email: params.email,
+			invitationId: params.invitationId,
+			inviterName: params.inviterName,
+			organizationName: params.organizationName,
+		};
+		const result = await sendBrandedEmail(
+			db,
+			params.email,
+			emailData,
+			emailOptions ?? {},
+			projectWhere,
+		);
+		if (!result.success) {
+			console.warn(
+				`[BanataAuth] Branded invitation email to ${params.email} failed: ${result.error}`,
+			);
+		}
+	} catch (err) {
+		console.error("[BanataAuth] Error sending branded invitation email:", err);
+	}
+}
+
+export function organizationRbacPlugin(
+	pluginOptions?: OrganizationRbacPluginOptions,
+): BetterAuthPlugin {
 	return {
 		id: "banata-organization-rbac",
 		schema: {
@@ -456,7 +569,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 						throw ctx.error("BAD_REQUEST", { message: "Organization slug already exists" });
 					}
 
-					await ensureSuperAdminRole(db, scope.data.projectId);
+					await ensureDefaultRoles(db, scope.data.projectId);
 					const organization = await db.create<OrganizationRow>({
 						model: "organization",
 						data: {
@@ -493,15 +606,15 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			listOrganizations: createAuthEndpoint(
 				"/organization/list",
 				{
-					method: "POST",
-					body: projectScopeSchema,
+					method: "GET",
+					query: projectScopeSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { userId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 
 					if (
 						await hasProjectWildcardAccess(db, {
@@ -563,19 +676,19 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			getFullOrganization: createAuthEndpoint(
 				"/organization/get-full-organization",
 				{
-					method: "POST",
-					body: organizationIdSchema,
+					method: "GET",
+					query: organizationIdSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 
 					const org = await resolveOrganization(db, {
-						organizationId: ctx.body.organizationId,
-						organizationSlug: ctx.body.organizationSlug,
+						organizationId: ctx.query.organizationId,
+						organizationSlug: ctx.query.organizationSlug,
 						activeOrganizationId,
 						scopeWhere: scope.where,
 					});
@@ -695,16 +808,38 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					}
 
 					const now = Date.now();
+
+					// Look up org name and inviter for the email
+					const orgRow = await db.findOne<OrganizationRow>({
+						model: "organization",
+						where: [{ field: "id", value: orgId }, ...scope.where],
+					});
+					const inviterRow = await db.findOne<{ id: string; name?: string; email?: string }>({
+						model: "user",
+						where: [{ field: "id", value: userId }],
+					});
+					const orgName = orgRow?.name ?? "Organization";
+					const inviterName = inviterRow?.name ?? inviterRow?.email ?? "A team member";
+
 					if (existingPending[0] && body.resend) {
 						const invitation = await db.update<InvitationRow>({
 							model: "invitation",
-							where: [{ field: "id", value: existingPending[0].id }, ...scope.where],
+							where: [{ field: "id", operator: "eq", value: existingPending[0].id }],
 							update: {
 								role: roles.join(","),
 								expiresAt: now + INVITATION_EXPIRY_MS,
 								status: "pending",
 							},
 						});
+						if (invitation) {
+							trySendInvitationEmail(pluginOptions, {
+								email,
+								organizationName: orgName,
+								inviterName,
+								invitationId: invitation.id,
+								role: roles.join(","),
+							}, db, undefined, scope.where);
+						}
 						return ctx.json(invitation);
 					}
 
@@ -721,6 +856,13 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 							createdAt: now,
 						},
 					});
+					trySendInvitationEmail(pluginOptions, {
+						email,
+						organizationName: orgName,
+						inviterName,
+						invitationId: invitation.id,
+						role: roles.join(","),
+					}, db, undefined, scope.where);
 					return ctx.json(invitation);
 				},
 			),
@@ -758,7 +900,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					const now = Date.now();
 					await db.update<InvitationRow>({
 						model: "invitation",
-						where: [{ field: "id", value: invitation.id }, ...scope.where],
+						where: [{ field: "id", operator: "eq", value: invitation.id }],
 						update: { status: "accepted" },
 					});
 
@@ -820,7 +962,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					}
 					const updated = await db.update<InvitationRow>({
 						model: "invitation",
-						where: [{ field: "id", value: invitation.id }, ...scope.where],
+						where: [{ field: "id", operator: "eq", value: invitation.id }],
 						update: { status: "rejected" },
 					});
 					return ctx.json({ invitation: updated, member: null });
@@ -856,7 +998,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					});
 					const updated = await db.update<InvitationRow>({
 						model: "invitation",
-						where: [{ field: "id", value: invitation.id }, ...scope.where],
+						where: [{ field: "id", operator: "eq", value: invitation.id }],
 						update: { status: "canceled" },
 					});
 					return ctx.json(updated);
@@ -866,18 +1008,18 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			getInvitation: createAuthEndpoint(
 				"/organization/get-invitation",
 				{
-					method: "POST",
-					body: getInvitationSchema,
+					method: "GET",
+					query: getInvitationSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 					const rows = await db.findMany<InvitationRow>({
 						model: "invitation",
-						where: [{ field: "id", value: ctx.body.id }, ...scope.where],
+						where: [{ field: "id", value: ctx.query.id }, ...scope.where],
 						limit: 1,
 					});
 					if (!rows[0]) throw ctx.error("BAD_REQUEST", { message: "Invitation not found" });
@@ -906,16 +1048,16 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			listInvitations: createAuthEndpoint(
 				"/organization/list-invitations",
 				{
-					method: "POST",
-					body: listInvitationsSchema,
+					method: "GET",
+					query: listInvitationsSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
-					const orgId = ctx.body.organizationId ?? activeOrganizationId;
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
+					const orgId = (ctx.query as Record<string, unknown>).organizationId as string | undefined ?? activeOrganizationId;
 					if (!orgId) throw ctx.error("BAD_REQUEST", { message: "Organization required" });
 					await requireOrganizationPermission(ctx, db, {
 						projectId: scope.projectId,
@@ -940,8 +1082,8 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			listUserInvitations: createAuthEndpoint(
 				"/organization/list-user-invitations",
 				{
-					method: "POST",
-					body: listUserInvitationsSchema,
+					method: "GET",
+					query: listUserInvitationsSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
@@ -949,7 +1091,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 					// Always use the authenticated user's own email to prevent enumeration (S9)
 					const { user } = await requireAuthenticated(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 					const targetEmail = user.email?.toLowerCase();
 					if (!targetEmail) throw ctx.error("BAD_REQUEST", { message: "Email is required" });
 
@@ -969,16 +1111,16 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			listMembers: createAuthEndpoint(
 				"/organization/list-members",
 				{
-					method: "POST",
-					body: listInvitationsSchema,
+					method: "GET",
+					query: listInvitationsSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
 				async (ctx) => {
 					const { userId, activeOrganizationId, userRole } = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
-					const orgId = ctx.body.organizationId ?? activeOrganizationId;
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
+					const orgId = (ctx.query as Record<string, unknown>).organizationId as string | undefined ?? activeOrganizationId;
 					if (!orgId) throw ctx.error("BAD_REQUEST", { message: "Organization required" });
 					await requireOrganizationPermission(ctx, db, {
 						projectId: scope.projectId,
@@ -1069,7 +1211,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 
 					const updated = await db.update<MemberRow>({
 						model: "member",
-						where: memberWhere,
+						where: [{ field: "id", operator: "eq", value: target.id }],
 						update: {
 							role: roles.join(","),
 							updatedAt: Date.now(),
@@ -1296,9 +1438,16 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 						}
 					}
 
+					// The Convex adapter's update only supports a single eq where clause.
+					// Use findOne + update by id to avoid compound where clauses.
+					const org = await db.findOne<OrganizationRow>({
+						model: "organization",
+						where: [{ field: "id", operator: "eq", value: orgId }, ...scope.where],
+					});
+					if (!org) throw ctx.error("BAD_REQUEST", { message: "Organization not found" });
 					const updated = await db.update<OrganizationRow>({
 						model: "organization",
-						where: [{ field: "id", value: orgId }, ...scope.where],
+						where: [{ field: "id", operator: "eq", value: org.id }],
 						update: {
 							...ctx.body.data,
 							metadata: ctx.body.data.metadata ? JSON.stringify(ctx.body.data.metadata) : undefined,
@@ -1337,8 +1486,8 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			getActiveMember: createAuthEndpoint(
 				"/organization/get-active-member",
 				{
-					method: "POST",
-					body: projectScopeSchema,
+					method: "GET",
+					query: projectScopeSchema,
 					requireHeaders: true,
 					use: [sessionMiddleware],
 				},
@@ -1348,7 +1497,7 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 						throw ctx.error("BAD_REQUEST", { message: "No active organization" });
 					}
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 					const member = await findMemberOrThrow(
 						ctx,
 						db,
@@ -1363,8 +1512,8 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 			getActiveMemberRole: createAuthEndpoint(
 				"/organization/get-active-member-role",
 				{
-					method: "POST",
-					body: z
+					method: "GET",
+					query: z
 						.object({
 							userId: z.string().optional(),
 							organizationId: z.string().optional(),
@@ -1377,17 +1526,17 @@ export function organizationRbacPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					const session = await getSessionOrThrow(ctx);
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+					const scope = getProjectScope(ctx.query as Record<string, unknown>);
 					const org = await resolveOrganization(db, {
-						organizationId: ctx.body.organizationId,
-						organizationSlug: ctx.body.organizationSlug,
+						organizationId: (ctx.query as Record<string, unknown>).organizationId as string | undefined,
+						organizationSlug: (ctx.query as Record<string, unknown>).organizationSlug as string | undefined,
 						activeOrganizationId: session.activeOrganizationId,
 						scopeWhere: scope.where,
 					});
 					if (!org) throw ctx.error("BAD_REQUEST", { message: "Organization not found" });
 
 					await findMemberOrThrow(ctx, db, org.id, session.userId, scope.where);
-					const targetUserId = ctx.body.userId ?? session.userId;
+					const targetUserId = (ctx.query as Record<string, unknown>).userId as string | undefined ?? session.userId;
 					const rows = await db.findMany<MemberRow>({
 						model: "member",
 						where: [

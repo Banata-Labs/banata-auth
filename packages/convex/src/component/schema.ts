@@ -134,7 +134,9 @@ const schema = defineSchema({
 	})
 		.index("token", ["token"])
 		.index("userId", ["userId"])
-		.index("projectId", ["projectId"]),
+		.index("projectId", ["projectId"])
+		.index("projectId_token", ["projectId", "token"])
+		.index("projectId_userId", ["projectId", "userId"]),
 
 	/**
 	 * Account table - stores provider credentials (OAuth, email/password, SAML, etc.)
@@ -164,7 +166,9 @@ const schema = defineSchema({
 	})
 		.index("userId", ["userId"])
 		.index("accountId_providerId", ["accountId", "providerId"])
-		.index("projectId", ["projectId"]),
+		.index("projectId", ["projectId"])
+		.index("projectId_userId", ["projectId", "userId"])
+		.index("projectId_accountId_providerId", ["projectId", "accountId", "providerId"]),
 
 	/**
 	 * Verification table - stores email verification tokens, password reset tokens,
@@ -182,7 +186,8 @@ const schema = defineSchema({
 		updatedAt: v.optional(v.float64()),
 	})
 		.index("identifier", ["identifier"])
-		.index("projectId", ["projectId"]),
+		.index("projectId", ["projectId"])
+		.index("projectId_identifier", ["projectId", "identifier"]),
 
 	// ─── Plugin Tables ──────────────────────────────────────────────
 

@@ -28,6 +28,11 @@ export interface EmailBlockStyle {
 	borderRadius?: number;
 	width?: string;
 	maxWidth?: string;
+	paddingTop?: number;
+	paddingBottom?: number;
+	paddingLeft?: number;
+	paddingRight?: number;
+	textDecoration?: "none" | "underline" | "line-through";
 }
 
 // ─── Block Definitions ─────────────────────────────────────────────
@@ -550,3 +555,51 @@ export function getBuiltInTemplateBlocks(
 			];
 	}
 }
+
+// ─── Blank Template Starter ────────────────────────────────────────
+
+/** Create a blank set of starter blocks for new custom templates. */
+export function getBlankTemplateBlocks(): EmailBlock[] {
+	return [
+		createDefaultBlock("heading"),
+		createDefaultBlock("text"),
+	];
+}
+
+// ─── System Template Variables ─────────────────────────────────────
+
+/** Variable definitions for each built-in system template type. */
+export const SYSTEM_TEMPLATE_VARIABLES: Record<
+	string,
+	Array<{ name: string; description: string; example: string }>
+> = {
+	verification: [
+		{ name: "userName", description: "The user's display name", example: "Jane Doe" },
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "verificationUrl", description: "Email verification link", example: "https://app.example.com/verify?token=abc123" },
+	],
+	"password-reset": [
+		{ name: "userName", description: "The user's display name", example: "Jane Doe" },
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "resetUrl", description: "Password reset link", example: "https://app.example.com/reset?token=xyz789" },
+	],
+	"magic-link": [
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "magicLinkUrl", description: "Passwordless sign-in link", example: "https://app.example.com/magic?token=mlk456" },
+	],
+	"email-otp": [
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "otp", description: "One-time passcode", example: "847291" },
+	],
+	invitation: [
+		{ name: "inviterName", description: "Name of the person who sent the invite", example: "John Smith" },
+		{ name: "organizationName", description: "Organization being joined", example: "Acme Corp" },
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "acceptUrl", description: "Invitation acceptance link", example: "https://app.example.com/invite/accept?id=inv_abc123" },
+	],
+	welcome: [
+		{ name: "userName", description: "The user's display name", example: "Jane Doe" },
+		{ name: "appName", description: "Your application name", example: "Acme App" },
+		{ name: "dashboardUrl", description: "Link to dashboard or app", example: "https://app.example.com/dashboard" },
+	],
+};

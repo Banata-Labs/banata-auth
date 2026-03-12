@@ -234,7 +234,7 @@ function buildProjectConfig(projectName: string, secret: string): BanataAuthConf
 		secret,
 		trustedOrigins: getTrustedOrigins(),
 		authMethods: {
-			emailPassword: false,
+			emailPassword: true,
 			magicLink: false,
 			emailOtp: false,
 			passkey: false,

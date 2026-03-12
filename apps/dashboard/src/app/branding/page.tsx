@@ -4,6 +4,7 @@ import {
 	BrandingCanvas,
 	type BrandingValues,
 	type CanvasView,
+	type AuthPreviewConfig,
 	deriveCssVariables,
 	parseCssVariables,
 } from "@/components/branding-preview";
@@ -31,18 +32,21 @@ import {
 	createEmailTemplate,
 	deleteEmailTemplate,
 	getBrandingConfig,
+	getDashboardConfig,
+	getEnabledPublicSocialProviders,
 	listEmailTemplates,
 	saveBrandingConfig,
 	updateEmailTemplate,
 } from "@/lib/dashboard-api";
 import type { EmailBlock, EmailBlockType, EmailTemplateCategory } from "@banata-auth/shared";
-import { getBuiltInTemplateBlocks } from "@banata-auth/shared";
+import { extractVariables, getBlankTemplateBlocks, getBuiltInTemplateBlocks, SYSTEM_TEMPLATE_VARIABLES } from "@banata-auth/shared";
 import {
 	Check,
 	Code2,
 	FilePlus,
 	ImageIcon,
 	Loader2,
+	Lock,
 	Mail,
 	Monitor,
 	Palette,
@@ -171,10 +175,14 @@ export default function BrandingPage() {
 	const [customCss, setCustomCss] = useState("");
 	const [font, setFont] = useState("inter");
 	const [logoUrl, setLogoUrl] = useState("");
+	const [cardWidth, setCardWidth] = useState(420);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saved, setSaved] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Auth config for preview
+	const [authConfig, setAuthConfig] = useState<AuthPreviewConfig | undefined>(undefined);
 
 	// Canvas state
 	const [view, setView] = useState<CanvasView>("sign-in");
@@ -205,9 +213,10 @@ export default function BrandingPage() {
 
 		async function load() {
 			try {
-				const [brandingResult, templatesResult] = await Promise.allSettled([
+				const [brandingResult, templatesResult, dashboardConfigResult] = await Promise.allSettled([
 					getBrandingConfig(),
 					listEmailTemplates(),
+					getDashboardConfig(),
 				]);
 
 				if (brandingResult.status === "fulfilled") {
@@ -219,6 +228,22 @@ export default function BrandingPage() {
 					setCustomCss(c.customCss);
 					setFont(c.font);
 					setLogoUrl(c.logoUrl ?? "");
+				}
+
+				if (dashboardConfigResult.status === "fulfilled") {
+					const cfg = dashboardConfigResult.value;
+					const enabledProviders = getEnabledPublicSocialProviders(cfg);
+					const methods = cfg.authMethods ?? {};
+					setAuthConfig({
+						emailPasswordEnabled: methods.emailPassword === true,
+						magicLinkEnabled: methods.magicLink === true,
+						emailOtpEnabled: methods.emailOtp === true,
+						passkeyEnabled: methods.passkey === true,
+						enabledSocialProviders: enabledProviders.map((p) => ({
+							id: p.id,
+							label: p.id.charAt(0).toUpperCase() + p.id.slice(1),
+						})),
+					});
 				}
 
 				let loadedTemplates: EmailTemplate[] = [];
@@ -270,9 +295,9 @@ export default function BrandingPage() {
 	async function handleCreateTemplate() {
 		setIsCreating(true);
 		try {
-			const newBlocks = getBuiltInTemplateBlocks("welcome");
+			const newBlocks = getBlankTemplateBlocks();
 			const tpl = await createEmailTemplate({
-				name: "New Template",
+				name: "Untitled Template",
 				slug: `template-${Date.now()}`,
 				subject: "Your Subject Here",
 				category: "custom",
@@ -382,8 +407,9 @@ export default function BrandingPage() {
 			font,
 			logoUrl,
 			customCss,
+			cardWidth,
 		}),
-		[primaryColor, bgColor, borderRadius, darkMode, font, logoUrl, customCss],
+		[primaryColor, bgColor, borderRadius, darkMode, font, logoUrl, customCss, cardWidth],
 	);
 
 	const emailBranding: EmailBrandingProps = useMemo(
@@ -464,24 +490,41 @@ export default function BrandingPage() {
 								<SelectValue placeholder="Select template" />
 							</SelectTrigger>
 							<SelectContent align="start">
-								{templates.map((tpl) => (
-									<SelectItem key={tpl.id} value={tpl.id}>
-										<div className="flex items-center gap-2 text-[12px]">
-											<span
-												className="size-1.5 rounded-full"
-												style={{
-													backgroundColor:
-														tpl.category === "auth"
-															? "#6366f1"
-															: tpl.category === "marketing"
-																? "#f59e0b"
-																: "#10b981",
-												}}
-											/>
-											{tpl.name}
+								{/* System templates */}
+								{templates.filter(t => t.builtIn).length > 0 && (
+									<>
+										<div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+											System Templates
 										</div>
-									</SelectItem>
-								))}
+										{templates.filter(t => t.builtIn).map((tpl) => (
+											<SelectItem key={tpl.id} value={tpl.id}>
+												<div className="flex items-center gap-2 text-[12px]">
+													<Lock className="size-3 text-muted-foreground/40" />
+													{tpl.name}
+												</div>
+											</SelectItem>
+										))}
+									</>
+								)}
+								{/* Custom templates */}
+								{templates.filter(t => !t.builtIn).length > 0 && (
+									<>
+										<div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+											Custom Templates
+										</div>
+										{templates.filter(t => !t.builtIn).map((tpl) => (
+											<SelectItem key={tpl.id} value={tpl.id}>
+												<div className="flex items-center gap-2 text-[12px]">
+													<span
+														className="size-1.5 rounded-full"
+														style={{ backgroundColor: "#10b981" }}
+													/>
+													{tpl.name}
+												</div>
+											</SelectItem>
+										))}
+									</>
+								)}
 							</SelectContent>
 						</Select>
 
@@ -573,23 +616,20 @@ export default function BrandingPage() {
 											/>
 										</div>
 										<div className="grid gap-1">
-											<Label className="text-[10px] text-muted-foreground">Category</Label>
-											<Select
-												value={templateCategory}
-												onValueChange={(v) => setTemplateCategory(v as EmailTemplateCategory)}
-											>
-												<SelectTrigger className="h-7 text-[11px]">
-													<SelectValue />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="auth">Auth</SelectItem>
-													<SelectItem value="marketing">Marketing</SelectItem>
-													<SelectItem value="transactional">Transactional</SelectItem>
-													<SelectItem value="onboarding">Onboarding</SelectItem>
-													<SelectItem value="notification">Notification</SelectItem>
-													<SelectItem value="custom">Custom</SelectItem>
-												</SelectContent>
-											</Select>
+											<Label className="text-[10px] text-muted-foreground">Type</Label>
+											<div className="flex h-7 items-center">
+												<span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium ${
+													activeTemplate?.builtIn
+														? "bg-blue-500/10 text-blue-500"
+														: "bg-emerald-500/10 text-emerald-500"
+												}`}>
+													{activeTemplate?.builtIn ? (
+														<><Lock className="size-2.5" /> System</>
+													) : (
+														"Custom"
+													)}
+												</span>
+											</div>
 										</div>
 									</div>
 
@@ -604,6 +644,42 @@ export default function BrandingPage() {
 												{`await banataAuth.emails.send({\n  to: "user@example.com",\n  template: "${templateSlug}",\n  data: { ... },\n});`}
 											</code>
 										</div>
+									</div>
+
+									<Separator className="my-3" />
+
+									<div className="space-y-2">
+										<span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/40">
+											Variables
+										</span>
+										{activeTemplate?.builtIn && activeTemplate.builtInType && SYSTEM_TEMPLATE_VARIABLES[activeTemplate.builtInType] ? (
+											<div className="space-y-1.5">
+												{SYSTEM_TEMPLATE_VARIABLES[activeTemplate.builtInType]!.map((v) => (
+													<div key={v.name} className="rounded-md border border-border bg-muted/30 p-2">
+														<code className="font-mono text-[10px] font-semibold text-foreground">
+															{"{{" + v.name + "}}"}
+														</code>
+														<p className="mt-0.5 text-[9px] text-muted-foreground">{v.description}</p>
+													</div>
+												))}
+											</div>
+										) : (
+											<div className="space-y-1.5">
+												{extractVariables(blocks).length > 0 ? (
+													extractVariables(blocks).map((varName) => (
+														<div key={varName} className="rounded-md border border-border bg-muted/30 p-2">
+															<code className="font-mono text-[10px] font-semibold text-foreground">
+																{"{{" + varName + "}}"}
+															</code>
+														</div>
+													))
+												) : (
+													<p className="text-[9px] text-muted-foreground/60">
+														No variables detected. Use {"{{variableName}}"} syntax in text blocks.
+													</p>
+												)}
+											</div>
+										)}
 									</div>
 								</div>
 							</div>
@@ -770,7 +846,7 @@ export default function BrandingPage() {
 							maxWidth: deviceWidth === "mobile" ? 375 : undefined,
 						}}
 					>
-						<BrandingCanvas branding={branding} view={view} emailTemplate="verification" />
+						<BrandingCanvas branding={branding} view={view} emailTemplate="verification" authConfig={authConfig} />
 					</div>
 				</div>
 
@@ -859,6 +935,21 @@ export default function BrandingPage() {
 										/>
 										<span className="min-w-[24px] text-right font-mono text-[10px] text-muted-foreground">
 											{borderRadius[0]}
+										</span>
+									</div>
+								</div>
+								<div className="grid gap-1">
+									<Label className="text-[10px] text-muted-foreground">Card Width</Label>
+									<div className="flex items-center gap-2">
+										<Slider
+											value={[cardWidth]}
+											onValueChange={([v]) => setCardWidth(v ?? 420)}
+											min={320}
+											max={560}
+											className="flex-1"
+										/>
+										<span className="min-w-[24px] text-right font-mono text-[10px] text-muted-foreground">
+											{cardWidth}
 										</span>
 									</div>
 								</div>

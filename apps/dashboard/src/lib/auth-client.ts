@@ -2,11 +2,11 @@
 
 import {
 	apiKeyClient,
-	convexClient,
 	createAuthClient,
 	organizationClient,
 	twoFactorClient,
 } from "@banata-auth/react/plugins";
+import { convexClient } from "@banata-auth/react/plugins/convex";
 
 /**
  * Better Auth client for the Banata dashboard.

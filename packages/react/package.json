@@ -39,6 +39,11 @@
 			"types": "./dist/client-plugins.d.ts",
 			"import": "./dist/client-plugins.js",
 			"default": "./dist/client-plugins.js"
+		},
+		"./plugins/convex": {
+			"types": "./dist/convex-plugins.d.ts",
+			"import": "./dist/convex-plugins.js",
+			"default": "./dist/convex-plugins.js"
 		}
 	},
 	"main": "./dist/index.js",
@@ -48,7 +53,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/index.js dist/convex-provider.js dist/client-plugins.js",
+		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/index.js dist/convex-provider.js dist/client-plugins.js dist/convex-plugins.js",
 		"dev": "tsup --watch",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run --passWithNoTests",

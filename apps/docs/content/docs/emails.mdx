@@ -1,11 +1,11 @@
 ---
 title: "Emails"
-description: "Configure email providers and control which transactional emails Banata sends to your users."
+description: "Configure email providers, control transactional emails, and send branded emails programmatically."
 section: "Operate Your Project"
 order: 1
 ---
 
-Banata handles transactional email delivery for your authentication flows. You configure a provider, choose which email types to send, and Banata takes care of the rest — delivering magic links, verification emails, password resets, and more through the provider you selected.
+Banata handles transactional email delivery for your authentication flows. You configure a provider, choose which email types to send, and Banata takes care of the rest — delivering magic links, verification emails, password resets, invitation emails, and more through the provider you selected. Every email automatically uses your project's branding (logo, colors, fonts).
 
 ---
 
@@ -58,6 +58,108 @@ Changes take effect immediately when you toggle an email type. If you disable a 
 
 ---
 
+## Branded Email Delivery
+
+All transactional emails — including organization invitation emails — are rendered using your project's branded template system. This means every email your users receive reflects your branding automatically:
+
+- **Logo** displayed in the email header
+- **Primary color** applied to buttons and links
+- **Background color** for the email body
+- **Font family** applied to all text
+- **Border radius** on buttons and containers
+- **Dark mode** support (optional)
+
+You configure branding once in the dashboard under **Branding**, and every email inherits it. See [Email Templates](/docs/email-templates) for template customization.
+
+---
+
+## Sending Branded Emails from Code
+
+In addition to the automatic emails Banata sends during auth flows, you can send branded emails programmatically. This works from **any backend** — Node.js, Bun, Hono, Express, Next.js, or any runtime that can make HTTP requests.
+
+### Using the API
+
+Send a branded email with a single HTTP request. The email uses your configured provider and branding automatically:
+
+```typescript
+// Works from any backend — Node, Bun, Deno, Hono, Express, etc.
+const response = await fetch(
+  "https://your-deployment.convex.site/api/auth/banata/emails/send",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "sk_live_...",
+    },
+    body: JSON.stringify({
+      to: "user@example.com",
+      template: "welcome",
+      data: {
+        userName: "Jane Doe",
+        dashboardUrl: "https://app.example.com",
+        appName: "My App",
+      },
+    }),
+  }
+);
+
+const result = await response.json();
+// { success: true } or { success: false, error: "..." }
+```
+
+You can use any built-in template (`verification`, `password-reset`, `magic-link`, `email-otp`, `invitation`, `welcome`) or any custom template you've created by passing its slug.
+
+### Previewing Without Sending
+
+Render a template to HTML without actually sending it — useful for testing or generating email content for your own delivery pipeline:
+
+```typescript
+const response = await fetch(
+  "https://your-deployment.convex.site/api/auth/banata/emails/preview",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "sk_live_...",
+    },
+    body: JSON.stringify({
+      template: "welcome",
+      data: { userName: "Jane", dashboardUrl: "https://example.com", appName: "Acme" },
+    }),
+  }
+);
+
+const { subject, html, text } = await response.json();
+// subject: "Welcome to Acme"
+// html: full branded HTML email
+// text: plain text version
+```
+
+### Overriding Email Callbacks
+
+If you need complete control over how specific email types are delivered (e.g., using your own email service instead of Banata's), you can provide callbacks in your auth configuration:
+
+```typescript
+import { banataAuth } from "@banata-auth/convex";
+
+export const auth = banataAuth({
+  email: {
+    // Override invitation emails with your own delivery
+    sendInvitationEmail: async ({ to, data }) => {
+      await myEmailService.send({
+        to,
+        subject: `You're invited to ${data.organizationName}`,
+        html: renderMyCustomTemplate(data),
+      });
+    },
+  },
+});
+```
+
+When you provide a callback, Banata uses it instead of the built-in branded template. If you don't provide a callback, Banata handles everything automatically.
+
+---
+
 ## Email Events
 
 You can monitor email delivery from the dashboard under **Emails > Events**. This page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password resets, and invitation emails.
@@ -106,3 +208,4 @@ await toggleEmail("magic-auth", false);
 ## What's Next
 
 - **[Email Templates](/docs/email-templates)** — Customize the content and branding of the emails Banata sends
+- **[Invitations](/docs/invitations)** — Invitation lifecycle and email delivery
