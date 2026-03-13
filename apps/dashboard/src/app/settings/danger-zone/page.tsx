@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { deleteProject } from "@/lib/dashboard-api";
+import { deleteProject, resetDashboardConfiguration } from "@/lib/dashboard-api";
 import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ export default function DangerZonePage() {
 	const [confirmText, setConfirmText] = useState("");
 	const [resetConfirmText, setResetConfirmText] = useState("");
 	const [deleting, setDeleting] = useState(false);
+	const [resetting, setResetting] = useState(false);
 
 	const handleDeleteProject = useCallback(async () => {
 		if (!activeProject) return;
@@ -40,9 +41,19 @@ export default function DangerZonePage() {
 		}
 	}, [activeProject, projects.length, refresh]);
 
-	const handleResetData = () => {
-		toast.error("Data reset is not yet available. Contact support for assistance.");
-	};
+	const handleResetData = useCallback(async () => {
+		setResetting(true);
+		try {
+			await resetDashboardConfiguration();
+			setResetConfirmText("");
+			await refresh();
+			toast.success("Project configuration reset to defaults");
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : "Failed to reset project configuration");
+		} finally {
+			setResetting(false);
+		}
+	}, [refresh]);
 
 	return (
 		<div className="grid gap-6">
@@ -87,10 +98,17 @@ export default function DangerZonePage() {
 									<Button
 										variant="destructive"
 										size="sm"
-										disabled={resetConfirmText !== "RESET"}
-										onClick={handleResetData}
+										disabled={resetConfirmText !== "RESET" || resetting}
+										onClick={() => void handleResetData()}
 									>
-										Reset configuration
+										{resetting ? (
+											<>
+												<Loader2 className="size-4 animate-spin" />
+												Resetting...
+											</>
+										) : (
+											"Reset configuration"
+										)}
 									</Button>
 								</div>
 							</div>

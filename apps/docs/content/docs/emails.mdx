@@ -84,7 +84,7 @@ Send a branded email with a single HTTP request. The email uses your configured 
 ```typescript
 // Works from any backend — Node, Bun, Deno, Hono, Express, etc.
 const response = await fetch(
-  "https://your-deployment.convex.site/api/auth/banata/emails/send",
+  "https://auth.banata.dev/api/auth/banata/emails/send",
   {
     method: "POST",
     headers: {
@@ -115,7 +115,7 @@ Render a template to HTML without actually sending it — useful for testing or 
 
 ```typescript
 const response = await fetch(
-  "https://your-deployment.convex.site/api/auth/banata/emails/preview",
+  "https://auth.banata.dev/api/auth/banata/emails/preview",
   {
     method: "POST",
     headers: {

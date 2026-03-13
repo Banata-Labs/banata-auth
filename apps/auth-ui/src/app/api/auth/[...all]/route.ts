@@ -1,7 +1,7 @@
 import { createRouteHandler } from "@banata-auth/nextjs";
 
 const handler = createRouteHandler({
-	convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "",
+	authUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "",
 	allowInternalProjectScope: true,
 });
 

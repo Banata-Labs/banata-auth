@@ -454,10 +454,20 @@ function createOptionalStringField() {
 	};
 }
 
-function resolveConfiguredSecret(secret: string | undefined): string {
+function resolveConfiguredSecret(
+	secret: string | undefined,
+	options: { allowPlaceholder: boolean },
+): string {
 	const normalized = typeof secret === "string" ? secret.trim() : "";
 	if (normalized.length > 0) {
 		return secret as string;
+	}
+
+	if (!options.allowPlaceholder) {
+		throw new Error(
+			"[BanataAuth] BETTER_AUTH_SECRET is required before serving auth traffic. " +
+				"Set a real BETTER_AUTH_SECRET in your deployment environment.",
+		);
 	}
 
 	if (!warnedAboutMissingSecret) {
@@ -827,7 +837,10 @@ export function createBanataAuthOptions(
 	const { authComponent, authConfig, config, requestProjectId } = params;
 	const methods = config.authMethods ?? {};
 	const emailPassword = config.emailPassword ?? {};
-	const resolvedSecret = resolveConfiguredSecret(config.secret);
+	const runtimeAdapterAvailable = canResolveRuntimeAdapter(ctx);
+	const resolvedSecret = resolveConfiguredSecret(config.secret, {
+		allowPlaceholder: !runtimeAdapterAvailable,
+	});
 
 	// Build social providers object — Better Auth expects { github?: {...}, google?: {...} }
 	const socialProviders = buildSocialProviders(config.socialProviders);
@@ -918,10 +931,7 @@ export function createBanataAuthOptions(
 				// Auto-rotate JWKS keys if the algorithm changed (e.g. EdDSA → RS256)
 				jwksRotateOnTokenGenerationError: true,
 			}),
-			// TODO: Re-enable after fixing the corrupted rate limit data issue.
-			// The rate limit plugin stores lastRequest as Date.now() but the computation
-			// produces incorrect tryAgainIn values after race-condition corruption.
-			// projectScopedRateLimitPlugin(),
+			projectScopedRateLimitPlugin(),
 			...plugins,
 		],
 		// Wire lifecycle triggers into Better Auth's database hooks

@@ -49,7 +49,7 @@ function createManagedHandler(
 	options: Partial<Parameters<typeof createRouteHandler>[0]> = {},
 ) {
 	return createRouteHandler({
-		convexSiteUrl: "https://my-site.convex.site",
+		authUrl: "https://auth.acme.test",
 		apiKey: "sk_test_project_key",
 		...options,
 	});
@@ -103,15 +103,30 @@ describe("createRouteHandler", () => {
 
 			const [fetchedRequest] = firstFetchCall();
 			const fetchedUrl = new URL(fetchedRequest.url);
-			expect(fetchedUrl.origin).toBe("https://my-site.convex.site");
+			expect(fetchedUrl.origin).toBe("https://auth.acme.test");
 			expect(fetchedUrl.pathname).toBe("/api/auth/sign-in");
 		});
 
-		it("strips trailing slash from convexSiteUrl", async () => {
+		it("defaults to auth.banata.dev when authUrl is omitted", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createRouteHandler({
+				apiKey: "sk_test_project_key",
+			});
+
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.url).toContain("https://auth.banata.dev/api/auth/session");
+			expect(fetchedRequest.headers.get("host")).toBe("auth.banata.dev");
+		});
+
+		it("strips trailing slash from authUrl", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
 			const handler = createManagedHandler({
-				convexSiteUrl: "https://my-site.convex.site/",
+				authUrl: "https://auth.acme.test/",
 			});
 
 			const request = createMockRequest(
@@ -122,10 +137,10 @@ describe("createRouteHandler", () => {
 			const [fetchedRequest] = firstFetchCall();
 			// Should not have double slash
 			expect(fetchedRequest.url).not.toContain(
-				"convex.site//api",
+				"auth.acme.test//api",
 			);
 			expect(fetchedRequest.url).toContain(
-				"https://my-site.convex.site/api/auth/callback",
+				"https://auth.acme.test/api/auth/callback",
 			);
 		});
 
@@ -219,7 +234,7 @@ describe("createRouteHandler", () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 
 			const handler = createRouteHandler({
-				convexSiteUrl: "https://my-site.convex.site",
+				authUrl: "https://auth.acme.test",
 				allowInternalProjectScope: true,
 			});
 
@@ -285,7 +300,7 @@ describe("createRouteHandler", () => {
 
 			const [fetchedRequest] = firstFetchCall();
 			expect(fetchedRequest.headers.get("host")).toBe(
-				"my-site.convex.site",
+				"auth.acme.test",
 			);
 		});
 

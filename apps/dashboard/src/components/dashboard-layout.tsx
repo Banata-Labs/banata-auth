@@ -40,8 +40,6 @@ const breadcrumbMap: Record<string, string> = {
 	"/emails/configuration": "Configuration",
 	"/events": "Events",
 	"/actions": "Actions",
-	"/idp-attributes": "IdP Attributes",
-	"/test-sso": "Test SSO",
 	"/notifications": "Notifications",
 	"/settings": "Settings",
 	"/settings/general": "General",

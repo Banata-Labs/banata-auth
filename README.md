@@ -60,7 +60,7 @@ Use [docs/quickstart](./apps/docs/content/docs/quickstart.mdx) for that flow onl
 ## Notes
 
 - `better-auth@1.4.x` is the supported line for the current Convex integration.
-- `@banata-auth/*@0.1.0` was published with broken `workspace:*` internal dependencies. This repo includes the manifest fix for the next release.
+- `@banata-auth/*@0.1.0` was published with broken `workspace:*` internal dependencies. Use the current workspace state or `0.2.0+` once published.
 
 ## Apps
 

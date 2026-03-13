@@ -80,13 +80,6 @@ const navSections: NavSection[] = [
 		items: [
 			{ label: "SSO Connections", href: "/connections", icon: Building },
 			{ label: "Directory Sync", href: "/directories", icon: Users },
-			{
-				label: "IdP Attributes",
-				href: "/idp-attributes",
-				icon: UserCog,
-				badge: "Soon",
-				disabled: true,
-			},
 		],
 	},
 	{

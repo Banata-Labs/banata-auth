@@ -17,7 +17,7 @@ The General page is where you manage your project's identity. You land here by d
 
 ### Project Name
 
-Your project name is the human-readable label that appears throughout the dashboard. You can change it at any time — just type a new name (up to 100 characters) and click **Save changes**.
+Your project name is the human-readable label that appears throughout the dashboard. You can change it at any time - just type a new name (up to 100 characters) and click **Save changes**.
 
 ### Description
 
@@ -25,20 +25,20 @@ Add an optional description (up to 500 characters) to help your team understand 
 
 ### Client ID
 
-Your Client ID is a read-only identifier assigned to your project. Banata uses it internally for callback URLs and public configuration lookups. You don't need it for day-to-day SDK usage — project-scoped API keys handle that — but you can copy it from the dashboard whenever you need it for redirect URLs or public auth flows.
+Your Client ID is a read-only identifier assigned to your project. Banata uses it internally for callback URLs and public configuration lookups. You don't need it for day-to-day SDK usage - project-scoped API keys handle that - but you can copy it from the dashboard whenever you need it for redirect URLs or public auth flows.
 
 ---
 
 ## Auth Overview
 
-The Auth Overview page gives you a read-only snapshot of your current authentication setup. Nothing is editable here — it's purely informational, with links to the relevant configuration pages if you want to make changes.
+The Auth Overview page gives you a read-only snapshot of your current authentication setup. Nothing is editable here - it's purely informational, with links to the relevant configuration pages if you want to make changes.
 
 You'll see:
 
-- **Summary stats** — A quick count of how many auth methods, social providers, and features you have enabled.
-- **Authentication Methods** — All available methods (Email & Password, Magic Link, Email OTP, Passkey, Two-Factor Auth, Organizations, Anonymous Users, Username, Enterprise SSO) with clear enabled/disabled badges.
-- **Social Providers** — Which OAuth providers you've configured, with demo badges where applicable.
-- **Session Configuration** — Your current max session length, access token duration, and inactivity timeout.
+- **Summary stats** - A quick count of how many auth methods, social providers, and features you have enabled.
+- **Authentication Methods** - All available methods (Email & Password, Magic Link, Email OTP, Passkey, Two-Factor Auth, Organizations, Anonymous Users, Username, Enterprise SSO) with clear enabled/disabled badges.
+- **Social Providers** - Which OAuth providers you've configured, with demo badges where applicable.
+- **Session Configuration** - Your current max session length, access token duration, and inactivity timeout.
 
 This page is a great first stop when you want to quickly confirm what's turned on before making changes elsewhere.
 
@@ -46,9 +46,7 @@ This page is a great first stop when you want to quickly confirm what's turned o
 
 ## Team
 
-Team management is **coming soon**. Right now, the Team page shows your own account details — your name, email, and admin role.
-
-When team management launches, you'll be able to invite other users to collaborate on your Banata Auth project with specific roles and permissions.
+The Team page shows the account that is currently managing the active project, along with its access level. Banata now limits this page to live access information instead of showing placeholder invite controls.
 
 ---
 
@@ -58,12 +56,14 @@ The Danger Zone contains irreversible actions that affect your entire project. B
 
 ### Reset Configuration
 
-Resetting your configuration returns all dashboard settings to their defaults. This includes:
+Resetting your configuration returns dashboard-managed settings to their defaults. This clears:
 
 - Branding settings
 - Email configuration
 - Detection rules (Radar)
-- All other custom configuration
+- Social provider credentials
+- Enterprise connection metadata
+- Custom roles, permissions, redirects, domains, actions, and other dashboard-managed configuration
 
 **Your user data is preserved.** Users, organizations, and sessions remain untouched.
 
@@ -90,13 +90,13 @@ Branding is configured from the **Branding** page in the dashboard sidebar (not 
 
 Key branding options:
 
-- **Primary color** — Applied to buttons, links, and active states. Button text automatically adjusts for contrast.
-- **Background color** — Page and email body background.
-- **Font family** — Choose from system, Inter, Roboto, Open Sans, Lato, or Poppins. Fonts load dynamically in the preview.
-- **Border radius** — Applied to buttons, cards, and containers.
-- **Card width** — Control the width of the sign-in/sign-up card (320–560px).
-- **Logo URL** — Displayed in the card header and email header.
-- **Dark mode** — Toggle dark mode styling for previews and emails.
+- **Primary color** - Applied to buttons, links, and active states. Button text automatically adjusts for contrast.
+- **Background color** - Page and email body background.
+- **Font family** - Choose from system, Inter, Roboto, Open Sans, Lato, or Poppins. Fonts load dynamically in the preview.
+- **Border radius** - Applied to buttons, cards, and containers.
+- **Card width** - Control the width of the sign-in/sign-up card (320-560px).
+- **Logo URL** - Displayed in the card header and email header.
+- **Dark mode** - Toggle dark mode styling for previews and emails.
 
 The branding preview dynamically reflects your enabled authentication methods (email/password, magic link, email OTP, passkeys) and social providers, showing exactly what your users will see.
 
@@ -104,8 +104,8 @@ The branding preview dynamically reflects your enabled authentication methods (e
 
 ## Next Steps
 
-- **[Radar & Bot Protection](/docs/radar)** — Set up bot detection rules and provider credentials.
-- **[Bot Protection Package](/docs/bot-protection)** — Integrate bot detection into your Next.js app.
-- **[Domains](/docs/domains)** — Configure custom domains for your auth services.
-- **[API Keys](/docs/api-keys)** — Create and manage project-scoped API keys.
-- **[Email Templates](/docs/email-templates)** — Customize transactional email content and branding.
+- **[Radar & Bot Protection](/docs/radar)** - Set up bot detection rules and provider credentials.
+- **[Bot Protection Package](/docs/bot-protection)** - Integrate bot detection into your Next.js app.
+- **[Domains](/docs/domains)** - Configure custom domains for your auth services.
+- **[API Keys](/docs/api-keys)** - Create and manage project-scoped API keys.
+- **[Email Templates](/docs/email-templates)** - Customize transactional email content and branding.

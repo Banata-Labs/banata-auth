@@ -30,9 +30,16 @@ export const {
   fetchAuthMutation,
   fetchAuthAction,
 } = createBanataAuthServer({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
   apiKey: process.env.BANATA_API_KEY!,
+});
+```
+
+Hosted Banata apps default to `https://auth.banata.dev`. Only set `authUrl` if you use a custom Banata auth domain or a self-hosted deployment:
+
+```ts
+createBanataAuthServer({
+  apiKey: process.env.BANATA_API_KEY!,
+  authUrl: process.env.BANATA_AUTH_URL,
 });
 ```
 

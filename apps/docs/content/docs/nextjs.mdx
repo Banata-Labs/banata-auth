@@ -21,9 +21,11 @@ If you haven't set up the basics yet, follow the [Quick Start](/docs/quickstart)
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
 BANATA_API_KEY=sk_test_your_project_key
+
+# Optional override for custom or self-hosted Banata auth domains.
+# Hosted Banata defaults to https://auth.banata.dev
+# BANATA_AUTH_URL=https://auth.yourcompany.com
 ```
 
 ### 2. Server Auth Helpers
@@ -41,11 +43,12 @@ export const {
   fetchAuthMutation,
   fetchAuthAction,
 } = createBanataAuthServer({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
   apiKey: process.env.BANATA_API_KEY!,
+  authUrl: process.env.BANATA_AUTH_URL,
 });
 ```
+
+For managed Banata, you usually do not need to pass any URL at all. `createBanataAuthServer` defaults to `https://auth.banata.dev`. Use `authUrl` only when you have a custom Banata auth domain or a self-hosted deployment.
 
 ### 3. Auth Route
 
@@ -157,7 +160,7 @@ await banata.configuration.saveDashboardConfig({
 
 ### Auth calls fail with a network error
 
-- Check that `NEXT_PUBLIC_CONVEX_SITE_URL` is correct and the Banata backend is running.
+- Check that `BANATA_AUTH_URL` is correct if you overrode it.
 - Verify `BANATA_API_KEY` is set in your environment.
 
 ### No session after sign-in

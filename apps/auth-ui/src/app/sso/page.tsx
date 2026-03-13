@@ -1,5 +1,11 @@
 "use client";
 
+import {
+	DisabledAuthMethodCard,
+	LoadingProjectAuthCard,
+	MissingProjectScopeCard,
+	ProjectAuthErrorCard,
+} from "@/components/project-auth-state";
 import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +18,46 @@ import { useState } from "react";
 export default function SsoPage() {
 	const [emailDomain, setEmailDomain] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const { config, customerAuthBaseUrl, hostedAuthUrl, scopedPath } = useProjectAuthConfig();
+	const {
+		config,
+		customerAuthBaseUrl,
+		error: configError,
+		hasScope,
+		hostedAuthUrl,
+		isLoading,
+		scopedPath,
+	} = useProjectAuthConfig();
 	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+
+	if (!hasScope) {
+		return <MissingProjectScopeCard branding={config?.branding} />;
+	}
+
+	if (isLoading) {
+		return <LoadingProjectAuthCard title="Enterprise SSO" branding={config?.branding} />;
+	}
+
+	if (configError) {
+		return (
+			<ProjectAuthErrorCard
+				title="Enterprise SSO"
+				message={configError}
+				branding={config?.branding}
+			/>
+		);
+	}
+
+	if (!(config?.authMethods.sso ?? false)) {
+		return (
+			<DisabledAuthMethodCard
+				title="Enterprise SSO"
+				description="Enterprise SSO is disabled for this project."
+				backHref={scopedPath("/sign-in")}
+				backLabel="Back to sign in"
+				branding={config?.branding}
+			/>
+		);
+	}
 
 	return (
 		<AuthCard

@@ -160,63 +160,68 @@ export function portalPlugin(): BetterAuthPlugin {
 					requireHeaders: true,
 				},
 				async (ctx) => {
-					const body = ctx.body;
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(body as Record<string, unknown>);
-					await requireProjectPermission(ctx, {
-						db,
-						permission: "portal.create",
-						projectId: scope.projectId,
-					});
-
-					// Verify the organization exists
-					const orgRows = await db.findMany({
-						model: "organization",
-						where: [{ field: "id", value: body.organizationId }, ...scope.where],
-						limit: 1,
-					});
-					if (orgRows.length === 0) {
-						throw ctx.error("NOT_FOUND", {
-							message: `Organization not found: ${body.organizationId}`,
+					try {
+						const body = ctx.body;
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(body as Record<string, unknown>);
+						await requireProjectPermission(ctx, {
+							db,
+							permission: "portal.create",
+							projectId: scope.projectId,
 						});
-					}
 
-					const now = Date.now();
-					const expiresInMs = body.expiresIn
-						? Math.min(body.expiresIn * 1000, MAX_EXPIRES_IN_MS)
-						: DEFAULT_EXPIRES_IN_MS;
-					const expiresAt = now + expiresInMs;
-					const token = generateToken();
+						// Verify the organization exists
+						const orgRows = await db.findMany({
+							model: "organization",
+							where: [{ field: "id", value: body.organizationId }, ...scope.where],
+							limit: 1,
+						});
+						if (orgRows.length === 0) {
+							throw ctx.error("NOT_FOUND", {
+								message: `Organization not found: ${body.organizationId}`,
+							});
+						}
 
-					const id =
-						ctx.context.generateId({ model: "portalSession" }) ||
-						`ps_${generateToken().slice(0, 24)}`;
+						const now = Date.now();
+						const expiresInMs = body.expiresIn
+							? Math.min(body.expiresIn * 1000, MAX_EXPIRES_IN_MS)
+							: DEFAULT_EXPIRES_IN_MS;
+						const expiresAt = now + expiresInMs;
+						const token = generateToken();
 
-					await db.create({
-						model: "portalSession",
-						data: {
-							id,
-							organizationId: body.organizationId,
+						const row = await db.create({
+							model: "portalSession",
+							data: {
+								organizationId: body.organizationId,
+								intent: body.intent,
+								returnUrl: body.returnUrl || undefined,
+								token,
+								expiresAt,
+								createdAt: now,
+								...scope.data,
+							},
+						});
+
+						const id = (row as Record<string, unknown>).id as string;
+
+						// Build the portal URL using the auth base URL
+						const baseUrl = ctx.context.baseURL;
+						const portalUrl = `${baseUrl}/portal?token=${token}&intent=${body.intent}`;
+
+						return ctx.json({
+							link: portalUrl,
+							sessionId: id,
 							intent: body.intent,
-							returnUrl: body.returnUrl ?? null,
-							token,
-							expiresAt,
-							createdAt: now,
-							...scope.data,
-						},
-					});
-
-					// Build the portal URL using the auth base URL
-					const baseUrl = ctx.context.baseURL;
-					const portalUrl = `${baseUrl}/portal?token=${token}&intent=${body.intent}`;
-
-					return ctx.json({
-						link: portalUrl,
-						sessionId: id,
-						intent: body.intent,
-						organizationId: body.organizationId,
-						expiresAt: new Date(expiresAt).toISOString(),
-					});
+							organizationId: body.organizationId,
+							expiresAt: new Date(expiresAt).toISOString(),
+						});
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json(
+							{ error: `Portal link generation failed: ${message}` },
+						);
+					}
 				},
 			),
 

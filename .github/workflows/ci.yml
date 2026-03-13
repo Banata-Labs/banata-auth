@@ -50,5 +50,5 @@ jobs:
       - name: Test
         run: bun run test
 
-      - name: Build packages
-        run: bun run build --filter='./packages/*'
+      - name: Build workspace
+        run: bun run build

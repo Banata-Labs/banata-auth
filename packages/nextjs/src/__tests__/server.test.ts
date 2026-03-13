@@ -52,8 +52,6 @@ describe("createBanataAuthServer()", () => {
 
 	it("returns handler and auth helpers", () => {
 		const result = createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
 			apiKey: "sk_test_project_key",
 		});
 
@@ -65,10 +63,26 @@ describe("createBanataAuthServer()", () => {
 		expect(result.fetchAuthAction).toBeDefined();
 	});
 
+	it("defaults hosted integrations to auth.banata.dev", async () => {
+		const server = createBanataAuthServer({
+			apiKey: "sk_test_project_key",
+		});
+
+		await server.getToken();
+
+		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
+			authUrl: "https://auth.banata.dev",
+			apiKey: "sk_test_project_key",
+			allowedOrigins: undefined,
+			project: undefined,
+		});
+		const [siteUrl] = mocks.getToken.mock.calls[0] as [string, Headers];
+		expect(siteUrl).toBe("https://auth.banata.dev");
+	});
+
 	it("creates the route handler with the configured API key", () => {
 		const result = createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			apiKey: "sk_test_project_key",
 			allowedOrigins: ["https://auth-ui.banata.dev"],
 			project: { clientId: "acme-app" },
@@ -76,7 +90,7 @@ describe("createBanataAuthServer()", () => {
 
 		expect(result.handler).toBeDefined();
 		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			apiKey: "sk_test_project_key",
 			allowedOrigins: ["https://auth-ui.banata.dev"],
 			project: { clientId: "acme-app" },
@@ -85,8 +99,7 @@ describe("createBanataAuthServer()", () => {
 
 	it("injects the API key into token refresh requests", async () => {
 		const server = createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			apiKey: "sk_test_project_key",
 			project: { clientId: "acme-app", projectId: "project_123" },
 		});
@@ -95,7 +108,7 @@ describe("createBanataAuthServer()", () => {
 
 		expect(mocks.getToken).toHaveBeenCalledTimes(1);
 		const [siteUrl, headers] = mocks.getToken.mock.calls[0] as [string, Headers];
-		expect(siteUrl).toBe("https://test.convex.site");
+		expect(siteUrl).toBe("https://auth.acme.test");
 		expect(headers.get("x-api-key")).toBe("sk_test_project_key");
 		expect(headers.get("x-banata-client-id")).toBe("acme-app");
 		expect(headers.get("x-banata-project-id")).toBe("project_123");
@@ -103,8 +116,7 @@ describe("createBanataAuthServer()", () => {
 
 	it("supports Banata internal hosted surfaces without a customer api key", async () => {
 		const server = createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			allowInternalProjectScope: true,
 			project: { clientId: "banata-dashboard" },
 		});
@@ -112,13 +124,13 @@ describe("createBanataAuthServer()", () => {
 		await server.getToken();
 
 		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			allowInternalProjectScope: true,
 			apiKey: undefined,
 			project: { clientId: "banata-dashboard" },
 		});
 		const [siteUrl, headers] = mocks.getToken.mock.calls[0] as [string, Headers];
-		expect(siteUrl).toBe("https://test.convex.site");
+		expect(siteUrl).toBe("https://auth.acme.test");
 		expect(headers.get("x-api-key")).toBeNull();
 		expect(headers.get("x-banata-internal-project-scope")).toBe("1");
 		expect(headers.get("x-banata-client-id")).toBe("banata-dashboard");
@@ -126,14 +138,13 @@ describe("createBanataAuthServer()", () => {
 
 	it("passes allowedOrigins through for hosted auth handoff support", () => {
 		createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			apiKey: "sk_test_project_key",
 			allowedOrigins: ["https://auth-ui.banata.dev", "https://auth.banata.dev"],
 		});
 
 		expect(mocks.createRouteHandler).toHaveBeenCalledWith({
-			convexSiteUrl: "https://test.convex.site",
+			authUrl: "https://auth.acme.test",
 			apiKey: "sk_test_project_key",
 			allowedOrigins: ["https://auth-ui.banata.dev", "https://auth.banata.dev"],
 			project: undefined,
@@ -142,8 +153,6 @@ describe("createBanataAuthServer()", () => {
 
 	it("reports authentication state from the resolved token", async () => {
 		const server = createBanataAuthServer({
-			convexUrl: "https://test.convex.cloud",
-			convexSiteUrl: "https://test.convex.site",
 			apiKey: "sk_test_project_key",
 		});
 

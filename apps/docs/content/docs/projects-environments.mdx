@@ -68,9 +68,8 @@ You never need to pass a `projectId` in your app code for normal usage. The API 
 ```ts
 // The API key determines which project this app uses
 export const { handler } = createBanataAuthServer({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
   apiKey: process.env.BANATA_API_KEY!, // ← This binds to your project
+  authUrl: process.env.BANATA_AUTH_URL,
 });
 ```
 

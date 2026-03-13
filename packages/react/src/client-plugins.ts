@@ -2,8 +2,9 @@
  * Re-export Better Auth client plugins so consumers don't need
  * `better-auth` as a direct dependency.
  *
- * For Convex-specific plugins (convexClient, crossDomainClient),
- * import from "@banata-auth/react/plugins/convex" instead.
+ * Convex-specific plugins are available from
+ * "@banata-auth/react/plugins/convex" and re-exported here for
+ * backward compatibility.
  *
  * @example
  * ```ts
@@ -58,6 +59,7 @@ export {
 	multiSessionClient,
 	usernameClient,
 } from "better-auth/client/plugins";
+export { convexClient, crossDomainClient } from "./convex-plugins";
 
 type BanataOrganizationClientOptions = NonNullable<
 	Parameters<typeof betterAuthOrganizationClient>[0]

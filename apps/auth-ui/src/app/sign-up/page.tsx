@@ -40,10 +40,22 @@ export default function SignUpPage() {
 	}
 
 	const emailPasswordEnabled = config?.authMethods.emailPassword ?? false;
+	const signUpEnabled = config?.features.signUp ?? true;
 	const verificationRequired = config?.emailPassword.requireEmailVerification ?? true;
 	const callbackURL = verificationRequired
 		? (hostedAuthUrl("/verify-email") ?? scopedPath("/verify-email"))
 		: (hostedAuthUrl("/callback") ?? scopedPath("/callback"));
+
+	if (!signUpEnabled) {
+		return (
+			<DisabledAuthMethodCard
+				title="Create account"
+				description="This project has disabled self-serve sign-ups."
+				backHref={scopedPath("/sign-in")}
+				branding={config?.branding}
+			/>
+		);
+	}
 
 	if (!emailPasswordEnabled && enabledSocialProviders.length === 0) {
 		return (

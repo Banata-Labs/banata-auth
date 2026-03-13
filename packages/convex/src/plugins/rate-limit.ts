@@ -11,6 +11,7 @@ type RateLimitRecord = {
 	key: string;
 	count: number;
 	lastRequest: number;
+	projectId?: string;
 };
 
 const DEFAULT_RULE: RateLimitRule = {
@@ -131,6 +132,13 @@ function getRetryAfter(lastRequest: number, windowSeconds: number): number {
 	return Math.max(1, Math.ceil(remaining / 1000));
 }
 
+function normalizeStoredNumber(value: unknown): number {
+	if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+		return 0;
+	}
+	return value;
+}
+
 function rateLimitResponse(retryAfter: number): Response {
 	return new Response(
 		JSON.stringify({
@@ -153,11 +161,7 @@ function rateLimitResponse(retryAfter: number): Response {
 export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 	return {
 		id: "banata-project-rate-limit",
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		async onRequest(request, ctx) {
-			// Temporarily disabled while investigating corrupted rate limit records.
-			// The race condition fix is in place but existing records need to expire.
-			return;
 			const ip = getIp(request, ctx.options);
 			if (!ip) {
 				return;
@@ -170,7 +174,9 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 			const key = identifier
 				? `${projectScopeId}|${ip}|${path}|${identifier}`
 				: `${projectScopeId}|${ip}|${path}`;
-			const where = [{ field: "key", value: key }];
+			const where = [{ field: "key", operator: "eq" as const, value: key }];
+			const projectScopedData =
+				projectScopeId === "__platform__" ? {} : { projectId: projectScopeId };
 
 			const existing = ((await ctx.adapter.findMany({
 				model: "rateLimit",
@@ -185,6 +191,7 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 						model: "rateLimit",
 						data: {
 							key,
+							...projectScopedData,
 							count: 1,
 							lastRequest: now,
 						},
@@ -210,8 +217,8 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 			const record = current as RateLimitRecord;
 
 			const windowMs = rule.window * 1000;
-			const lastReq = record.lastRequest;
-			const curCount = record.count;
+			const lastReq = normalizeStoredNumber(record.lastRequest);
+			const curCount = Math.floor(normalizeStoredNumber(record.count));
 			if (now - lastReq < windowMs && curCount >= rule.max) {
 				return {
 					response: rateLimitResponse(getRetryAfter(lastReq, rule.window)),
@@ -223,6 +230,7 @@ export function projectScopedRateLimitPlugin(): BetterAuthPlugin {
 				model: "rateLimit",
 				where,
 				update: {
+					...projectScopedData,
 					count: nextCount,
 					lastRequest: now,
 				},

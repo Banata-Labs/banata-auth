@@ -1,5 +1,6 @@
 "use client";
 
+import { useActiveProjectId } from "@/components/project-environment-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,7 @@ type TabValue = "users" | "invitations";
 
 export default function UsersPage() {
 	const router = useRouter();
+	const activeProjectId = useActiveProjectId();
 	const [users, setUsers] = useState<User[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [query, setQuery] = useState("");
@@ -67,8 +69,11 @@ export default function UsersPage() {
 	}, []);
 
 	useEffect(() => {
+		if (!activeProjectId) {
+			return;
+		}
 		void refreshUsers();
-	}, [refreshUsers]);
+	}, [activeProjectId, refreshUsers]);
 
 	const filtered = users
 		.filter((u) => {

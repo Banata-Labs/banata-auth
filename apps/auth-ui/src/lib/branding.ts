@@ -2,6 +2,49 @@
 
 import type { RuntimeBrandingConfig } from "@banata-auth/shared";
 
+const BRANDING_STYLE_ID = "banata-auth-custom-css";
+const BRANDING_FONT_LINK_ID = "banata-auth-font";
+const BRANDING_VAR_DATASET_KEY = "banataBrandingVars";
+const BRANDING_VAR_NAMES = [
+	"--background",
+	"--foreground",
+	"--card",
+	"--card-foreground",
+	"--popover",
+	"--popover-foreground",
+	"--primary",
+	"--primary-foreground",
+	"--secondary",
+	"--secondary-foreground",
+	"--muted",
+	"--muted-foreground",
+	"--accent",
+	"--accent-foreground",
+	"--destructive",
+	"--border",
+	"--input",
+	"--ring",
+	"--radius",
+	"--font-app-sans",
+] as const;
+const FONT_STYLESHEET_URLS: Record<string, string | null> = {
+	inter: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+	system: null,
+	roboto: "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap",
+	"open-sans":
+		"https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap",
+	lato: "https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap",
+	poppins: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap",
+};
+
+function normalizeFontChoice(font: string | null | undefined): string {
+	const normalized = font?.trim().toLowerCase().replace(/\s+/g, "-");
+	if (!normalized || normalized === "general-sans") {
+		return "inter";
+	}
+	return normalized in FONT_STYLESHEET_URLS ? normalized : "system";
+}
+
 function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
 	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 	if (!result?.[1] || !result[2] || !result[3]) {
@@ -37,7 +80,7 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
 }
 
 function getFontStack(font: string): string {
-	switch (font) {
+	switch (normalizeFontChoice(font)) {
 		case "inter":
 			return '"Inter", system-ui, sans-serif';
 		case "system":
@@ -83,7 +126,7 @@ export function deriveBrandingCssVariables(
 			"--input": `${background.h} ${background.s}% ${Math.min(background.l + 15, 100)}%`,
 			"--ring": `${primary.h} ${primary.s}% ${primary.l}%`,
 			"--radius": `${branding.borderRadius}px`,
-			"--font-sans": fontStack,
+			"--font-app-sans": fontStack,
 		};
 	}
 
@@ -107,8 +150,33 @@ export function deriveBrandingCssVariables(
 		"--input": "0 0% 90%",
 		"--ring": `${primary.h} ${primary.s}% ${primary.l}%`,
 		"--radius": `${branding.borderRadius}px`,
-		"--font-sans": fontStack,
+		"--font-app-sans": fontStack,
 	};
+}
+
+function updateBrandingFont(font: string | null | undefined) {
+	if (typeof document === "undefined") {
+		return;
+	}
+
+	const normalizedFont = normalizeFontChoice(font);
+	const href = FONT_STYLESHEET_URLS[normalizedFont] ?? null;
+	const existing = document.getElementById(BRANDING_FONT_LINK_ID) as HTMLLinkElement | null;
+	if (!href) {
+		existing?.remove();
+		return;
+	}
+
+	if (existing) {
+		existing.href = href;
+		return;
+	}
+
+	const link = document.createElement("link");
+	link.id = BRANDING_FONT_LINK_ID;
+	link.rel = "stylesheet";
+	link.href = href;
+	document.head.appendChild(link);
 }
 
 export function parseBrandingCssVariables(css: string): Record<string, string> {
@@ -128,17 +196,25 @@ export function applyBrandingToDocument(branding: RuntimeBrandingConfig | null |
 	}
 
 	const root = document.documentElement;
-	const styleId = "banata-auth-custom-css";
-	let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+	let styleEl = document.getElementById(BRANDING_STYLE_ID) as HTMLStyleElement | null;
 	if (!styleEl) {
 		styleEl = document.createElement("style");
-		styleEl.id = styleId;
+		styleEl.id = BRANDING_STYLE_ID;
 		document.head.appendChild(styleEl);
+	}
+	const previousNames = root.dataset[BRANDING_VAR_DATASET_KEY]
+		?.split(",")
+		.map((name) => name.trim())
+		.filter(Boolean) ?? [...BRANDING_VAR_NAMES];
+	for (const name of previousNames) {
+		root.style.removeProperty(name);
 	}
 
 	if (!branding) {
 		root.classList.remove("dark");
 		root.classList.add("light");
+		delete root.dataset[BRANDING_VAR_DATASET_KEY];
+		updateBrandingFont("system");
 		styleEl.textContent = "";
 		return;
 	}
@@ -148,9 +224,12 @@ export function applyBrandingToDocument(branding: RuntimeBrandingConfig | null |
 
 	const derivedVars = deriveBrandingCssVariables(branding);
 	const overrides = branding.customCss ? parseBrandingCssVariables(branding.customCss) : {};
-	for (const [name, value] of Object.entries({ ...derivedVars, ...overrides })) {
+	const appliedVariables = { ...derivedVars, ...overrides };
+	for (const [name, value] of Object.entries(appliedVariables)) {
 		root.style.setProperty(name, value);
 	}
+	root.dataset[BRANDING_VAR_DATASET_KEY] = Object.keys(appliedVariables).join(",");
 
+	updateBrandingFont(branding.font);
 	styleEl.textContent = branding.customCss || "";
 }

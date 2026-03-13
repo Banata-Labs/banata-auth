@@ -1,0 +1,6 @@
+testing/real-chrome-profile-9223
+testing/**
+apps/dashboard/temp-auth-request.json
+.next
+.turbo
+node_modules

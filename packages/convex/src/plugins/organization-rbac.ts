@@ -673,6 +673,76 @@ export function organizationRbacPlugin(
 				},
 			),
 
+			listOrganizationsPost: createAuthEndpoint(
+				"/organization/list",
+				{
+					method: "POST",
+					body: projectScopeSchema,
+					requireHeaders: true,
+					use: [sessionMiddleware],
+				},
+				async (ctx) => {
+					const { userId, userRole } = await getSessionOrThrow(ctx);
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = getProjectScope(ctx.body as Record<string, unknown>);
+
+					if (
+						await hasProjectWildcardAccess(db, {
+							userId,
+							userRole,
+							projectId: scope.projectId,
+						})
+					) {
+						const organizations = await db.findMany<OrganizationRow>({
+							model: "organization",
+							where: [...scope.where],
+							limit: 1000,
+							sortBy: { field: "createdAt", direction: "desc" },
+						});
+						return ctx.json({
+							data: organizations.map((org) => ({
+								...org,
+								metadata:
+									typeof org.metadata === "string"
+										? JSON.parse(org.metadata as string)
+										: org.metadata,
+							})),
+							listMetadata: { before: null, after: null },
+						});
+					}
+
+					const memberships = await db.findMany<MemberRow>({
+						model: "member",
+						where: [{ field: "userId", value: userId }, ...scope.where],
+						limit: 1000,
+					});
+					if (memberships.length === 0) {
+						return ctx.json({
+							data: [],
+							listMetadata: { before: null, after: null },
+						});
+					}
+
+					const orgIds = memberships.map((m) => m.organizationId);
+					const organizations = await db.findMany<OrganizationRow>({
+						model: "organization",
+						where: [{ field: "id", operator: "in", value: orgIds }, ...scope.where],
+						limit: 1000,
+						sortBy: { field: "createdAt", direction: "desc" },
+					});
+					return ctx.json({
+						data: organizations.map((org) => ({
+							...org,
+							metadata:
+								typeof org.metadata === "string"
+									? JSON.parse(org.metadata as string)
+									: org.metadata,
+						})),
+						listMetadata: { before: null, after: null },
+					});
+				},
+			),
+
 			getFullOrganization: createAuthEndpoint(
 				"/organization/get-full-organization",
 				{

@@ -40,6 +40,7 @@ import {
 	type DomainConfigRow,
 	type EmailConfigRow,
 	type EmailProviderConfigRow,
+	type EmailTemplateRow,
 	type PermissionDefinitionRow,
 	type PluginDBAdapter,
 	type ProjectConfigRow,
@@ -1042,6 +1043,12 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		return scope.projectId;
 	}
 
+	function resetScopedConfigCache(projectId: string) {
+		const key = cacheKey(projectId);
+		configCache.delete(key);
+		loadedKeys.delete(key);
+	}
+
 	async function persistScopedDashboardConfig(
 		db: PluginDBAdapter,
 		scope: { where: WhereClause[]; data: Record<string, unknown> },
@@ -1134,7 +1141,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			borderRadius: row?.borderRadius ?? 14,
 			darkMode: row?.darkMode ?? false,
 			customCss: row?.customCss ?? "",
-			font: row?.font ?? "General Sans",
+			font: row?.font ?? "inter",
 			logoUrl: row?.logoUrl ?? "",
 		};
 	}
@@ -1215,6 +1222,65 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			projectId: scope.projectId,
 		});
 		return scope;
+	}
+
+	async function resetProjectConfigurationState(
+		db: PluginDBAdapter,
+		projectId: string,
+	): Promise<void> {
+		const scopeWhere: WhereClause[] = [{ field: "projectId", operator: "eq", value: projectId }];
+		const singletonModels = [
+			"dashboardConfig",
+			"brandingConfig",
+			"emailConfig",
+			"emailProviderConfig",
+			"roleDefinition",
+			"permissionDefinition",
+			"domainConfig",
+			"redirectConfig",
+			"actionConfig",
+			"radarConfig",
+			"resourceType",
+			"addonConfig",
+			"projectConfig",
+			"ssoProvider",
+			"scimProvider",
+			"domainVerification",
+			"rateLimit",
+		];
+
+		for (const model of singletonModels) {
+			await db.deleteMany({
+				model,
+				where: scopeWhere,
+			});
+		}
+
+		const [emailTemplates, socialProviders] = await Promise.all([
+			db.findMany<EmailTemplateRow>({
+				model: "emailTemplate",
+				where: scopeWhere,
+				limit: 500,
+			}),
+			listProjectSocialProviderSecrets(db, projectId).catch(() => []),
+		]);
+
+		for (const template of emailTemplates) {
+			if (template.builtIn === true) {
+				continue;
+			}
+			await db.delete({
+				model: "emailTemplate",
+				where: [{ field: "id", operator: "eq", value: template.id }],
+			});
+		}
+
+		for (const provider of socialProviders) {
+			await deleteProjectSocialProviderSecret(db, projectId, provider.name);
+		}
+
+		resetScopedConfigCache(projectId);
+		await ensureProjectRbacDefaults(db, projectId);
 	}
 
 	async function findProjectByScope(
@@ -1481,6 +1547,24 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					}
 
 					return ctx.json(cfg);
+				},
+			),
+
+			resetDashboardConfig: createAuthEndpoint(
+				"/banata/config/dashboard/reset",
+				{
+					method: "POST", requireHeaders: true,
+					body: projectScopedEmpty,
+				},
+				async (ctx) => {
+					const body = ctx.body as Record<string, unknown>;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(ctx, db, body, "dashboard.manage");
+					const projectId = requireScopedProjectId(ctx, scope);
+
+					await resetProjectConfigurationState(db, projectId);
+
+					return ctx.json({ success: true });
 				},
 			),
 
@@ -2163,7 +2247,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						borderRadius: row?.borderRadius ?? 14,
 						darkMode: row?.darkMode ?? false,
 						customCss: row?.customCss ?? "",
-						font: row?.font ?? "General Sans",
+						font: row?.font ?? "inter",
 						logoUrl: row?.logoUrl ?? "",
 					});
 				},
@@ -2222,7 +2306,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 								borderRadius: body.borderRadius ?? 14,
 								darkMode: body.darkMode ?? false,
 								customCss: body.customCss ? sanitizeCss(body.customCss) : "",
-								font: body.font ?? "General Sans",
+								font: body.font ?? "inter",
 								logoUrl: body.logoUrl ?? "",
 								createdAt: now,
 								updatedAt: now,
@@ -2236,7 +2320,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						borderRadius: result?.borderRadius ?? 14,
 						darkMode: result?.darkMode ?? false,
 						customCss: result?.customCss ?? "",
-						font: result?.font ?? "General Sans",
+						font: result?.font ?? "inter",
 						logoUrl: result?.logoUrl ?? "",
 					});
 				},

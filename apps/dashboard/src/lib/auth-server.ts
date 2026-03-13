@@ -23,7 +23,6 @@ export const {
 	fetchAuthMutation,
 	fetchAuthAction,
 } = createBanataAuthServer({
-	convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-	convexSiteUrl,
+	authUrl: convexSiteUrl,
 	allowInternalProjectScope: true,
 });

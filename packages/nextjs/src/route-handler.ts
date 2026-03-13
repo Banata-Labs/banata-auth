@@ -1,8 +1,8 @@
 /**
- * Create a Next.js route handler that proxies auth requests to Convex.
+ * Create a Next.js route handler that proxies auth requests to Banata.
  *
  * This is used in `app/api/auth/[...all]/route.ts` to forward all
- * Better Auth API calls to the Convex HTTP actions endpoint.
+ * Better Auth API calls to the configured Banata auth endpoint.
  *
  * @example
  * ```ts
@@ -10,14 +10,14 @@
  * import { createRouteHandler } from "@banata-auth/nextjs";
  *
  * const handler = createRouteHandler({
- *   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+ *   apiKey: process.env.BANATA_API_KEY!,
  * });
  *
  * export const { GET, POST } = handler;
  * ```
  */
 /**
- * Headers that are safe to forward from the client to the Convex auth API.
+ * Headers that are safe to forward from the client to the Banata auth API.
  * All other headers are stripped to avoid leaking internal server details
  * (e.g. X-Forwarded-For, X-Real-IP, CF-* Cloudflare headers, etc.).
  */
@@ -48,6 +48,7 @@ const STRIPPED_RESPONSE_HEADERS = new Set([
 
 const PROJECT_ID_COOKIE = "banata_project_id";
 const CLIENT_ID_COOKIE = "banata_client_id";
+const DEFAULT_BANATA_AUTH_URL = "https://auth.banata.dev";
 
 export interface BanataProjectRouteScope {
 	projectId?: string;
@@ -89,11 +90,28 @@ export type BanataRouteAuthOptions = {
 } & (BanataManagedRouteAuthOptions | BanataInternalRouteAuthOptions);
 
 export type BanataRouteHandlerOptions = {
-	/** The Convex .site URL where HTTP actions are hosted. */
-	convexSiteUrl: string;
+	/**
+	 * Hosted or self-hosted Banata auth base URL.
+	 *
+	 * Defaults to `https://auth.banata.dev` for managed Banata projects.
+	 */
+	authUrl?: string;
 	/** Origins allowed to call this auth proxy cross-origin. */
 	allowedOrigins?: string[];
 } & BanataRouteAuthOptions;
+
+function resolveAuthBaseUrl(authUrl?: string): string {
+	const normalizedUrl =
+		typeof authUrl === "string" && authUrl.trim().length > 0
+			? authUrl.trim()
+			: DEFAULT_BANATA_AUTH_URL;
+	if (normalizedUrl.endsWith(".convex.cloud")) {
+		throw new Error(
+			`authUrl must point to your Banata auth base URL, not the raw Convex cloud URL ${normalizedUrl}.`,
+		);
+	}
+	return normalizedUrl.replace(/\/$/, "");
+}
 
 function normalizeScopeValue(value: string | null | undefined): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
@@ -170,8 +188,14 @@ function mirrorCrossDomainCookieHeader(request: Request, headers: Headers): Head
 }
 
 export function createRouteHandler(options: BanataRouteHandlerOptions) {
-	const { allowInternalProjectScope, allowedOrigins, apiKey, convexSiteUrl, project } = options;
-	const siteUrl = convexSiteUrl.replace(/\/$/, "");
+	const {
+		allowInternalProjectScope,
+		allowedOrigins,
+		apiKey,
+		authUrl,
+		project,
+	} = options;
+	const siteUrl = resolveAuthBaseUrl(authUrl);
 	const normalizedApiKey = normalizeScopeValue(apiKey);
 	if (!normalizedApiKey && !allowInternalProjectScope) {
 		throw new Error(
@@ -248,7 +272,7 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 			duplex: "half",
 		});
 
-		// Set the host header to the Convex site
+		// Set the host header to the upstream Banata auth host
 		newRequest.headers.set("host", new URL(siteUrl).host);
 
 		try {

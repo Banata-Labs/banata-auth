@@ -137,7 +137,7 @@ const createTemplateSchema = z
 		slug: z.string().min(1).max(200),
 		subject: z.string().min(1).max(500),
 		previewText: z.string().max(200).optional(),
-		category: templateCategoryEnum.default("custom"),
+		category: templateCategoryEnum.optional().default("custom"),
 		description: z.string().max(1000).optional(),
 		blocksJson: z.string(),
 		variablesJson: z.string().optional(),
@@ -1045,48 +1045,58 @@ export function banataEmail(options: BanataEmailOptions = {}): BetterAuthPlugin 
 					body: updateTemplateSchema,
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const body = ctx.body;
-					const projScope = getProjectScope(body as Record<string, unknown>);
-					await requireProjectPermission(ctx, {
-						db,
-						permission: "email.manage",
-						projectId: projScope.projectId,
-					});
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const body = ctx.body;
+						const projScope = getProjectScope(body as Record<string, unknown>);
+						await requireProjectPermission(ctx, {
+							db,
+							permission: "email.manage",
+							projectId: projScope.projectId,
+						});
 
-					const existing = await loadTemplateById(db, body.id, projScope.where);
-					if (!existing) {
-						return ctx.json({ success: false, error: "Template not found" });
-					}
-
-					// If slug is being changed, check uniqueness within the project scope
-					if (body.slug && body.slug !== existing.slug) {
-						const conflict = await loadTemplateBySlug(db, body.slug, projScope.where);
-						if (conflict) {
-							return ctx.json({
-								success: false,
-								error: `Template slug "${body.slug}" already exists`,
-							});
+						const existing = await loadTemplateById(db, body.id, projScope.where);
+						if (!existing) {
+							return ctx.json({ success: false, error: "Template not found" });
 						}
+
+						// If slug is being changed, check uniqueness within the project scope
+						if (body.slug && body.slug !== existing.slug) {
+							const conflict = await loadTemplateBySlug(db, body.slug, projScope.where);
+							if (conflict) {
+								return ctx.json({
+									success: false,
+									error: `Template slug "${body.slug}" already exists`,
+								});
+							}
+						}
+
+						const update: Record<string, unknown> = { updatedAt: Date.now() };
+						if (body.name !== undefined) update.name = body.name;
+						if (body.slug !== undefined) update.slug = body.slug;
+						if (body.subject !== undefined) update.subject = body.subject;
+						if (body.previewText !== undefined) update.previewText = body.previewText;
+						if (body.category !== undefined) update.category = body.category;
+						if (body.description !== undefined) update.description = body.description;
+						if (body.blocksJson !== undefined) update.blocksJson = body.blocksJson;
+						if (body.variablesJson !== undefined) update.variablesJson = body.variablesJson;
+
+						// Use simple where clause — compound where not supported by Convex adapter
+						const updated = await db.update<EmailTemplateRow>({
+							model: "emailTemplate",
+							where: [{ field: "id", value: existing.id }],
+							update,
+						});
+
+						if (!updated) {
+							return ctx.json({ success: false, error: "Failed to update template" });
+						}
+
+						return ctx.json({ success: true, template: updated });
+					} catch (err) {
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ success: false, error: `Update failed: ${message}` });
 					}
-
-					const update: Record<string, unknown> = { updatedAt: Date.now() };
-					if (body.name !== undefined) update.name = body.name;
-					if (body.slug !== undefined) update.slug = body.slug;
-					if (body.subject !== undefined) update.subject = body.subject;
-					if (body.previewText !== undefined) update.previewText = body.previewText;
-					if (body.category !== undefined) update.category = body.category;
-					if (body.description !== undefined) update.description = body.description;
-					if (body.blocksJson !== undefined) update.blocksJson = body.blocksJson;
-					if (body.variablesJson !== undefined) update.variablesJson = body.variablesJson;
-
-					const updated = await db.update<EmailTemplateRow>({
-						model: "emailTemplate",
-						where: [{ field: "id", value: body.id }, ...projScope.where],
-						update,
-					});
-
-					return ctx.json({ success: true, template: updated });
 				},
 			),
 

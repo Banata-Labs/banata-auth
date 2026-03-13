@@ -5,7 +5,6 @@ describe("createRouteHandler()", () => {
 	it("requires a project api key for customer apps", () => {
 		expect(() =>
 			createRouteHandler({
-				convexSiteUrl: "https://example.convex.site",
 			} as never),
 		).toThrow(/project-scoped apiKey/i);
 	});
@@ -13,7 +12,14 @@ describe("createRouteHandler()", () => {
 	it("allows a customer route handler when an api key is provided", () => {
 		expect(() =>
 			createRouteHandler({
-				convexSiteUrl: "https://example.convex.site",
+				apiKey: "ba_test_123",
+			}),
+		).not.toThrow();
+	});
+
+	it("defaults hosted customer apps to auth.banata.dev", () => {
+		expect(() =>
+			createRouteHandler({
 				apiKey: "ba_test_123",
 			}),
 		).not.toThrow();
@@ -22,7 +28,6 @@ describe("createRouteHandler()", () => {
 	it("allows internal hosted surfaces without a customer api key", () => {
 		expect(() =>
 			createRouteHandler({
-				convexSiteUrl: "https://example.convex.site",
 				allowInternalProjectScope: true,
 			}),
 		).not.toThrow();

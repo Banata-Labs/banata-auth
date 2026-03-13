@@ -22,6 +22,7 @@ type SignInViewModel = {
 	passkeyEnabled: boolean;
 	magicLinkEnabled: boolean;
 	emailOtpEnabled: boolean;
+	ssoEnabled: boolean;
 	signUpEnabled: boolean;
 	showDivider: boolean;
 	hasAnyMethod: boolean;
@@ -66,19 +67,23 @@ function getSignInViewModel(
 	const passkeyEnabled = config?.authMethods.passkey ?? false;
 	const magicLinkEnabled = config?.authMethods.magicLink ?? false;
 	const emailOtpEnabled = config?.authMethods.emailOtp ?? false;
+	const ssoEnabled = config?.authMethods.sso ?? false;
+	const signUpFeatureEnabled = config?.features.signUp ?? true;
 
 	return {
 		emailPasswordEnabled,
 		passkeyEnabled,
 		magicLinkEnabled,
 		emailOtpEnabled,
-		signUpEnabled: emailPasswordEnabled || socialProviderCount > 0,
-		showDivider: passkeyEnabled || socialProviderCount > 0,
+		ssoEnabled,
+		signUpEnabled: signUpFeatureEnabled && (emailPasswordEnabled || socialProviderCount > 0),
+		showDivider: passkeyEnabled || socialProviderCount > 0 || ssoEnabled,
 		hasAnyMethod:
 			emailPasswordEnabled ||
 			passkeyEnabled ||
 			magicLinkEnabled ||
 			emailOtpEnabled ||
+			ssoEnabled ||
 			socialProviderCount > 0,
 		callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),
 	};
@@ -208,6 +213,14 @@ export default function SignInPage() {
 						providers={enabledSocialProviders}
 						callbackURL={viewModel.callbackURL}
 					/>
+				) : null}
+				{viewModel.ssoEnabled ? (
+					<p className="text-sm text-muted-foreground">
+						Use your company identity provider?{" "}
+						<Link href={scopedPath("/sso")} className="underline">
+							Continue with enterprise SSO
+						</Link>
+					</p>
 				) : null}
 				{viewModel.signUpEnabled ? (
 					<p className="text-sm text-muted-foreground">

@@ -1040,6 +1040,14 @@ export async function saveDashboardConfig(
 	return payload as DashboardConfig;
 }
 
+export async function resetDashboardConfiguration(): Promise<void> {
+	const payload = await postJson("/api/auth/banata/config/dashboard/reset", {});
+	if (typeof payload !== "object" || payload === null || (payload as { success?: boolean }).success !== true) {
+		throw new Error("Failed to reset dashboard configuration");
+	}
+	invalidateCache();
+}
+
 export async function toggleAuthMethod(
 	method: keyof DashboardConfig["authMethods"],
 	enabled: boolean,

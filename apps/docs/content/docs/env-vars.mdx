@@ -5,7 +5,7 @@ section: "Platform Operators"
 order: 3
 ---
 
-> **Self-hosted deployments only.** This page covers the environment variables required when you run your own Convex + Next.js stack. If you use Banata as a managed service, you can skip this entirely — just create a project in the dashboard, generate an API key, and integrate with [`@banata-auth/sdk`](/docs/sdk).
+> **Self-hosted deployments only.** This page covers the environment variables required when you run your own Convex + Next.js stack. If you use Banata as a managed service, you can skip this page entirely. Hosted app integrations usually only need `BANATA_API_KEY` and, optionally, `BANATA_AUTH_URL` if you use a custom Banata auth domain.
 
 Banata Auth reads environment variables from **two separate runtimes**: the Convex backend (server-side) and the Next.js frontend. Setting each variable in the right place is essential for everything to work correctly.
 

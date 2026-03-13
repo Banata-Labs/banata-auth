@@ -5,7 +5,7 @@
  *   bun run scripts/generate-search-index.ts
  *
  * Pages: 42
- * Total headings: 817
+ * Total headings: 698
  */
 
 export interface SearchIndexHeading {
@@ -27,1951 +27,70 @@ export interface SearchIndexEntry {
 
 export const SEARCH_INDEX: SearchIndexEntry[] = [
   {
-    "slug": "anonymous-auth",
-    "title": "Anonymous Authentication",
-    "description": "Allow users to interact with your app without creating an account, with optional upgrade to a full account later.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Use Cases",
-        "anchor": "use-cases",
-        "snippet": "Anonymous auth is well-suited for scenarios where you want to reduce friction and let users experience your product before committing to an account:"
-      },
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Anonymous User Properties",
-        "anchor": "anonymous-user-properties",
-        "snippet": "When an anonymous user is created, the user record has these characteristics:"
-      },
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable anonymous authentication in your BanataAuthConfig:"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Create an Anonymous Session",
-        "anchor": "create-an-anonymous-session",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Check if the Current User is Anonymous",
-        "anchor": "check-if-the-current-user-is-anonymous",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Upgrade to Email/Password",
-        "anchor": "upgrade-to-emailpassword",
-        "snippet": "Link an email and password to the anonymous user, converting them to a full account:"
-      },
-      {
-        "level": 3,
-        "text": "Upgrade via Social OAuth",
-        "anchor": "upgrade-via-social-oauth",
-        "snippet": "Anonymous users can also upgrade by linking a social account:"
-      },
-      {
-        "level": 2,
-        "text": "Complete Anonymous-to-Upgrade Flow",
-        "anchor": "complete-anonymous-to-upgrade-flow",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Data Persistence During Upgrade",
-        "anchor": "data-persistence-during-upgrade",
-        "snippet": "When an anonymous user upgrades to a full account, the following are preserved:"
-      },
-      {
-        "level": 3,
-        "text": "What Changes on Upgrade",
-        "anchor": "what-changes-on-upgrade",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Cleanup of Stale Anonymous Accounts",
-        "anchor": "cleanup-of-stale-anonymous-accounts",
-        "snippet": "Anonymous users that never upgrade will accumulate over time. Banata Auth provides mechanisms to clean up stale anonymous accounts."
-      },
-      {
-        "level": 3,
-        "text": "Automatic Cleanup",
-        "anchor": "automatic-cleanup",
-        "snippet": "Configure automatic cleanup of anonymous accounts that have been inactive beyond a threshold:"
-      },
-      {
-        "level": 3,
-        "text": "Manual Cleanup via Admin SDK",
-        "anchor": "manual-cleanup-via-admin-sdk",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Rate Limiting",
-        "anchor": "rate-limiting",
-        "snippet": "Anonymous session creation is rate-limited to prevent abuse:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "See the Audit Logs guide for more details."
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Rate limit anonymous creation -- Without rate limiting, anonymous auth can be abused to create unlimited user records. The built-in rate limit (30/min per IP) mitigates this."
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"User is not anonymous\"",
-        "anchor": "user-is-not-anonymous",
-        "snippet": "The upgrade endpoint was called on a user that is already a full account (i.e., isAnonymous is false). Only anonymous users can be upgraded."
-      },
-      {
-        "level": 3,
-        "text": "\"Email already in use\"",
-        "anchor": "email-already-in-use",
-        "snippet": "The email provided during upgrade is already registered to another user. The anonymous user cannot claim an email that belongs to an existing account."
-      },
-      {
-        "level": 3,
-        "text": "\"Anonymous session expired\"",
-        "anchor": "anonymous-session-expired",
-        "snippet": "The session expired before the user upgraded. The anonymous user record still exists, but a new session must be created. If the user has no way to re-authenticate (no email/password), the data from th"
-      },
-      {
-        "level": 3,
-        "text": "\"Too many anonymous accounts\"",
-        "anchor": "too-many-anonymous-accounts",
-        "snippet": "If you see a large number of anonymous users, check for: Bot traffic creating sessions programmatically Missing cleanup configuration Frontend code that creates anonymous sessions on every page load ("
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Email & Password -- The most common upgrade target for anonymous users Social OAuth -- Let anonymous users upgrade via Google, GitHub, etc. Username Auth -- Upgrade with a username instead of email"
-      }
-    ],
-    "searchText": "anonymous authentication allow users to interact with your app without creating an account, with optional upgrade to a full account later. use cases anonymous auth is well-suited for scenarios where you want to reduce friction and let users experience your product before committing to an account: how it works anonymous user properties when an anonymous user is created, the user record has these characteristics: configuration enable anonymous authentication in your banataauthconfig: client-side api create an anonymous session check if the current user is anonymous upgrade to email/password link an email and password to the anonymous user, converting them to a full account: upgrade via social oauth anonymous users can also upgrade by linking a social account: complete anonymous-to-upgrade flow data persistence during upgrade when an anonymous user upgrades to a full account, the following are preserved: what changes on upgrade --- cleanup of stale anonymous accounts anonymous users that never upgrade will accumulate over time. banata auth provides mechanisms to clean up stale anonymous accounts. automatic cleanup configure automatic cleanup of anonymous accounts that have been inactive beyond a threshold: manual cleanup via admin sdk rate limiting anonymous session creation is rate-limited to prevent abuse: audit events see the audit logs guide for more details. security considerations rate limit anonymous creation -- without rate limiting, anonymous auth can be abused to create unlimited user records. the built-in rate limit (30/min per ip) mitigates this. troubleshooting \"user is not anonymous\" the upgrade endpoint was called on a user that is already a full account (i.e., isanonymous is false). only anonymous users can be upgraded. \"email already in use\" the email provided during upgrade is already registered to another user. the anonymous user cannot claim an email that belongs to an existing account. \"anonymous session expired\" the session expired before the user upgraded. the anonymous user record still exists, but a new session must be created. if the user has no way to re-authenticate (no email/password), the data from th \"too many anonymous accounts\" if you see a large number of anonymous users, check for: bot traffic creating sessions programmatically missing cleanup configuration frontend code that creates anonymous sessions on every page load ( what's next email & password -- the most common upgrade target for anonymous users social oauth -- let anonymous users upgrade via google, github, etc. username auth -- upgrade with a username instead of email"
-  },
-  {
-    "slug": "email-otp",
-    "title": "Email OTP",
-    "description": "Passwordless authentication using one-time passcodes sent via email.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "New Users vs. Existing Users",
-        "anchor": "new-users-vs-existing-users",
-        "snippet": "New email -- A new user account is created automatically. No separate sign-up step is needed. Existing email -- The existing user is signed in. Their account data is unchanged."
-      },
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable email OTP in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Default Delivery Model",
-        "anchor": "default-delivery-model",
-        "snippet": "By default, Banata sends OTP emails automatically:"
-      },
-      {
-        "level": 3,
-        "text": "Optional Code Override",
-        "anchor": "optional-code-override",
-        "snippet": "If you want to send OTP emails through your own code path instead of the dashboard-managed provider, add email.sendOtp:"
-      },
-      {
-        "level": 3,
-        "text": "Override Callback Parameters",
-        "anchor": "override-callback-parameters",
-        "snippet": "The sendOtp override receives:"
-      },
-      {
-        "level": 2,
-        "text": "OTP Properties",
-        "anchor": "otp-properties",
-        "snippet": "OTP expiry is defined alongside other token lifetimes in @banata-auth/shared:"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Step 1: Send the OTP",
-        "anchor": "step-1-send-the-otp",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Step 2: Verify the OTP",
-        "anchor": "step-2-verify-the-otp",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Complete OTP Form Example",
-        "anchor": "complete-otp-form-example",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Email Template Integration",
-        "anchor": "email-template-integration",
-        "snippet": "Email OTP uses the \"magic-auth\" email category in the email configuration system. When you configure email types in the dashboard under Emails > Configuration, the \"Magic Auth\" toggle controls deliver"
-      },
-      {
-        "level": 2,
-        "text": "Rate Limiting",
-        "anchor": "rate-limiting",
-        "snippet": "OTP requests are rate-limited to prevent abuse and brute-force attempts:"
-      },
-      {
-        "level": 2,
-        "text": "Combining with Other Methods",
-        "anchor": "combining-with-other-methods",
-        "snippet": "Email OTP works alongside other authentication methods. A common pattern is offering email OTP as the primary method:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "See the Audit Logs guide for more details."
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Short expiry window -- OTPs expire after 10 minutes, limiting the window for interception. Single-use codes -- Each OTP is consumed on verification and cannot be reused."
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Invalid or expired OTP\"",
-        "anchor": "invalid-or-expired-otp",
-        "snippet": "The code does not match or has expired. Common causes: User entered the code incorrectly (check for typos) More than 10 minutes passed since the code was sent"
-      },
-      {
-        "level": 3,
-        "text": "\"OTP email not received\"",
-        "anchor": "otp-email-not-received",
-        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure Magic Auth is enabled Check the email-otp template in Email Templates"
-      },
-      {
-        "level": 3,
-        "text": "\"Rate limit exceeded\"",
-        "anchor": "rate-limit-exceeded",
-        "snippet": "The user has made too many requests. Wait one minute before retrying. If this happens frequently, consider showing a countdown timer in your UI."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Magic Links -- Link-based passwordless authentication Passkeys -- WebAuthn-based biometric authentication Multi-Factor Auth -- Add TOTP as a second factor"
-      }
-    ],
-    "searchText": "email otp passwordless authentication using one-time passcodes sent via email. how it works new users vs. existing users new email -- a new user account is created automatically. no separate sign-up step is needed. existing email -- the existing user is signed in. their account data is unchanged. configuration enable email otp in your banataauthconfig: default delivery model by default, banata sends otp emails automatically: optional code override if you want to send otp emails through your own code path instead of the dashboard-managed provider, add email.sendotp: override callback parameters the sendotp override receives: otp properties otp expiry is defined alongside other token lifetimes in @banata-auth/shared: client-side api step 1: send the otp step 2: verify the otp complete otp form example email template integration email otp uses the \"magic-auth\" email category in the email configuration system. when you configure email types in the dashboard under emails > configuration, the \"magic auth\" toggle controls deliver rate limiting otp requests are rate-limited to prevent abuse and brute-force attempts: combining with other methods email otp works alongside other authentication methods. a common pattern is offering email otp as the primary method: audit events see the audit logs guide for more details. security considerations short expiry window -- otps expire after 10 minutes, limiting the window for interception. single-use codes -- each otp is consumed on verification and cannot be reused. troubleshooting \"invalid or expired otp\" the code does not match or has expired. common causes: user entered the code incorrectly (check for typos) more than 10 minutes passed since the code was sent \"otp email not received\" check emails > providers for an active provider check emails > configuration and make sure magic auth is enabled check the email-otp template in email templates \"rate limit exceeded\" the user has made too many requests. wait one minute before retrying. if this happens frequently, consider showing a countdown timer in your ui. what's next magic links -- link-based passwordless authentication passkeys -- webauthn-based biometric authentication multi-factor auth -- add totp as a second factor"
-  },
-  {
-    "slug": "email-password",
-    "title": "Email & Password",
-    "description": "Configure email/password authentication with email verification, password reset, and customizable validation rules.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable email/password authentication in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Default Delivery Model",
-        "anchor": "default-delivery-model",
-        "snippet": "Banata is dashboard-first here:"
-      },
-      {
-        "level": 3,
-        "text": "Optional Code Overrides",
-        "anchor": "optional-code-overrides",
-        "snippet": "If you want to bypass the dashboard-managed delivery path for a specific project, add callbacks in config.email. These callbacks override Banata's automatic sending for that email type."
-      },
-      {
-        "level": 3,
-        "text": "Override Callback Parameters",
-        "anchor": "override-callback-parameters",
-        "snippet": "> Development tip: In development, you can log to console instead of sending real emails if you intentionally want a local override: > ```typescript > sendVerificationEmail: async ({ user, url }) => {"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign Up",
-        "anchor": "sign-up",
-        "snippet": "Use the Better Auth client to sign up with email and password:"
-      },
-      {
-        "level": 3,
-        "text": "Sign In",
-        "anchor": "sign-in",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign Out",
-        "anchor": "sign-out",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Request Password Reset",
-        "anchor": "request-password-reset",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Reset Password (with token from email)",
-        "anchor": "reset-password-with-token-from-email",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Verify Email",
-        "anchor": "verify-email",
-        "snippet": "Email verification typically happens automatically when the user clicks the link in the verification email. The link hits the /api/auth/verify-email endpoint with the token, and Better Auth handles th"
-      },
-      {
-        "level": 2,
-        "text": "Password Validation",
-        "anchor": "password-validation",
-        "snippet": "Banata Auth validates passwords using the passwordSchema from @banata-auth/shared:"
-      },
-      {
-        "level": 3,
-        "text": "Custom Password Rules",
-        "anchor": "custom-password-rules",
-        "snippet": "To enforce additional rules (uppercase, numbers, special characters), you can add custom validation in your sign-up form before calling the API:"
-      },
-      {
-        "level": 2,
-        "text": "Pre-Built UI Components",
-        "anchor": "pre-built-ui-components",
-        "snippet": "Banata Auth ships a SignUpForm and SignInForm in @banata-auth/react that handle the entire email/password flow:"
-      },
-      {
-        "level": 3,
-        "text": "Sign Up Form",
-        "anchor": "sign-up-form",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign In Form",
-        "anchor": "sign-in-form",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Server-Side User Management",
-        "anchor": "server-side-user-management",
-        "snippet": "Use the admin SDK to manage users from your backend:"
-      },
-      {
-        "level": 2,
-        "text": "Override Delivery With Your Own Provider Code",
-        "anchor": "override-delivery-with-your-own-provider-code",
-        "snippet": "Most teams should configure providers in the Banata dashboard and let Banata send auth emails automatically. Use code like this only if you deliberately want your app to own delivery."
-      },
-      {
-        "level": 3,
-        "text": "Resend",
-        "anchor": "resend",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "SendGrid",
-        "anchor": "sendgrid",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "AWS SES (via fetch)",
-        "anchor": "aws-ses-via-fetch",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "When email/password auth is enabled, the following events are automatically logged to the audit log:"
-      },
-      {
-        "level": 2,
-        "text": "Error Handling",
-        "anchor": "error-handling",
-        "snippet": "All auth endpoints return typed errors from @banata-auth/shared:"
-      },
-      {
-        "level": 3,
-        "text": "Rate Limits",
-        "anchor": "rate-limits",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Security Best Practices",
-        "anchor": "security-best-practices",
-        "snippet": "Always enable email verification â€” Without it, anyone can sign up with someone else's email. Use HTTPS in production â€” Session cookies are Secure-flagged and won't work over HTTP."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Social OAuth â€” Add Google, GitHub, and more alongside email/password Magic Links â€” Offer passwordless sign-in via email Multi-Factor Auth â€” Add TOTP-based two-factor authentication"
-      }
-    ],
-    "searchText": "email & password configure email/password authentication with email verification, password reset, and customizable validation rules. configuration enable email/password authentication in your banataauthconfig: default delivery model banata is dashboard-first here: optional code overrides if you want to bypass the dashboard-managed delivery path for a specific project, add callbacks in config.email. these callbacks override banata's automatic sending for that email type. override callback parameters > development tip: in development, you can log to console instead of sending real emails if you intentionally want a local override: > ```typescript > sendverificationemail: async ({ user, url }) => { client-side api sign up use the better auth client to sign up with email and password: sign in sign out request password reset reset password (with token from email) verify email email verification typically happens automatically when the user clicks the link in the verification email. the link hits the /api/auth/verify-email endpoint with the token, and better auth handles th password validation banata auth validates passwords using the passwordschema from @banata-auth/shared: custom password rules to enforce additional rules (uppercase, numbers, special characters), you can add custom validation in your sign-up form before calling the api: pre-built ui components banata auth ships a signupform and signinform in @banata-auth/react that handle the entire email/password flow: sign up form sign in form server-side user management use the admin sdk to manage users from your backend: override delivery with your own provider code most teams should configure providers in the banata dashboard and let banata send auth emails automatically. use code like this only if you deliberately want your app to own delivery. resend sendgrid aws ses (via fetch) audit events when email/password auth is enabled, the following events are automatically logged to the audit log: error handling all auth endpoints return typed errors from @banata-auth/shared: rate limits --- security best practices always enable email verification â€” without it, anyone can sign up with someone else's email. use https in production â€” session cookies are secure-flagged and won't work over http. what's next social oauth â€” add google, github, and more alongside email/password magic links â€” offer passwordless sign-in via email multi-factor auth â€” add totp-based two-factor authentication"
-  },
-  {
-    "slug": "magic-links",
-    "title": "Magic Links",
-    "description": "Passwordless authentication via email — users click a link to sign in without needing a password.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable magic links in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Default Delivery Model",
-        "anchor": "default-delivery-model",
-        "snippet": "Banata's normal magic-link setup is:"
-      },
-      {
-        "level": 3,
-        "text": "Optional Code Override",
-        "anchor": "optional-code-override",
-        "snippet": "If you want to deliver magic links through your own provider code, add email.sendMagicLink:"
-      },
-      {
-        "level": 3,
-        "text": "Override Callback Parameters",
-        "anchor": "override-callback-parameters",
-        "snippet": "The sendMagicLink override receives:"
-      },
-      {
-        "level": 2,
-        "text": "Token Lifetime",
-        "anchor": "token-lifetime",
-        "snippet": "Magic link tokens expire after 10 minutes (600 seconds) by default. This is defined in @banata-auth/shared:"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Send Magic Link",
-        "anchor": "send-magic-link",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Magic Link Form Example",
-        "anchor": "magic-link-form-example",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": "Here's the complete magic link flow:"
-      },
-      {
-        "level": 3,
-        "text": "New Users vs. Existing Users",
-        "anchor": "new-users-vs-existing-users",
-        "snippet": "New email — A new user account is created automatically. No separate sign-up step needed. Existing email — The existing user is signed in. Their account is unchanged."
-      },
-      {
-        "level": 2,
-        "text": "Combining with Other Methods",
-        "anchor": "combining-with-other-methods",
-        "snippet": "Magic links work well alongside other authentication methods. A common pattern is offering magic links as the primary method with email/password as a fallback:"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Token Security",
-        "anchor": "token-security",
-        "snippet": "Tokens are cryptographically signed using the BETTER_AUTH_SECRET. Tokens are single-use — once verified, they cannot be reused. Tokens expire after 10 minutes — a narrow window limits exposure."
-      },
-      {
-        "level": 3,
-        "text": "Email Security",
-        "anchor": "email-security",
-        "snippet": "Magic links are as secure as the user's email account. If someone has access to the email, they can sign in. For higher-security applications, consider combining magic links with MFA (TOTP) for a pass"
-      },
-      {
-        "level": 3,
-        "text": "Rate Limiting",
-        "anchor": "rate-limiting",
-        "snippet": "Magic link requests are rate-limited to prevent abuse:"
-      },
-      {
-        "level": 2,
-        "text": "Email OTP Alternative",
-        "anchor": "email-otp-alternative",
-        "snippet": "If you prefer one-time codes instead of links, Banata Auth also supports Email OTP (one-time password):"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Magic link expired\"",
-        "anchor": "magic-link-expired",
-        "snippet": "The token is only valid for 10 minutes. Ask the user to request a new one. Common causes: User took too long to check their email Email was delayed by the provider"
-      },
-      {
-        "level": 3,
-        "text": "\"Invalid magic link\"",
-        "anchor": "invalid-magic-link",
-        "snippet": "The token signature doesn't match. This can happen if: The BETTER_AUTH_SECRET was changed after the link was generated The link URL was modified or truncated (some email clients break long URLs)"
-      },
-      {
-        "level": 3,
-        "text": "Magic Link Email Not Received",
-        "anchor": "magic-link-email-not-received",
-        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure Magic Auth is enabled Check the magic-link template in Email Templates"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Multi-Factor Auth — Add TOTP as a second factor Email & Password — Traditional authentication Social OAuth — Sign in with Google, GitHub, etc."
-      }
-    ],
-    "searchText": "magic links passwordless authentication via email — users click a link to sign in without needing a password. configuration enable magic links in your banataauthconfig: default delivery model banata's normal magic-link setup is: optional code override if you want to deliver magic links through your own provider code, add email.sendmagiclink: override callback parameters the sendmagiclink override receives: token lifetime magic link tokens expire after 10 minutes (600 seconds) by default. this is defined in @banata-auth/shared: client-side api send magic link magic link form example how it works here's the complete magic link flow: new users vs. existing users new email — a new user account is created automatically. no separate sign-up step needed. existing email — the existing user is signed in. their account is unchanged. combining with other methods magic links work well alongside other authentication methods. a common pattern is offering magic links as the primary method with email/password as a fallback: security considerations token security tokens are cryptographically signed using the better_auth_secret. tokens are single-use — once verified, they cannot be reused. tokens expire after 10 minutes — a narrow window limits exposure. email security magic links are as secure as the user's email account. if someone has access to the email, they can sign in. for higher-security applications, consider combining magic links with mfa (totp) for a pass rate limiting magic link requests are rate-limited to prevent abuse: email otp alternative if you prefer one-time codes instead of links, banata auth also supports email otp (one-time password): audit events --- troubleshooting \"magic link expired\" the token is only valid for 10 minutes. ask the user to request a new one. common causes: user took too long to check their email email was delayed by the provider \"invalid magic link\" the token signature doesn't match. this can happen if: the better_auth_secret was changed after the link was generated the link url was modified or truncated (some email clients break long urls) magic link email not received check emails > providers for an active provider check emails > configuration and make sure magic auth is enabled check the magic-link template in email templates what's next multi-factor auth — add totp as a second factor email & password — traditional authentication social oauth — sign in with google, github, etc."
-  },
-  {
-    "slug": "mfa",
-    "title": "Multi-Factor Authentication",
-    "description": "Add TOTP-based two-factor authentication with authenticator apps, backup codes, and recovery flows.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable two-factor authentication in your BanataAuthConfig:"
-      },
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Setup Flow",
-        "anchor": "setup-flow",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign-In Flow (with MFA enabled)",
-        "anchor": "sign-in-flow-with-mfa-enabled",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Enable Two-Factor Auth",
-        "anchor": "enable-two-factor-auth",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Generate QR Code",
-        "anchor": "generate-qr-code",
-        "snippet": "Use a QR code library to render the TOTP URI:"
-      },
-      {
-        "level": 3,
-        "text": "Verify TOTP Code",
-        "anchor": "verify-totp-code",
-        "snippet": "After setup, verify the user can generate valid codes:"
-      },
-      {
-        "level": 3,
-        "text": "Disable Two-Factor Auth",
-        "anchor": "disable-two-factor-auth",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Backup Codes",
-        "anchor": "backup-codes",
-        "snippet": "When a user enables MFA, backup codes are automatically generated. These are one-time use codes that allow sign-in if the user loses access to their authenticator app."
-      },
-      {
-        "level": 3,
-        "text": "Backup Code Format",
-        "anchor": "backup-code-format",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Displaying Backup Codes",
-        "anchor": "displaying-backup-codes",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Using a Backup Code to Sign In",
-        "anchor": "using-a-backup-code-to-sign-in",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Complete MFA Setup Component",
-        "anchor": "complete-mfa-setup-component",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "MFA Challenge During Sign-In",
-        "anchor": "mfa-challenge-during-sign-in",
-        "snippet": "When a user with MFA enabled signs in, the sign-in response indicates that a TOTP code is required:"
-      },
-      {
-        "level": 2,
-        "text": "Passkeys (WebAuthn)",
-        "anchor": "passkeys-webauthn",
-        "snippet": "In addition to TOTP, Banata Auth also supports passkeys (WebAuthn) for passwordless biometric/hardware key authentication:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "TOTP codes are time-sensitive — They change every 30 seconds. Make sure your server's clock is accurate. Backup codes are critical — Users who lose both their device and backup codes may be locked out"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Organizations — Multi-tenant workspaces Roles & Permissions — Fine-grained access control Webhooks — Get notified about auth events"
-      }
-    ],
-    "searchText": "multi-factor authentication add totp-based two-factor authentication with authenticator apps, backup codes, and recovery flows. configuration enable two-factor authentication in your banataauthconfig: how it works setup flow sign-in flow (with mfa enabled) client-side api enable two-factor auth generate qr code use a qr code library to render the totp uri: verify totp code after setup, verify the user can generate valid codes: disable two-factor auth backup codes when a user enables mfa, backup codes are automatically generated. these are one-time use codes that allow sign-in if the user loses access to their authenticator app. backup code format displaying backup codes using a backup code to sign in complete mfa setup component mfa challenge during sign-in when a user with mfa enabled signs in, the sign-in response indicates that a totp code is required: passkeys (webauthn) in addition to totp, banata auth also supports passkeys (webauthn) for passwordless biometric/hardware key authentication: audit events --- security considerations totp codes are time-sensitive — they change every 30 seconds. make sure your server's clock is accurate. backup codes are critical — users who lose both their device and backup codes may be locked out what's next organizations — multi-tenant workspaces roles & permissions — fine-grained access control webhooks — get notified about auth events"
-  },
-  {
-    "slug": "passkeys",
-    "title": "Passkeys",
-    "description": "WebAuthn-based passwordless authentication using biometrics, security keys, or device credentials.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": "Passkeys involve two distinct flows: registration (creating a credential) and authentication (using a credential to sign in)."
-      },
-      {
-        "level": 3,
-        "text": "Registration Flow",
-        "anchor": "registration-flow",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Authentication Flow",
-        "anchor": "authentication-flow",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable passkeys in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Passkey Configuration Options",
-        "anchor": "passkey-configuration-options",
-        "snippet": "> Important: The rpId must be a valid domain that matches or is a registrable suffix of the page origin. For example, if your app is at https://app.mycompany.com, the rpId can be \"app.mycompany.com\" o"
-      },
-      {
-        "level": 3,
-        "text": "Environment Variables",
-        "anchor": "environment-variables",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Browser and Platform Support",
-        "anchor": "browser-and-platform-support",
-        "snippet": "Passkeys are supported on all modern browsers and platforms:"
-      },
-      {
-        "level": 3,
-        "text": "Cross-Device Authentication",
-        "anchor": "cross-device-authentication",
-        "snippet": "Modern passkey implementations support cross-device authentication, where a user can use their phone to authenticate on a desktop browser via Bluetooth proximity. This is handled natively by the brows"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Register a Passkey",
-        "anchor": "register-a-passkey",
-        "snippet": "Users must be signed in to register a passkey. This is typically done in a security settings page:"
-      },
-      {
-        "level": 3,
-        "text": "Sign In with a Passkey",
-        "anchor": "sign-in-with-a-passkey",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "List Registered Passkeys",
-        "anchor": "list-registered-passkeys",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Delete a Passkey",
-        "anchor": "delete-a-passkey",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Complete Registration Component",
-        "anchor": "complete-registration-component",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign-In Page with Passkey Option",
-        "anchor": "sign-in-page-with-passkey-option",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Resident vs. Non-Resident Credentials",
-        "anchor": "resident-vs-non-resident-credentials",
-        "snippet": "WebAuthn defines two types of credentials:"
-      },
-      {
-        "level": 2,
-        "text": "Combining with Other Methods",
-        "anchor": "combining-with-other-methods",
-        "snippet": "Passkeys work well alongside traditional authentication methods. Users can register a passkey after signing in with email/password, and then use the passkey for future sign-ins:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "See the Audit Logs guide for more details."
-      },
-      {
-        "level": 2,
-        "text": "Security Advantages Over Passwords",
-        "anchor": "security-advantages-over-passwords",
-        "snippet": "Passkeys are the most secure user authentication method available in web browsers today. The private key never leaves the user's device, and authentication requires physical presence (biometric or sec"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Always validate the origin -- The origin in your passkey config must exactly match the page origin. Mismatches will cause authentication failures. Use HTTPS in production -- WebAuthn requires a secure"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"WebAuthn not supported\"",
-        "anchor": "webauthn-not-supported",
-        "snippet": "The user's browser does not support the WebAuthn API. This is rare on modern browsers but can happen on older versions or certain embedded browser views. Check window.PublicKeyCredential before showin"
-      },
-      {
-        "level": 3,
-        "text": "\"Registration cancelled\"",
-        "anchor": "registration-cancelled",
-        "snippet": "The user dismissed the browser's passkey prompt. This is not an error -- simply allow the user to try again."
-      },
-      {
-        "level": 3,
-        "text": "\"Origin mismatch\"",
-        "anchor": "origin-mismatch",
-        "snippet": "The origin in your passkey config does not match the actual page origin. Ensure PASSKEY_ORIGIN matches exactly (including protocol and port)."
-      },
-      {
-        "level": 3,
-        "text": "\"Passkey not found\"",
-        "anchor": "passkey-not-found",
-        "snippet": "No registered credentials match the rpId. This can happen if: The user hasn't registered a passkey for this site The rpId changed between registration and authentication"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Email OTP -- Passwordless authentication via email codes Multi-Factor Auth -- Add TOTP as a second factor Email & Password -- Traditional authentication"
-      }
-    ],
-    "searchText": "passkeys webauthn-based passwordless authentication using biometrics, security keys, or device credentials. how it works passkeys involve two distinct flows: registration (creating a credential) and authentication (using a credential to sign in). registration flow authentication flow configuration enable passkeys in your banataauthconfig: passkey configuration options > important: the rpid must be a valid domain that matches or is a registrable suffix of the page origin. for example, if your app is at https://app.mycompany.com, the rpid can be \"app.mycompany.com\" o environment variables browser and platform support passkeys are supported on all modern browsers and platforms: cross-device authentication modern passkey implementations support cross-device authentication, where a user can use their phone to authenticate on a desktop browser via bluetooth proximity. this is handled natively by the brows client-side api register a passkey users must be signed in to register a passkey. this is typically done in a security settings page: sign in with a passkey list registered passkeys delete a passkey complete registration component sign-in page with passkey option resident vs. non-resident credentials webauthn defines two types of credentials: combining with other methods passkeys work well alongside traditional authentication methods. users can register a passkey after signing in with email/password, and then use the passkey for future sign-ins: audit events see the audit logs guide for more details. security advantages over passwords passkeys are the most secure user authentication method available in web browsers today. the private key never leaves the user's device, and authentication requires physical presence (biometric or sec security considerations always validate the origin -- the origin in your passkey config must exactly match the page origin. mismatches will cause authentication failures. use https in production -- webauthn requires a secure troubleshooting \"webauthn not supported\" the user's browser does not support the webauthn api. this is rare on modern browsers but can happen on older versions or certain embedded browser views. check window.publickeycredential before showin \"registration cancelled\" the user dismissed the browser's passkey prompt. this is not an error -- simply allow the user to try again. \"origin mismatch\" the origin in your passkey config does not match the actual page origin. ensure passkey_origin matches exactly (including protocol and port). \"passkey not found\" no registered credentials match the rpid. this can happen if: the user hasn't registered a passkey for this site the rpid changed between registration and authentication what's next email otp -- passwordless authentication via email codes multi-factor auth -- add totp as a second factor email & password -- traditional authentication"
-  },
-  {
-    "slug": "social-oauth",
-    "title": "Social OAuth",
-    "description": "Add social login with Google, GitHub, Apple, Microsoft, and 6 more providers — complete setup guides for each.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Supported Providers",
-        "anchor": "supported-providers",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Add social providers to your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Setting Provider Credentials",
-        "anchor": "setting-provider-credentials",
-        "snippet": "OAuth credentials must be set on the Convex deployment (not in .env.local), since they're used by server-side Convex functions:"
-      },
-      {
-        "level": 2,
-        "text": "Provider Setup Guides",
-        "anchor": "provider-setup-guides",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Google",
-        "anchor": "google",
-        "snippet": "Go to the Google Cloud Console Create a new project (or select existing) Navigate to APIs & Services > Credentials Click Create Credentials > OAuth client ID"
-      },
-      {
-        "level": 3,
-        "text": "GitHub",
-        "anchor": "github",
-        "snippet": "Go to GitHub Developer Settings Click New OAuth App Set Homepage URL: http://localhost:3000 Set Authorization callback URL: http://localhost:3000/api/auth/callback/github"
-      },
-      {
-        "level": 3,
-        "text": "Apple",
-        "anchor": "apple",
-        "snippet": "Apple Sign-In requires more setup than other providers:"
-      },
-      {
-        "level": 3,
-        "text": "Microsoft (Azure AD)",
-        "anchor": "microsoft-azure-ad",
-        "snippet": "Go to the Azure Portal Click New registration Set redirect URI: http://localhost:3000/api/auth/callback/microsoft (Web platform) Note the Application (client) ID and Directory (tenant) ID"
-      },
-      {
-        "level": 3,
-        "text": "Facebook",
-        "anchor": "facebook",
-        "snippet": "Go to Meta for Developers Create a new app (Consumer type) Add Facebook Login product Set Valid OAuth Redirect URIs: http://localhost:3000/api/auth/callback/facebook"
-      },
-      {
-        "level": 3,
-        "text": "Twitter (X)",
-        "anchor": "twitter-x",
-        "snippet": "Go to the Twitter Developer Portal Create a new project and app Enable OAuth 2.0 Set Callback URL: http://localhost:3000/api/auth/callback/twitter Copy the Client ID and Client Secret"
-      },
-      {
-        "level": 3,
-        "text": "Discord",
-        "anchor": "discord",
-        "snippet": "Go to the Discord Developer Portal Create a new application Go to OAuth2 settings Add redirect: http://localhost:3000/api/auth/callback/discord Copy the Client ID and reset the Client Secret"
-      },
-      {
-        "level": 3,
-        "text": "Spotify",
-        "anchor": "spotify",
-        "snippet": "Go to the Spotify Developer Dashboard Create a new app Add redirect URI: http://localhost:3000/api/auth/callback/spotify Copy the Client ID and Client Secret"
-      },
-      {
-        "level": 3,
-        "text": "Twitch",
-        "anchor": "twitch",
-        "snippet": "Go to the Twitch Developer Console Register a new application Set OAuth Redirect URL: http://localhost:3000/api/auth/callback/twitch Copy the Client ID and generate a Client Secret"
-      },
-      {
-        "level": 3,
-        "text": "LinkedIn",
-        "anchor": "linkedin",
-        "snippet": "Go to the LinkedIn Developer Portal Create a new app Under Auth, add redirect URL: http://localhost:3000/api/auth/callback/linkedin Request the Sign In with LinkedIn using OpenID Connect product"
-      },
-      {
-        "level": 2,
-        "text": "Callback URL Pattern",
-        "anchor": "callback-url-pattern",
-        "snippet": "All OAuth providers follow the same callback URL pattern:"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side Integration",
-        "anchor": "client-side-integration",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Initiating Social Sign-In",
-        "anchor": "initiating-social-sign-in",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "SocialButtons Component",
-        "anchor": "socialbuttons-component",
-        "snippet": "Banata Auth ships a SocialButtons component that renders buttons for all configured providers:"
-      },
-      {
-        "level": 2,
-        "text": "Conditional Provider Configuration",
-        "anchor": "conditional-provider-configuration",
-        "snippet": "You can conditionally enable providers based on whether credentials are available:"
-      },
-      {
-        "level": 2,
-        "text": "Account Linking",
-        "anchor": "account-linking",
-        "snippet": "When a user signs in with a social provider and an account with the same email already exists (from email/password sign-up), Better Auth handles account linking:"
-      },
-      {
-        "level": 2,
-        "text": "How the OAuth Flow Works",
-        "anchor": "how-the-oauth-flow-works",
-        "snippet": "Here's what happens under the hood when a user clicks \"Sign in with GitHub\":"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "Social sign-ins generate these audit log events:"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"redirect_uri_mismatch\" Error",
-        "anchor": "redirecturimismatch-error",
-        "snippet": "The callback URL in your OAuth provider settings doesn't match the actual URL. Make sure: Development: http://localhost:3000/api/auth/callback/{provider}"
-      },
-      {
-        "level": 3,
-        "text": "\"Access Denied\" After Granting Permission",
-        "anchor": "access-denied-after-granting-permission",
-        "snippet": "Check that the provider's Client Secret is correctly set on Convex: npx convex env list Check that the provider is included in your socialProviders config."
-      },
-      {
-        "level": 3,
-        "text": "User Created Without Name/Email",
-        "anchor": "user-created-without-nameemail",
-        "snippet": "Some providers don't return all user fields. Check the provider's scope settings to ensure you're requesting the right permissions (e.g., email scope for Google)."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Magic Links — Passwordless authentication via email Multi-Factor Auth — Add TOTP as a second factor Organizations — Multi-tenant workspaces"
-      }
-    ],
-    "searchText": "social oauth add social login with google, github, apple, microsoft, and 6 more providers — complete setup guides for each. supported providers --- configuration add social providers to your banataauthconfig: setting provider credentials oauth credentials must be set on the convex deployment (not in .env.local), since they're used by server-side convex functions: provider setup guides google go to the google cloud console create a new project (or select existing) navigate to apis & services > credentials click create credentials > oauth client id github go to github developer settings click new oauth app set homepage url: http://localhost:3000 set authorization callback url: http://localhost:3000/api/auth/callback/github apple apple sign-in requires more setup than other providers: microsoft (azure ad) go to the azure portal click new registration set redirect uri: http://localhost:3000/api/auth/callback/microsoft (web platform) note the application (client) id and directory (tenant) id facebook go to meta for developers create a new app (consumer type) add facebook login product set valid oauth redirect uris: http://localhost:3000/api/auth/callback/facebook twitter (x) go to the twitter developer portal create a new project and app enable oauth 2.0 set callback url: http://localhost:3000/api/auth/callback/twitter copy the client id and client secret discord go to the discord developer portal create a new application go to oauth2 settings add redirect: http://localhost:3000/api/auth/callback/discord copy the client id and reset the client secret spotify go to the spotify developer dashboard create a new app add redirect uri: http://localhost:3000/api/auth/callback/spotify copy the client id and client secret twitch go to the twitch developer console register a new application set oauth redirect url: http://localhost:3000/api/auth/callback/twitch copy the client id and generate a client secret linkedin go to the linkedin developer portal create a new app under auth, add redirect url: http://localhost:3000/api/auth/callback/linkedin request the sign in with linkedin using openid connect product callback url pattern all oauth providers follow the same callback url pattern: client-side integration initiating social sign-in socialbuttons component banata auth ships a socialbuttons component that renders buttons for all configured providers: conditional provider configuration you can conditionally enable providers based on whether credentials are available: account linking when a user signs in with a social provider and an account with the same email already exists (from email/password sign-up), better auth handles account linking: how the oauth flow works here's what happens under the hood when a user clicks \"sign in with github\": audit events social sign-ins generate these audit log events: troubleshooting \"redirect_uri_mismatch\" error the callback url in your oauth provider settings doesn't match the actual url. make sure: development: http://localhost:3000/api/auth/callback/{provider} \"access denied\" after granting permission check that the provider's client secret is correctly set on convex: npx convex env list check that the provider is included in your socialproviders config. user created without name/email some providers don't return all user fields. check the provider's scope settings to ensure you're requesting the right permissions (e.g., email scope for google). what's next magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
-  },
-  {
-    "slug": "username-auth",
-    "title": "Username Authentication",
-    "description": "Allow users to sign in with a username and password instead of email.",
-    "section": "Authentication",
-    "headings": [
-      {
-        "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "When to Use Username Auth",
-        "anchor": "when-to-use-username-auth",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable username authentication in your BanataAuthConfig:"
-      },
-      {
-        "level": 3,
-        "text": "Username with Optional Email",
-        "anchor": "username-with-optional-email",
-        "snippet": "In many cases, you want to support both username and email. You can enable both methods and make email optional during sign-up:"
-      },
-      {
-        "level": 2,
-        "text": "Username Validation Rules",
-        "anchor": "username-validation-rules",
-        "snippet": "Banata Auth enforces the following rules on usernames:"
-      },
-      {
-        "level": 3,
-        "text": "Reserved Usernames",
-        "anchor": "reserved-usernames",
-        "snippet": "The following usernames are reserved and cannot be registered:"
-      },
-      {
-        "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign Up with Username",
-        "anchor": "sign-up-with-username",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign In with Username",
-        "anchor": "sign-in-with-username",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Check Username Availability",
-        "anchor": "check-username-availability",
-        "snippet": "Before sign-up, you can check if a username is available:"
-      },
-      {
-        "level": 2,
-        "text": "Complete Sign-Up Form Example",
-        "anchor": "complete-sign-up-form-example",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sign-In Form",
-        "anchor": "sign-in-form",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Username Uniqueness Enforcement",
-        "anchor": "username-uniqueness-enforcement",
-        "snippet": "Usernames are enforced as globally unique across all users in your application. The uniqueness check is performed at the database level:"
-      },
-      {
-        "level": 3,
-        "text": "Handling Conflicts",
-        "anchor": "handling-conflicts",
-        "snippet": "If a username is taken, the server returns a ConflictError (409):"
-      },
-      {
-        "level": 2,
-        "text": "Combining Username with Email",
-        "anchor": "combining-username-with-email",
-        "snippet": "When both username and emailPassword are enabled, users can sign in with either their username or their email:"
-      },
-      {
-        "level": 3,
-        "text": "Password Reset with Username Auth",
-        "anchor": "password-reset-with-username-auth",
-        "snippet": "If a user signed up with only a username (no email), password reset via email is not available. Consider these alternatives:"
-      },
-      {
-        "level": 2,
-        "text": "Server-Side User Management",
-        "anchor": "server-side-user-management",
-        "snippet": "Use the admin SDK to manage username-based users:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
-        "snippet": "See the Audit Logs guide for more details."
-      },
-      {
-        "level": 2,
-        "text": "Error Handling",
-        "anchor": "error-handling",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Rate Limits",
-        "anchor": "rate-limits",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Username enumeration -- The sign-in error message is intentionally vague (\"Invalid username or password\") to prevent attackers from determining whether a username exists. The checkAvailability endpoin"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Invalid username format\"",
-        "anchor": "invalid-username-format",
-        "snippet": "The username does not meet the validation rules. Ensure the username: Is at least 3 characters long Is at most 32 characters long Starts with a letter Contains only lowercase letters, numbers, undersc"
-      },
-      {
-        "level": 3,
-        "text": "\"Username already taken\"",
-        "anchor": "username-already-taken",
-        "snippet": "Another user has registered with the same username. Suggest alternatives or prompt the user to choose a different one. Remember that usernames are case-insensitive."
-      },
-      {
-        "level": 3,
-        "text": "\"Cannot reset password\"",
-        "anchor": "cannot-reset-password",
-        "snippet": "The user signed up with username only and has no email address linked. Use the admin SDK to reset their password, or ask them to add an email to their account first."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Email & Password -- Traditional email-based authentication Anonymous Auth -- Guest access with optional upgrade Social OAuth -- Add Google, GitHub, etc. alongside username auth"
-      }
-    ],
-    "searchText": "username authentication allow users to sign in with a username and password instead of email. how it works when to use username auth --- configuration enable username authentication in your banataauthconfig: username with optional email in many cases, you want to support both username and email. you can enable both methods and make email optional during sign-up: username validation rules banata auth enforces the following rules on usernames: reserved usernames the following usernames are reserved and cannot be registered: client-side api sign up with username sign in with username check username availability before sign-up, you can check if a username is available: complete sign-up form example sign-in form username uniqueness enforcement usernames are enforced as globally unique across all users in your application. the uniqueness check is performed at the database level: handling conflicts if a username is taken, the server returns a conflicterror (409): combining username with email when both username and emailpassword are enabled, users can sign in with either their username or their email: password reset with username auth if a user signed up with only a username (no email), password reset via email is not available. consider these alternatives: server-side user management use the admin sdk to manage username-based users: audit events see the audit logs guide for more details. error handling rate limits --- security considerations username enumeration -- the sign-in error message is intentionally vague (\"invalid username or password\") to prevent attackers from determining whether a username exists. the checkavailability endpoin troubleshooting \"invalid username format\" the username does not meet the validation rules. ensure the username: is at least 3 characters long is at most 32 characters long starts with a letter contains only lowercase letters, numbers, undersc \"username already taken\" another user has registered with the same username. suggest alternatives or prompt the user to choose a different one. remember that usernames are case-insensitive. \"cannot reset password\" the user signed up with username only and has no email address linked. use the admin sdk to reset their password, or ask them to add an email to their account first. what's next email & password -- traditional email-based authentication anonymous auth -- guest access with optional upgrade social oauth -- add google, github, etc. alongside username auth"
-  },
-  {
-    "slug": "email-templates",
-    "title": "Email Templates",
-    "description": "Block-based email template editor with 9 block types, variable interpolation, and 6 built-in auth templates.",
-    "section": "Infrastructure",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Block Types",
-        "anchor": "block-types",
-        "snippet": "Each email template is an ordered array of 9 block types. Blocks map 1:1 to React Email components and support the shared EmailBlockStyle properties for inline styling."
-      },
-      {
-        "level": 3,
-        "text": "Heading",
-        "anchor": "heading",
-        "snippet": "Renders an <h1> through <h6> element."
-      },
-      {
-        "level": 3,
-        "text": "Text",
-        "anchor": "text",
-        "snippet": "A paragraph of body text. Supports basic inline HTML (e.g., <strong>, <em>)."
-      },
-      {
-        "level": 3,
-        "text": "Button",
-        "anchor": "button",
-        "snippet": "A call-to-action button rendered as a linked element."
-      },
-      {
-        "level": 3,
-        "text": "Image",
-        "anchor": "image",
-        "snippet": "An inline image element."
-      },
-      {
-        "level": 3,
-        "text": "Divider",
-        "anchor": "divider",
-        "snippet": "A horizontal rule separator."
-      },
-      {
-        "level": 3,
-        "text": "Spacer",
-        "anchor": "spacer",
-        "snippet": "Empty vertical space with configurable height."
-      },
-      {
-        "level": 3,
-        "text": "Code",
-        "anchor": "code",
-        "snippet": "Monospace-styled text, designed for OTP codes, tokens, and inline code snippets."
-      },
-      {
-        "level": 3,
-        "text": "Link",
-        "anchor": "link",
-        "snippet": "An inline hyperlink."
-      },
-      {
-        "level": 3,
-        "text": "Columns",
-        "anchor": "columns",
-        "snippet": "A multi-column layout (2 to 4 columns). Each column contains its own nested array of blocks."
-      },
-      {
-        "level": 2,
-        "text": "EmailBlockStyle",
-        "anchor": "emailblockstyle",
-        "snippet": "All blocks that accept a style property use the shared EmailBlockStyle interface:"
-      },
-      {
-        "level": 2,
-        "text": "Variable Interpolation",
-        "anchor": "variable-interpolation",
-        "snippet": "Templates support {{variableName}} placeholders in text, URLs, and subject lines. Variables are replaced at send time with the data passed in the API call."
-      },
-      {
-        "level": 3,
-        "text": "Extracting Variables",
-        "anchor": "extracting-variables",
-        "snippet": "The extractVariables utility scans a block array and returns all referenced variable names:"
-      },
-      {
-        "level": 2,
-        "text": "Built-in Auth Templates",
-        "anchor": "built-in-auth-templates",
-        "snippet": "Banata Auth ships with 6 built-in templates for standard auth flows. These are created automatically and can be customized in the dashboard editor. Built-in templates cannot be deleted."
-      },
-      {
-        "level": 3,
-        "text": "verification",
-        "anchor": "verification",
-        "snippet": "Sent when a user signs up and needs to verify their email address."
-      },
-      {
-        "level": 3,
-        "text": "password-reset",
-        "anchor": "password-reset",
-        "snippet": "Sent when a user requests a password reset."
-      },
-      {
-        "level": 3,
-        "text": "magic-link",
-        "anchor": "magic-link",
-        "snippet": "Sent for passwordless sign-in via magic link."
-      },
-      {
-        "level": 3,
-        "text": "email-otp",
-        "anchor": "email-otp",
-        "snippet": "Sent for email-based one-time password verification."
-      },
-      {
-        "level": 3,
-        "text": "invitation",
-        "anchor": "invitation",
-        "snippet": "Sent when a user is invited to join an organization."
-      },
-      {
-        "level": 3,
-        "text": "welcome",
-        "anchor": "welcome",
-        "snippet": "Sent after successful account creation."
-      },
-      {
-        "level": 2,
-        "text": "Template Categories",
-        "anchor": "template-categories",
-        "snippet": "Templates are organized into 6 categories:"
-      },
-      {
-        "level": 2,
-        "text": "Branding Integration",
-        "anchor": "branding-integration",
-        "snippet": "All email templates automatically inherit the project's branding configuration when rendered. Branding is set in the dashboard under Settings and includes:"
-      },
-      {
-        "level": 2,
-        "text": "Dashboard Design Studio",
-        "anchor": "dashboard-design-studio",
-        "snippet": "The dashboard includes a visual email editor for building and editing templates:"
-      },
-      {
-        "level": 2,
-        "text": "SDK / API Usage",
-        "anchor": "sdk-api-usage",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Sending Emails",
-        "anchor": "sending-emails",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Previewing a Template",
-        "anchor": "previewing-a-template",
-        "snippet": "Render a template with sample data without sending it:"
-      },
-      {
-        "level": 3,
-        "text": "Listing Templates",
-        "anchor": "listing-templates",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Getting a Template",
-        "anchor": "getting-a-template",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Creating a Custom Template",
-        "anchor": "creating-a-custom-template",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Updating a Template",
-        "anchor": "updating-a-template",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Deleting a Template",
-        "anchor": "deleting-a-template",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Template Data Model",
-        "anchor": "template-data-model",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "Sending Test Emails",
-        "anchor": "sending-test-emails",
-        "snippet": "Verify your email provider configuration by sending a test email:"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Emails — Configure email providers (SendGrid, Resend, Postmark, etc.) SDK Reference — Complete API reference for the Emails resource Settings — Configure project branding used by email templates"
-      }
-    ],
-    "searchText": "email templates block-based email template editor with 9 block types, variable interpolation, and 6 built-in auth templates. block types each email template is an ordered array of 9 block types. blocks map 1:1 to react email components and support the shared emailblockstyle properties for inline styling. heading renders an <h1> through <h6> element. text a paragraph of body text. supports basic inline html (e.g., <strong>, <em>). button a call-to-action button rendered as a linked element. image an inline image element. divider a horizontal rule separator. spacer empty vertical space with configurable height. code monospace-styled text, designed for otp codes, tokens, and inline code snippets. link an inline hyperlink. columns a multi-column layout (2 to 4 columns). each column contains its own nested array of blocks. emailblockstyle all blocks that accept a style property use the shared emailblockstyle interface: variable interpolation templates support {{variablename}} placeholders in text, urls, and subject lines. variables are replaced at send time with the data passed in the api call. extracting variables the extractvariables utility scans a block array and returns all referenced variable names: built-in auth templates banata auth ships with 6 built-in templates for standard auth flows. these are created automatically and can be customized in the dashboard editor. built-in templates cannot be deleted. verification sent when a user signs up and needs to verify their email address. password-reset sent when a user requests a password reset. magic-link sent for passwordless sign-in via magic link. email-otp sent for email-based one-time password verification. invitation sent when a user is invited to join an organization. welcome sent after successful account creation. template categories templates are organized into 6 categories: branding integration all email templates automatically inherit the project's branding configuration when rendered. branding is set in the dashboard under settings and includes: dashboard design studio the dashboard includes a visual email editor for building and editing templates: sdk / api usage sending emails previewing a template render a template with sample data without sending it: listing templates getting a template creating a custom template updating a template deleting a template template data model api endpoints --- sending test emails verify your email provider configuration by sending a test email: what's next emails — configure email providers (sendgrid, resend, postmark, etc.) sdk reference — complete api reference for the emails resource settings — configure project branding used by email templates"
-  },
-  {
-    "slug": "emails",
-    "title": "Emails",
-    "description": "Configure email providers, manage transactional email types, and monitor email delivery events in the Banata Auth dashboard.",
-    "section": "Infrastructure",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Email Sub-Pages",
-        "anchor": "email-sub-pages",
-        "snippet": "Navigating to /emails automatically redirects to /emails/events."
-      },
-      {
-        "level": 2,
-        "text": "Email Providers",
-        "anchor": "email-providers",
-        "snippet": "Configure which third-party email delivery provider handles transactional emails for your Banata Auth instance. Five providers are supported out of the box:"
-      },
-      {
-        "level": 3,
-        "text": "Setting Up a Provider",
-        "anchor": "setting-up-a-provider",
-        "snippet": "Navigate to Emails > Providers Click Enable on your preferred provider Enter your API key in the input field that appears Click Save Key to persist the credential"
-      },
-      {
-        "level": 3,
-        "text": "Sending Test Emails",
-        "anchor": "sending-test-emails",
-        "snippet": "Once a provider is active, click the Send test email button in the page header. Enter a recipient email address and click Send. The test email is dispatched through your active provider to verify that"
-      },
-      {
-        "level": 3,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Provider Config Shape",
-        "anchor": "provider-config-shape",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Example: Setting Up Resend",
-        "anchor": "example-setting-up-resend",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Email Configuration",
-        "anchor": "email-configuration",
-        "snippet": "Control which categories of transactional emails are sent to your users. Each email type can be independently enabled or disabled."
-      },
-      {
-        "level": 3,
-        "text": "Authentication Emails",
-        "anchor": "authentication-emails",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Organization Emails",
-        "anchor": "organization-emails",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Toggling an Email Type",
-        "anchor": "toggling-an-email-type",
-        "snippet": "Each email type has a Switch toggle. Changes are saved immediately when toggled. The server returns the full updated configuration after each change."
-      },
-      {
-        "level": 3,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Email Toggle Shape",
-        "anchor": "email-toggle-shape",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Example: Disabling Password Reset Emails",
-        "anchor": "example-disabling-password-reset-emails",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Email Events",
-        "anchor": "email-events",
-        "snippet": "The Events page provides a real-time view of email-related activity in your Banata Auth instance. Events are filtered from the global audit log based on email-related action keywords."
-      },
-      {
-        "level": 3,
-        "text": "What's Tracked",
-        "anchor": "whats-tracked",
-        "snippet": "Events matching these keywords are displayed:"
-      },
-      {
-        "level": 3,
-        "text": "Event Table Columns",
-        "anchor": "event-table-columns",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Empty State",
-        "anchor": "empty-state",
-        "snippet": "If no email events exist in the audit log, the page shows an empty state with the message: \"No email events found in the last 30 days. Events will appear here once emails are sent through your configu"
-      },
-      {
-        "level": 2,
-        "text": "Data Model",
-        "anchor": "data-model",
-        "snippet": "Email configuration is stored in two separate config tables:"
-      },
-      {
-        "level": 3,
-        "text": "Email Toggles",
-        "anchor": "email-toggles",
-        "snippet": "Stored in the emailConfig table as a JSON blob:"
-      },
-      {
-        "level": 3,
-        "text": "Email Provider Config",
-        "anchor": "email-provider-config",
-        "snippet": "Stored in the emailProviderConfig table as a JSON blob:"
-      },
-      {
-        "level": 2,
-        "text": "Using Emails Programmatically",
-        "anchor": "using-emails-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Notifications — Configure system notifications Domains — Set up custom domains for auth email links Settings — Configure project-level settings"
-      }
-    ],
-    "searchText": "emails configure email providers, manage transactional email types, and monitor email delivery events in the banata auth dashboard. email sub-pages navigating to /emails automatically redirects to /emails/events. email providers configure which third-party email delivery provider handles transactional emails for your banata auth instance. five providers are supported out of the box: setting up a provider navigate to emails > providers click enable on your preferred provider enter your api key in the input field that appears click save key to persist the credential sending test emails once a provider is active, click the send test email button in the page header. enter a recipient email address and click send. the test email is dispatched through your active provider to verify that api endpoints provider config shape example: setting up resend email configuration control which categories of transactional emails are sent to your users. each email type can be independently enabled or disabled. authentication emails organization emails toggling an email type each email type has a switch toggle. changes are saved immediately when toggled. the server returns the full updated configuration after each change. api endpoints email toggle shape example: disabling password reset emails email events the events page provides a real-time view of email-related activity in your banata auth instance. events are filtered from the global audit log based on email-related action keywords. what's tracked events matching these keywords are displayed: event table columns empty state if no email events exist in the audit log, the page shows an empty state with the message: \"no email events found in the last 30 days. events will appear here once emails are sent through your configu data model email configuration is stored in two separate config tables: email toggles stored in the emailconfig table as a json blob: email provider config stored in the emailproviderconfig table as a json blob: using emails programmatically what's next notifications — configure system notifications domains — set up custom domains for auth email links settings — configure project-level settings"
-  },
-  {
-    "slug": "convex",
-    "title": "Convex Integration",
-    "description": "Platform-runtime reference for self-hosting Banata on Convex.",
-    "section": "Packages",
-    "headings": [
-      {
-        "level": 2,
-        "text": "What It Is Responsible For",
-        "anchor": "what-it-is-responsible-for",
-        "snippet": "Inside a Banata platform deployment, @banata-auth/convex provides:"
-      },
-      {
-        "level": 2,
-        "text": "Minimal Local Files",
-        "anchor": "minimal-local-files",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Product Boundary",
-        "anchor": "product-boundary",
-        "snippet": "The important product rule is:"
-      },
-      {
-        "level": 2,
-        "text": "Related Docs",
-        "anchor": "related-docs",
-        "snippet": "Self-Hosted Quick Start Self-Hosting API Keys"
-      }
-    ],
-    "searchText": "convex integration platform-runtime reference for self-hosting banata on convex. what it is responsible for inside a banata platform deployment, @banata-auth/convex provides: minimal local files product boundary the important product rule is: related docs self-hosted quick start self-hosting api keys"
-  },
-  {
-    "slug": "shared",
-    "title": "@banata-auth/shared",
-    "description": "Shared types, constants, validation utilities, and email block definitions used across all Banata Auth packages.",
-    "section": "Packages",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Installation",
-        "anchor": "installation",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Package Structure",
-        "anchor": "package-structure",
-        "snippet": "The shared package exports 6 modules:"
-      },
-      {
-        "level": 2,
-        "text": "TypeScript Interfaces",
-        "anchor": "typescript-interfaces",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Core Resources",
-        "anchor": "core-resources",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Organization Resources",
-        "anchor": "organization-resources",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "SSO Resources",
-        "anchor": "sso-resources",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Directory Sync Resources",
-        "anchor": "directory-sync-resources",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Other Resources",
-        "anchor": "other-resources",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Constants",
-        "anchor": "constants",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "ID_PREFIXES",
-        "anchor": "idprefixes",
-        "snippet": "Every Banata Auth resource uses a prefixed ULID for its identifier. The prefix makes IDs self-documenting and debuggable:"
-      },
-      {
-        "level": 3,
-        "text": "Rate Limits",
-        "anchor": "rate-limits",
-        "snippet": "Default rate limits per endpoint category (requests per minute):"
-      },
-      {
-        "level": 3,
-        "text": "Token Lifetimes",
-        "anchor": "token-lifetimes",
-        "snippet": "Default token and session lifetimes in seconds:"
-      },
-      {
-        "level": 3,
-        "text": "Size Limits",
-        "anchor": "size-limits",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Webhook Constants",
-        "anchor": "webhook-constants",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "ID Generation",
-        "anchor": "id-generation",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "generateId",
-        "anchor": "generateid",
-        "snippet": "Generate a prefixed ULID for any resource type:"
-      },
-      {
-        "level": 3,
-        "text": "ulid",
-        "anchor": "ulid",
-        "snippet": "Generate a raw ULID without a prefix:"
-      },
-      {
-        "level": 3,
-        "text": "getResourceType",
-        "anchor": "getresourcetype",
-        "snippet": "Extract the resource type from a prefixed ID:"
-      },
-      {
-        "level": 3,
-        "text": "validateId",
-        "anchor": "validateid",
-        "snippet": "Check if an ID has the correct prefix for a given resource type:"
-      },
-      {
-        "level": 3,
-        "text": "generateRandomToken",
-        "anchor": "generaterandomtoken",
-        "snippet": "Generate a URL-safe base64 random token:"
-      },
-      {
-        "level": 3,
-        "text": "generateOtp",
-        "anchor": "generateotp",
-        "snippet": "Generate a random numeric OTP:"
-      },
-      {
-        "level": 2,
-        "text": "Validation Schemas",
-        "anchor": "validation-schemas",
-        "snippet": "All validation schemas are built with Zod and are used throughout the backend for input validation. They can also be used in client applications for form validation."
-      },
-      {
-        "level": 3,
-        "text": "Primitive Schemas",
-        "anchor": "primitive-schemas",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Resource Schemas",
-        "anchor": "resource-schemas",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Input Types",
-        "anchor": "input-types",
-        "snippet": "Each schema exports a corresponding TypeScript type:"
-      },
-      {
-        "level": 2,
-        "text": "Error Classes",
-        "anchor": "error-classes",
-        "snippet": "All Banata Auth errors extend BanataAuthError, which provides structured error information with HTTP status codes, error codes, and request IDs."
-      },
-      {
-        "level": 3,
-        "text": "BanataAuthError (Base)",
-        "anchor": "banataautherror-base",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Specialized Error Classes",
-        "anchor": "specialized-error-classes",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Usage",
-        "anchor": "usage",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "FieldError",
-        "anchor": "fielderror",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Email Block System",
-        "anchor": "email-block-system",
-        "snippet": "The shared package defines the complete email block type system used by the template editor, SDK, and backend renderer. See the Email Templates documentation for full details."
-      },
-      {
-        "level": 3,
-        "text": "Key Exports",
-        "anchor": "key-exports",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Factory Helpers",
-        "anchor": "factory-helpers",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Variable Interpolation",
-        "anchor": "variable-interpolation",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Built-in Template Blocks",
-        "anchor": "built-in-template-blocks",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Pagination Types",
-        "anchor": "pagination-types",
-        "snippet": "All list endpoints use a cursor-based pagination model:"
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "SDK Reference — The TypeScript SDK that consumes these shared types Email Templates — Full documentation on the block-based email system Vault & Encryption — Encryption layer using shared VaultSecret "
-      }
-    ],
-    "searchText": "@banata-auth/shared shared types, constants, validation utilities, and email block definitions used across all banata auth packages. installation package structure the shared package exports 6 modules: typescript interfaces core resources organization resources sso resources directory sync resources other resources constants id_prefixes every banata auth resource uses a prefixed ulid for its identifier. the prefix makes ids self-documenting and debuggable: rate limits default rate limits per endpoint category (requests per minute): token lifetimes default token and session lifetimes in seconds: size limits webhook constants id generation generateid generate a prefixed ulid for any resource type: ulid generate a raw ulid without a prefix: getresourcetype extract the resource type from a prefixed id: validateid check if an id has the correct prefix for a given resource type: generaterandomtoken generate a url-safe base64 random token: generateotp generate a random numeric otp: validation schemas all validation schemas are built with zod and are used throughout the backend for input validation. they can also be used in client applications for form validation. primitive schemas resource schemas input types each schema exports a corresponding typescript type: error classes all banata auth errors extend banataautherror, which provides structured error information with http status codes, error codes, and request ids. banataautherror (base) specialized error classes usage fielderror email block system the shared package defines the complete email block type system used by the template editor, sdk, and backend renderer. see the email templates documentation for full details. key exports factory helpers variable interpolation built-in template blocks pagination types all list endpoints use a cursor-based pagination model: what's next sdk reference — the typescript sdk that consumes these shared types email templates — full documentation on the block-based email system vault & encryption — encryption layer using shared vaultsecret "
-  },
-  {
-    "slug": "self-hosting",
-    "title": "Self-Hosting",
-    "description": "Run the full Banata platform on your own infrastructure.",
-    "section": "Deployment",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Product Shape",
-        "anchor": "product-shape",
-        "snippet": "The hosted and self-hosted models are intended to match:"
-      },
-      {
-        "level": 2,
-        "text": "Convex Wiring",
-        "anchor": "convex-wiring",
-        "snippet": "The self-hosted platform keeps a small amount of local Convex wiring:"
-      },
-      {
-        "level": 2,
-        "text": "Infrastructure",
-        "anchor": "infrastructure",
-        "snippet": "To self-host Banata, you still need:"
-      }
-    ],
-    "searchText": "self-hosting run the full banata platform on your own infrastructure. product shape the hosted and self-hosted models are intended to match: convex wiring the self-hosted platform keeps a small amount of local convex wiring: infrastructure to self-host banata, you still need:"
-  },
-  {
     "slug": "account",
     "title": "Account Management",
-    "description": "Manage your admin profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard.",
-    "section": "Configuration",
+    "description": "Manage your profile, security settings, connected accounts, and active sessions from the Banata Auth dashboard.",
+    "section": "Operate Your Project",
     "headings": [
-      {
-        "level": 2,
-        "text": "Account Sub-Pages",
-        "anchor": "account-sub-pages",
-        "snippet": "Navigating to /account automatically redirects to /account/profile."
-      },
       {
         "level": 2,
         "text": "Profile",
         "anchor": "profile",
-        "snippet": "The Profile page manages your personal information and connected accounts."
+        "snippet": "The Profile page lets you update your personal information and manage the sign-in methods linked to your account."
       },
       {
         "level": 3,
-        "text": "Personal Information",
-        "anchor": "personal-information",
-        "snippet": "Display name â€” Editable text field (click \"Edit\" to enter edit mode) Avatar â€” Upload an image (max 2MB, stored as a Data URL). Click the upload button on the avatar to change it, or \"Remove\" to cl"
+        "text": "Updating Your Name and Avatar",
+        "anchor": "updating-your-name-and-avatar",
+        "snippet": "You can change your display name and avatar directly from the dashboard:"
       },
       {
         "level": 3,
-        "text": "Email Address",
-        "anchor": "email-address",
-        "snippet": "Change your email by clicking \"Change email\", entering a new address, and clicking \"Send verification\". Better Auth sends a verification email to the new address. Your email does not change until you "
+        "text": "Changing Your Email",
+        "anchor": "changing-your-email",
+        "snippet": "To change your email address:"
       },
       {
         "level": 3,
         "text": "Connected Accounts",
         "anchor": "connected-accounts",
-        "snippet": "Lists all sign-in methods linked to your account:"
+        "snippet": "The Connected Accounts section shows every sign-in method linked to your account:"
       },
       {
         "level": 3,
-        "text": "Delete Account",
-        "anchor": "delete-account",
-        "snippet": "Permanently deletes your account and all associated data. Requires typing DELETE to confirm. Triggers authClient.deleteUser() which sends a confirmation email before deletion."
+        "text": "Deleting Your Account",
+        "anchor": "deleting-your-account",
+        "snippet": "You can permanently delete your account from the bottom of the Profile page. To confirm, type DELETE in the confirmation field and submit. A confirmation email is sent before deletion is finalized."
       },
       {
         "level": 2,
         "text": "Security",
         "anchor": "security",
-        "snippet": "The Security page manages authentication credentials and active sessions."
+        "snippet": "The Security page is where you manage your authentication credentials and review active sessions."
       },
       {
         "level": 3,
-        "text": "Password",
-        "anchor": "password",
-        "snippet": "Change your password by providing your current password and a new one (minimum 8 characters). The confirmation field validates that both entries match before enabling the submit button."
+        "text": "Changing Your Password",
+        "anchor": "changing-your-password",
+        "snippet": "To change your password:"
       },
       {
         "level": 3,
-        "text": "Two-Factor Authentication (TOTP)",
-        "anchor": "two-factor-authentication-totp",
-        "snippet": "TOTP-based two-factor authentication adds an extra layer of security. The setup flow has multiple steps:"
+        "text": "Setting Up Two-Factor Authentication (TOTP)",
+        "anchor": "setting-up-two-factor-authentication-totp",
+        "snippet": "TOTP-based two-factor authentication adds an extra layer of security to your account. Here is the step-by-step setup flow:"
       },
       {
         "level": 3,
-        "text": "Active Sessions",
-        "anchor": "active-sessions",
-        "snippet": "Lists all devices where you are currently signed in, showing:"
+        "text": "Managing Active Sessions",
+        "anchor": "managing-active-sessions",
+        "snippet": "The Active Sessions section lists every device where you are currently signed in. Each entry shows:"
       },
       {
         "level": 2,
         "text": "Auth Client Methods",
         "anchor": "auth-client-methods",
-        "snippet": "The account pages use the Better Auth client directly. All methods follow the { data, error } response convention."
+        "snippet": "If you are building a custom account management UI, the following authClient methods are available. All methods return { data, error }."
       },
       {
         "level": 2,
@@ -1981,18 +100,18 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Settings â€” Configure project name and team Authentication â€” Set up authentication methods Radar & Bot Protection â€” Configure bot detection for your auth endpoints"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Settings -- Configure your project name and team. Authentication -- Set up authentication methods for your project. Radar & Bot Protection -- Configure bot detection for your auth endpoints."
       }
     ],
-    "searchText": "account management manage your admin profile, security settings, connected accounts, and active sessions from the banata auth dashboard. account sub-pages navigating to /account automatically redirects to /account/profile. profile the profile page manages your personal information and connected accounts. personal information display name â€” editable text field (click \"edit\" to enter edit mode) avatar â€” upload an image (max 2mb, stored as a data url). click the upload button on the avatar to change it, or \"remove\" to cl email address change your email by clicking \"change email\", entering a new address, and clicking \"send verification\". better auth sends a verification email to the new address. your email does not change until you  connected accounts lists all sign-in methods linked to your account: delete account permanently deletes your account and all associated data. requires typing delete to confirm. triggers authclient.deleteuser() which sends a confirmation email before deletion. security the security page manages authentication credentials and active sessions. password change your password by providing your current password and a new one (minimum 8 characters). the confirmation field validates that both entries match before enabling the submit button. two-factor authentication (totp) totp-based two-factor authentication adds an extra layer of security. the setup flow has multiple steps: active sessions lists all devices where you are currently signed in, showing: auth client methods the account pages use the better auth client directly. all methods follow the { data, error } response convention. client plugins the dashboard auth client includes the twofactorclient() plugin for 2fa methods. if you are building a custom ui, import it from the react package: what's next settings â€” configure project name and team authentication â€” set up authentication methods radar & bot protection â€” configure bot detection for your auth endpoints"
+    "searchText": "account management manage your profile, security settings, connected accounts, and active sessions from the banata auth dashboard. profile the profile page lets you update your personal information and manage the sign-in methods linked to your account. updating your name and avatar you can change your display name and avatar directly from the dashboard: changing your email to change your email address: connected accounts the connected accounts section shows every sign-in method linked to your account: deleting your account you can permanently delete your account from the bottom of the profile page. to confirm, type delete in the confirmation field and submit. a confirmation email is sent before deletion is finalized. security the security page is where you manage your authentication credentials and review active sessions. changing your password to change your password: setting up two-factor authentication (totp) totp-based two-factor authentication adds an extra layer of security to your account. here is the step-by-step setup flow: managing active sessions the active sessions section lists every device where you are currently signed in. each entry shows: auth client methods if you are building a custom account management ui, the following authclient methods are available. all methods return { data, error }. client plugins the dashboard auth client includes the twofactorclient() plugin for 2fa methods. if you are building a custom ui, import it from the react package: next steps settings -- configure your project name and team. authentication -- set up authentication methods for your project. radar & bot protection -- configure bot detection for your auth endpoints."
   },
   {
     "slug": "addons",
     "title": "Add-ons",
-    "description": "Extend authentication with third-party integrations — Google Analytics, Segment, Stripe, and PostHog.",
-    "section": "Configuration",
+    "description": "Extend your project with third-party integrations — Google Analytics, Segment, Stripe, and PostHog.",
+    "section": "Operate Your Project",
     "headings": [
       {
         "level": 2,
@@ -2002,63 +121,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "How Add-ons Work",
-        "anchor": "how-add-ons-work",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Add-on Configuration Data Model",
-        "anchor": "add-on-configuration-data-model",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Managing Add-ons via the Dashboard",
-        "anchor": "managing-add-ons-via-the-dashboard",
-        "snippet": "Navigate to Authentication > Add-ons in the dashboard sidebar Each add-on is displayed as a card with its icon, title, description, and current state A badge shows \"Enabled\" or \"Disabled\""
-      },
-      {
-        "level": 3,
-        "text": "Add-on Cards",
-        "anchor": "add-on-cards",
-        "snippet": "Each card displays: Icon — Color-coded icon for the service (amber for Google Analytics, green for Segment, violet for Stripe, blue for PostHog) Title — The service name"
-      },
-      {
-        "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 2 add-on endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Get Add-on Configuration",
-        "anchor": "get-add-on-configuration",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Save Add-on Configuration",
-        "anchor": "save-add-on-configuration",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Add-on configuration is stored as a singleton row in the addonConfig table:"
-      },
-      {
-        "level": 2,
-        "text": "Using Add-ons Programmatically",
-        "anchor": "using-add-ons-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": ""
+        "text": "Enabling and Disabling Add-ons",
+        "anchor": "enabling-and-disabling-add-ons",
+        "snippet": "You manage all add-ons from the dashboard:"
       },
       {
         "level": 2,
@@ -2070,175 +135,310 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Google Analytics",
         "anchor": "google-analytics",
-        "snippet": "Enable the Google Analytics add-on in the dashboard Configure your Google Analytics measurement ID in your application Auth events (sign-up, sign-in) will be attributed to traffic sources"
+        "snippet": "Enable the Google Analytics add-on in the dashboard. Add your Google Analytics measurement ID to your application's environment variables. Auth events such as sign-up and sign-in are automatically att"
       },
       {
         "level": 3,
         "text": "Segment",
         "anchor": "segment",
-        "snippet": "Enable the Segment add-on in the dashboard Configure your Segment write key in your application Auth events are sent to Segment as track calls Use Segment destinations to forward events to your data w"
+        "snippet": "Enable the Segment add-on in the dashboard. Add your Segment write key to your application's environment variables. Auth events are sent to Segment as track calls."
       },
       {
         "level": 3,
         "text": "Stripe",
         "anchor": "stripe",
-        "snippet": "Enable the Stripe add-on in the dashboard Configure your Stripe API keys in your application User creation events trigger Stripe customer creation Seat counts are automatically synced when members are"
+        "snippet": "Enable the Stripe add-on in the dashboard. Add your Stripe API keys to your application's environment variables. When a user is created, a corresponding Stripe customer is provisioned automatically."
       },
       {
         "level": 3,
         "text": "PostHog",
         "anchor": "posthog",
-        "snippet": "Enable the PostHog add-on in the dashboard Configure your PostHog API key and host in your application Auth events are sent to PostHog as custom events Use PostHog feature flags to gate features based"
+        "snippet": "Enable the PostHog add-on in the dashboard. Add your PostHog API key and host URL to your application's environment variables. Auth events are sent to PostHog as custom events."
       },
       {
         "level": 2,
         "text": "Security Considerations",
         "anchor": "security-considerations",
-        "snippet": "Admin-only access — Only admin users can enable or disable add-ons. API key management — Third-party service API keys should be stored in environment variables, not in the add-on configuration. The ad"
+        "snippet": "Admin-only access — Only admin users can enable or disable add-ons. API keys in environment variables — Third-party service credentials should always be stored in environment variables, not in the add"
       },
       {
         "level": 2,
         "text": "Troubleshooting",
         "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Add-on enabled but no data appearing in the service\"",
-        "anchor": "add-on-enabled-but-no-data-appearing-in-the-service",
-        "snippet": "Check that your third-party service API keys are correctly configured in your environment variables Verify the add-on is enabled in the dashboard (check the badge)"
-      },
-      {
-        "level": 3,
-        "text": "\"Failed to update addon configuration\"",
-        "anchor": "failed-to-update-addon-configuration",
-        "snippet": "The backend save failed. Check that the Convex backend is running and that your user has admin privileges."
-      },
-      {
-        "level": 3,
-        "text": "\"Add-on states reset\"",
-        "anchor": "add-on-states-reset",
-        "snippet": "Add-on configuration is stored in a singleton database row. If the row was deleted (e.g., during a database reset), add-on states will revert to their defaults (all disabled)."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Radar & Bot Protection — AI-powered bot detection and fraud prevention Webhooks — Get notified about auth events Audit Logs — Track all auth activity"
-      }
-    ],
-    "searchText": "add-ons extend authentication with third-party integrations — google analytics, segment, stripe, and posthog. available add-ons --- how add-ons work add-on configuration data model managing add-ons via the dashboard navigate to authentication > add-ons in the dashboard sidebar each add-on is displayed as a card with its icon, title, description, and current state a badge shows \"enabled\" or \"disabled\" add-on cards each card displays: icon — color-coded icon for the service (amber for google analytics, green for segment, violet for stripe, blue for posthog) title — the service name api endpoints the configplugin exposes 2 add-on endpoints: get add-on configuration save add-on configuration database storage add-on configuration is stored as a singleton row in the addonconfig table: using add-ons programmatically via the dashboard api client setting up each add-on google analytics enable the google analytics add-on in the dashboard configure your google analytics measurement id in your application auth events (sign-up, sign-in) will be attributed to traffic sources segment enable the segment add-on in the dashboard configure your segment write key in your application auth events are sent to segment as track calls use segment destinations to forward events to your data w stripe enable the stripe add-on in the dashboard configure your stripe api keys in your application user creation events trigger stripe customer creation seat counts are automatically synced when members are posthog enable the posthog add-on in the dashboard configure your posthog api key and host in your application auth events are sent to posthog as custom events use posthog feature flags to gate features based security considerations admin-only access — only admin users can enable or disable add-ons. api key management — third-party service api keys should be stored in environment variables, not in the add-on configuration. the ad troubleshooting \"add-on enabled but no data appearing in the service\" check that your third-party service api keys are correctly configured in your environment variables verify the add-on is enabled in the dashboard (check the badge) \"failed to update addon configuration\" the backend save failed. check that the convex backend is running and that your user has admin privileges. \"add-on states reset\" add-on configuration is stored in a singleton database row. if the row was deleted (e.g., during a database reset), add-on states will revert to their defaults (all disabled). what's next radar & bot protection — ai-powered bot detection and fraud prevention webhooks — get notified about auth events audit logs — track all auth activity"
-  },
-  {
-    "slug": "api-keys",
-    "title": "API Keys",
-    "description": "Project-scoped API keys are how your app authenticates to Banata and how Banata determines project scope.",
-    "section": "Start Here",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Why API Keys Matter",
-        "anchor": "why-api-keys-matter",
-        "snippet": "The API key does two jobs:"
-      },
-      {
-        "level": 2,
-        "text": "Create A Key In The Dashboard",
-        "anchor": "create-a-key-in-the-dashboard",
-        "snippet": "For the normal product path:"
-      },
-      {
-        "level": 2,
-        "text": "Use The Key In Code",
-        "anchor": "use-the-key-in-code",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Next.js server helpers",
-        "anchor": "nextjs-server-helpers",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "SDK",
-        "anchor": "sdk",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Scope Rules",
-        "anchor": "scope-rules",
-        "snippet": "With the normal managed-service flow:"
-      },
-      {
-        "level": 2,
-        "text": "Security Model",
-        "anchor": "security-model",
-        "snippet": "Banata stores a hash of the key, not the raw key itself."
-      },
-      {
-        "level": 2,
-        "text": "Rotate And Revoke",
-        "anchor": "rotate-and-revoke",
-        "snippet": "Use separate keys for separate integrations. That lets you revoke one surface without breaking everything else."
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Requests authenticate, but hit the wrong project",
-        "anchor": "requests-authenticate-but-hit-the-wrong-project",
-        "snippet": "Check that the app is using the correct project-scoped key."
-      },
-      {
-        "level": 3,
-        "text": "The dashboard works, but the app does not",
-        "anchor": "the-dashboard-works-but-the-app-does-not",
-        "snippet": "Check:"
-      },
-      {
-        "level": 3,
-        "text": "A key works locally but not in production",
-        "anchor": "a-key-works-locally-but-not-in-production",
-        "snippet": "Check:"
+        "snippet": "Add-on is enabled but no data appears in the third-party service"
       },
       {
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "Quick Start Projects Next.js SDK Reference"
+        "snippet": "Radar & Bot Protection — AI-powered bot detection and fraud prevention Webhooks — Get notified about auth events Audit Logs — Track all authentication activity"
       }
     ],
-    "searchText": "api keys project-scoped api keys are how your app authenticates to banata and how banata determines project scope. why api keys matter the api key does two jobs: create a key in the dashboard for the normal product path: use the key in code next.js server helpers sdk scope rules with the normal managed-service flow: security model banata stores a hash of the key, not the raw key itself. rotate and revoke use separate keys for separate integrations. that lets you revoke one surface without breaking everything else. troubleshooting requests authenticate, but hit the wrong project check that the app is using the correct project-scoped key. the dashboard works, but the app does not check: a key works locally but not in production check: next steps quick start projects next.js sdk reference"
+    "searchText": "add-ons extend your project with third-party integrations — google analytics, segment, stripe, and posthog. available add-ons --- enabling and disabling add-ons you manage all add-ons from the dashboard: setting up each add-on google analytics enable the google analytics add-on in the dashboard. add your google analytics measurement id to your application's environment variables. auth events such as sign-up and sign-in are automatically att segment enable the segment add-on in the dashboard. add your segment write key to your application's environment variables. auth events are sent to segment as track calls. stripe enable the stripe add-on in the dashboard. add your stripe api keys to your application's environment variables. when a user is created, a corresponding stripe customer is provisioned automatically. posthog enable the posthog add-on in the dashboard. add your posthog api key and host url to your application's environment variables. auth events are sent to posthog as custom events. security considerations admin-only access — only admin users can enable or disable add-ons. api keys in environment variables — third-party service credentials should always be stored in environment variables, not in the add troubleshooting add-on is enabled but no data appears in the third-party service next steps radar & bot protection — ai-powered bot detection and fraud prevention webhooks — get notified about auth events audit logs — track all authentication activity"
+  },
+  {
+    "slug": "anonymous-auth",
+    "title": "Anonymous Authentication",
+    "description": "Let users interact with your app without an account, then upgrade to a full account while preserving their data.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Use Cases",
+        "anchor": "use-cases",
+        "snippet": "Anonymous auth shines wherever you want to reduce friction and let people experience your product before committing:"
+      },
+      {
+        "level": 2,
+        "text": "Enable Anonymous Auth",
+        "anchor": "enable-anonymous-auth",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Via the Dashboard",
+        "anchor": "via-the-dashboard",
+        "snippet": "Go to Authentication > Methods in your project. Toggle on Anonymous. Make sure at least one upgrade method is also enabled (Email & Password, Social OAuth, Magic Links, etc.) so anonymous users have a"
+      },
+      {
+        "level": 3,
+        "text": "Via the SDK",
+        "anchor": "via-the-sdk",
+        "snippet": "You can also enable anonymous auth programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Client-Side API",
+        "anchor": "client-side-api",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Create an Anonymous Session",
+        "anchor": "create-an-anonymous-session",
+        "snippet": "Call authClient.signIn.anonymous() to create a guest session. This generates a user record with no credentials and returns a fully functional session:"
+      },
+      {
+        "level": 3,
+        "text": "Check if the Current User Is Anonymous",
+        "anchor": "check-if-the-current-user-is-anonymous",
+        "snippet": "Use the isAnonymous flag to decide what UI to show -- for example, displaying an upgrade banner or restricting certain features:"
+      },
+      {
+        "level": 3,
+        "text": "Upgrade to Email & Password",
+        "anchor": "upgrade-to-email-password",
+        "snippet": "Link an email and password to the anonymous user, converting them to a full account:"
+      },
+      {
+        "level": 3,
+        "text": "Upgrade via Social OAuth",
+        "anchor": "upgrade-via-social-oauth",
+        "snippet": "Anonymous users can also upgrade by linking a social account:"
+      },
+      {
+        "level": 2,
+        "text": "Complete Component Example",
+        "anchor": "complete-component-example",
+        "snippet": "Here is a full React component that wraps your app with anonymous session management and an upgrade banner:"
+      },
+      {
+        "level": 2,
+        "text": "What's Preserved on Upgrade",
+        "anchor": "whats-preserved-on-upgrade",
+        "snippet": "When an anonymous user upgrades to a full account, the upgrade is an in-place mutation of the existing user record -- not a creation of a new one. This means all foreign key relationships to the user "
+      },
+      {
+        "level": 2,
+        "text": "What Changes on Upgrade",
+        "anchor": "what-changes-on-upgrade",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Cleanup of Stale Anonymous Accounts",
+        "anchor": "cleanup-of-stale-anonymous-accounts",
+        "snippet": "Anonymous users who never upgrade will accumulate over time. You should plan for cleanup from the start."
+      },
+      {
+        "level": 3,
+        "text": "Automatic Cleanup",
+        "anchor": "automatic-cleanup",
+        "snippet": "You can configure a maximum age for anonymous accounts in your dashboard under Authentication > Methods > Anonymous > Settings, or via the SDK:"
+      },
+      {
+        "level": 3,
+        "text": "Manual Cleanup via Admin SDK",
+        "anchor": "manual-cleanup-via-admin-sdk",
+        "snippet": "If you prefer more control, you can clean up stale anonymous accounts programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Rate Limits",
+        "anchor": "rate-limits",
+        "snippet": "Anonymous session creation is rate-limited to prevent abuse:"
+      },
+      {
+        "level": 2,
+        "text": "Security Considerations",
+        "anchor": "security-considerations",
+        "snippet": "Rate limits are your first line of defense. Without them, anonymous auth can be abused to create unlimited user records. The built-in limit of 30 per minute per IP keeps this in check."
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "\"User is not anonymous\"",
+        "anchor": "user-is-not-anonymous",
+        "snippet": "You called the upgrade endpoint on a user whose isAnonymous flag is already false. Only anonymous users can be upgraded. If the user already has credentials, they are a full account."
+      },
+      {
+        "level": 3,
+        "text": "\"Email already in use\"",
+        "anchor": "email-already-in-use",
+        "snippet": "The email provided during upgrade belongs to another existing user. An anonymous user cannot claim an email that is already registered. You may want to prompt the user to sign in to the existing accou"
+      },
+      {
+        "level": 3,
+        "text": "\"Anonymous session expired\"",
+        "anchor": "anonymous-session-expired",
+        "snippet": "The session expired before the user upgraded. The anonymous user record may still exist, but since there are no credentials to re-authenticate, the user will get a new anonymous session if they return"
+      },
+      {
+        "level": 3,
+        "text": "\"Too many anonymous accounts\"",
+        "anchor": "too-many-anonymous-accounts",
+        "snippet": "If you see a large number of anonymous user records, check for:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Email & Password -- The most common upgrade target for anonymous users. Social OAuth -- Let anonymous users upgrade via Google, GitHub, and more. Magic Links -- Passwordless upgrade path."
+      }
+    ],
+    "searchText": "anonymous authentication let users interact with your app without an account, then upgrade to a full account while preserving their data. use cases anonymous auth shines wherever you want to reduce friction and let people experience your product before committing: enable anonymous auth via the dashboard go to authentication > methods in your project. toggle on anonymous. make sure at least one upgrade method is also enabled (email & password, social oauth, magic links, etc.) so anonymous users have a via the sdk you can also enable anonymous auth programmatically: client-side api create an anonymous session call authclient.signin.anonymous() to create a guest session. this generates a user record with no credentials and returns a fully functional session: check if the current user is anonymous use the isanonymous flag to decide what ui to show -- for example, displaying an upgrade banner or restricting certain features: upgrade to email & password link an email and password to the anonymous user, converting them to a full account: upgrade via social oauth anonymous users can also upgrade by linking a social account: complete component example here is a full react component that wraps your app with anonymous session management and an upgrade banner: what's preserved on upgrade when an anonymous user upgrades to a full account, the upgrade is an in-place mutation of the existing user record -- not a creation of a new one. this means all foreign key relationships to the user  what changes on upgrade --- cleanup of stale anonymous accounts anonymous users who never upgrade will accumulate over time. you should plan for cleanup from the start. automatic cleanup you can configure a maximum age for anonymous accounts in your dashboard under authentication > methods > anonymous > settings, or via the sdk: manual cleanup via admin sdk if you prefer more control, you can clean up stale anonymous accounts programmatically: rate limits anonymous session creation is rate-limited to prevent abuse: security considerations rate limits are your first line of defense. without them, anonymous auth can be abused to create unlimited user records. the built-in limit of 30 per minute per ip keeps this in check. troubleshooting \"user is not anonymous\" you called the upgrade endpoint on a user whose isanonymous flag is already false. only anonymous users can be upgraded. if the user already has credentials, they are a full account. \"email already in use\" the email provided during upgrade belongs to another existing user. an anonymous user cannot claim an email that is already registered. you may want to prompt the user to sign in to the existing accou \"anonymous session expired\" the session expired before the user upgraded. the anonymous user record may still exist, but since there are no credentials to re-authenticate, the user will get a new anonymous session if they return \"too many anonymous accounts\" if you see a large number of anonymous user records, check for: next steps email & password -- the most common upgrade target for anonymous users. social oauth -- let anonymous users upgrade via google, github, and more. magic links -- passwordless upgrade path."
+  },
+  {
+    "slug": "api-keys",
+    "title": "API Keys",
+    "description": "API keys connect your application to a Banata project. Learn how to create, use, rotate, and manage API keys.",
+    "section": "Start Here",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Creating an API Key",
+        "anchor": "creating-an-api-key",
+        "snippet": "Sign in to the Banata dashboard. Select the project you want to connect your app to. Go to API Keys in the sidebar. Click Create new key. Copy the key immediately and store it securely."
+      },
+      {
+        "level": 2,
+        "text": "Using Your API Key",
+        "anchor": "using-your-api-key",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "In a Next.js app",
+        "anchor": "in-a-nextjs-app",
+        "snippet": "Pass the API key to createBanataAuthServer in your server auth helpers:"
+      },
+      {
+        "level": 3,
+        "text": "With the admin SDK",
+        "anchor": "with-the-admin-sdk",
+        "snippet": "Pass the API key when creating a BanataAuth client:"
+      },
+      {
+        "level": 2,
+        "text": "How Project Scoping Works",
+        "anchor": "how-project-scoping-works",
+        "snippet": "Each API key belongs to exactly one project. When your app sends a request with that key, Banata automatically scopes the request to the correct project. You don't need to pass a projectId in your cod"
+      },
+      {
+        "level": 2,
+        "text": "Security Best Practices",
+        "anchor": "security-best-practices",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Store keys in environment variables",
+        "anchor": "store-keys-in-environment-variables",
+        "snippet": "Never hard-code API keys in your source code. Use environment variables or a secrets manager:"
+      },
+      {
+        "level": 3,
+        "text": "Use separate keys for separate concerns",
+        "anchor": "use-separate-keys-for-separate-concerns",
+        "snippet": "If you have multiple services connecting to the same project (e.g., your web app and a background job worker), create a separate API key for each. This way, if one key is compromised, you can revoke i"
+      },
+      {
+        "level": 3,
+        "text": "Rotate keys regularly",
+        "anchor": "rotate-keys-regularly",
+        "snippet": "To rotate an API key safely:"
+      },
+      {
+        "level": 2,
+        "text": "Managing API Keys with the SDK",
+        "anchor": "managing-api-keys-with-the-sdk",
+        "snippet": "You can also create and manage API keys programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Auth requests work in the dashboard but fail in the app",
+        "anchor": "auth-requests-work-in-the-dashboard-but-fail-in-the-app",
+        "snippet": "Verify BANATA_API_KEY is set in your server environment (not just .env.local — check your deployment platform too). Make sure you're using the correct key for the right project."
+      },
+      {
+        "level": 3,
+        "text": "Requests return data from the wrong project",
+        "anchor": "requests-return-data-from-the-wrong-project",
+        "snippet": "You may be using an API key from a different project. Check which project the key was created in."
+      },
+      {
+        "level": 3,
+        "text": "Key works locally but not in production",
+        "anchor": "key-works-locally-but-not-in-production",
+        "snippet": "Confirm the production deployment has the correct BANATA_API_KEY environment variable. If you recently created the key, make sure the production Banata backend has been redeployed."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Projects — Understand how projects provide data isolation Quick Start — Set up your first app with Banata SDK Reference — Manage API keys and other resources programmatically"
+      }
+    ],
+    "searchText": "api keys api keys connect your application to a banata project. learn how to create, use, rotate, and manage api keys. creating an api key sign in to the banata dashboard. select the project you want to connect your app to. go to api keys in the sidebar. click create new key. copy the key immediately and store it securely. using your api key in a next.js app pass the api key to createbanataauthserver in your server auth helpers: with the admin sdk pass the api key when creating a banataauth client: how project scoping works each api key belongs to exactly one project. when your app sends a request with that key, banata automatically scopes the request to the correct project. you don't need to pass a projectid in your cod security best practices store keys in environment variables never hard-code api keys in your source code. use environment variables or a secrets manager: use separate keys for separate concerns if you have multiple services connecting to the same project (e.g., your web app and a background job worker), create a separate api key for each. this way, if one key is compromised, you can revoke i rotate keys regularly to rotate an api key safely: managing api keys with the sdk you can also create and manage api keys programmatically: troubleshooting auth requests work in the dashboard but fail in the app verify banata_api_key is set in your server environment (not just .env.local — check your deployment platform too). make sure you're using the correct key for the right project. requests return data from the wrong project you may be using an api key from a different project. check which project the key was created in. key works locally but not in production confirm the production deployment has the correct banata_api_key environment variable. if you recently created the key, make sure the production banata backend has been redeployed. next steps projects — understand how projects provide data isolation quick start — set up your first app with banata sdk reference — manage api keys and other resources programmatically"
   },
   {
     "slug": "audit-logs",
     "title": "Audit Logs",
-    "description": "Comprehensive audit logging with 30 auto-tracked events, custom events, actor/target tracking, and export capabilities.",
-    "section": "Enterprise",
+    "description": "Automatic audit trail for all auth events with custom event support, filtering, and export capabilities.",
+    "section": "Operate Your Project",
     "headings": [
       {
         "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
-        "snippet": "The auditLog plugin is one of the 7 always-on plugins — it's enabled by default with no configuration needed. Every auth action automatically generates an audit log entry."
-      },
-      {
-        "level": 3,
         "text": "Audit Event Structure",
         "anchor": "audit-event-structure",
-        "snippet": ""
+        "snippet": "Every audit event captures five pieces of information:"
       },
       {
         "level": 2,
-        "text": "Auto-Tracked Events (30)",
-        "anchor": "auto-tracked-events-30",
-        "snippet": "The audit log plugin automatically tracks these events:"
+        "text": "Auto-Tracked Events",
+        "anchor": "auto-tracked-events",
+        "snippet": "Banata tracks 30 events automatically, grouped into five categories."
       },
       {
         "level": 3,
@@ -2272,33 +472,33 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Querying Audit Logs",
-        "anchor": "querying-audit-logs",
-        "snippet": ""
+        "text": "Querying Audit Logs via the SDK",
+        "anchor": "querying-audit-logs-via-the-sdk",
+        "snippet": "Use auditLogs.listEvents to search and filter your audit trail programmatically."
       },
       {
         "level": 3,
-        "text": "Via the Admin SDK",
-        "anchor": "via-the-admin-sdk",
+        "text": "Basic Queries",
+        "anchor": "basic-queries",
         "snippet": ""
       },
       {
         "level": 3,
         "text": "Pagination",
         "anchor": "pagination",
-        "snippet": "Audit logs use cursor-based pagination:"
+        "snippet": "Audit logs use cursor-based pagination. The listMetadata object returned with each response contains the cursors you need to move forward and backward through results."
       },
       {
-        "level": 3,
-        "text": "Via the Admin Dashboard",
-        "anchor": "via-the-admin-dashboard",
-        "snippet": "Navigate to Audit Logs in the dashboard sidebar to see a searchable, filterable view of all events."
+        "level": 2,
+        "text": "Querying via the Dashboard",
+        "anchor": "querying-via-the-dashboard",
+        "snippet": "You can also browse your audit trail in the Banata dashboard. Navigate to Audit Logs in the sidebar to see a searchable, filterable view of all events. The dashboard lets you filter by action type, ac"
       },
       {
         "level": 2,
         "text": "Custom Audit Events",
         "anchor": "custom-audit-events",
-        "snippet": "In addition to the 30 auto-tracked events, you can log custom events:"
+        "snippet": "The 30 auto-tracked events cover authentication and authorization. For business-specific actions — like exporting a document, approving a request, or changing a billing plan — you can log custom event"
       },
       {
         "level": 3,
@@ -2310,31 +510,19 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Via the logAuditEvent Helper (Server-Side)",
         "anchor": "via-the-logauditevent-helper-server-side",
-        "snippet": "Inside Convex functions, you can use the logAuditEvent helper directly:"
+        "snippet": "Inside Convex functions, you can log audit events directly using the logAuditEvent helper:"
       },
       {
         "level": 2,
         "text": "Exporting Audit Logs",
         "anchor": "exporting-audit-logs",
-        "snippet": "Export audit logs for compliance reporting or external analysis:"
+        "snippet": "You can export audit logs for compliance reporting, external analysis, or long-term archival."
       },
       {
         "level": 2,
         "text": "Change Tracking",
         "anchor": "change-tracking",
-        "snippet": "For update events, audit logs capture what changed:"
-      },
-      {
-        "level": 2,
-        "text": "Audit Log Endpoints (API)",
-        "anchor": "audit-log-endpoints-api",
-        "snippet": "The auditLog plugin exposes 3 endpoints:"
-      },
-      {
-        "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Audit events are stored in the auditLog table in Convex:"
+        "snippet": "For any update event, Banata captures a before-and-after snapshot so you can see exactly what changed. This is especially useful for investigating permission escalations, profile modifications, and co"
       },
       {
         "level": 2,
@@ -2346,182 +534,128 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "SOC 2",
         "anchor": "soc-2",
-        "snippet": "SOC 2 requires logging of: User authentication events (sign-in, sign-out) — Covered by session.created and session.revoked Access control changes (role assignments) — Covered by member.role_updated an"
+        "snippet": "SOC 2 requires logging of user authentication events, access control changes, and account lifecycle events. Banata covers these automatically:"
       },
       {
         "level": 3,
         "text": "HIPAA",
         "anchor": "hipaa",
-        "snippet": "HIPAA requires: Audit trails for electronic health information access — Use custom events for PHI access Login monitoring — Covered by session.created Access control audits — Covered by RBAC events"
+        "snippet": "HIPAA requires audit trails for access to electronic health information, login monitoring, and access control audits. Banata provides:"
       },
       {
         "level": 3,
         "text": "GDPR",
         "anchor": "gdpr",
-        "snippet": "GDPR requires: Records of processing activities — Custom events for data processing Account deletion tracking — Covered by user.deleted Consent changes — Use custom events"
+        "snippet": "GDPR requires records of processing activities, account deletion tracking, and consent management. Banata helps with:"
       },
       {
         "level": 2,
         "text": "Best Practices",
         "anchor": "best-practices",
-        "snippet": "Don't disable audit logging — It's always-on for a reason. Compliance requirements don't have exceptions. Add custom events for business actions — Supplement the 30 auto-tracked events with custom eve"
+        "snippet": "Supplement with custom events. The 30 auto-tracked events cover authentication and authorization. Add custom events for business-critical actions like data exports, billing changes, and approval workf"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Webhooks — Get real-time notifications for audit events API Keys — Programmatic access management Deploy — Production deployment with audit log monitoring"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Webhooks — Get real-time notifications when audit events occur API Keys — Manage programmatic access to your project Deploy — Take your project to production with audit log monitoring in place"
       }
     ],
-    "searchText": "audit logs comprehensive audit logging with 30 auto-tracked events, custom events, actor/target tracking, and export capabilities. how it works the auditlog plugin is one of the 7 always-on plugins — it's enabled by default with no configuration needed. every auth action automatically generates an audit log entry. audit event structure auto-tracked events (30) the audit log plugin automatically tracks these events: user events session events email & password events organization events security events --- querying audit logs via the admin sdk pagination audit logs use cursor-based pagination: via the admin dashboard navigate to audit logs in the dashboard sidebar to see a searchable, filterable view of all events. custom audit events in addition to the 30 auto-tracked events, you can log custom events: via the sdk via the logauditevent helper (server-side) inside convex functions, you can use the logauditevent helper directly: exporting audit logs export audit logs for compliance reporting or external analysis: change tracking for update events, audit logs capture what changed: audit log endpoints (api) the auditlog plugin exposes 3 endpoints: database storage audit events are stored in the auditlog table in convex: compliance use cases soc 2 soc 2 requires logging of: user authentication events (sign-in, sign-out) — covered by session.created and session.revoked access control changes (role assignments) — covered by member.role_updated an hipaa hipaa requires: audit trails for electronic health information access — use custom events for phi access login monitoring — covered by session.created access control audits — covered by rbac events gdpr gdpr requires: records of processing activities — custom events for data processing account deletion tracking — covered by user.deleted consent changes — use custom events best practices don't disable audit logging — it's always-on for a reason. compliance requirements don't have exceptions. add custom events for business actions — supplement the 30 auto-tracked events with custom eve what's next webhooks — get real-time notifications for audit events api keys — programmatic access management deploy — production deployment with audit log monitoring"
+    "searchText": "audit logs automatic audit trail for all auth events with custom event support, filtering, and export capabilities. audit event structure every audit event captures five pieces of information: auto-tracked events banata tracks 30 events automatically, grouped into five categories. user events session events email & password events organization events security events --- querying audit logs via the sdk use auditlogs.listevents to search and filter your audit trail programmatically. basic queries pagination audit logs use cursor-based pagination. the listmetadata object returned with each response contains the cursors you need to move forward and backward through results. querying via the dashboard you can also browse your audit trail in the banata dashboard. navigate to audit logs in the sidebar to see a searchable, filterable view of all events. the dashboard lets you filter by action type, ac custom audit events the 30 auto-tracked events cover authentication and authorization. for business-specific actions — like exporting a document, approving a request, or changing a billing plan — you can log custom event via the sdk via the logauditevent helper (server-side) inside convex functions, you can log audit events directly using the logauditevent helper: exporting audit logs you can export audit logs for compliance reporting, external analysis, or long-term archival. change tracking for any update event, banata captures a before-and-after snapshot so you can see exactly what changed. this is especially useful for investigating permission escalations, profile modifications, and co compliance use cases soc 2 soc 2 requires logging of user authentication events, access control changes, and account lifecycle events. banata covers these automatically: hipaa hipaa requires audit trails for access to electronic health information, login monitoring, and access control audits. banata provides: gdpr gdpr requires records of processing activities, account deletion tracking, and consent management. banata helps with: best practices supplement with custom events. the 30 auto-tracked events cover authentication and authorization. add custom events for business-critical actions like data exports, billing changes, and approval workf next steps webhooks — get real-time notifications when audit events occur api keys — manage programmatic access to your project deploy — take your project to production with audit log monitoring in place"
   },
   {
     "slug": "auth-configuration",
     "title": "Auth Configuration",
-    "description": "Configure authorization behavior — role assignment, multiple roles, and API key permissions via the admin dashboard.",
-    "section": "Enterprise",
+    "description": "Enable and configure authentication methods for your project — from the dashboard or by code.",
+    "section": "Configure Authentication",
     "headings": [
       {
         "level": 2,
-        "text": "Configuration Settings",
-        "anchor": "configuration-settings",
+        "text": "Available Auth Methods",
+        "anchor": "available-auth-methods",
+        "snippet": "You can enable multiple methods at the same time. For example, you might offer email/password as the primary method, social OAuth for convenience, and MFA for added security."
+      },
+      {
+        "level": 2,
+        "text": "Enabling Methods from the Dashboard",
+        "anchor": "enabling-methods-from-the-dashboard",
+        "snippet": "Open the Banata dashboard and select your project. Go to Authentication > Methods. Toggle on the methods you want to enable. For methods that need additional setup (like social OAuth), follow the conf"
+      },
+      {
+        "level": 2,
+        "text": "Enabling Methods by Code",
+        "anchor": "enabling-methods-by-code",
+        "snippet": "Use the SDK to enable or disable auth methods programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Method-Specific Settings",
+        "anchor": "method-specific-settings",
+        "snippet": "Some methods have additional settings you can configure:"
+      },
+      {
+        "level": 3,
+        "text": "Email & Password",
+        "anchor": "email-password",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Role Assignment in Admin Portal",
-        "anchor": "role-assignment-in-admin-portal",
-        "snippet": "When enabled, organization administrators can configure role mapping rules based on identity provider (IdP) groups. This is useful for enterprises that manage user roles in their IdP (e.g., Okta, Azur"
+        "text": "Passkeys (WebAuthn)",
+        "anchor": "passkeys-webauthn",
+        "snippet": "Passkey configuration requires specifying your app's domain and origin. See the Passkeys guide for details."
+      },
+      {
+        "level": 3,
+        "text": "Organizations",
+        "anchor": "organizations",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Authorization Configuration",
+        "anchor": "authorization-configuration",
+        "snippet": "In addition to authentication methods, you can configure authorization behavior:"
       },
       {
         "level": 3,
         "text": "Multiple Roles",
         "anchor": "multiple-roles",
-        "snippet": "By default, a user has exactly one role per organization. Enabling multiple roles allows users to hold several roles simultaneously:"
+        "snippet": "By default, each user has one role per organization. When multiple roles is enabled, users can hold several roles simultaneously, and permission checks combine all permissions from all assigned roles:"
       },
       {
         "level": 3,
-        "text": "Project API Key Permissions",
-        "anchor": "project-api-key-permissions",
-        "snippet": "When enabled, you can control which specific permissions are available to project-scoped API keys. This lets you create narrowly-scoped API keys that can only perform certain actions within the curren"
+        "text": "Configuring via Dashboard",
+        "anchor": "configuring-via-dashboard",
+        "snippet": "Navigate to Authorization > Configuration in the dashboard to toggle these settings."
       },
       {
-        "level": 2,
-        "text": "Auth Configuration Data Model",
-        "anchor": "auth-configuration-data-model",
+        "level": 3,
+        "text": "Configuring via SDK",
+        "anchor": "configuring-via-sdk",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Managing Auth Configuration via the Dashboard",
-        "anchor": "managing-auth-configuration-via-the-dashboard",
-        "snippet": "Navigate to Authorization > Configuration in the dashboard sidebar Each setting is displayed as a card with a title, description, and toggle switch A badge shows the current state: \"Enabled\" or \"Disab"
+        "text": "Email Configuration",
+        "anchor": "email-configuration",
+        "snippet": "If you're using any email-based auth method (email/password, magic links, email OTP), you need to configure email delivery:"
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 2 auth configuration endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Get Auth Configuration",
-        "anchor": "get-auth-configuration",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Save Auth Configuration",
-        "anchor": "save-auth-configuration",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Auth configuration is stored inside the dashboardConfig singleton row — the same row that stores branding and other dashboard settings. The authConfiguration key holds the configuration object:"
-      },
-      {
-        "level": 2,
-        "text": "Using Auth Configuration Programmatically",
-        "anchor": "using-auth-configuration-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "How Settings Affect Behavior",
-        "anchor": "how-settings-affect-behavior",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Multiple Roles Disabled (Default)",
-        "anchor": "multiple-roles-disabled-default",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Multiple Roles Enabled",
-        "anchor": "multiple-roles-enabled",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Principle of least privilege — Only enable settings that your application needs. Multiple roles and API key permissions expand the authorization surface."
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Configuration not persisting\"",
-        "anchor": "configuration-not-persisting",
-        "snippet": "Auth configuration is stored in the dashboardConfig singleton. If changes aren't persisting, check that the Convex backend is running and that your user has admin privileges."
-      },
-      {
-        "level": 3,
-        "text": "\"Multiple roles not working\"",
-        "anchor": "multiple-roles-not-working",
-        "snippet": "Ensure the multipleRoles setting is enabled. When disabled, assigning a new role replaces the existing one."
-      },
-      {
-        "level": 3,
-        "text": "\"Toggle reverted unexpectedly\"",
-        "anchor": "toggle-reverted-unexpectedly",
-        "snippet": "The dashboard uses optimistic updates — if the backend save fails, the toggle reverts. Check the browser console for error details and ensure the Convex backend is reachable."
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Roles & Permissions — Define roles and check permissions Resource Types — Define what can be protected API Keys — Programmatic access with scoped permissions"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Choose the auth methods you want to add to your app:"
       }
     ],
-    "searchText": "auth configuration configure authorization behavior — role assignment, multiple roles, and api key permissions via the admin dashboard. configuration settings role assignment in admin portal when enabled, organization administrators can configure role mapping rules based on identity provider (idp) groups. this is useful for enterprises that manage user roles in their idp (e.g., okta, azur multiple roles by default, a user has exactly one role per organization. enabling multiple roles allows users to hold several roles simultaneously: project api key permissions when enabled, you can control which specific permissions are available to project-scoped api keys. this lets you create narrowly-scoped api keys that can only perform certain actions within the curren auth configuration data model managing auth configuration via the dashboard navigate to authorization > configuration in the dashboard sidebar each setting is displayed as a card with a title, description, and toggle switch a badge shows the current state: \"enabled\" or \"disab api endpoints the configplugin exposes 2 auth configuration endpoints: get auth configuration save auth configuration database storage auth configuration is stored inside the dashboardconfig singleton row — the same row that stores branding and other dashboard settings. the authconfiguration key holds the configuration object: using auth configuration programmatically via the dashboard api client how settings affect behavior multiple roles disabled (default) multiple roles enabled security considerations principle of least privilege — only enable settings that your application needs. multiple roles and api key permissions expand the authorization surface. troubleshooting \"configuration not persisting\" auth configuration is stored in the dashboardconfig singleton. if changes aren't persisting, check that the convex backend is running and that your user has admin privileges. \"multiple roles not working\" ensure the multipleroles setting is enabled. when disabled, assigning a new role replaces the existing one. \"toggle reverted unexpectedly\" the dashboard uses optimistic updates — if the backend save fails, the toggle reverts. check the browser console for error details and ensure the convex backend is reachable. what's next roles & permissions — define roles and check permissions resource types — define what can be protected api keys — programmatic access with scoped permissions"
+    "searchText": "auth configuration enable and configure authentication methods for your project — from the dashboard or by code. available auth methods you can enable multiple methods at the same time. for example, you might offer email/password as the primary method, social oauth for convenience, and mfa for added security. enabling methods from the dashboard open the banata dashboard and select your project. go to authentication > methods. toggle on the methods you want to enable. for methods that need additional setup (like social oauth), follow the conf enabling methods by code use the sdk to enable or disable auth methods programmatically: method-specific settings some methods have additional settings you can configure: email & password passkeys (webauthn) passkey configuration requires specifying your app's domain and origin. see the passkeys guide for details. organizations authorization configuration in addition to authentication methods, you can configure authorization behavior: multiple roles by default, each user has one role per organization. when multiple roles is enabled, users can hold several roles simultaneously, and permission checks combine all permissions from all assigned roles: configuring via dashboard navigate to authorization > configuration in the dashboard to toggle these settings. configuring via sdk email configuration if you're using any email-based auth method (email/password, magic links, email otp), you need to configure email delivery: next steps choose the auth methods you want to add to your app:"
   },
   {
     "slug": "bot-protection",
-    "title": "Bot Protection SDK (Next.js)",
-    "description": "Integrate bot detection providers (Vercel BotID, Cloudflare Turnstile, reCAPTCHA, hCaptcha) into your Next.js app using the @banata-auth/nextjs/bot-protection package.",
-    "section": "Configuration",
+    "title": "Bot Protection",
+    "description": "Add bot detection to your Next.js auth routes using Vercel BotID, Cloudflare Turnstile, reCAPTCHA, or hCaptcha — all built into @banata-auth/nextjs.",
+    "section": "Operate Your Project",
     "headings": [
-      {
-        "level": 2,
-        "text": "Installation",
-        "anchor": "installation",
-        "snippet": "The bot protection utilities ship with @banata-auth/nextjs — no additional installation needed:"
-      },
       {
         "level": 2,
         "text": "Quick Start",
@@ -2530,21 +664,15 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Option 1: Direct Provider (Vercel BotID)",
-        "anchor": "option-1-direct-provider-vercel-botid",
-        "snippet": "Use this when you have botid installed and want to wire it up directly:"
+        "text": "Recommended: Config-Aware (Dashboard-Managed)",
+        "anchor": "recommended-config-aware-dashboard-managed",
+        "snippet": "This approach reads your bot protection settings from the dashboard, so you can change providers or credentials without redeploying:"
       },
       {
         "level": 3,
-        "text": "Option 2: Config-Aware (Dashboard-Managed Credentials)",
-        "anchor": "option-2-config-aware-dashboard-managed-credentials",
-        "snippet": "Use this when you want admins to configure bot protection through the Radar dashboard page:"
-      },
-      {
-        "level": 2,
-        "text": "Configuring Bot Protection in the Dashboard",
-        "anchor": "configuring-bot-protection-in-the-dashboard",
-        "snippet": "Navigate to Radar in the dashboard sidebar Click Enable protection Go to the Configuration tab Toggle Bot detection on Under Bot Detection Provider, select your provider:"
+        "text": "Alternative: Direct Provider (Vercel BotID)",
+        "anchor": "alternative-direct-provider-vercel-botid",
+        "snippet": "If you already have botid installed and want to skip dashboard configuration, you can wire up the provider directly:"
       },
       {
         "level": 2,
@@ -2556,19 +684,19 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "withBotProtection(handler, config)",
         "anchor": "withbotprotectionhandler-config",
-        "snippet": "Wraps a Next.js route handler with bot protection. Only requests matching protected paths are verified."
+        "snippet": "Wraps a Next.js route handler with bot protection. Only requests whose path matches a protected prefix are verified — everything else passes through untouched."
       },
       {
         "level": 3,
         "text": "createBotIdVerifier(checkBotIdFn)",
         "anchor": "createbotidverifiercheckbotidfn",
-        "snippet": "Factory for creating a Vercel BotID verifier:"
+        "snippet": "Creates a Vercel BotID verifier function:"
       },
       {
         "level": 3,
         "text": "createConfigAwareVerifier(options)",
         "anchor": "createconfigawareverifieroptions",
-        "snippet": "Factory for creating a verifier that reads credentials from the Banata Auth config API:"
+        "snippet": "Creates a verifier that reads provider credentials from the Banata Auth config API at runtime:"
       },
       {
         "level": 2,
@@ -2580,31 +708,25 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Vercel BotID",
         "anchor": "vercel-botid",
-        "snippet": "Fields: API Key How it works: Invisible challenge runs automatically on Vercel deployments. The checkBotId() function verifies the challenge server-side."
+        "snippet": "Dashboard fields: API Key How it works: An invisible challenge runs automatically on Vercel deployments. The checkBotId() function verifies the challenge server-side."
       },
       {
         "level": 3,
         "text": "Cloudflare Turnstile",
         "anchor": "cloudflare-turnstile",
-        "snippet": "Fields: Site Key, Secret Key How it works: Client sends a Turnstile token in the cf-turnstile-response or x-turnstile-token header. Server verifies against Cloudflare's siteverify API."
+        "snippet": "Dashboard fields: Site Key, Secret Key How it works: Your client sends a Turnstile token in the cf-turnstile-response or x-turnstile-token header. The server verifies it against Cloudflare's siteverif"
       },
       {
         "level": 3,
         "text": "Google reCAPTCHA",
         "anchor": "google-recaptcha",
-        "snippet": "Fields: Site Key, Secret Key How it works: Client sends a reCAPTCHA v3 token in the x-recaptcha-token or g-recaptcha-response header. Server verifies and checks the score (threshold: 0.5)."
+        "snippet": "Dashboard fields: Site Key, Secret Key How it works: Your client sends a reCAPTCHA v3 token in the x-recaptcha-token or g-recaptcha-response header. The server verifies it and checks the score (thresh"
       },
       {
         "level": 3,
         "text": "hCaptcha",
         "anchor": "hcaptcha",
-        "snippet": "Fields: Site Key, Secret Key How it works: Client sends an hCaptcha token in the x-hcaptcha-token or h-captcha-response header. Server verifies against hCaptcha's siteverify API."
-      },
-      {
-        "level": 2,
-        "text": "Server-Side Plugin",
-        "anchor": "server-side-plugin",
-        "snippet": "For server-side protection at the Better Auth plugin level (before the route handler), use the banataProtection plugin:"
+        "snippet": "Dashboard fields: Site Key, Secret Key How it works: Your client sends an hCaptcha token in the x-hcaptcha-token or h-captcha-response header. The server verifies it against hCaptcha's siteverify API."
       },
       {
         "level": 2,
@@ -2616,64 +738,97 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Security Considerations",
         "anchor": "security-considerations",
-        "snippet": "Fail-open by default — If the bot detection service is unavailable, requests are allowed through. This prevents legitimate users from being locked out. Set failOpen: false for stricter enforcement."
+        "snippet": "Fail-open by default — If the bot detection service is unavailable, requests are allowed through so legitimate users are not locked out. Set failOpen: false if you prefer stricter enforcement."
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Radar & Bot Protection — Configure detection rules and provider credentials in the dashboard Settings — Project-level configuration Domains — Configure custom domains for auth services"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Radar — Enable bot detection and configure your provider credentials in the dashboard."
       }
     ],
-    "searchText": "bot protection sdk (next.js) integrate bot detection providers (vercel botid, cloudflare turnstile, recaptcha, hcaptcha) into your next.js app using the @banata-auth/nextjs/bot-protection package. installation the bot protection utilities ship with @banata-auth/nextjs — no additional installation needed: quick start option 1: direct provider (vercel botid) use this when you have botid installed and want to wire it up directly: option 2: config-aware (dashboard-managed credentials) use this when you want admins to configure bot protection through the radar dashboard page: configuring bot protection in the dashboard navigate to radar in the dashboard sidebar click enable protection go to the configuration tab toggle bot detection on under bot detection provider, select your provider: api reference withbotprotection(handler, config) wraps a next.js route handler with bot protection. only requests matching protected paths are verified. createbotidverifier(checkbotidfn) factory for creating a vercel botid verifier: createconfigawareverifier(options) factory for creating a verifier that reads credentials from the banata auth config api: supported providers vercel botid fields: api key how it works: invisible challenge runs automatically on vercel deployments. the checkbotid() function verifies the challenge server-side. cloudflare turnstile fields: site key, secret key how it works: client sends a turnstile token in the cf-turnstile-response or x-turnstile-token header. server verifies against cloudflare's siteverify api. google recaptcha fields: site key, secret key how it works: client sends a recaptcha v3 token in the x-recaptcha-token or g-recaptcha-response header. server verifies and checks the score (threshold: 0.5). hcaptcha fields: site key, secret key how it works: client sends an hcaptcha token in the x-hcaptcha-token or h-captcha-response header. server verifies against hcaptcha's siteverify api. server-side plugin for server-side protection at the better auth plugin level (before the route handler), use the banataprotection plugin: architecture security considerations fail-open by default — if the bot detection service is unavailable, requests are allowed through. this prevents legitimate users from being locked out. set failopen: false for stricter enforcement. what's next radar & bot protection — configure detection rules and provider credentials in the dashboard settings — project-level configuration domains — configure custom domains for auth services"
+    "searchText": "bot protection add bot detection to your next.js auth routes using vercel botid, cloudflare turnstile, recaptcha, or hcaptcha — all built into @banata-auth/nextjs. quick start recommended: config-aware (dashboard-managed) this approach reads your bot protection settings from the dashboard, so you can change providers or credentials without redeploying: alternative: direct provider (vercel botid) if you already have botid installed and want to skip dashboard configuration, you can wire up the provider directly: api reference withbotprotection(handler, config) wraps a next.js route handler with bot protection. only requests whose path matches a protected prefix are verified — everything else passes through untouched. createbotidverifier(checkbotidfn) creates a vercel botid verifier function: createconfigawareverifier(options) creates a verifier that reads provider credentials from the banata auth config api at runtime: supported providers vercel botid dashboard fields: api key how it works: an invisible challenge runs automatically on vercel deployments. the checkbotid() function verifies the challenge server-side. cloudflare turnstile dashboard fields: site key, secret key how it works: your client sends a turnstile token in the cf-turnstile-response or x-turnstile-token header. the server verifies it against cloudflare's siteverif google recaptcha dashboard fields: site key, secret key how it works: your client sends a recaptcha v3 token in the x-recaptcha-token or g-recaptcha-response header. the server verifies it and checks the score (thresh hcaptcha dashboard fields: site key, secret key how it works: your client sends an hcaptcha token in the x-hcaptcha-token or h-captcha-response header. the server verifies it against hcaptcha's siteverify api. architecture security considerations fail-open by default — if the bot detection service is unavailable, requests are allowed through so legitimate users are not locked out. set failopen: false if you prefer stricter enforcement. next steps radar — enable bot detection and configure your provider credentials in the dashboard."
+  },
+  {
+    "slug": "convex",
+    "title": "Convex Integration",
+    "description": "Platform-runtime reference for self-hosting Banata on Convex.",
+    "section": "Platform Operators",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Who This Is For",
+        "anchor": "who-this-is-for",
+        "snippet": "You should read this page if you are:"
+      },
+      {
+        "level": 2,
+        "text": "What It Provides",
+        "anchor": "what-it-provides",
+        "snippet": "Inside a Banata platform deployment, @banata-auth/convex gives you:"
+      },
+      {
+        "level": 2,
+        "text": "Minimal Local Files",
+        "anchor": "minimal-local-files",
+        "snippet": "The platform keeps a thin local convex/banataAuth/ folder for the pieces that cannot live entirely inside the Convex component environment."
+      },
+      {
+        "level": 2,
+        "text": "Product Boundary",
+        "anchor": "product-boundary",
+        "snippet": "There is an important distinction between the platform and customer apps:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Self-Hosting — set up your own Banata instance. Environment Variables — configure secrets and service URLs. Deploying — push your platform to production."
+      }
+    ],
+    "searchText": "convex integration platform-runtime reference for self-hosting banata on convex. who this is for you should read this page if you are: what it provides inside a banata platform deployment, @banata-auth/convex gives you: minimal local files the platform keeps a thin local convex/banataauth/ folder for the pieces that cannot live entirely inside the convex component environment. product boundary there is an important distinction between the platform and customer apps: next steps self-hosting — set up your own banata instance. environment variables — configure secrets and service urls. deploying — push your platform to production."
   },
   {
     "slug": "deploy",
-    "title": "Deploying the Self-Hosted Stack",
-    "description": "Production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for Banata Auth.",
-    "section": "Configuration",
+    "title": "Deploy to Production",
+    "description": "Step-by-step guide for deploying your self-hosted Banata Auth stack — Convex backend, Next.js frontend, security hardening, and a pre-launch checklist.",
+    "section": "Platform Operators",
     "headings": [
       {
         "level": 2,
         "text": "Deployment Architecture",
         "anchor": "deployment-architecture",
-        "snippet": "This page applies only to the self-hosted Convex + Next.js architecture."
+        "snippet": "In production, your stack has two main components — a Next.js app (deployed to Vercel, Cloudflare, or your own servers) and a Convex backend that runs the auth engine and database."
       },
       {
         "level": 2,
-        "text": "Step 1: Convex Production Deployment",
-        "anchor": "step-1-convex-production-deployment",
-        "snippet": ""
+        "text": "Step 1 — Deploy to Convex",
+        "anchor": "step-1-deploy-to-convex",
+        "snippet": "Start by pushing your Convex functions and schema to a production deployment."
       },
       {
         "level": 3,
-        "text": "Create a Production Deployment",
-        "anchor": "create-a-production-deployment",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Set Production Environment Variables",
+        "text": "Set production environment variables",
         "anchor": "set-production-environment-variables",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Step 2: Next.js Production Deployment",
-        "anchor": "step-2-nextjs-production-deployment",
+        "text": "Step 2 — Deploy Next.js",
+        "anchor": "step-2-deploy-nextjs",
         "snippet": ""
       },
       {
         "level": 3,
         "text": "Vercel (Recommended)",
         "anchor": "vercel-recommended",
-        "snippet": "Connect your repo to Vercel Set environment variables in the Vercel dashboard:"
+        "snippet": "Connect your repository to Vercel. Add these environment variables in the Vercel dashboard:"
       },
       {
         "level": 3,
         "text": "Cloudflare Pages",
         "anchor": "cloudflare-pages",
-        "snippet": "Set up a Cloudflare Pages project Configure the same environment variables Build command: next build Output directory: .next"
+        "snippet": "Create a Cloudflare Pages project. Set the same environment variables listed above. Build command: next build Output directory: .next"
       },
       {
         "level": 3,
@@ -2683,9 +838,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Step 3: Update OAuth Callback URLs",
+        "text": "Step 3 — Update OAuth Callback URLs",
         "anchor": "step-3-update-oauth-callback-urls",
-        "snippet": "Update every OAuth provider's callback URLs to your production domain:"
+        "snippet": "Head to each OAuth provider's developer console and update the callback URLs to your production domain."
       },
       {
         "level": 2,
@@ -2695,33 +850,33 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
+        "text": "HTTPS",
+        "anchor": "https",
+        "snippet": "Production requires HTTPS. The Secure cookie flag is set automatically, so session cookies are only sent over encrypted connections. Vercel and Cloudflare provide HTTPS out of the box. If you are self"
+      },
+      {
+        "level": 3,
+        "text": "Auth Secret",
+        "anchor": "auth-secret",
+        "snippet": "Generate with openssl rand -base64 32 (minimum 32 bytes). Never share between environments. Never commit to source control. Rotating the secret invalidates all active sessions — plan rotations during "
+      },
+      {
+        "level": 3,
         "text": "Session Security",
         "anchor": "session-security",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Auth Secret",
-        "anchor": "auth-secret",
-        "snippet": "Generate with openssl rand -base64 32 (minimum 32 bytes) Never share between environments Never commit to source control Rotate periodically (note: this invalidates all existing sessions)"
-      },
-      {
-        "level": 3,
-        "text": "HTTPS",
-        "anchor": "https",
-        "snippet": "Production requires HTTPS. The Secure cookie flag is set automatically in production, meaning: Session cookies are only sent over HTTPS HTTP connections cannot authenticate"
-      },
-      {
-        "level": 3,
         "text": "Rate Limiting",
         "anchor": "rate-limiting",
-        "snippet": "Built-in rate limits protect against brute force attacks:"
+        "snippet": "Built-in rate limits protect against brute-force attacks by default:"
       },
       {
         "level": 3,
         "text": "Trusted Origins",
         "anchor": "trusted-origins",
-        "snippet": "Limit which origins can make authenticated requests:"
+        "snippet": "Configure trusted origins to restrict which domains can make authenticated requests. Only list the origins your app actually runs on — for example, https://myapp.com and https://admin.myapp.com."
       },
       {
         "level": 2,
@@ -2733,61 +888,25 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Convex Dashboard",
         "anchor": "convex-dashboard",
-        "snippet": "The Convex Dashboard provides:"
+        "snippet": "The Convex Dashboard gives you real-time visibility into your auth backend:"
       },
       {
         "level": 3,
         "text": "Audit Logs",
         "anchor": "audit-logs",
-        "snippet": "Banata Auth automatically logs 30 auth events. Use these for security monitoring:"
+        "snippet": "Banata Auth automatically records 30 auth event types. Query them through the SDK to spot suspicious activity:"
       },
       {
         "level": 3,
-        "text": "Webhook Delivery",
-        "anchor": "webhook-delivery",
-        "snippet": "Monitor webhook delivery via the admin dashboard or SDK:"
-      },
-      {
-        "level": 3,
-        "text": "External Monitoring",
-        "anchor": "external-monitoring",
-        "snippet": "Set up webhooks to send events to your monitoring system:"
+        "text": "Webhooks",
+        "anchor": "webhooks",
+        "snippet": "Set up webhook endpoints to pipe auth events into your monitoring stack (Datadog, PagerDuty, Slack, etc.). Monitor delivery success rates and retry counts through the admin dashboard."
       },
       {
         "level": 2,
         "text": "Scaling",
         "anchor": "scaling",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Convex (Backend)",
-        "anchor": "convex-backend",
-        "snippet": "Convex handles scaling automatically: Serverless functions — Scale to zero, scale to thousands Database — Automatically sharded and replicated No cold starts — Functions are always warm"
-      },
-      {
-        "level": 3,
-        "text": "Next.js (Frontend)",
-        "anchor": "nextjs-frontend",
-        "snippet": "For the Next.js app: Vercel — Automatic global edge deployment Self-hosted — Use a load balancer with multiple instances Session cookies are stateless on the Next.js side (stored in Convex), so any in"
-      },
-      {
-        "level": 2,
-        "text": "Backup & Recovery",
-        "anchor": "backup-recovery",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Data Backup",
-        "anchor": "data-backup",
-        "snippet": "Convex provides automatic backups and point-in-time recovery. For additional protection:"
-      },
-      {
-        "level": 3,
-        "text": "Secret Rotation",
-        "anchor": "secret-rotation",
-        "snippet": "To rotate the BETTER_AUTH_SECRET:"
+        "snippet": "Convex handles backend scaling automatically — serverless functions scale from zero to thousands of concurrent executions, the database is sharded and replicated, and there are no cold starts. You do "
       },
       {
         "level": 2,
@@ -2799,130 +918,193 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Environment",
         "anchor": "environment",
-        "snippet": "[ ] BETTER_AUTH_SECRET is set to a unique production value [ ] SITE_URL matches your production domain (with https://) [ ] All NEXT_PUBLIC_* variables point to production Convex deployment"
+        "snippet": "[ ] BETTER_AUTH_SECRET is set to a unique production value [ ] SITE_URL matches your production domain (with https://) [ ] All NEXT_PUBLIC_* variables point to the production Convex deployment"
       },
       {
         "level": 3,
         "text": "Security",
         "anchor": "security",
-        "snippet": "[ ] HTTPS is enabled (required for secure cookies) [ ] BETTER_AUTH_SECRET is different from development [ ] No development/test credentials in production"
+        "snippet": "[ ] HTTPS is enabled (required for secure cookies) [ ] BETTER_AUTH_SECRET is different from development [ ] No development or test credentials in production"
       },
       {
         "level": 3,
-        "text": "Auth Methods",
-        "anchor": "auth-methods",
-        "snippet": "[ ] Email/password sign-up flow works end-to-end [ ] Email verification emails are received [ ] Password reset emails are received [ ] Social OAuth flows complete successfully"
+        "text": "Auth Flows",
+        "anchor": "auth-flows",
+        "snippet": "[ ] Email/password sign-up works end-to-end [ ] Verification and password-reset emails are received [ ] Social OAuth flows complete successfully [ ] MFA setup and verification works (if enabled)"
       },
       {
         "level": 3,
         "text": "Monitoring",
         "anchor": "monitoring",
-        "snippet": "[ ] Convex dashboard accessible [ ] Audit logs are being recorded [ ] Webhook endpoints are registered and receiving events [ ] Error alerting is configured"
+        "snippet": "[ ] Convex dashboard is accessible [ ] Audit logs are recording events [ ] Webhook endpoints are registered and receiving events [ ] Error alerting is configured"
       },
       {
         "level": 3,
         "text": "Compliance",
         "anchor": "compliance",
-        "snippet": "[ ] Audit logging is active (always-on by default) [ ] Data retention policy defined [ ] Privacy policy updated to reflect auth data collection [ ] Cookie consent banner added (if required by jurisdic"
+        "snippet": "[ ] Audit logging is active (always-on by default) [ ] Data retention policy is defined [ ] Privacy policy reflects auth data collection [ ] Cookie consent banner is added (if required by jurisdiction"
       },
       {
         "level": 2,
         "text": "Post-Launch",
         "anchor": "post-launch",
-        "snippet": "After launching:"
+        "snippet": "Once you are live:"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Environment Variables — Complete variable reference Webhooks — Set up event monitoring Audit Logs — Configure compliance logging"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Environment Variables — Full reference for every variable your deployment uses. Webhooks — Set up real-time event delivery to your systems. Audit Logs — Configure compliance and security logging."
       }
     ],
-    "searchText": "deploying the self-hosted stack production deployment guide — security hardening, monitoring, scaling, and a pre-launch checklist for banata auth. deployment architecture this page applies only to the self-hosted convex + next.js architecture. step 1: convex production deployment create a production deployment set production environment variables step 2: next.js production deployment vercel (recommended) connect your repo to vercel set environment variables in the vercel dashboard: cloudflare pages set up a cloudflare pages project configure the same environment variables build command: next build output directory: .next self-hosted step 3: update oauth callback urls update every oauth provider's callback urls to your production domain: security hardening session security auth secret generate with openssl rand -base64 32 (minimum 32 bytes) never share between environments never commit to source control rotate periodically (note: this invalidates all existing sessions) https production requires https. the secure cookie flag is set automatically in production, meaning: session cookies are only sent over https http connections cannot authenticate rate limiting built-in rate limits protect against brute force attacks: trusted origins limit which origins can make authenticated requests: monitoring convex dashboard the convex dashboard provides: audit logs banata auth automatically logs 30 auth events. use these for security monitoring: webhook delivery monitor webhook delivery via the admin dashboard or sdk: external monitoring set up webhooks to send events to your monitoring system: scaling convex (backend) convex handles scaling automatically: serverless functions — scale to zero, scale to thousands database — automatically sharded and replicated no cold starts — functions are always warm next.js (frontend) for the next.js app: vercel — automatic global edge deployment self-hosted — use a load balancer with multiple instances session cookies are stateless on the next.js side (stored in convex), so any in backup & recovery data backup convex provides automatic backups and point-in-time recovery. for additional protection: secret rotation to rotate the better_auth_secret: pre-launch checklist environment [ ] better_auth_secret is set to a unique production value [ ] site_url matches your production domain (with https://) [ ] all next_public_* variables point to production convex deployment security [ ] https is enabled (required for secure cookies) [ ] better_auth_secret is different from development [ ] no development/test credentials in production auth methods [ ] email/password sign-up flow works end-to-end [ ] email verification emails are received [ ] password reset emails are received [ ] social oauth flows complete successfully monitoring [ ] convex dashboard accessible [ ] audit logs are being recorded [ ] webhook endpoints are registered and receiving events [ ] error alerting is configured compliance [ ] audit logging is active (always-on by default) [ ] data retention policy defined [ ] privacy policy updated to reflect auth data collection [ ] cookie consent banner added (if required by jurisdic post-launch after launching: what's next environment variables — complete variable reference webhooks — set up event monitoring audit logs — configure compliance logging"
+    "searchText": "deploy to production step-by-step guide for deploying your self-hosted banata auth stack — convex backend, next.js frontend, security hardening, and a pre-launch checklist. deployment architecture in production, your stack has two main components — a next.js app (deployed to vercel, cloudflare, or your own servers) and a convex backend that runs the auth engine and database. step 1 — deploy to convex start by pushing your convex functions and schema to a production deployment. set production environment variables step 2 — deploy next.js vercel (recommended) connect your repository to vercel. add these environment variables in the vercel dashboard: cloudflare pages create a cloudflare pages project. set the same environment variables listed above. build command: next build output directory: .next self-hosted step 3 — update oauth callback urls head to each oauth provider's developer console and update the callback urls to your production domain. security hardening https production requires https. the secure cookie flag is set automatically, so session cookies are only sent over encrypted connections. vercel and cloudflare provide https out of the box. if you are self auth secret generate with openssl rand -base64 32 (minimum 32 bytes). never share between environments. never commit to source control. rotating the secret invalidates all active sessions — plan rotations during  session security rate limiting built-in rate limits protect against brute-force attacks by default: trusted origins configure trusted origins to restrict which domains can make authenticated requests. only list the origins your app actually runs on — for example, https://myapp.com and https://admin.myapp.com. monitoring convex dashboard the convex dashboard gives you real-time visibility into your auth backend: audit logs banata auth automatically records 30 auth event types. query them through the sdk to spot suspicious activity: webhooks set up webhook endpoints to pipe auth events into your monitoring stack (datadog, pagerduty, slack, etc.). monitor delivery success rates and retry counts through the admin dashboard. scaling convex handles backend scaling automatically — serverless functions scale from zero to thousands of concurrent executions, the database is sharded and replicated, and there are no cold starts. you do  pre-launch checklist environment [ ] better_auth_secret is set to a unique production value [ ] site_url matches your production domain (with https://) [ ] all next_public_* variables point to the production convex deployment security [ ] https is enabled (required for secure cookies) [ ] better_auth_secret is different from development [ ] no development or test credentials in production auth flows [ ] email/password sign-up works end-to-end [ ] verification and password-reset emails are received [ ] social oauth flows complete successfully [ ] mfa setup and verification works (if enabled) monitoring [ ] convex dashboard is accessible [ ] audit logs are recording events [ ] webhook endpoints are registered and receiving events [ ] error alerting is configured compliance [ ] audit logging is active (always-on by default) [ ] data retention policy is defined [ ] privacy policy reflects auth data collection [ ] cookie consent banner is added (if required by jurisdiction post-launch once you are live: next steps environment variables — full reference for every variable your deployment uses. webhooks — set up real-time event delivery to your systems. audit logs — configure compliance and security logging."
   },
   {
     "slug": "domains",
     "title": "Domains",
-    "description": "Configure custom domains for authentication services, email delivery, admin portal, and hosted AuthKit UI.",
-    "section": "Configuration",
+    "description": "Configure the base URLs for your authentication services, email delivery, admin portal, and hosted UI.",
+    "section": "Operate Your Project",
     "headings": [
-      {
-        "level": 2,
-        "text": "How Domains Work",
-        "anchor": "how-domains-work",
-        "snippet": ""
-      },
       {
         "level": 2,
         "text": "Default Domains",
         "anchor": "default-domains",
-        "snippet": "Default domains are seeded automatically when you first visit the Domains page in the dashboard. They cannot be deleted but their values can be edited."
+        "snippet": "Every project ships with four default domains. These are created automatically the first time you visit the Domains page in your dashboard."
       },
       {
         "level": 2,
-        "text": "Domain Data Model",
-        "anchor": "domain-data-model",
-        "snippet": ""
+        "text": "Editing Domains in the Dashboard",
+        "anchor": "editing-domains-in-the-dashboard",
+        "snippet": "Open your project in the dashboard and navigate to Domains in the sidebar. Click the pencil icon next to any domain to edit its value inline. Press Enter to save your change or Escape to cancel."
       },
       {
         "level": 2,
-        "text": "Managing Domains via the Dashboard",
-        "anchor": "managing-domains-via-the-dashboard",
-        "snippet": "Navigate to Domains in the dashboard sidebar Default domains are pre-populated on first visit Click the pencil icon on any domain to edit its value inline"
+        "text": "Adding Custom Domains",
+        "anchor": "adding-custom-domains",
+        "snippet": "In addition to the four defaults, you can create custom domains for any additional services your project needs."
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 3 domain management endpoints:"
+        "text": "Custom Domains",
+        "anchor": "custom-domains",
+        "snippet": "When you change a domain value to your own domain (for example, switching from auth.banata.dev to auth.mycompany.com), you need to configure DNS and SSL so traffic reaches your Banata Auth deployment."
       },
       {
         "level": 3,
-        "text": "List Domains",
-        "anchor": "list-domains",
+        "text": "DNS Setup",
+        "anchor": "dns-setup",
+        "snippet": "Create a CNAME record with your DNS provider that points your custom domain to your Banata Auth service host."
+      },
+      {
+        "level": 3,
+        "text": "SSL Certificates",
+        "anchor": "ssl-certificates",
+        "snippet": "All production domains must serve traffic over HTTPS. If you deploy to Vercel, SSL certificates are provisioned automatically for custom domains. For other hosting providers, make sure you provision a"
+      },
+      {
+        "level": 2,
+        "text": "Security",
+        "anchor": "security",
+        "snippet": "Admin-only access — Only users with an admin role can view or modify domain configuration. Default domains are protected — The four built-in domains cannot be deleted, only edited."
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": "\"Authentication required\" — You must be signed in as an admin to manage domains. Verify that your session is active and your user has an admin role."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Redirects — Configure redirect URIs for your authentication flows. Environment Variables — Set the environment variables your project needs. Deploying to Production — Walk through a full production de"
+      }
+    ],
+    "searchText": "domains configure the base urls for your authentication services, email delivery, admin portal, and hosted ui. default domains every project ships with four default domains. these are created automatically the first time you visit the domains page in your dashboard. editing domains in the dashboard open your project in the dashboard and navigate to domains in the sidebar. click the pencil icon next to any domain to edit its value inline. press enter to save your change or escape to cancel. adding custom domains in addition to the four defaults, you can create custom domains for any additional services your project needs. custom domains when you change a domain value to your own domain (for example, switching from auth.banata.dev to auth.mycompany.com), you need to configure dns and ssl so traffic reaches your banata auth deployment. dns setup create a cname record with your dns provider that points your custom domain to your banata auth service host. ssl certificates all production domains must serve traffic over https. if you deploy to vercel, ssl certificates are provisioned automatically for custom domains. for other hosting providers, make sure you provision a security admin-only access — only users with an admin role can view or modify domain configuration. default domains are protected — the four built-in domains cannot be deleted, only edited. troubleshooting \"authentication required\" — you must be signed in as an admin to manage domains. verify that your session is active and your user has an admin role. next steps redirects — configure redirect uris for your authentication flows. environment variables — set the environment variables your project needs. deploying to production — walk through a full production de"
+  },
+  {
+    "slug": "email-otp",
+    "title": "Email OTP",
+    "description": "Passwordless authentication using a 6-digit code sent to the user's email.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Enable Email OTP",
+        "anchor": "enable-email-otp",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Save (Upsert) a Domain",
-        "anchor": "save-upsert-a-domain",
-        "snippet": ""
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Open the Banata dashboard and select your project. Go to Authentication > Methods. Toggle Email OTP on. Make sure you have an active email provider configured under Emails > Providers (Resend, SendGri"
       },
       {
         "level": 3,
-        "text": "Delete a Domain",
-        "anchor": "delete-a-domain",
-        "snippet": ""
+        "text": "From the SDK",
+        "anchor": "from-the-sdk",
+        "snippet": "You can also enable Email OTP programmatically:"
       },
       {
         "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Domains are stored in the domainConfig table in Convex:"
-      },
-      {
-        "level": 2,
-        "text": "Using Domains Programmatically",
-        "anchor": "using-domains-programmatically",
-        "snippet": ""
+        "text": "Client-Side API",
+        "anchor": "client-side-api",
+        "snippet": "Email OTP uses a two-step flow through a single method. The presence or absence of the otp parameter determines which step you are on."
       },
       {
         "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": "The dashboard uses these functions internally. If you're building custom admin tooling, you can call them the same way:"
+        "text": "Step 1 -- Send the Code",
+        "anchor": "step-1-send-the-code",
+        "snippet": "Call authClient.signIn.emailOtp with just the user's email. Banata generates a 6-digit code and emails it to the user."
+      },
+      {
+        "level": 3,
+        "text": "Step 2 -- Verify the Code",
+        "anchor": "step-2-verify-the-code",
+        "snippet": "Call the same method again, this time including the otp the user entered. If the code is valid, Banata creates a session and returns the user."
       },
       {
         "level": 2,
-        "text": "Custom Domain Setup",
-        "anchor": "custom-domain-setup",
-        "snippet": "When you change a domain value (e.g., switching from auth.banata.dev to auth.mycompany.com), you also need to configure DNS and SSL:"
+        "text": "Complete Form Example",
+        "anchor": "complete-form-example",
+        "snippet": "Here is a full React component that walks the user through both steps: entering their email, then entering the code."
+      },
+      {
+        "level": 2,
+        "text": "How It Works",
+        "anchor": "how-it-works",
+        "snippet": "Here is the full flow from start to finish:"
+      },
+      {
+        "level": 2,
+        "text": "OTP Properties",
+        "anchor": "otp-properties",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "New Users vs. Existing Users",
+        "anchor": "new-users-vs-existing-users",
+        "snippet": "Email OTP handles both sign-in and sign-up in a single flow:"
+      },
+      {
+        "level": 2,
+        "text": "Combining with Other Methods",
+        "anchor": "combining-with-other-methods",
+        "snippet": "Email OTP works alongside any other authentication method. You can enable multiple methods in Authentication > Methods and let users choose."
+      },
+      {
+        "level": 2,
+        "text": "Rate Limits",
+        "anchor": "rate-limits",
+        "snippet": "OTP endpoints are rate-limited to prevent abuse:"
       },
       {
         "level": 2,
         "text": "Security Considerations",
         "anchor": "security-considerations",
-        "snippet": "Admin-only access — All domain endpoints require admin authentication. Non-admin users cannot view or modify domain configuration. Default domains are protected — Built-in default domains (Email, Admi"
+        "snippet": "Short expiry window -- Codes expire after 10 minutes, limiting the window for interception. Single-use codes -- Each code is consumed on verification and cannot be reused."
       },
       {
         "level": 2,
@@ -2932,36 +1114,411 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "\"Authentication required\"",
-        "anchor": "authentication-required",
-        "snippet": "You must be signed in as an admin to access domain configuration. Check that your session is valid and your user has role: \"admin\"."
+        "text": "\"Invalid or expired OTP\"",
+        "anchor": "invalid-or-expired-otp",
+        "snippet": "The code does not match or has expired. Common causes:"
       },
       {
         "level": 3,
-        "text": "\"Domain value not taking effect\"",
-        "anchor": "domain-value-not-taking-effect",
-        "snippet": "Domain values stored in the dashboard are configuration records — they don't automatically update DNS or SSL certificates. You need to separately configure DNS records and ensure the domain resolves c"
+        "text": "OTP email not received",
+        "anchor": "otp-email-not-received",
+        "snippet": "Verify you have an active email provider in Emails > Providers. Check that Magic Auth is enabled under Emails > Configuration (this controls OTP email delivery)."
       },
       {
         "level": 3,
-        "text": "\"Default domains missing\"",
-        "anchor": "default-domains-missing",
-        "snippet": "Default domains are seeded on first visit to the Domains page. If they're missing, navigate to Domains in the dashboard and the 4 defaults will be created automatically."
+        "text": "\"Rate limit exceeded\"",
+        "anchor": "rate-limit-exceeded",
+        "snippet": "The user has sent too many requests in a short period. Wait one minute before retrying. If this happens frequently for legitimate users, consider adding a visible cooldown timer after sending a code."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Magic Links -- Link-based passwordless authentication as an alternative to OTP. Email & Password -- Traditional authentication with email verification."
+      }
+    ],
+    "searchText": "email otp passwordless authentication using a 6-digit code sent to the user's email. enable email otp from the dashboard open the banata dashboard and select your project. go to authentication > methods. toggle email otp on. make sure you have an active email provider configured under emails > providers (resend, sendgri from the sdk you can also enable email otp programmatically: client-side api email otp uses a two-step flow through a single method. the presence or absence of the otp parameter determines which step you are on. step 1 -- send the code call authclient.signin.emailotp with just the user's email. banata generates a 6-digit code and emails it to the user. step 2 -- verify the code call the same method again, this time including the otp the user entered. if the code is valid, banata creates a session and returns the user. complete form example here is a full react component that walks the user through both steps: entering their email, then entering the code. how it works here is the full flow from start to finish: otp properties --- new users vs. existing users email otp handles both sign-in and sign-up in a single flow: combining with other methods email otp works alongside any other authentication method. you can enable multiple methods in authentication > methods and let users choose. rate limits otp endpoints are rate-limited to prevent abuse: security considerations short expiry window -- codes expire after 10 minutes, limiting the window for interception. single-use codes -- each code is consumed on verification and cannot be reused. troubleshooting \"invalid or expired otp\" the code does not match or has expired. common causes: otp email not received verify you have an active email provider in emails > providers. check that magic auth is enabled under emails > configuration (this controls otp email delivery). \"rate limit exceeded\" the user has sent too many requests in a short period. wait one minute before retrying. if this happens frequently for legitimate users, consider adding a visible cooldown timer after sending a code. next steps magic links -- link-based passwordless authentication as an alternative to otp. email & password -- traditional authentication with email verification."
+  },
+  {
+    "slug": "email-password",
+    "title": "Email & Password",
+    "description": "Set up email and password authentication with email verification, password reset, and customizable validation.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Enabling Email & Password",
+        "anchor": "enabling-email-password",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Go to Authentication > Methods in your project. Toggle on Email & Password. Configure an email provider under Emails > Providers (required for verification and password reset emails)."
+      },
+      {
+        "level": 3,
+        "text": "From the SDK",
+        "anchor": "from-the-sdk",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Configuration Options",
+        "anchor": "configuration-options",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Sign Up",
+        "anchor": "sign-up",
+        "snippet": "Use the auth client to create a new account:"
+      },
+      {
+        "level": 3,
+        "text": "Using the Pre-Built Form",
+        "anchor": "using-the-pre-built-form",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Sign In",
+        "anchor": "sign-in",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Using the Pre-Built Form",
+        "anchor": "using-the-pre-built-form",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Sign Out",
+        "anchor": "sign-out",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Password Reset",
+        "anchor": "password-reset",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Step 1: Request a Reset Link",
+        "anchor": "step-1-request-a-reset-link",
+        "snippet": "The user enters their email address and Banata sends a password reset email:"
+      },
+      {
+        "level": 3,
+        "text": "Step 2: Reset the Password",
+        "anchor": "step-2-reset-the-password",
+        "snippet": "On the /reset-password page, extract the token from the URL and submit the new password:"
+      },
+      {
+        "level": 2,
+        "text": "Email Verification",
+        "anchor": "email-verification",
+        "snippet": "Email verification happens automatically when the user clicks the link in the verification email. The link hits /api/auth/verify-email with the token, and Banata handles the rest."
+      },
+      {
+        "level": 2,
+        "text": "Server-Side User Management",
+        "anchor": "server-side-user-management",
+        "snippet": "Use the admin SDK to manage users from your backend:"
+      },
+      {
+        "level": 2,
+        "text": "Password Validation",
+        "anchor": "password-validation",
+        "snippet": "Passwords are validated on both sign-up and password reset:"
+      },
+      {
+        "level": 2,
+        "text": "Rate Limits",
+        "anchor": "rate-limits",
+        "snippet": "Rate limits are project-scoped and identifier-aware for email-based endpoints."
+      },
+      {
+        "level": 2,
+        "text": "Error Reference",
+        "anchor": "error-reference",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Security Best Practices",
+        "anchor": "security-best-practices",
+        "snippet": "Enable email verification — prevents sign-up with someone else's email address. Use HTTPS in production — session cookies are Secure-flagged. Set a strong BETTER_AUTH_SECRET — use openssl rand -base64"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Social OAuth — Add Google, GitHub, and more alongside email/password Magic Links — Offer passwordless sign-in via email Multi-Factor Auth — Add TOTP-based two-factor authentication"
+      }
+    ],
+    "searchText": "email & password set up email and password authentication with email verification, password reset, and customizable validation. enabling email & password from the dashboard go to authentication > methods in your project. toggle on email & password. configure an email provider under emails > providers (required for verification and password reset emails). from the sdk configuration options --- sign up use the auth client to create a new account: using the pre-built form sign in using the pre-built form sign out password reset step 1: request a reset link the user enters their email address and banata sends a password reset email: step 2: reset the password on the /reset-password page, extract the token from the url and submit the new password: email verification email verification happens automatically when the user clicks the link in the verification email. the link hits /api/auth/verify-email with the token, and banata handles the rest. server-side user management use the admin sdk to manage users from your backend: password validation passwords are validated on both sign-up and password reset: rate limits rate limits are project-scoped and identifier-aware for email-based endpoints. error reference --- security best practices enable email verification — prevents sign-up with someone else's email address. use https in production — session cookies are secure-flagged. set a strong better_auth_secret — use openssl rand -base64 next steps social oauth — add google, github, and more alongside email/password magic links — offer passwordless sign-in via email multi-factor auth — add totp-based two-factor authentication"
+  },
+  {
+    "slug": "email-templates",
+    "title": "Email Templates",
+    "description": "Customize the emails Banata sends with a block-based template editor, variable interpolation, and project branding.",
+    "section": "Operate Your Project",
+    "headings": [
+      {
+        "level": 2,
+        "text": "System Templates",
+        "anchor": "system-templates",
+        "snippet": "Banata ships with six system templates that power built-in authentication flows. These are created automatically when you set up your project. You can customize their content and styling in the editor"
+      },
+      {
+        "level": 3,
+        "text": "verification",
+        "anchor": "verification",
+        "snippet": "Sent when a user signs up and needs to confirm their email address."
+      },
+      {
+        "level": 3,
+        "text": "password-reset",
+        "anchor": "password-reset",
+        "snippet": "Sent when a user requests a password reset."
+      },
+      {
+        "level": 3,
+        "text": "magic-link",
+        "anchor": "magic-link",
+        "snippet": "Sent for passwordless sign-in via a magic link."
+      },
+      {
+        "level": 3,
+        "text": "email-otp",
+        "anchor": "email-otp",
+        "snippet": "Sent for email-based one-time password verification."
+      },
+      {
+        "level": 3,
+        "text": "invitation",
+        "anchor": "invitation",
+        "snippet": "Sent when a user is invited to join an organization. Organization invitations are now sent through the branded template system automatically — no custom email-sending code is required."
+      },
+      {
+        "level": 3,
+        "text": "welcome",
+        "anchor": "welcome",
+        "snippet": "Sent after successful account creation."
+      },
+      {
+        "level": 2,
+        "text": "Custom Templates",
+        "anchor": "custom-templates",
+        "snippet": "Custom templates are templates you create for your own use cases — marketing emails, onboarding sequences, notifications, or anything else. You have full control over custom templates: create, edit, r"
+      },
+      {
+        "level": 3,
+        "text": "Creating a Custom Template",
+        "anchor": "creating-a-custom-template",
+        "snippet": "Go to Email Templates in the dashboard sidebar. Click Create Template. A new template named \"Untitled Template\" is created with a blank heading and text block."
+      },
+      {
+        "level": 3,
+        "text": "Variables in Custom Templates",
+        "anchor": "variables-in-custom-templates",
+        "snippet": "When you use {{variableName}} placeholders in your custom template blocks, the dashboard auto-detects them and displays them in the Variables panel. You can add descriptions and default values for eac"
+      },
+      {
+        "level": 2,
+        "text": "Block Types",
+        "anchor": "block-types",
+        "snippet": "Every template is an ordered list of blocks. You can mix and match these nine types to build any layout you need."
+      },
+      {
+        "level": 3,
+        "text": "Block Styling",
+        "anchor": "block-styling",
+        "snippet": "All blocks that support styling accept optional properties:"
+      },
+      {
+        "level": 2,
+        "text": "Variable Interpolation",
+        "anchor": "variable-interpolation",
+        "snippet": "Templates support {{variableName}} placeholders in text, URLs, and subject lines. At send time, Banata replaces each placeholder with the value you pass in."
+      },
+      {
+        "level": 3,
+        "text": "Variable Quick-Insert",
+        "anchor": "variable-quick-insert",
+        "snippet": "In the email editor, text and heading blocks have a Variable button in their inspector panel. Click it to see a dropdown of available variables and insert {{variableName}} directly into the block cont"
+      },
+      {
+        "level": 2,
+        "text": "Dashboard Editor",
+        "anchor": "dashboard-editor",
+        "snippet": "The easiest way to work with templates is through the visual editor in your dashboard. Navigate to Email Templates in the sidebar to get started."
+      },
+      {
+        "level": 2,
+        "text": "Branding Integration",
+        "anchor": "branding-integration",
+        "snippet": "Your email templates automatically inherit your project's branding configuration when rendered. You configure branding once in the dashboard under Branding, and every email -- system and custom -- pic"
+      },
+      {
+        "level": 2,
+        "text": "Modifying Templates from Code",
+        "anchor": "modifying-templates-from-code",
+        "snippet": "You can manage templates entirely from code without using the dashboard. All template operations use the HTTP API, so they work from any backend — Node.js, Bun, Deno, Hono, Express, or any runtime."
+      },
+      {
+        "level": 3,
+        "text": "Create a Template",
+        "anchor": "create-a-template",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Update a Template",
+        "anchor": "update-a-template",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "List and Get Templates",
+        "anchor": "list-and-get-templates",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Delete a Template",
+        "anchor": "delete-a-template",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Send an Email",
+        "anchor": "send-an-email",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Preview a Template",
+        "anchor": "preview-a-template",
+        "snippet": "Render to HTML without sending — useful for testing or custom delivery:"
+      },
+      {
+        "level": 2,
+        "text": "System Template Variable Reference",
+        "anchor": "system-template-variable-reference",
+        "snippet": "Each system template has a fixed set of variables. Here's the complete reference:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Emails — Configure email providers and send branded emails from code SDK Reference — Complete API reference for the Emails resource Branding — Configure project branding used by email templates"
+      }
+    ],
+    "searchText": "email templates customize the emails banata sends with a block-based template editor, variable interpolation, and project branding. system templates banata ships with six system templates that power built-in authentication flows. these are created automatically when you set up your project. you can customize their content and styling in the editor verification sent when a user signs up and needs to confirm their email address. password-reset sent when a user requests a password reset. magic-link sent for passwordless sign-in via a magic link. email-otp sent for email-based one-time password verification. invitation sent when a user is invited to join an organization. organization invitations are now sent through the branded template system automatically — no custom email-sending code is required. welcome sent after successful account creation. custom templates custom templates are templates you create for your own use cases — marketing emails, onboarding sequences, notifications, or anything else. you have full control over custom templates: create, edit, r creating a custom template go to email templates in the dashboard sidebar. click create template. a new template named \"untitled template\" is created with a blank heading and text block. variables in custom templates when you use {{variablename}} placeholders in your custom template blocks, the dashboard auto-detects them and displays them in the variables panel. you can add descriptions and default values for eac block types every template is an ordered list of blocks. you can mix and match these nine types to build any layout you need. block styling all blocks that support styling accept optional properties: variable interpolation templates support {{variablename}} placeholders in text, urls, and subject lines. at send time, banata replaces each placeholder with the value you pass in. variable quick-insert in the email editor, text and heading blocks have a variable button in their inspector panel. click it to see a dropdown of available variables and insert {{variablename}} directly into the block cont dashboard editor the easiest way to work with templates is through the visual editor in your dashboard. navigate to email templates in the sidebar to get started. branding integration your email templates automatically inherit your project's branding configuration when rendered. you configure branding once in the dashboard under branding, and every email -- system and custom -- pic modifying templates from code you can manage templates entirely from code without using the dashboard. all template operations use the http api, so they work from any backend — node.js, bun, deno, hono, express, or any runtime. create a template update a template list and get templates delete a template send an email preview a template render to html without sending — useful for testing or custom delivery: system template variable reference each system template has a fixed set of variables. here's the complete reference: next steps emails — configure email providers and send branded emails from code sdk reference — complete api reference for the emails resource branding — configure project branding used by email templates"
+  },
+  {
+    "slug": "emails",
+    "title": "Emails",
+    "description": "Configure email providers, control transactional emails, and send branded emails programmatically.",
+    "section": "Operate Your Project",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Email Providers",
+        "anchor": "email-providers",
+        "snippet": "Banata supports five email delivery providers out of the box:"
+      },
+      {
+        "level": 3,
+        "text": "Setting Up a Provider",
+        "anchor": "setting-up-a-provider",
+        "snippet": "Go to Emails > Providers in the dashboard. Click Enable on your preferred provider. Enter your API key in the field that appears. Click Save Key."
+      },
+      {
+        "level": 3,
+        "text": "Send a Test Email",
+        "anchor": "send-a-test-email",
+        "snippet": "Once your provider is active, click the Send test email button at the top of the Providers page. Enter a recipient address and click Send. This dispatches a real email through your active provider so "
+      },
+      {
+        "level": 2,
+        "text": "Email Configuration",
+        "anchor": "email-configuration",
+        "snippet": "You control which types of transactional emails Banata sends. Each type can be toggled on or off independently from Emails > Configuration in the dashboard."
+      },
+      {
+        "level": 3,
+        "text": "Authentication Emails",
+        "anchor": "authentication-emails",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Organization Emails",
+        "anchor": "organization-emails",
+        "snippet": "Changes take effect immediately when you toggle an email type. If you disable a type, Banata will not send those emails even when your application triggers the corresponding auth flow."
+      },
+      {
+        "level": 2,
+        "text": "Branded Email Delivery",
+        "anchor": "branded-email-delivery",
+        "snippet": "All transactional emails — including organization invitation emails — are rendered using your project's branded template system. This means every email your users receive reflects your branding automa"
+      },
+      {
+        "level": 2,
+        "text": "Sending Branded Emails from Code",
+        "anchor": "sending-branded-emails-from-code",
+        "snippet": "In addition to the automatic emails Banata sends during auth flows, you can send branded emails programmatically. This works from any backend — Node.js, Bun, Hono, Express, Next.js, or any runtime tha"
+      },
+      {
+        "level": 3,
+        "text": "Using the API",
+        "anchor": "using-the-api",
+        "snippet": "Send a branded email with a single HTTP request. The email uses your configured provider and branding automatically:"
+      },
+      {
+        "level": 3,
+        "text": "Previewing Without Sending",
+        "anchor": "previewing-without-sending",
+        "snippet": "Render a template to HTML without actually sending it — useful for testing or generating email content for your own delivery pipeline:"
+      },
+      {
+        "level": 3,
+        "text": "Overriding Email Callbacks",
+        "anchor": "overriding-email-callbacks",
+        "snippet": "If you need complete control over how specific email types are delivered (e.g., using your own email service instead of Banata's), you can provide callbacks in your auth configuration:"
+      },
+      {
+        "level": 2,
+        "text": "Email Events",
+        "anchor": "email-events",
+        "snippet": "You can monitor email delivery from the dashboard under Emails > Events. This page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password re"
+      },
+      {
+        "level": 2,
+        "text": "SDK Usage",
+        "anchor": "sdk-usage",
+        "snippet": "You can also manage email provider configuration programmatically through the Banata SDK:"
       },
       {
         "level": 2,
         "text": "What's Next",
         "anchor": "whats-next",
-        "snippet": "Redirects — Configure redirect URIs for authentication flows Environment Variables — Configure required environment variables Deploying to Production — Full deployment guide"
+        "snippet": "Email Templates — Customize the content and branding of the emails Banata sends Invitations — Invitation lifecycle and email delivery"
       }
     ],
-    "searchText": "domains configure custom domains for authentication services, email delivery, admin portal, and hosted authkit ui. how domains work default domains default domains are seeded automatically when you first visit the domains page in the dashboard. they cannot be deleted but their values can be edited. domain data model managing domains via the dashboard navigate to domains in the dashboard sidebar default domains are pre-populated on first visit click the pencil icon on any domain to edit its value inline api endpoints the configplugin exposes 3 domain management endpoints: list domains save (upsert) a domain delete a domain database storage domains are stored in the domainconfig table in convex: using domains programmatically via the dashboard api client the dashboard uses these functions internally. if you're building custom admin tooling, you can call them the same way: custom domain setup when you change a domain value (e.g., switching from auth.banata.dev to auth.mycompany.com), you also need to configure dns and ssl: security considerations admin-only access — all domain endpoints require admin authentication. non-admin users cannot view or modify domain configuration. default domains are protected — built-in default domains (email, admi troubleshooting \"authentication required\" you must be signed in as an admin to access domain configuration. check that your session is valid and your user has role: \"admin\". \"domain value not taking effect\" domain values stored in the dashboard are configuration records — they don't automatically update dns or ssl certificates. you need to separately configure dns records and ensure the domain resolves c \"default domains missing\" default domains are seeded on first visit to the domains page. if they're missing, navigate to domains in the dashboard and the 4 defaults will be created automatically. what's next redirects — configure redirect uris for authentication flows environment variables — configure required environment variables deploying to production — full deployment guide"
+    "searchText": "emails configure email providers, control transactional emails, and send branded emails programmatically. email providers banata supports five email delivery providers out of the box: setting up a provider go to emails > providers in the dashboard. click enable on your preferred provider. enter your api key in the field that appears. click save key. send a test email once your provider is active, click the send test email button at the top of the providers page. enter a recipient address and click send. this dispatches a real email through your active provider so  email configuration you control which types of transactional emails banata sends. each type can be toggled on or off independently from emails > configuration in the dashboard. authentication emails organization emails changes take effect immediately when you toggle an email type. if you disable a type, banata will not send those emails even when your application triggers the corresponding auth flow. branded email delivery all transactional emails — including organization invitation emails — are rendered using your project's branded template system. this means every email your users receive reflects your branding automa sending branded emails from code in addition to the automatic emails banata sends during auth flows, you can send branded emails programmatically. this works from any backend — node.js, bun, hono, express, next.js, or any runtime tha using the api send a branded email with a single http request. the email uses your configured provider and branding automatically: previewing without sending render a template to html without actually sending it — useful for testing or generating email content for your own delivery pipeline: overriding email callbacks if you need complete control over how specific email types are delivered (e.g., using your own email service instead of banata's), you can provide callbacks in your auth configuration: email events you can monitor email delivery from the dashboard under emails > events. this page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password re sdk usage you can also manage email provider configuration programmatically through the banata sdk: what's next email templates — customize the content and branding of the emails banata sends invitations — invitation lifecycle and email delivery"
   },
   {
     "slug": "env-vars",
-    "title": "Self-Hosted Environment Variables",
-    "description": "Complete reference for every environment variable used by Banata Auth — Convex backend, Next.js frontend, and OAuth providers.",
-    "section": "Configuration",
+    "title": "Environment Variables",
+    "description": "Complete reference for every environment variable you need when self-hosting Banata Auth with Convex and Next.js.",
+    "section": "Platform Operators",
     "headings": [
       {
         "level": 2,
@@ -2973,7 +1530,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Convex Environment Variables",
         "anchor": "convex-environment-variables",
-        "snippet": "These are set on the Convex deployment using npx convex env set. They're available to Convex functions via process.env."
+        "snippet": "You set these on your Convex deployment with npx convex env set. They're available to your Convex functions via process.env."
       },
       {
         "level": 3,
@@ -2985,7 +1542,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Social OAuth Providers",
         "anchor": "social-oauth-providers",
-        "snippet": "Set these only for the providers you've enabled in socialProviders:"
+        "snippet": "You only need to set credentials for the providers you've enabled in your socialProviders configuration."
       },
       {
         "level": 3,
@@ -2995,27 +1552,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Passkey (WebAuthn)",
-        "anchor": "passkey-webauthn",
+        "text": "Passkeys (WebAuthn)",
+        "anchor": "passkeys-webauthn",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Listing All Convex Variables",
-        "anchor": "listing-all-convex-variables",
+        "text": "Managing Convex Variables",
+        "anchor": "managing-convex-variables",
         "snippet": ""
       },
       {
         "level": 2,
         "text": "Next.js Environment Variables (.env.local)",
         "anchor": "nextjs-environment-variables-envlocal",
-        "snippet": "These are set in your .env.local file and are available to your Next.js app."
-      },
-      {
-        "level": 3,
-        "text": "Core",
-        "anchor": "core",
-        "snippet": ""
+        "snippet": "These live in your .env.local file and are available to your Next.js application at build and runtime."
       },
       {
         "level": 3,
@@ -3027,424 +1578,397 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Local Development",
         "anchor": "local-development",
-        "snippet": "For local Convex development (npx convex dev):"
-      },
-      {
-        "level": 3,
-        "text": "NEXT_PUBLIC_ Prefix",
-        "anchor": "nextpublic-prefix",
-        "snippet": "Variables starting with NEXT_PUBLIC_ are embedded in the client-side JavaScript bundle and visible to users. Never put secrets in NEXT_PUBLIC_ variables."
+        "snippet": "When you run Convex locally with npx convex dev, your .env.local should point to the local endpoints:"
       },
       {
         "level": 2,
-        "text": "Dashboard-Specific Variables",
-        "anchor": "dashboard-specific-variables",
-        "snippet": "The admin dashboard (apps/dashboard) uses additional variables:"
+        "text": "NEXT_PUBLIC_ Safety Reminder",
+        "anchor": "nextpublic-safety-reminder",
+        "snippet": "Any variable prefixed with NEXT_PUBLIC_ gets embedded in your client-side JavaScript bundle and is visible to every user. Never put secrets in NEXT_PUBLIC_ variables."
       },
       {
         "level": 2,
         "text": "Production Checklist",
         "anchor": "production-checklist",
-        "snippet": "Before deploying to production, verify:"
+        "snippet": "Before you go live, walk through each item:"
       },
       {
         "level": 2,
         "text": "Template .env.local",
         "anchor": "template-envlocal",
-        "snippet": "Copy this template for new projects:"
+        "snippet": "Copy this into your project as a starting point:"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Deploy — Production deployment guide Quick Start — Set up a new project from scratch Convex — Backend configuration reference"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Convex Integration — Deep dive into the Convex backend configuration Deploy — Ship your self-hosted instance to production Quick Start — Set up a new project from scratch"
       }
     ],
-    "searchText": "self-hosted environment variables complete reference for every environment variable used by banata auth — convex backend, next.js frontend, and oauth providers. quick reference --- convex environment variables these are set on the convex deployment using npx convex env set. they're available to convex functions via process.env. core social oauth providers set these only for the providers you've enabled in socialproviders: email provider passkey (webauthn) listing all convex variables next.js environment variables (.env.local) these are set in your .env.local file and are available to your next.js app. core example .env.local local development for local convex development (npx convex dev): next_public_ prefix variables starting with next_public_ are embedded in the client-side javascript bundle and visible to users. never put secrets in next_public_ variables. dashboard-specific variables the admin dashboard (apps/dashboard) uses additional variables: production checklist before deploying to production, verify: template .env.local copy this template for new projects: what's next deploy — production deployment guide quick start — set up a new project from scratch convex — backend configuration reference"
+    "searchText": "environment variables complete reference for every environment variable you need when self-hosting banata auth with convex and next.js. quick reference --- convex environment variables you set these on your convex deployment with npx convex env set. they're available to your convex functions via process.env. core social oauth providers you only need to set credentials for the providers you've enabled in your socialproviders configuration. email provider passkeys (webauthn) managing convex variables next.js environment variables (.env.local) these live in your .env.local file and are available to your next.js application at build and runtime. example .env.local local development when you run convex locally with npx convex dev, your .env.local should point to the local endpoints: next_public_ safety reminder any variable prefixed with next_public_ gets embedded in your client-side javascript bundle and is visible to every user. never put secrets in next_public_ variables. production checklist before you go live, walk through each item: template .env.local copy this into your project as a starting point: next steps convex integration — deep dive into the convex backend configuration deploy — ship your self-hosted instance to production quick start — set up a new project from scratch"
   },
   {
     "slug": "hosted-ui",
     "title": "Hosted Sign-In",
-    "description": "Reference guide for Banata's hosted auth UI. This is documented, but it is not the primary integration path right now.",
-    "section": "Configure Authentication",
+    "description": "Let Banata render the auth UI for you. Your app links to a hosted sign-in page, the user authenticates, and Banata redirects them back.",
+    "section": "Platform Operators",
     "headings": [
       {
         "level": 2,
         "text": "How It Works",
         "anchor": "how-it-works",
-        "snippet": "In the hosted model:"
+        "snippet": "Your app links the user to Banata's hosted sign-in page, passing your project's client_id as a query parameter. Banata renders the sign-in UI with the auth methods and providers you've configured for "
       },
       {
         "level": 2,
-        "text": "What Must Be Configured First",
-        "anchor": "what-must-be-configured-first",
-        "snippet": "Hosted UI only reflects the configuration already saved for that project."
+        "text": "Prerequisites",
+        "anchor": "prerequisites",
+        "snippet": "The hosted UI reflects the configuration already saved for your project. Before you test it, make sure you've completed the following in the Banata dashboard:"
       },
       {
         "level": 2,
-        "text": "Customer App Requirements",
-        "anchor": "customer-app-requirements",
-        "snippet": "Your app still needs:"
+        "text": "App Requirements",
+        "anchor": "app-requirements",
+        "snippet": "Even though Banata handles the UI, your app still needs a few things in place:"
+      },
+      {
+        "level": 3,
+        "text": "Proxy Route",
+        "anchor": "proxy-route",
+        "snippet": "Set up the /api/auth/[...all] proxy route in your app. This is the same route used by the primary SDK integration and is required for session management."
+      },
+      {
+        "level": 3,
+        "text": "API Key",
+        "anchor": "api-key",
+        "snippet": "Your server must have a valid project-scoped API key. Create one in the dashboard under API Keys and store it as an environment variable. See the API Keys guide for details."
+      },
+      {
+        "level": 3,
+        "text": "Callback Handling",
+        "anchor": "callback-handling",
+        "snippet": "Your app needs a /auth/callback route that receives the redirect from Banata after the user authenticates. If this route is missing or misconfigured, the hosted flow will complete successfully on the "
       },
       {
         "level": 2,
-        "text": "Current Positioning",
-        "anchor": "current-positioning",
-        "snippet": "This page remains in the docs as a reference because the product supports it."
+        "text": "Branding",
+        "anchor": "branding",
+        "snippet": "The hosted UI uses the same project configuration as the dashboard and the SDK. That means:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "The hosted page loads but shows no sign-in options",
+        "anchor": "the-hosted-page-loads-but-shows-no-sign-in-options",
+        "snippet": "Your project is missing auth configuration. Check Authentication > Methods to confirm at least one method is enabled, and check Authentication > Providers to confirm credentials are configured for any"
+      },
+      {
+        "level": 3,
+        "text": "The hosted flow completes but the user is still unauthenticated",
+        "anchor": "the-hosted-flow-completes-but-the-user-is-still-unauthenticated",
+        "snippet": "Check the following:"
+      },
+      {
+        "level": 3,
+        "text": "Rate limit exceeded",
+        "anchor": "rate-limit-exceeded",
+        "snippet": "Banata rate-limits sensitive auth endpoints per project, IP, path, and (for email-based flows) the submitted identifier. If you're hitting rate limits during development:"
+      },
+      {
+        "level": 3,
+        "text": "The hosted page returns the wrong project",
+        "anchor": "the-hosted-page-returns-the-wrong-project",
+        "snippet": "Verify that the client_id parameter is set to the project's client ID from the Banata dashboard. This is not the workspace slug or workspace name — it's the ID shown on the project's settings page."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Quick Start — set up the primary app-owned auth integration with @banata-auth/nextjs API Keys — create and manage the keys that connect your app to a project"
       }
     ],
-    "searchText": "hosted sign-in reference guide for banata's hosted auth ui. this is documented, but it is not the primary integration path right now. how it works in the hosted model: what must be configured first hosted ui only reflects the configuration already saved for that project. customer app requirements your app still needs: current positioning this page remains in the docs as a reference because the product supports it."
+    "searchText": "hosted sign-in let banata render the auth ui for you. your app links to a hosted sign-in page, the user authenticates, and banata redirects them back. how it works your app links the user to banata's hosted sign-in page, passing your project's client_id as a query parameter. banata renders the sign-in ui with the auth methods and providers you've configured for  prerequisites the hosted ui reflects the configuration already saved for your project. before you test it, make sure you've completed the following in the banata dashboard: app requirements even though banata handles the ui, your app still needs a few things in place: proxy route set up the /api/auth/[...all] proxy route in your app. this is the same route used by the primary sdk integration and is required for session management. api key your server must have a valid project-scoped api key. create one in the dashboard under api keys and store it as an environment variable. see the api keys guide for details. callback handling your app needs a /auth/callback route that receives the redirect from banata after the user authenticates. if this route is missing or misconfigured, the hosted flow will complete successfully on the  branding the hosted ui uses the same project configuration as the dashboard and the sdk. that means: troubleshooting the hosted page loads but shows no sign-in options your project is missing auth configuration. check authentication > methods to confirm at least one method is enabled, and check authentication > providers to confirm credentials are configured for any the hosted flow completes but the user is still unauthenticated check the following: rate limit exceeded banata rate-limits sensitive auth endpoints per project, ip, path, and (for email-based flows) the submitted identifier. if you're hitting rate limits during development: the hosted page returns the wrong project verify that the client_id parameter is set to the project's client id from the banata dashboard. this is not the workspace slug or workspace name — it's the id shown on the project's settings page. next steps quick start — set up the primary app-owned auth integration with @banata-auth/nextjs api keys — create and manage the keys that connect your app to a project"
   },
   {
     "slug": "introduction",
     "title": "Introduction",
-    "description": "Banata Auth is a project-scoped auth platform where the dashboard and API keys are the starting point.",
+    "description": "Banata Auth is a complete authentication and user management platform for web applications. Add sign-in, organizations, roles, SSO, and more to your app.",
     "section": "Start Here",
     "headings": [
       {
         "level": 2,
-        "text": "What Banata Is",
-        "anchor": "what-banata-is",
-        "snippet": "Banata Auth is an authentication platform for products that need:"
+        "text": "What is Banata Auth?",
+        "anchor": "what-is-banata-auth",
+        "snippet": "Banata Auth is an authentication and user management platform that gives your application everything it needs to handle users securely:"
       },
       {
         "level": 2,
-        "text": "The Product Contract",
-        "anchor": "the-product-contract",
-        "snippet": "Banata always starts the same way:"
+        "text": "How It Works",
+        "anchor": "how-it-works",
+        "snippet": "Banata Auth runs as a separate service from your application. Your app doesn't store user data or manage sessions directly — Banata handles that for you."
       },
       {
         "level": 2,
-        "text": "Hosted Vs Self-Hosted",
+        "text": "Key Concepts",
+        "anchor": "key-concepts",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Projects",
+        "anchor": "projects",
+        "snippet": "A project is the top-level isolation boundary in Banata. Each project has its own users, organizations, roles, providers, and configuration. When you create an API key, it's scoped to a single project"
+      },
+      {
+        "level": 3,
+        "text": "API Keys",
+        "anchor": "api-keys",
+        "snippet": "An API key is how your app authenticates with Banata and identifies which project it belongs to. You store it as a server-side environment variable (BANATA_API_KEY). The API key does two things: it au"
+      },
+      {
+        "level": 3,
+        "text": "Dashboard",
+        "anchor": "dashboard",
+        "snippet": "The Banata dashboard is where you manage your projects. From the dashboard you can configure auth methods, set up OAuth providers, manage users and organizations, customize email templates, create API"
+      },
+      {
+        "level": 2,
+        "text": "Packages",
+        "anchor": "packages",
+        "snippet": "Banata Auth provides several packages for different parts of your integration:"
+      },
+      {
+        "level": 2,
+        "text": "Hosted vs. Self-Hosted",
         "anchor": "hosted-vs-self-hosted",
-        "snippet": "These are deployment choices, not different integration models."
+        "snippet": "Banata Auth can run in two modes:"
       },
       {
         "level": 2,
-        "text": "Read These Docs In Order",
-        "anchor": "read-these-docs-in-order",
-        "snippet": "For a normal product integration, read these pages in this order:"
-      },
-      {
-        "level": 2,
-        "text": "Package Roles",
-        "anchor": "package-roles",
-        "snippet": "---"
-      },
-      {
-        "level": 2,
-        "text": "What Matters First",
-        "anchor": "what-matters-first",
-        "snippet": "Projects are the isolation boundary. API keys are how your app binds to a project. Dashboard config and SDK config are the same underlying config. Your app does not own the auth database. Banata does."
-      },
-      {
-        "level": 2,
-        "text": "Version Notes",
-        "anchor": "version-notes",
-        "snippet": "The current Convex-backed platform runtime is tested against better-auth@1.4.x. Use published @banata-auth/* packages from 0.1.1+."
+        "text": "What's Next",
+        "anchor": "whats-next",
+        "snippet": "Ready to get started? Head to the Quick Start guide to connect your first app to Banata in a few minutes."
       }
     ],
-    "searchText": "introduction banata auth is a project-scoped auth platform where the dashboard and api keys are the starting point. what banata is banata auth is an authentication platform for products that need: the product contract banata always starts the same way: hosted vs self-hosted these are deployment choices, not different integration models. read these docs in order for a normal product integration, read these pages in this order: package roles --- what matters first projects are the isolation boundary. api keys are how your app binds to a project. dashboard config and sdk config are the same underlying config. your app does not own the auth database. banata does. version notes the current convex-backed platform runtime is tested against better-auth@1.4.x. use published @banata-auth/* packages from 0.1.1+."
+    "searchText": "introduction banata auth is a complete authentication and user management platform for web applications. add sign-in, organizations, roles, sso, and more to your app. what is banata auth? banata auth is an authentication and user management platform that gives your application everything it needs to handle users securely: how it works banata auth runs as a separate service from your application. your app doesn't store user data or manage sessions directly — banata handles that for you. key concepts projects a project is the top-level isolation boundary in banata. each project has its own users, organizations, roles, providers, and configuration. when you create an api key, it's scoped to a single project api keys an api key is how your app authenticates with banata and identifies which project it belongs to. you store it as a server-side environment variable (banata_api_key). the api key does two things: it au dashboard the banata dashboard is where you manage your projects. from the dashboard you can configure auth methods, set up oauth providers, manage users and organizations, customize email templates, create api packages banata auth provides several packages for different parts of your integration: hosted vs. self-hosted banata auth can run in two modes: what's next ready to get started? head to the quick start guide to connect your first app to banata in a few minutes."
   },
   {
     "slug": "invitations",
     "title": "Invitations",
-    "description": "Complete invitation lifecycle — sending, accepting, expiring, and revoking organization invitations.",
-    "section": "Enterprise",
+    "description": "Invite members to organizations by email — create, accept, expire, and revoke invitations.",
+    "section": "Organizations & RBAC",
     "headings": [
       {
         "level": 2,
         "text": "How Invitations Work",
         "anchor": "how-invitations-work",
-        "snippet": ""
+        "snippet": "When you send an invitation, here's what happens:"
       },
       {
         "level": 2,
         "text": "Invitation Data Model",
         "anchor": "invitation-data-model",
-        "snippet": ""
+        "snippet": "Each invitation contains the following fields:"
       },
       {
         "level": 3,
         "text": "Status Lifecycle",
         "anchor": "status-lifecycle",
-        "snippet": ""
+        "snippet": "An invitation starts as pending and moves to one of three terminal states:"
       },
       {
         "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable organizations, then configure invitation delivery in the dashboard:"
+        "text": "Email Delivery",
+        "anchor": "email-delivery",
+        "snippet": "Banata sends invitation emails automatically using the branded template system. Invitation emails use the invitation system template and inherit your project's branding (logo, colors, fonts) — no cust"
       },
       {
         "level": 3,
-        "text": "Default Delivery Model",
-        "anchor": "default-delivery-model",
-        "snippet": "The default invitation flow is dashboard-first:"
+        "text": "Setting Up Email Delivery",
+        "anchor": "setting-up-email-delivery",
+        "snippet": "Configure an email provider — Go to Emails > Providers in the dashboard and add an active provider (e.g. Resend, SendGrid, or Postmark). Enable invitation emails — In Emails > Configuration, make sure"
       },
       {
         "level": 3,
-        "text": "Optional Code Override",
-        "anchor": "optional-code-override",
-        "snippet": "If you want your app to own invitation delivery, add email.sendInvitationEmail:"
-      },
-      {
-        "level": 3,
-        "text": "Override Callback Parameters",
-        "anchor": "override-callback-parameters",
-        "snippet": "The sendInvitationEmail override receives an object with:"
+        "text": "Overriding Invitation Emails",
+        "anchor": "overriding-invitation-emails",
+        "snippet": "If you need full control over invitation email delivery, you can provide a custom callback:"
       },
       {
         "level": 2,
-        "text": "Client-Side API",
-        "anchor": "client-side-api",
+        "text": "Client API",
+        "anchor": "client-api",
         "snippet": ""
       },
       {
         "level": 3,
         "text": "Send an Invitation",
         "anchor": "send-an-invitation",
-        "snippet": ""
+        "snippet": "Use authClient.organization.inviteMember to invite a user by email:"
       },
       {
         "level": 3,
-        "text": "List Pending Invitations",
-        "anchor": "list-pending-invitations",
-        "snippet": ""
+        "text": "List Invitations",
+        "anchor": "list-invitations",
+        "snippet": "Fetch all invitations for an organization:"
       },
       {
         "level": 3,
         "text": "Accept an Invitation",
         "anchor": "accept-an-invitation",
-        "snippet": ""
+        "snippet": "Accept an invitation on behalf of the currently signed-in user:"
       },
       {
         "level": 3,
         "text": "Revoke an Invitation",
         "anchor": "revoke-an-invitation",
-        "snippet": ""
+        "snippet": "Cancel a pending invitation so it can no longer be accepted:"
       },
       {
         "level": 2,
         "text": "Invitation Acceptance Page",
         "anchor": "invitation-acceptance-page",
-        "snippet": "Build a page at /invite/[id] that handles invitation acceptance:"
+        "snippet": "You need a page in your app that handles the invite link. Create a route at /invite/[id]:"
       },
       {
         "level": 2,
-        "text": "Server-Side Management (Admin SDK)",
-        "anchor": "server-side-management-admin-sdk",
-        "snippet": ""
+        "text": "Server-Side Management",
+        "anchor": "server-side-management",
+        "snippet": "Use the Banata SDK to manage invitations from your server or backend scripts:"
       },
       {
         "level": 2,
         "text": "Expiration",
         "anchor": "expiration",
-        "snippet": "Invitations expire after 7 days (604,800 seconds), as defined in @banata-auth/shared:"
+        "snippet": "Invitations expire after 7 days. Once expired, the status changes to \"expired\" and the link can no longer be used. To re-invite someone whose invitation expired, send a new invitation."
       },
       {
         "level": 2,
         "text": "Bulk Invitations",
         "anchor": "bulk-invitations",
-        "snippet": "To invite multiple users at once, iterate over the emails:"
+        "snippet": "To invite multiple people at once, use Promise.allSettled to send invitations in parallel:"
       },
       {
         "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Invitation email not sent",
+        "anchor": "invitation-email-not-sent",
+        "snippet": "Verify you have an active email provider in Emails > Providers in the dashboard. Check that invitation emails are enabled in Emails > Configuration. Review your invitation template in Email Templates "
+      },
+      {
+        "level": 3,
+        "text": "\"Invitation already pending\"",
+        "anchor": "invitation-already-pending",
+        "snippet": "An invitation with the same email already exists for this organization. You have two options:"
+      },
+      {
+        "level": 3,
+        "text": "\"Organization membership limit reached\"",
+        "anchor": "organization-membership-limit-reached",
+        "snippet": "Your organization has hit its membership cap (default: 100). You can increase the limit in your organization settings in the dashboard."
+      },
+      {
+        "level": 3,
+        "text": "Invitation link not working",
+        "anchor": "invitation-link-not-working",
+        "snippet": "The invitation may have expired (older than 7 days). Send a new one. The invitation may have been revoked by an admin. Make sure you have an /invite/[id] route in your app that handles acceptance."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Organizations — Learn how to create and manage organizations. Roles & Permissions — Control what members can do within an organization. Webhooks — Get notified when invitations are created, accepted, "
+      }
+    ],
+    "searchText": "invitations invite members to organizations by email — create, accept, expire, and revoke invitations. how invitations work when you send an invitation, here's what happens: invitation data model each invitation contains the following fields: status lifecycle an invitation starts as pending and moves to one of three terminal states: email delivery banata sends invitation emails automatically using the branded template system. invitation emails use the invitation system template and inherit your project's branding (logo, colors, fonts) — no cust setting up email delivery configure an email provider — go to emails > providers in the dashboard and add an active provider (e.g. resend, sendgrid, or postmark). enable invitation emails — in emails > configuration, make sure overriding invitation emails if you need full control over invitation email delivery, you can provide a custom callback: client api send an invitation use authclient.organization.invitemember to invite a user by email: list invitations fetch all invitations for an organization: accept an invitation accept an invitation on behalf of the currently signed-in user: revoke an invitation cancel a pending invitation so it can no longer be accepted: invitation acceptance page you need a page in your app that handles the invite link. create a route at /invite/[id]: server-side management use the banata sdk to manage invitations from your server or backend scripts: expiration invitations expire after 7 days. once expired, the status changes to \"expired\" and the link can no longer be used. to re-invite someone whose invitation expired, send a new invitation. bulk invitations to invite multiple people at once, use promise.allsettled to send invitations in parallel: troubleshooting invitation email not sent verify you have an active email provider in emails > providers in the dashboard. check that invitation emails are enabled in emails > configuration. review your invitation template in email templates  \"invitation already pending\" an invitation with the same email already exists for this organization. you have two options: \"organization membership limit reached\" your organization has hit its membership cap (default: 100). you can increase the limit in your organization settings in the dashboard. invitation link not working the invitation may have expired (older than 7 days). send a new one. the invitation may have been revoked by an admin. make sure you have an /invite/[id] route in your app that handles acceptance. next steps organizations — learn how to create and manage organizations. roles & permissions — control what members can do within an organization. webhooks — get notified when invitations are created, accepted, "
+  },
+  {
+    "slug": "magic-links",
+    "title": "Magic Links",
+    "description": "Passwordless sign-in via email — users click a link to authenticate without a password.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Enable Magic Links",
+        "anchor": "enable-magic-links",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Via the Dashboard",
+        "anchor": "via-the-dashboard",
+        "snippet": "The quickest way to turn on magic links is through your Banata dashboard:"
+      },
+      {
+        "level": 3,
+        "text": "Via the SDK",
+        "anchor": "via-the-sdk",
+        "snippet": "You can also enable magic links programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Client-Side API",
+        "anchor": "client-side-api",
+        "snippet": "Once magic links are enabled, you can trigger them from your frontend using authClient.signIn.magicLink:"
+      },
+      {
+        "level": 3,
+        "text": "Parameters",
+        "anchor": "parameters",
         "snippet": "---"
       },
       {
         "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
+        "text": "Complete Form Example",
+        "anchor": "complete-form-example",
+        "snippet": "Here is a full React component that handles the magic link sign-in flow, including loading state, error handling, and a confirmation screen:"
+      },
+      {
+        "level": 2,
+        "text": "How It Works",
+        "anchor": "how-it-works",
+        "snippet": "When a user requests a magic link, here is what happens behind the scenes:"
       },
       {
         "level": 3,
-        "text": "Invitation Email Not Sent",
-        "anchor": "invitation-email-not-sent",
-        "snippet": "Check Emails > Providers for an active provider Check Emails > Configuration and make sure invitation emails are enabled Check the invitation template in Email Templates"
-      },
-      {
-        "level": 3,
-        "text": "\"Invitation Already Pending\"",
-        "anchor": "invitation-already-pending",
-        "snippet": "An invitation with the same email already exists for this organization. Either: Wait for it to expire (7 days) Revoke the existing invitation first, then send a new one"
-      },
-      {
-        "level": 3,
-        "text": "\"Organization Membership Limit Reached\"",
-        "anchor": "organization-membership-limit-reached",
-        "snippet": "The organization has reached the membershipLimit (default: 100). Increase it in your config:"
+        "text": "New Users vs. Existing Users",
+        "anchor": "new-users-vs-existing-users",
+        "snippet": "Magic links handle both cases automatically:"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Roles & Permissions — Control what members can do within an organization Organizations — Full organization management guide Webhooks — Get notified about invitation events"
-      }
-    ],
-    "searchText": "invitations complete invitation lifecycle — sending, accepting, expiring, and revoking organization invitations. how invitations work invitation data model status lifecycle configuration enable organizations, then configure invitation delivery in the dashboard: default delivery model the default invitation flow is dashboard-first: optional code override if you want your app to own invitation delivery, add email.sendinvitationemail: override callback parameters the sendinvitationemail override receives an object with: client-side api send an invitation list pending invitations accept an invitation revoke an invitation invitation acceptance page build a page at /invite/[id] that handles invitation acceptance: server-side management (admin sdk) expiration invitations expire after 7 days (604,800 seconds), as defined in @banata-auth/shared: bulk invitations to invite multiple users at once, iterate over the emails: audit events --- troubleshooting invitation email not sent check emails > providers for an active provider check emails > configuration and make sure invitation emails are enabled check the invitation template in email templates \"invitation already pending\" an invitation with the same email already exists for this organization. either: wait for it to expire (7 days) revoke the existing invitation first, then send a new one \"organization membership limit reached\" the organization has reached the membershiplimit (default: 100). increase it in your config: what's next roles & permissions — control what members can do within an organization organizations — full organization management guide webhooks — get notified about invitation events"
-  },
-  {
-    "slug": "nextjs",
-    "title": "Next.js",
-    "description": "Proxy Banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an API key.",
-    "section": "Build Your App",
-    "headings": [
-      {
-        "level": 2,
-        "text": "Recommended Model",
-        "anchor": "recommended-model",
-        "snippet": "Create a project in the Banata dashboard. Configure auth methods, providers, and emails for that project. Create a project-scoped API key. Store the key in your server environment."
+        "text": "Token Lifetime",
+        "anchor": "token-lifetime",
+        "snippet": "Magic link tokens expire after 10 minutes. After that, the link becomes invalid and the user needs to request a new one. This short window keeps the authentication flow secure while giving users enoug"
       },
       {
         "level": 2,
-        "text": "Server Helpers",
-        "anchor": "server-helpers",
-        "snippet": ""
+        "text": "Combining with Other Methods",
+        "anchor": "combining-with-other-methods",
+        "snippet": "Magic links work well alongside other authentication methods. A common pattern is to offer magic links as the primary sign-in method with email/password as a fallback:"
       },
       {
         "level": 2,
-        "text": "Route File",
-        "anchor": "route-file",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Read Auth State On The Server",
-        "anchor": "read-auth-state-on-the-server",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Environment Variables",
-        "anchor": "environment-variables",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Programmatic Configuration",
-        "anchor": "programmatic-configuration",
-        "snippet": "@banata-auth/nextjs handles transport and cookies. If you want to change the project's Banata configuration by code, use the SDK:"
-      },
-      {
-        "level": 2,
-        "text": "Troubleshooting",
-        "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "The frontend can render, but auth calls fail",
-        "anchor": "the-frontend-can-render-but-auth-calls-fail",
-        "snippet": "Check:"
-      },
-      {
-        "level": 3,
-        "text": "The app has no session after sign-in",
-        "anchor": "the-app-has-no-session-after-sign-in",
-        "snippet": "Check:"
-      },
-      {
-        "level": 3,
-        "text": "Do I still need projectId or clientId in app code?",
-        "anchor": "do-i-still-need-projectid-or-clientid-in-app-code",
-        "snippet": "Normally no."
-      },
-      {
-        "level": 2,
-        "text": "Related Guides",
-        "anchor": "related-guides",
-        "snippet": "Quick Start React SDK Reference Self-Hosting"
-      }
-    ],
-    "searchText": "next.js proxy banata auth routes through your app, keep cookies on your domain, and bind requests to a project with an api key. recommended model create a project in the banata dashboard. configure auth methods, providers, and emails for that project. create a project-scoped api key. store the key in your server environment. server helpers route file read auth state on the server environment variables programmatic configuration @banata-auth/nextjs handles transport and cookies. if you want to change the project's banata configuration by code, use the sdk: troubleshooting the frontend can render, but auth calls fail check: the app has no session after sign-in check: do i still need projectid or clientid in app code? normally no. related guides quick start react sdk reference self-hosting"
-  },
-  {
-    "slug": "notifications",
-    "title": "Notifications",
-    "description": "Real-time system notifications for critical auth events — user creation, password changes, MFA enrollment, and more.",
-    "section": "Enterprise",
-    "headings": [
-      {
-        "level": 2,
-        "text": "How Notifications Work",
-        "anchor": "how-notifications-work",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Important Events",
-        "anchor": "important-events",
-        "snippet": "Notifications filter the audit log to these high-signal event types:"
-      },
-      {
-        "level": 2,
-        "text": "Notification Data Model",
-        "anchor": "notification-data-model",
-        "snippet": "Each notification is an audit event with this structure:"
-      },
-      {
-        "level": 2,
-        "text": "Viewing Notifications in the Dashboard",
-        "anchor": "viewing-notifications-in-the-dashboard",
-        "snippet": "Navigate to Notifications in the dashboard sidebar Recent important events are displayed as a list"
-      },
-      {
-        "level": 3,
-        "text": "Notification Display",
-        "anchor": "notification-display",
-        "snippet": "Each notification row shows:"
-      },
-      {
-        "level": 3,
-        "text": "Empty State",
-        "anchor": "empty-state",
-        "snippet": "When no important events have occurred, the page shows:"
-      },
-      {
-        "level": 2,
-        "text": "Backend: No Separate Endpoints",
-        "anchor": "backend-no-separate-endpoints",
-        "snippet": "Notifications reuse the existing audit log endpoint — no additional backend endpoints are needed:"
-      },
-      {
-        "level": 2,
-        "text": "Customizing Important Events",
-        "anchor": "customizing-important-events",
-        "snippet": "The set of important events is defined in the dashboard page source. To customize which events appear as notifications, modify the IMPORTANT_ACTIONS array:"
-      },
-      {
-        "level": 2,
-        "text": "Relative Time Formatting",
-        "anchor": "relative-time-formatting",
-        "snippet": "Notifications display timestamps as human-readable relative time:"
-      },
-      {
-        "level": 2,
-        "text": "Notifications vs. Audit Logs",
-        "anchor": "notifications-vs-audit-logs",
-        "snippet": "For comprehensive event querying, filtering, and export, use Audit Logs."
-      },
-      {
-        "level": 2,
-        "text": "Using the Audit Log API for Notifications",
-        "anchor": "using-the-audit-log-api-for-notifications",
-        "snippet": "If you're building a custom notification UI outside the dashboard, use the audit log SDK methods:"
-      },
-      {
-        "level": 2,
-        "text": "Webhook-Based Notifications",
-        "anchor": "webhook-based-notifications",
-        "snippet": "For real-time push notifications (email, Slack, PagerDuty), use Webhooks instead of polling the audit log:"
+        "text": "Rate Limiting",
+        "anchor": "rate-limiting",
+        "snippet": "Magic link requests are rate-limited to prevent abuse:"
       },
       {
         "level": 2,
         "text": "Security Considerations",
         "anchor": "security-considerations",
-        "snippet": "Admin-only access — The notifications page and the underlying audit log endpoint require admin authentication. No sensitive data exposed — Notifications show event types, actor identities, and timesta"
+        "snippet": "Cryptographically signed — Each magic link token is signed so it cannot be forged or tampered with. Single-use — Once a magic link has been used to sign in, the token is invalidated and cannot be reus"
       },
       {
         "level": 2,
@@ -3454,48 +1978,357 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "\"No notifications\" but events are occurring",
-        "anchor": "no-notifications-but-events-are-occurring",
-        "snippet": "Check that the events match the IMPORTANT_ACTIONS list. Common auth events like session.created are intentionally excluded — they're too frequent to be useful as notifications."
+        "text": "\"Magic link expired\"",
+        "anchor": "magic-link-expired",
+        "snippet": "The token is only valid for 10 minutes. Ask the user to request a new one. Common causes:"
       },
       {
         "level": 3,
-        "text": "\"Failed to load notifications\"",
-        "anchor": "failed-to-load-notifications",
-        "snippet": "The audit log endpoint may be unreachable. Check that the Convex backend is running and that your session is valid."
+        "text": "\"Invalid magic link\"",
+        "anchor": "invalid-magic-link",
+        "snippet": "The token signature could not be verified. This can happen if:"
       },
       {
         "level": 3,
-        "text": "\"Timestamps showing 'Invalid Date'\"",
-        "anchor": "timestamps-showing-invalid-date",
-        "snippet": "Ensure the audit events have valid occurredAt timestamps. This can happen if custom audit events are created with malformed date strings."
+        "text": "Email not received",
+        "anchor": "email-not-received",
+        "snippet": "If the magic link email is not arriving:"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Audit Logs — Full audit trail with filtering, search, and export Webhooks — Push notifications for auth events Radar & Bot Protection — Monitor and block suspicious activity"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Email & Password — Add traditional sign-in as a fallback Social OAuth — Let users sign in with Google, GitHub, and more Multi-Factor Auth — Add TOTP as a second factor for extra security"
       }
     ],
-    "searchText": "notifications real-time system notifications for critical auth events — user creation, password changes, mfa enrollment, and more. how notifications work important events notifications filter the audit log to these high-signal event types: notification data model each notification is an audit event with this structure: viewing notifications in the dashboard navigate to notifications in the dashboard sidebar recent important events are displayed as a list notification display each notification row shows: empty state when no important events have occurred, the page shows: backend: no separate endpoints notifications reuse the existing audit log endpoint — no additional backend endpoints are needed: customizing important events the set of important events is defined in the dashboard page source. to customize which events appear as notifications, modify the important_actions array: relative time formatting notifications display timestamps as human-readable relative time: notifications vs. audit logs for comprehensive event querying, filtering, and export, use audit logs. using the audit log api for notifications if you're building a custom notification ui outside the dashboard, use the audit log sdk methods: webhook-based notifications for real-time push notifications (email, slack, pagerduty), use webhooks instead of polling the audit log: security considerations admin-only access — the notifications page and the underlying audit log endpoint require admin authentication. no sensitive data exposed — notifications show event types, actor identities, and timesta troubleshooting \"no notifications\" but events are occurring check that the events match the important_actions list. common auth events like session.created are intentionally excluded — they're too frequent to be useful as notifications. \"failed to load notifications\" the audit log endpoint may be unreachable. check that the convex backend is running and that your session is valid. \"timestamps showing 'invalid date'\" ensure the audit events have valid occurredat timestamps. this can happen if custom audit events are created with malformed date strings. what's next audit logs — full audit trail with filtering, search, and export webhooks — push notifications for auth events radar & bot protection — monitor and block suspicious activity"
+    "searchText": "magic links passwordless sign-in via email — users click a link to authenticate without a password. enable magic links via the dashboard the quickest way to turn on magic links is through your banata dashboard: via the sdk you can also enable magic links programmatically: client-side api once magic links are enabled, you can trigger them from your frontend using authclient.signin.magiclink: parameters --- complete form example here is a full react component that handles the magic link sign-in flow, including loading state, error handling, and a confirmation screen: how it works when a user requests a magic link, here is what happens behind the scenes: new users vs. existing users magic links handle both cases automatically: token lifetime magic link tokens expire after 10 minutes. after that, the link becomes invalid and the user needs to request a new one. this short window keeps the authentication flow secure while giving users enoug combining with other methods magic links work well alongside other authentication methods. a common pattern is to offer magic links as the primary sign-in method with email/password as a fallback: rate limiting magic link requests are rate-limited to prevent abuse: security considerations cryptographically signed — each magic link token is signed so it cannot be forged or tampered with. single-use — once a magic link has been used to sign in, the token is invalidated and cannot be reus troubleshooting \"magic link expired\" the token is only valid for 10 minutes. ask the user to request a new one. common causes: \"invalid magic link\" the token signature could not be verified. this can happen if: email not received if the magic link email is not arriving: next steps email & password — add traditional sign-in as a fallback social oauth — let users sign in with google, github, and more multi-factor auth — add totp as a second factor for extra security"
+  },
+  {
+    "slug": "mfa",
+    "title": "Multi-Factor Authentication",
+    "description": "Add TOTP-based two-factor authentication with authenticator apps and backup codes.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "What is TOTP-Based MFA?",
+        "anchor": "what-is-totp-based-mfa",
+        "snippet": "TOTP (Time-based One-Time Password) is the industry-standard algorithm behind most authenticator apps. Here is how it works:"
+      },
+      {
+        "level": 2,
+        "text": "Enabling MFA",
+        "anchor": "enabling-mfa",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Step 1: Turn It On in the Dashboard",
+        "anchor": "step-1-turn-it-on-in-the-dashboard",
+        "snippet": "Open your project in the Banata Auth Dashboard. Navigate to Authentication > Methods. Find Two-Factor Authentication (TOTP) and toggle it on. Save your changes."
+      },
+      {
+        "level": 3,
+        "text": "Step 2: Add It to Your Client",
+        "anchor": "step-2-add-it-to-your-client",
+        "snippet": "Once MFA is enabled in the dashboard, you can use the twoFactor methods on your auth client. No additional SDK configuration is required beyond your standard auth client setup:"
+      },
+      {
+        "level": 2,
+        "text": "How the Setup Flow Works",
+        "anchor": "how-the-setup-flow-works",
+        "snippet": "When a user decides to enable MFA on their account, the flow looks like this:"
+      },
+      {
+        "level": 2,
+        "text": "Client API",
+        "anchor": "client-api",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Enable Two-Factor Authentication",
+        "anchor": "enable-two-factor-authentication",
+        "snippet": "Call authClient.twoFactor.enable() to start MFA setup. You must pass the user's current password for re-authentication:"
+      },
+      {
+        "level": 3,
+        "text": "Verify a TOTP Code",
+        "anchor": "verify-a-totp-code",
+        "snippet": "After the user scans the QR code, have them enter a 6-digit code from their authenticator app to confirm everything is working:"
+      },
+      {
+        "level": 3,
+        "text": "Disable Two-Factor Authentication",
+        "anchor": "disable-two-factor-authentication",
+        "snippet": "To let users turn off MFA, call authClient.twoFactor.disable() with their current password:"
+      },
+      {
+        "level": 2,
+        "text": "Generating a QR Code",
+        "anchor": "generating-a-qr-code",
+        "snippet": "The totpURI returned by authClient.twoFactor.enable() is a standard otpauth:// URI. You can render it as a QR code using any QR library. Here is an example with qrcode.react:"
+      },
+      {
+        "level": 2,
+        "text": "Backup Codes",
+        "anchor": "backup-codes",
+        "snippet": "When MFA is enabled, backup codes are generated automatically. These are emergency recovery codes your users can use if they lose access to their authenticator app."
+      },
+      {
+        "level": 3,
+        "text": "Backup Code Format",
+        "anchor": "backup-code-format",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Displaying Backup Codes",
+        "anchor": "displaying-backup-codes",
+        "snippet": "Show backup codes exactly once, immediately after MFA setup. Give your users a clear way to copy or save them:"
+      },
+      {
+        "level": 3,
+        "text": "Signing In with a Backup Code",
+        "anchor": "signing-in-with-a-backup-code",
+        "snippet": "During an MFA challenge, if the user cannot access their authenticator app, they can use a backup code instead:"
+      },
+      {
+        "level": 2,
+        "text": "Complete MFA Setup Component",
+        "anchor": "complete-mfa-setup-component",
+        "snippet": "Here is a full React component that walks users through the entire MFA setup process in four steps: enter password, scan QR code, verify code, and save backup codes."
+      },
+      {
+        "level": 2,
+        "text": "MFA Challenge During Sign-In",
+        "anchor": "mfa-challenge-during-sign-in",
+        "snippet": "When a user with MFA enabled signs in, the server returns a response indicating that a TOTP code is required before the session can be created. You need to detect this and show a second input step."
+      },
+      {
+        "level": 3,
+        "text": "Detecting the MFA Challenge",
+        "anchor": "detecting-the-mfa-challenge",
+        "snippet": "After calling authClient.signIn.email(), check whether the response indicates an MFA challenge:"
+      },
+      {
+        "level": 3,
+        "text": "Full Sign-In Component with MFA Support",
+        "anchor": "full-sign-in-component-with-mfa-support",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Security Considerations",
+        "anchor": "security-considerations",
+        "snippet": "Keep these best practices in mind when implementing MFA:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "\"Invalid code\" errors during setup",
+        "anchor": "invalid-code-errors-during-setup",
+        "snippet": "If the user scans the QR code but the verification code is rejected, check the following:"
+      },
+      {
+        "level": 3,
+        "text": "Users locked out after losing their device",
+        "anchor": "users-locked-out-after-losing-their-device",
+        "snippet": "If a user loses access to their authenticator app and has no backup codes:"
+      },
+      {
+        "level": 3,
+        "text": "MFA challenge not appearing during sign-in",
+        "anchor": "mfa-challenge-not-appearing-during-sign-in",
+        "snippet": "If MFA-enabled users can sign in without being prompted for a code:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Organizations — Set up multi-tenant workspaces for your users. Roles & Permissions — Add fine-grained access control to your app. Webhooks — Get notified about authentication events including MFA chan"
+      }
+    ],
+    "searchText": "multi-factor authentication add totp-based two-factor authentication with authenticator apps and backup codes. what is totp-based mfa? totp (time-based one-time password) is the industry-standard algorithm behind most authenticator apps. here is how it works: enabling mfa step 1: turn it on in the dashboard open your project in the banata auth dashboard. navigate to authentication > methods. find two-factor authentication (totp) and toggle it on. save your changes. step 2: add it to your client once mfa is enabled in the dashboard, you can use the twofactor methods on your auth client. no additional sdk configuration is required beyond your standard auth client setup: how the setup flow works when a user decides to enable mfa on their account, the flow looks like this: client api enable two-factor authentication call authclient.twofactor.enable() to start mfa setup. you must pass the user's current password for re-authentication: verify a totp code after the user scans the qr code, have them enter a 6-digit code from their authenticator app to confirm everything is working: disable two-factor authentication to let users turn off mfa, call authclient.twofactor.disable() with their current password: generating a qr code the totpuri returned by authclient.twofactor.enable() is a standard otpauth:// uri. you can render it as a qr code using any qr library. here is an example with qrcode.react: backup codes when mfa is enabled, backup codes are generated automatically. these are emergency recovery codes your users can use if they lose access to their authenticator app. backup code format displaying backup codes show backup codes exactly once, immediately after mfa setup. give your users a clear way to copy or save them: signing in with a backup code during an mfa challenge, if the user cannot access their authenticator app, they can use a backup code instead: complete mfa setup component here is a full react component that walks users through the entire mfa setup process in four steps: enter password, scan qr code, verify code, and save backup codes. mfa challenge during sign-in when a user with mfa enabled signs in, the server returns a response indicating that a totp code is required before the session can be created. you need to detect this and show a second input step. detecting the mfa challenge after calling authclient.signin.email(), check whether the response indicates an mfa challenge: full sign-in component with mfa support security considerations keep these best practices in mind when implementing mfa: troubleshooting \"invalid code\" errors during setup if the user scans the qr code but the verification code is rejected, check the following: users locked out after losing their device if a user loses access to their authenticator app and has no backup codes: mfa challenge not appearing during sign-in if mfa-enabled users can sign in without being prompted for a code: next steps organizations — set up multi-tenant workspaces for your users. roles & permissions — add fine-grained access control to your app. webhooks — get notified about authentication events including mfa chan"
+  },
+  {
+    "slug": "nextjs",
+    "title": "Next.js",
+    "description": "Integrate Banata Auth into your Next.js app with server-side auth helpers, route proxying, and session management.",
+    "section": "Build Your App",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Setup",
+        "anchor": "setup",
+        "snippet": "If you haven't set up the basics yet, follow the Quick Start guide first. Here's a summary of what you need:"
+      },
+      {
+        "level": 3,
+        "text": "1. Environment Variables",
+        "anchor": "1-environment-variables",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "2. Server Auth Helpers",
+        "anchor": "2-server-auth-helpers",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "3. Auth Route",
+        "anchor": "3-auth-route",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Server-Side Auth Helpers",
+        "anchor": "server-side-auth-helpers",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Checking Authentication",
+        "anchor": "checking-authentication",
+        "snippet": "Use isAuthenticated in server components and route handlers to check if the current request has a valid session:"
+      },
+      {
+        "level": 3,
+        "text": "Getting the Auth Token",
+        "anchor": "getting-the-auth-token",
+        "snippet": "Use getToken when you need the raw auth token for server-side API calls:"
+      },
+      {
+        "level": 3,
+        "text": "Fetching Data with Auth Context",
+        "anchor": "fetching-data-with-auth-context",
+        "snippet": "If your app also uses Convex, the auth helpers let you run authenticated Convex queries and mutations from the server:"
+      },
+      {
+        "level": 2,
+        "text": "How the Proxy Works",
+        "anchor": "how-the-proxy-works",
+        "snippet": "When your browser calls /api/auth/sign-in/email, the Next.js route handler proxies that request to the Banata backend. The response (including session cookies) is passed back to the browser on your ap"
+      },
+      {
+        "level": 2,
+        "text": "Programmatic Configuration",
+        "anchor": "programmatic-configuration",
+        "snippet": "The @banata-auth/nextjs package handles transport and authentication. To change your project's configuration by code (auth methods, branding, providers), use the SDK:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Auth calls fail with a network error",
+        "anchor": "auth-calls-fail-with-a-network-error",
+        "snippet": "Check that BANATA_AUTH_URL is correct if you overrode it. Verify BANATA_API_KEY is set in your environment."
+      },
+      {
+        "level": 3,
+        "text": "No session after sign-in",
+        "anchor": "no-session-after-sign-in",
+        "snippet": "Make sure the auth route exists at src/app/api/auth/[...all]/route.ts. Verify /api/auth/get-session returns session data in your browser. Ensure your app and the auth route are on the same origin."
+      },
+      {
+        "level": 3,
+        "text": "\"Do I need a projectId or clientId?\"",
+        "anchor": "do-i-need-a-projectid-or-clientid",
+        "snippet": "No. The API key handles project binding automatically."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "React Components — Add pre-built UI and auth hooks SDK Reference — Manage Banata resources by code Email & Password — Configure email/password sign-in"
+      }
+    ],
+    "searchText": "next.js integrate banata auth into your next.js app with server-side auth helpers, route proxying, and session management. setup if you haven't set up the basics yet, follow the quick start guide first. here's a summary of what you need: 1. environment variables 2. server auth helpers 3. auth route server-side auth helpers checking authentication use isauthenticated in server components and route handlers to check if the current request has a valid session: getting the auth token use gettoken when you need the raw auth token for server-side api calls: fetching data with auth context if your app also uses convex, the auth helpers let you run authenticated convex queries and mutations from the server: how the proxy works when your browser calls /api/auth/sign-in/email, the next.js route handler proxies that request to the banata backend. the response (including session cookies) is passed back to the browser on your ap programmatic configuration the @banata-auth/nextjs package handles transport and authentication. to change your project's configuration by code (auth methods, branding, providers), use the sdk: troubleshooting auth calls fail with a network error check that banata_auth_url is correct if you overrode it. verify banata_api_key is set in your environment. no session after sign-in make sure the auth route exists at src/app/api/auth/[...all]/route.ts. verify /api/auth/get-session returns session data in your browser. ensure your app and the auth route are on the same origin. \"do i need a projectid or clientid?\" no. the api key handles project binding automatically. next steps react components — add pre-built ui and auth hooks sdk reference — manage banata resources by code email & password — configure email/password sign-in"
+  },
+  {
+    "slug": "notifications",
+    "title": "Notifications",
+    "description": "A focused view of the auth events that matter most — new users, security changes, organization activity, and key management.",
+    "section": "Operate Your Project",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Tracked Events",
+        "anchor": "tracked-events",
+        "snippet": "Notifications surface these high-signal event types:"
+      },
+      {
+        "level": 2,
+        "text": "Viewing Notifications in the Dashboard",
+        "anchor": "viewing-notifications-in-the-dashboard",
+        "snippet": "Open your project in the Banata dashboard. Click Notifications in the sidebar."
+      },
+      {
+        "level": 2,
+        "text": "Building Custom Notification Logic",
+        "anchor": "building-custom-notification-logic",
+        "snippet": "If you want to surface notifications in your own application or build custom alerting, use the SDK's audit log methods to fetch and filter events programmatically."
+      },
+      {
+        "level": 2,
+        "text": "Webhook-Based Notifications",
+        "anchor": "webhook-based-notifications",
+        "snippet": "For real-time push notifications — sending alerts to Slack, email, PagerDuty, or any other external service — use Webhooks instead of polling. Webhooks push events to your endpoint the moment they hap"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": "No notifications showing, but events are happening. Check the full Audit Logs page to confirm events are being recorded. Common high-frequency events like session.created are intentionally excluded fr"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Audit Logs — Search, filter, and export your full event history Webhooks — Push real-time event notifications to external services Radar & Bot Protection — Monitor and block suspicious authentication "
+      }
+    ],
+    "searchText": "notifications a focused view of the auth events that matter most — new users, security changes, organization activity, and key management. tracked events notifications surface these high-signal event types: viewing notifications in the dashboard open your project in the banata dashboard. click notifications in the sidebar. building custom notification logic if you want to surface notifications in your own application or build custom alerting, use the sdk's audit log methods to fetch and filter events programmatically. webhook-based notifications for real-time push notifications — sending alerts to slack, email, pagerduty, or any other external service — use webhooks instead of polling. webhooks push events to your endpoint the moment they hap troubleshooting no notifications showing, but events are happening. check the full audit logs page to confirm events are being recorded. common high-frequency events like session.created are intentionally excluded fr next steps audit logs — search, filter, and export your full event history webhooks — push real-time event notifications to external services radar & bot protection — monitor and block suspicious authentication "
   },
   {
     "slug": "organizations-overview",
     "title": "Organizations",
-    "description": "Multi-tenant workspaces with members, roles, invitations, and organization switching — the foundation for B2B SaaS.",
-    "section": "Enterprise",
+    "description": "Multi-tenant workspaces with members, roles, and invitations — the foundation for B2B applications.",
+    "section": "Organizations & RBAC",
     "headings": [
       {
         "level": 2,
-        "text": "Configuration",
-        "anchor": "configuration",
-        "snippet": "Enable organizations in your BanataAuthConfig:"
+        "text": "Enabling Organizations",
+        "anchor": "enabling-organizations",
+        "snippet": ""
       },
       {
         "level": 3,
-        "text": "Organization Config Options",
-        "anchor": "organization-config-options",
-        "snippet": "---"
+        "text": "1. Turn it on in the dashboard",
+        "anchor": "1-turn-it-on-in-the-dashboard",
+        "snippet": "Open your project in the Banata dashboard and navigate to Authentication > Methods. Toggle Organization to enabled."
+      },
+      {
+        "level": 3,
+        "text": "2. Configure options in your SDK client",
+        "anchor": "2-configure-options-in-your-sdk-client",
+        "snippet": "Once organizations are enabled in the dashboard, you can fine-tune behavior through the SDK configuration:"
+      },
+      {
+        "level": 3,
+        "text": "Configuration Options",
+        "anchor": "configuration-options",
+        "snippet": "These options are available in the dashboard under Authentication > Methods > Organization:"
       },
       {
         "level": 2,
@@ -3519,13 +2352,13 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Invitation",
         "anchor": "invitation",
-        "snippet": ""
+        "snippet": "Invitations track pending membership offers. For the full invitation lifecycle, see the Invitations guide."
       },
       {
         "level": 2,
         "text": "Client-Side API",
         "anchor": "client-side-api",
-        "snippet": ""
+        "snippet": "All client-side operations use the authClient you set up during installation."
       },
       {
         "level": 3,
@@ -3543,13 +2376,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Set Active Organization",
         "anchor": "set-active-organization",
-        "snippet": "When a user belongs to multiple organizations, they switch between them:"
-      },
-      {
-        "level": 3,
-        "text": "Get Active Organization",
-        "anchor": "get-active-organization",
-        "snippet": ""
+        "snippet": "When a user belongs to multiple organizations, they switch between them. The active organization is stored in the session:"
       },
       {
         "level": 3,
@@ -3573,13 +2400,13 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "useOrganization()",
         "anchor": "useorganization",
-        "snippet": "Returns the current active organization:"
+        "snippet": "Returns the current active organization and loading state:"
       },
       {
         "level": 3,
         "text": "useBanataAuth()",
         "anchor": "usebanataauth",
-        "snippet": "The full context includes organization data:"
+        "snippet": "The full auth context includes organization data alongside user and session:"
       },
       {
         "level": 2,
@@ -3613,9 +2440,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
+        "text": "Organization Switcher Component",
+        "anchor": "organization-switcher-component",
+        "snippet": "A common UI pattern is an organization switcher in your navigation. Here is a minimal example:"
+      },
+      {
+        "level": 2,
+        "text": "Server-Side Management (Admin SDK)",
+        "anchor": "server-side-management-admin-sdk",
+        "snippet": "You can manage organizations from your backend using the admin SDK. This is useful for admin panels, automated provisioning, or server-side workflows:"
+      },
+      {
+        "level": 2,
         "text": "Invitation Management",
         "anchor": "invitation-management",
-        "snippet": "See the dedicated Invitations guide for the complete invitation lifecycle."
+        "snippet": "You can send, accept, and revoke invitations from the client SDK. For the complete invitation lifecycle, email template configuration, and advanced flows, see the dedicated Invitations guide."
       },
       {
         "level": 3,
@@ -3637,659 +2476,680 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Server-Side Management (Admin SDK)",
-        "anchor": "server-side-management-admin-sdk",
-        "snippet": "Use the SDK to manage organizations from your backend:"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Invitations — Complete invitation lifecycle and email configuration Roles & Permissions — Fine-grained access control within organizations Webhooks — Get notified about organization events"
+      }
+    ],
+    "searchText": "organizations multi-tenant workspaces with members, roles, and invitations — the foundation for b2b applications. enabling organizations 1. turn it on in the dashboard open your project in the banata dashboard and navigate to authentication > methods. toggle organization to enabled. 2. configure options in your sdk client once organizations are enabled in the dashboard, you can fine-tune behavior through the sdk configuration: configuration options these options are available in the dashboard under authentication > methods > organization: data model organization member invitation invitations track pending membership offers. for the full invitation lifecycle, see the invitations guide. client-side api all client-side operations use the authclient you set up during installation. create an organization list user's organizations set active organization when a user belongs to multiple organizations, they switch between them. the active organization is stored in the session: update an organization delete an organization react hooks useorganization() returns the current active organization and loading state: usebanataauth() the full auth context includes organization data alongside user and session: member management list members add a member update member role remove a member organization switcher component a common ui pattern is an organization switcher in your navigation. here is a minimal example: server-side management (admin sdk) you can manage organizations from your backend using the admin sdk. this is useful for admin panels, automated provisioning, or server-side workflows: invitation management you can send, accept, and revoke invitations from the client sdk. for the complete invitation lifecycle, email template configuration, and advanced flows, see the dedicated invitations guide. send an invitation accept an invitation revoke an invitation next steps invitations — complete invitation lifecycle and email configuration roles & permissions — fine-grained access control within organizations webhooks — get notified about organization events"
+  },
+  {
+    "slug": "passkeys",
+    "title": "Passkeys",
+    "description": "WebAuthn-based passwordless authentication using biometrics, security keys, or device credentials.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Enabling Passkeys",
+        "anchor": "enabling-passkeys",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Go to Authentication > Methods in your project. Toggle on Passkeys. Configure the Passkey Settings panel that appears (see below)."
+      },
+      {
+        "level": 3,
+        "text": "From the SDK",
+        "anchor": "from-the-sdk",
+        "snippet": "If you prefer to configure passkeys programmatically, use saveDashboardConfig:"
       },
       {
         "level": 2,
-        "text": "Organization Switcher Component",
-        "anchor": "organization-switcher-component",
-        "snippet": "A common UI pattern is an organization switcher in the navigation:"
+        "text": "Configuration Options",
+        "anchor": "configuration-options",
+        "snippet": "> Important: The rpId must be a valid domain that matches or is a registrable suffix of the page origin. For example, if your app is at https://app.mycompany.com, the rpId can be \"app.mycompany.com\" o"
+      },
+      {
+        "level": 3,
+        "text": "Environment-Specific Values",
+        "anchor": "environment-specific-values",
+        "snippet": "In most setups, your RP ID and origin differ between development and production. A common pattern is to pass environment-specific values when calling saveDashboardConfig, or simply configure them sepa"
       },
       {
         "level": 2,
-        "text": "Database Tables",
-        "anchor": "database-tables",
-        "snippet": "Organizations use these Convex tables:"
+        "text": "Browser and Platform Support",
+        "anchor": "browser-and-platform-support",
+        "snippet": "Passkeys are supported on all modern browsers and platforms:"
+      },
+      {
+        "level": 3,
+        "text": "Cross-Device Authentication",
+        "anchor": "cross-device-authentication",
+        "snippet": "Modern passkey implementations support cross-device authentication -- a user can use their phone to authenticate on a desktop browser via Bluetooth proximity. This is handled natively by the browser a"
       },
       {
         "level": 2,
-        "text": "Audit Events",
-        "anchor": "audit-events",
+        "text": "Client-Side API",
+        "anchor": "client-side-api",
+        "snippet": "Banata Auth provides four passkey methods on the auth client."
+      },
+      {
+        "level": 3,
+        "text": "Register a Passkey",
+        "anchor": "register-a-passkey",
+        "snippet": "Users must be signed in to register a passkey. This is typically called from a security settings page:"
+      },
+      {
+        "level": 3,
+        "text": "Sign In with a Passkey",
+        "anchor": "sign-in-with-a-passkey",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "List Registered Passkeys",
+        "anchor": "list-registered-passkeys",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Delete a Passkey",
+        "anchor": "delete-a-passkey",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Registration Component Example",
+        "anchor": "registration-component-example",
+        "snippet": "Here is a complete React component that lets users manage their passkeys from a settings page:"
+      },
+      {
+        "level": 2,
+        "text": "Sign-In with Passkey Example",
+        "anchor": "sign-in-with-passkey-example",
+        "snippet": "You can add a passkey sign-in button alongside your existing sign-in form:"
+      },
+      {
+        "level": 2,
+        "text": "Resident vs. Non-Resident Credentials",
+        "anchor": "resident-vs-non-resident-credentials",
+        "snippet": "WebAuthn defines two types of credentials:"
+      },
+      {
+        "level": 2,
+        "text": "Combining with Other Methods",
+        "anchor": "combining-with-other-methods",
+        "snippet": "Passkeys work well alongside other authentication methods. A common pattern is to let users sign up with email and password, then register a passkey from their account settings for faster future sign-"
+      },
+      {
+        "level": 2,
+        "text": "Security Advantages Over Passwords",
+        "anchor": "security-advantages-over-passwords",
         "snippet": "---"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Invitations — Complete invitation lifecycle and flows Roles & Permissions — Fine-grained access control within organizations Webhooks — Get notified about organization events"
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "\"WebAuthn not supported\"",
+        "anchor": "webauthn-not-supported",
+        "snippet": "The user's browser does not support the WebAuthn API. This is rare on modern browsers but can occur in older versions or embedded browser views (e.g., in-app browsers). You can check for support befor"
+      },
+      {
+        "level": 3,
+        "text": "\"Registration cancelled\"",
+        "anchor": "registration-cancelled",
+        "snippet": "The user dismissed the browser's passkey prompt. This is not an error -- simply allow the user to try again."
+      },
+      {
+        "level": 3,
+        "text": "\"Origin mismatch\"",
+        "anchor": "origin-mismatch",
+        "snippet": "The origin in your passkey configuration does not match the actual page origin. Make sure it matches exactly, including protocol and port. For example, http://localhost:3000 is not the same as http://"
+      },
+      {
+        "level": 3,
+        "text": "\"Passkey not found\"",
+        "anchor": "passkey-not-found",
+        "snippet": "No registered credentials match the rpId. This can happen if:"
+      },
+      {
+        "level": 3,
+        "text": "Users locked out after losing a device",
+        "anchor": "users-locked-out-after-losing-a-device",
+        "snippet": "If a user's only passkey was on a lost device, they need a fallback sign-in method. Always enable at least one alternative method (email/password, magic link, or social OAuth) so users can recover acc"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Email OTP -- Passwordless authentication via email codes Multi-Factor Auth -- Add TOTP as a second factor alongside passkeys Email & Password -- Traditional authentication as a fallback"
       }
     ],
-    "searchText": "organizations multi-tenant workspaces with members, roles, invitations, and organization switching — the foundation for b2b saas. configuration enable organizations in your banataauthconfig: organization config options --- data model organization member invitation client-side api create an organization list user's organizations set active organization when a user belongs to multiple organizations, they switch between them: get active organization update an organization delete an organization react hooks useorganization() returns the current active organization: usebanataauth() the full context includes organization data: member management list members add a member update member role remove a member invitation management see the dedicated invitations guide for the complete invitation lifecycle. send an invitation accept an invitation revoke an invitation server-side management (admin sdk) use the sdk to manage organizations from your backend: organization switcher component a common ui pattern is an organization switcher in the navigation: database tables organizations use these convex tables: audit events --- what's next invitations — complete invitation lifecycle and flows roles & permissions — fine-grained access control within organizations webhooks — get notified about organization events"
+    "searchText": "passkeys webauthn-based passwordless authentication using biometrics, security keys, or device credentials. enabling passkeys from the dashboard go to authentication > methods in your project. toggle on passkeys. configure the passkey settings panel that appears (see below). from the sdk if you prefer to configure passkeys programmatically, use savedashboardconfig: configuration options > important: the rpid must be a valid domain that matches or is a registrable suffix of the page origin. for example, if your app is at https://app.mycompany.com, the rpid can be \"app.mycompany.com\" o environment-specific values in most setups, your rp id and origin differ between development and production. a common pattern is to pass environment-specific values when calling savedashboardconfig, or simply configure them sepa browser and platform support passkeys are supported on all modern browsers and platforms: cross-device authentication modern passkey implementations support cross-device authentication -- a user can use their phone to authenticate on a desktop browser via bluetooth proximity. this is handled natively by the browser a client-side api banata auth provides four passkey methods on the auth client. register a passkey users must be signed in to register a passkey. this is typically called from a security settings page: sign in with a passkey list registered passkeys delete a passkey registration component example here is a complete react component that lets users manage their passkeys from a settings page: sign-in with passkey example you can add a passkey sign-in button alongside your existing sign-in form: resident vs. non-resident credentials webauthn defines two types of credentials: combining with other methods passkeys work well alongside other authentication methods. a common pattern is to let users sign up with email and password, then register a passkey from their account settings for faster future sign- security advantages over passwords --- troubleshooting \"webauthn not supported\" the user's browser does not support the webauthn api. this is rare on modern browsers but can occur in older versions or embedded browser views (e.g., in-app browsers). you can check for support befor \"registration cancelled\" the user dismissed the browser's passkey prompt. this is not an error -- simply allow the user to try again. \"origin mismatch\" the origin in your passkey configuration does not match the actual page origin. make sure it matches exactly, including protocol and port. for example, http://localhost:3000 is not the same as http:// \"passkey not found\" no registered credentials match the rpid. this can happen if: users locked out after losing a device if a user's only passkey was on a lost device, they need a fallback sign-in method. always enable at least one alternative method (email/password, magic link, or social oauth) so users can recover acc next steps email otp -- passwordless authentication via email codes multi-factor auth -- add totp as a second factor alongside passkeys email & password -- traditional authentication as a fallback"
   },
   {
     "slug": "project-structure",
     "title": "Project Structure",
-    "description": "What you add to your app, what Banata owns, and which files matter for the normal customer integration path.",
+    "description": "The files and packages you add to your app to integrate with Banata Auth, and what Banata manages for you.",
     "section": "Start Here",
     "headings": [
       {
         "level": 2,
-        "text": "What Lives In Your App",
-        "anchor": "what-lives-in-your-app",
-        "snippet": "For the normal integration path, your app only needs a small auth surface:"
+        "text": "What You Add to Your App",
+        "anchor": "what-you-add-to-your-app",
+        "snippet": "A typical Banata integration adds these files to your Next.js project:"
       },
       {
         "level": 2,
-        "text": "What Lives In Banata",
-        "anchor": "what-lives-in-banata",
-        "snippet": "Banata owns these concerns per project:"
+        "text": "What Banata Manages",
+        "anchor": "what-banata-manages",
+        "snippet": "Banata owns the auth backend and all the data associated with it. Per project, Banata manages:"
       },
       {
         "level": 2,
-        "text": "Typical App Structure",
-        "anchor": "typical-app-structure",
+        "text": "What You Don't Need",
+        "anchor": "what-you-dont-need",
+        "snippet": "When using Banata Auth (hosted or self-hosted), your app does not need:"
+      },
+      {
+        "level": 2,
+        "text": "File Reference",
+        "anchor": "file-reference",
         "snippet": ""
       },
       {
-        "level": 2,
-        "text": "What You Do Not Add",
-        "anchor": "what-you-do-not-add",
-        "snippet": "For the normal Banata integration path, you do not add:"
+        "level": 3,
+        "text": "src/lib/auth-server.ts",
+        "anchor": "srclibauth-serverts",
+        "snippet": "Initializes the server-side connection to Banata. This is where you pass your API key."
       },
       {
-        "level": 2,
-        "text": "Self-Hosting Changes Infrastructure, Not The Customer API",
-        "anchor": "self-hosting-changes-infrastructure-not-the-customer-api",
-        "snippet": "If you self-host Banata, you deploy the Banata platform itself. Customer apps still:"
+        "level": 3,
+        "text": "src/lib/auth-client.ts",
+        "anchor": "srclibauth-clientts",
+        "snippet": "Creates the browser-side auth client that your React components use."
+      },
+      {
+        "level": 3,
+        "text": "src/app/api/auth/[...all]/route.ts",
+        "anchor": "srcappapiauthallroutets",
+        "snippet": "Catch-all route that proxies auth requests from your app to Banata."
       },
       {
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "Quick Start Projects Next.js Self-Hosting"
+        "snippet": "Quick Start — Step-by-step setup guide Next.js Integration — Deep dive into the Next.js package React Components — UI components and hooks"
       }
     ],
-    "searchText": "project structure what you add to your app, what banata owns, and which files matter for the normal customer integration path. what lives in your app for the normal integration path, your app only needs a small auth surface: what lives in banata banata owns these concerns per project: typical app structure what you do not add for the normal banata integration path, you do not add: self-hosting changes infrastructure, not the customer api if you self-host banata, you deploy the banata platform itself. customer apps still: next steps quick start projects next.js self-hosting"
+    "searchText": "project structure the files and packages you add to your app to integrate with banata auth, and what banata manages for you. what you add to your app a typical banata integration adds these files to your next.js project: what banata manages banata owns the auth backend and all the data associated with it. per project, banata manages: what you don't need when using banata auth (hosted or self-hosted), your app does not need: file reference src/lib/auth-server.ts initializes the server-side connection to banata. this is where you pass your api key. src/lib/auth-client.ts creates the browser-side auth client that your react components use. src/app/api/auth/[...all]/route.ts catch-all route that proxies auth requests from your app to banata. next steps quick start — step-by-step setup guide next.js integration — deep dive into the next.js package react components — ui components and hooks"
   },
   {
     "slug": "projects-environments",
     "title": "Projects",
-    "description": "Projects are the isolation boundary for users, organizations, roles, branding, and configuration.",
+    "description": "Projects are the isolation boundary in Banata Auth. Each project has its own users, organizations, roles, and configuration.",
     "section": "Start Here",
     "headings": [
       {
         "level": 2,
-        "text": "What A Project Is",
-        "anchor": "what-a-project-is",
-        "snippet": "A project is not just a label in the sidebar. It is the scope boundary for:"
+        "text": "What a Project Contains",
+        "anchor": "what-a-project-contains",
+        "snippet": "Each project is a completely independent auth environment with its own:"
       },
       {
         "level": 2,
-        "text": "What The Default Project Actually Means",
-        "anchor": "what-the-default-project-actually-means",
-        "snippet": "On the first dashboard load, Banata calls ensure-default for the signed-in dashboard admin."
+        "text": "When to Use Multiple Projects",
+        "anchor": "when-to-use-multiple-projects",
+        "snippet": "One project per application is the most common setup. But there are good reasons to use multiple projects:"
       },
       {
         "level": 2,
-        "text": "Why The Project Switcher Exists",
-        "anchor": "why-the-project-switcher-exists",
-        "snippet": "The project switcher exists because nearly every management surface in Banata is project-scoped."
+        "text": "Your Default Project",
+        "anchor": "your-default-project",
+        "snippet": "When you first sign in to the Banata dashboard, a default project is automatically created for you. This is your starting point — you can use it immediately or create additional projects as needed."
       },
       {
         "level": 2,
-        "text": "How App Scope Works",
-        "anchor": "how-app-scope-works",
-        "snippet": "For a customer app, the normal scope rules are:"
+        "text": "Switching Projects in the Dashboard",
+        "anchor": "switching-projects-in-the-dashboard",
+        "snippet": "The project switcher in the dashboard lets you navigate between your projects. When you switch projects, the entire dashboard context changes — the users list, organizations, roles, providers, email t"
       },
       {
         "level": 2,
-        "text": "What Is Shared Across Projects",
-        "anchor": "what-is-shared-across-projects",
-        "snippet": "The main thing shared across projects is the dashboard admin identity: the person who signs in to the Banata dashboard and manages projects."
+        "text": "How Your App Connects to a Project",
+        "anchor": "how-your-app-connects-to-a-project",
+        "snippet": "Your app connects to a project through an API key:"
       },
       {
         "level": 2,
-        "text": "What To Verify In Production",
-        "anchor": "what-to-verify-in-production",
-        "snippet": "When you are testing project isolation, verify all of these:"
-      },
-      {
-        "level": 2,
-        "text": "Programmatic Access",
-        "anchor": "programmatic-access",
-        "snippet": "The SDK exposes project lifecycle operations, but the normal product flow is still dashboard-first:"
+        "text": "Managing Projects with the SDK",
+        "anchor": "managing-projects-with-the-sdk",
+        "snippet": "You can list and manage projects programmatically using the admin SDK:"
       },
       {
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "API Keys Quick Start SDK Reference Roles & Permissions"
+        "snippet": "API Keys — How to create and manage project-scoped API keys Project Structure — What files to add to your app Quick Start — Set up your first app"
       }
     ],
-    "searchText": "projects projects are the isolation boundary for users, organizations, roles, branding, and configuration. what a project is a project is not just a label in the sidebar. it is the scope boundary for: what the default project actually means on the first dashboard load, banata calls ensure-default for the signed-in dashboard admin. why the project switcher exists the project switcher exists because nearly every management surface in banata is project-scoped. how app scope works for a customer app, the normal scope rules are: what is shared across projects the main thing shared across projects is the dashboard admin identity: the person who signs in to the banata dashboard and manages projects. what to verify in production when you are testing project isolation, verify all of these: programmatic access the sdk exposes project lifecycle operations, but the normal product flow is still dashboard-first: next steps api keys quick start sdk reference roles & permissions"
+    "searchText": "projects projects are the isolation boundary in banata auth. each project has its own users, organizations, roles, and configuration. what a project contains each project is a completely independent auth environment with its own: when to use multiple projects one project per application is the most common setup. but there are good reasons to use multiple projects: your default project when you first sign in to the banata dashboard, a default project is automatically created for you. this is your starting point — you can use it immediately or create additional projects as needed. switching projects in the dashboard the project switcher in the dashboard lets you navigate between your projects. when you switch projects, the entire dashboard context changes — the users list, organizations, roles, providers, email t how your app connects to a project your app connects to a project through an api key: managing projects with the sdk you can list and manage projects programmatically using the admin sdk: next steps api keys — how to create and manage project-scoped api keys project structure — what files to add to your app quick start — set up your first app"
   },
   {
     "slug": "quickstart",
     "title": "Quick Start",
-    "description": "Connect a Next.js app to Banata with a project-scoped API key and app-owned auth routes.",
+    "description": "Connect a Next.js app to Banata Auth in under 10 minutes. Install packages, set up auth routes, and add sign-in pages.",
     "section": "Start Here",
     "headings": [
       {
         "level": 2,
-        "text": "Dashboard Prerequisites",
-        "anchor": "dashboard-prerequisites",
-        "snippet": "Before you write code:"
+        "text": "Prerequisites",
+        "anchor": "prerequisites",
+        "snippet": "Before writing code, set up your Banata project:"
       },
       {
         "level": 2,
-        "text": "Install Packages",
-        "anchor": "install-packages",
+        "text": "Step 1: Install Packages",
+        "anchor": "step-1-install-packages",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Environment Variables",
-        "anchor": "environment-variables",
-        "snippet": ""
+        "text": "Step 2: Set Environment Variables",
+        "anchor": "step-2-set-environment-variables",
+        "snippet": "Create or update your .env.local file:"
       },
       {
         "level": 2,
-        "text": "Create Server Auth Helpers",
-        "anchor": "create-server-auth-helpers",
-        "snippet": ""
+        "text": "Step 3: Create Server Auth Helpers",
+        "anchor": "step-3-create-server-auth-helpers",
+        "snippet": "This file initializes the server-side auth connection to Banata. The API key binds your app to your Banata project."
       },
       {
         "level": 2,
-        "text": "Create The Auth Route",
-        "anchor": "create-the-auth-route",
-        "snippet": ""
+        "text": "Step 4: Create the Auth Route",
+        "anchor": "step-4-create-the-auth-route",
+        "snippet": "This catch-all route proxies all /api/auth/* requests from your app to Banata. This keeps auth cookies on your domain."
       },
       {
         "level": 2,
-        "text": "Create The Browser Auth Client",
-        "anchor": "create-the-browser-auth-client",
-        "snippet": ""
+        "text": "Step 5: Create the Browser Auth Client",
+        "anchor": "step-5-create-the-browser-auth-client",
+        "snippet": "This client-side module is what your React components use to trigger sign-in, sign-up, sign-out, and other auth actions."
       },
       {
         "level": 2,
-        "text": "Add Sign-In And Sign-Up Pages",
-        "anchor": "add-sign-in-and-sign-up-pages",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Guard Your App",
-        "anchor": "guard-your-app",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Configure Banata By Code",
-        "anchor": "configure-banata-by-code",
-        "snippet": "The dashboard is the main management surface, but it is not the only way to configure a project."
-      },
-      {
-        "level": 2,
-        "text": "What To Verify",
-        "anchor": "what-to-verify",
-        "snippet": "After wiring the app:"
-      },
-      {
-        "level": 2,
-        "text": "Common First-Run Problems",
-        "anchor": "common-first-run-problems",
+        "text": "Step 6: Add Sign-In and Sign-Up Pages",
+        "anchor": "step-6-add-sign-in-and-sign-up-pages",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "The frontend renders, but sign-in fails immediately",
-        "anchor": "the-frontend-renders-but-sign-in-fails-immediately",
-        "snippet": "Check:"
+        "text": "Sign-In Page",
+        "anchor": "sign-in-page",
+        "snippet": ""
       },
       {
         "level": 3,
-        "text": "Email sign-up exists, but the flow is not practical",
-        "anchor": "email-sign-up-exists-but-the-flow-is-not-practical",
-        "snippet": "Email delivery is not ready yet. Configure:"
+        "text": "Sign-Up Page",
+        "anchor": "sign-up-page",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Step 7: Protect Your Pages",
+        "anchor": "step-7-protect-your-pages",
+        "snippet": "Use the isAuthenticated helper to guard server-rendered pages:"
+      },
+      {
+        "level": 2,
+        "text": "Verify It Works",
+        "anchor": "verify-it-works",
+        "snippet": "Start your development server and test the full flow:"
+      },
+      {
+        "level": 2,
+        "text": "Configuring Banata by Code (Optional)",
+        "anchor": "configuring-banata-by-code-optional",
+        "snippet": "The dashboard is the easiest way to configure your project, but you can also use the SDK to manage configuration programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
       },
       {
         "level": 3,
-        "text": "Sign-in succeeds, but the app still has no session",
-        "anchor": "sign-in-succeeds-but-the-app-still-has-no-session",
-        "snippet": "Check:"
+        "text": "Sign-in form renders but authentication fails",
+        "anchor": "sign-in-form-renders-but-authentication-fails",
+        "snippet": "Verify the auth method is enabled in the dashboard (e.g., Email & Password is toggled on). Check that provider credentials are configured if using social OAuth."
+      },
+      {
+        "level": 3,
+        "text": "Sign-in succeeds but the app shows no session",
+        "anchor": "sign-in-succeeds-but-the-app-shows-no-session",
+        "snippet": "Make sure your browser is calling /api/auth on your app's origin, not the Banata backend URL directly. Verify the auth route file exists at src/app/api/auth/[...all]/route.ts."
+      },
+      {
+        "level": 3,
+        "text": "Email verification or password reset emails aren't arriving",
+        "anchor": "email-verification-or-password-reset-emails-arent-arriving",
+        "snippet": "Configure an email provider under Emails > Providers in the dashboard. Make sure the relevant email type is enabled under Emails > Configuration. Customize your templates under Email Templates."
+      },
+      {
+        "level": 3,
+        "text": "Hitting rate limits during testing",
+        "anchor": "hitting-rate-limits-during-testing",
+        "snippet": "Banata rate-limits auth endpoints to prevent abuse. If you're hitting limits during development:"
       },
       {
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "API Keys Projects Next.js React SDK Reference"
+        "snippet": "Now that your app is connected to Banata, explore these topics:"
       }
     ],
-    "searchText": "quick start connect a next.js app to banata with a project-scoped api key and app-owned auth routes. dashboard prerequisites before you write code: install packages environment variables create server auth helpers create the auth route create the browser auth client add sign-in and sign-up pages guard your app configure banata by code the dashboard is the main management surface, but it is not the only way to configure a project. what to verify after wiring the app: common first-run problems the frontend renders, but sign-in fails immediately check: email sign-up exists, but the flow is not practical email delivery is not ready yet. configure: sign-in succeeds, but the app still has no session check: next steps api keys projects next.js react sdk reference"
+    "searchText": "quick start connect a next.js app to banata auth in under 10 minutes. install packages, set up auth routes, and add sign-in pages. prerequisites before writing code, set up your banata project: step 1: install packages step 2: set environment variables create or update your .env.local file: step 3: create server auth helpers this file initializes the server-side auth connection to banata. the api key binds your app to your banata project. step 4: create the auth route this catch-all route proxies all /api/auth/* requests from your app to banata. this keeps auth cookies on your domain. step 5: create the browser auth client this client-side module is what your react components use to trigger sign-in, sign-up, sign-out, and other auth actions. step 6: add sign-in and sign-up pages sign-in page sign-up page step 7: protect your pages use the isauthenticated helper to guard server-rendered pages: verify it works start your development server and test the full flow: configuring banata by code (optional) the dashboard is the easiest way to configure your project, but you can also use the sdk to manage configuration programmatically: troubleshooting sign-in form renders but authentication fails verify the auth method is enabled in the dashboard (e.g., email & password is toggled on). check that provider credentials are configured if using social oauth. sign-in succeeds but the app shows no session make sure your browser is calling /api/auth on your app's origin, not the banata backend url directly. verify the auth route file exists at src/app/api/auth/[...all]/route.ts. email verification or password reset emails aren't arriving configure an email provider under emails > providers in the dashboard. make sure the relevant email type is enabled under emails > configuration. customize your templates under email templates. hitting rate limits during testing banata rate-limits auth endpoints to prevent abuse. if you're hitting limits during development: next steps now that your app is connected to banata, explore these topics:"
   },
   {
     "slug": "radar",
-    "title": "Radar (Dashboard Feature)",
-    "description": "AI-powered bot detection with configurable providers (Vercel BotID, Cloudflare Turnstile, reCAPTCHA, hCaptcha), impossible travel detection, device fingerprinting, and rate limiting.",
-    "section": "Configuration",
+    "title": "Radar",
+    "description": "Layered defense against bots, credential stuffing, and automated threats with configurable providers and detection rules.",
+    "section": "Operate Your Project",
     "headings": [
       {
         "level": 2,
-        "text": "How Radar Works",
-        "anchor": "how-radar-works",
-        "snippet": ""
+        "text": "Supported Providers",
+        "anchor": "supported-providers",
+        "snippet": "Radar supports four bot detection providers. You can switch between them at any time from the dashboard."
       },
       {
         "level": 2,
-        "text": "Supported Bot Detection Providers",
-        "anchor": "supported-bot-detection-providers",
+        "text": "Enable and Configure Radar in the Dashboard",
+        "anchor": "enable-and-configure-radar-in-the-dashboard",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Configuring a Provider",
-        "anchor": "configuring-a-provider",
-        "snippet": "Navigate to Radar in the dashboard sidebar Click Enable protection if not already enabled Go to the Configuration tab Toggle Bot detection on Under Bot Detection Provider, select your provider from th"
-      },
-      {
-        "level": 2,
-        "text": "Using Bot Protection in Your App",
-        "anchor": "using-bot-protection-in-your-app",
-        "snippet": ""
+        "text": "Turn on Radar",
+        "anchor": "turn-on-radar",
+        "snippet": "Open your project in the dashboard Navigate to Radar in the sidebar Click Enable protection The status card turns green to confirm your project is protected"
       },
       {
         "level": 3,
-        "text": "Option 1: Config-Aware (Recommended)",
-        "anchor": "option-1-config-aware-recommended",
-        "snippet": "Reads provider credentials from the dashboard configuration automatically:"
+        "text": "Configure Detection Rules",
+        "anchor": "configure-detection-rules",
+        "snippet": "Click the Configuration tab Toggle individual detection rules on or off (see the table below for what each rule does) Changes save automatically"
       },
       {
         "level": 3,
-        "text": "Option 2: Direct Provider (Vercel BotID)",
-        "anchor": "option-2-direct-provider-vercel-botid",
-        "snippet": "For Vercel deployments with BotID installed directly:"
+        "text": "Set Up a Bot Detection Provider",
+        "anchor": "set-up-a-bot-detection-provider",
+        "snippet": "In the Configuration tab, toggle Bot detection on Under Bot Detection Provider, select your provider from the dropdown Enter the required credentials for that provider"
+      },
+      {
+        "level": 3,
+        "text": "Review the Overview Tab",
+        "anchor": "review-the-overview-tab",
+        "snippet": "The Overview tab shows detection statistics — total detections, allowed requests, challenged requests, and blocked requests — along with a timeline chart. These populate once Radar is handling real tr"
       },
       {
         "level": 2,
         "text": "Detection Rules",
         "anchor": "detection-rules",
-        "snippet": "Radar provides 4 configurable detection rules that work alongside bot providers:"
-      },
-      {
-        "level": 3,
-        "text": "Detection Rule Defaults",
-        "anchor": "detection-rule-defaults",
-        "snippet": "When Radar is first enabled, it ships with sensible defaults:"
+        "snippet": "Radar provides four detection rules that work alongside your chosen bot provider for defense in depth."
       },
       {
         "level": 2,
-        "text": "Radar Configuration Data Model",
-        "anchor": "radar-configuration-data-model",
-        "snippet": ""
+        "text": "Add Bot Protection to Your App",
+        "anchor": "add-bot-protection-to-your-app",
+        "snippet": "Once you have configured a provider in the dashboard, wire up your Next.js route handler to verify requests at runtime."
+      },
+      {
+        "level": 3,
+        "text": "Config-Aware Approach (Recommended)",
+        "anchor": "config-aware-approach-recommended",
+        "snippet": "This approach reads your provider credentials from the dashboard automatically. When you change the provider or credentials in the dashboard, the change takes effect within one minute."
+      },
+      {
+        "level": 3,
+        "text": "Direct Provider Approach (Vercel BotID)",
+        "anchor": "direct-provider-approach-vercel-botid",
+        "snippet": "If you are deployed on Vercel with BotID installed, you can wire it up directly without reading from the dashboard config."
       },
       {
         "level": 2,
-        "text": "Managing Radar via the Dashboard",
-        "anchor": "managing-radar-via-the-dashboard",
-        "snippet": "Navigate to Radar in the dashboard sidebar"
-      },
-      {
-        "level": 3,
-        "text": "Enabling Radar",
-        "anchor": "enabling-radar",
-        "snippet": "The Radar page shows a hero card with feature highlights when disabled:"
-      },
-      {
-        "level": 3,
-        "text": "Configuring Detection Rules",
-        "anchor": "configuring-detection-rules",
-        "snippet": "Click the Configuration tab Toggle individual detection rules on or off using the switches Changes are saved to the backend immediately with optimistic updates"
-      },
-      {
-        "level": 3,
-        "text": "Configuring Bot Detection Provider",
-        "anchor": "configuring-bot-detection-provider",
-        "snippet": "In the Configuration tab, scroll to Bot Detection Provider Select a provider from the dropdown (BotID, Turnstile, reCAPTCHA, hCaptcha) A description and docs link appear for the selected provider"
-      },
-      {
-        "level": 3,
-        "text": "Overview Tab",
-        "anchor": "overview-tab",
-        "snippet": "The Overview tab shows detection statistics (total detections, allowed, challenged, blocked) and a timeline chart. These populate with data once Radar is active in production."
-      },
-      {
-        "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 2 Radar endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Get Radar Config",
-        "anchor": "get-radar-config",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Save Radar Config",
-        "anchor": "save-radar-config",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Radar configuration is stored as a singleton row in the radarConfig table:"
-      },
-      {
-        "level": 2,
-        "text": "Using Radar Programmatically",
-        "anchor": "using-radar-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Combining Radar with Rate Limiting",
-        "anchor": "combining-radar-with-rate-limiting",
-        "snippet": "Radar's rate limiting detection rule works alongside Banata Auth's built-in rate limiting (configured in BanataAuthConfig). The two are complementary:"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Defense in depth — Radar provides multiple layers (bot providers, detection rules, rate limiting). Enable all layers in production. Provider flexibility — Not tied to a single provider. Switch provide"
+        "text": "Combining with Rate Limiting",
+        "anchor": "combining-with-rate-limiting",
+        "snippet": "Radar's rate limiting detection rule complements Banata Auth's built-in per-endpoint rate limiting. The built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts"
       },
       {
         "level": 2,
         "text": "Troubleshooting",
         "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Bot detected. Access denied.\" (403)",
-        "anchor": "bot-detected-access-denied-403",
-        "snippet": "The bot provider flagged the request as automated. This can happen if: The request is from an automated script without browser context The provider's client-side widget didn't load (check your layout/"
-      },
-      {
-        "level": 3,
-        "text": "\"Detection stats showing all zeros\"",
-        "anchor": "detection-stats-showing-all-zeros",
-        "snippet": "Detection statistics populate once Radar is active in production and receives real traffic. In development, all requests pass through without recording statistics."
-      },
-      {
-        "level": 3,
-        "text": "\"Radar enabled but no protection\"",
-        "anchor": "radar-enabled-but-no-protection",
-        "snippet": "Check that: A bot provider is selected in the Radar configuration Credentials are saved for the selected provider Your route handler uses withBotProtection() with either createConfigAwareVerifier() or"
-      },
-      {
-        "level": 3,
-        "text": "\"Credentials not taking effect\"",
-        "anchor": "credentials-not-taking-effect",
-        "snippet": "The config-aware verifier caches the radar config for 1 minute by default. Wait up to 1 minute after saving credentials, or set cacheTtlMs: 0 for immediate effect (not recommended in production)."
+        "snippet": "\"Bot detected. Access denied.\" (403) — The provider flagged the request as automated. Verify that the provider's client-side widget loaded correctly in your layout or form, and check for browser exten"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Bot Protection Package — Full API reference for @banata-auth/nextjs/bot-protection Settings — Project-level configuration Audit Logs — Track security events and suspicious activity"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Bot Protection — Full API reference for @banata-auth/nextjs/bot-protection Settings — Project-level configuration Audit Logs — Track security events and suspicious activity"
       }
     ],
-    "searchText": "radar (dashboard feature) ai-powered bot detection with configurable providers (vercel botid, cloudflare turnstile, recaptcha, hcaptcha), impossible travel detection, device fingerprinting, and rate limiting. how radar works supported bot detection providers configuring a provider navigate to radar in the dashboard sidebar click enable protection if not already enabled go to the configuration tab toggle bot detection on under bot detection provider, select your provider from th using bot protection in your app option 1: config-aware (recommended) reads provider credentials from the dashboard configuration automatically: option 2: direct provider (vercel botid) for vercel deployments with botid installed directly: detection rules radar provides 4 configurable detection rules that work alongside bot providers: detection rule defaults when radar is first enabled, it ships with sensible defaults: radar configuration data model managing radar via the dashboard navigate to radar in the dashboard sidebar enabling radar the radar page shows a hero card with feature highlights when disabled: configuring detection rules click the configuration tab toggle individual detection rules on or off using the switches changes are saved to the backend immediately with optimistic updates configuring bot detection provider in the configuration tab, scroll to bot detection provider select a provider from the dropdown (botid, turnstile, recaptcha, hcaptcha) a description and docs link appear for the selected provider overview tab the overview tab shows detection statistics (total detections, allowed, challenged, blocked) and a timeline chart. these populate with data once radar is active in production. api endpoints the configplugin exposes 2 radar endpoints: get radar config save radar config database storage radar configuration is stored as a singleton row in the radarconfig table: using radar programmatically via the dashboard api client combining radar with rate limiting radar's rate limiting detection rule works alongside banata auth's built-in rate limiting (configured in banataauthconfig). the two are complementary: security considerations defense in depth — radar provides multiple layers (bot providers, detection rules, rate limiting). enable all layers in production. provider flexibility — not tied to a single provider. switch provide troubleshooting \"bot detected. access denied.\" (403) the bot provider flagged the request as automated. this can happen if: the request is from an automated script without browser context the provider's client-side widget didn't load (check your layout/ \"detection stats showing all zeros\" detection statistics populate once radar is active in production and receives real traffic. in development, all requests pass through without recording statistics. \"radar enabled but no protection\" check that: a bot provider is selected in the radar configuration credentials are saved for the selected provider your route handler uses withbotprotection() with either createconfigawareverifier() or \"credentials not taking effect\" the config-aware verifier caches the radar config for 1 minute by default. wait up to 1 minute after saving credentials, or set cachettlms: 0 for immediate effect (not recommended in production). what's next bot protection package — full api reference for @banata-auth/nextjs/bot-protection settings — project-level configuration audit logs — track security events and suspicious activity"
+    "searchText": "radar layered defense against bots, credential stuffing, and automated threats with configurable providers and detection rules. supported providers radar supports four bot detection providers. you can switch between them at any time from the dashboard. enable and configure radar in the dashboard turn on radar open your project in the dashboard navigate to radar in the sidebar click enable protection the status card turns green to confirm your project is protected configure detection rules click the configuration tab toggle individual detection rules on or off (see the table below for what each rule does) changes save automatically set up a bot detection provider in the configuration tab, toggle bot detection on under bot detection provider, select your provider from the dropdown enter the required credentials for that provider review the overview tab the overview tab shows detection statistics — total detections, allowed requests, challenged requests, and blocked requests — along with a timeline chart. these populate once radar is handling real tr detection rules radar provides four detection rules that work alongside your chosen bot provider for defense in depth. add bot protection to your app once you have configured a provider in the dashboard, wire up your next.js route handler to verify requests at runtime. config-aware approach (recommended) this approach reads your provider credentials from the dashboard automatically. when you change the provider or credentials in the dashboard, the change takes effect within one minute. direct provider approach (vercel botid) if you are deployed on vercel with botid installed, you can wire it up directly without reading from the dashboard config. combining with rate limiting radar's rate limiting detection rule complements banata auth's built-in per-endpoint rate limiting. the built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts troubleshooting \"bot detected. access denied.\" (403) — the provider flagged the request as automated. verify that the provider's client-side widget loaded correctly in your layout or form, and check for browser exten next steps bot protection — full api reference for @banata-auth/nextjs/bot-protection settings — project-level configuration audit logs — track security events and suspicious activity"
   },
   {
     "slug": "react",
     "title": "React",
-    "description": "Use Banata's React package for auth UI, provider state, and client-side organization helpers.",
+    "description": "Pre-built sign-in and sign-up forms, auth provider, hooks for user and session state, and organization helpers.",
     "section": "Build Your App",
     "headings": [
       {
         "level": 2,
-        "text": "What It Provides",
-        "anchor": "what-it-provides",
+        "text": "Package Exports",
+        "anchor": "package-exports",
         "snippet": "---"
       },
       {
         "level": 2,
-        "text": "Create The Browser Client",
-        "anchor": "create-the-browser-client",
+        "text": "Browser Auth Client",
+        "anchor": "browser-auth-client",
+        "snippet": "Before using any components or hooks, create a browser auth client. This client talks to your app's /api/auth route:"
+      },
+      {
+        "level": 2,
+        "text": "Pre-Built Forms",
+        "anchor": "pre-built-forms",
         "snippet": ""
       },
       {
-        "level": 2,
-        "text": "Use The Prebuilt Forms",
-        "anchor": "use-the-prebuilt-forms",
+        "level": 3,
+        "text": "SignInForm",
+        "anchor": "signinform",
+        "snippet": "A complete sign-in form that supports all enabled auth methods:"
+      },
+      {
+        "level": 3,
+        "text": "SignUpForm",
+        "anchor": "signupform",
         "snippet": ""
       },
       {
-        "level": 2,
-        "text": "Provider And Hooks",
-        "anchor": "provider-and-hooks",
-        "snippet": "If you want auth state inside client components, wrap your app with BanataAuthProvider and provide an adapter:"
+        "level": 3,
+        "text": "SocialButtons",
+        "anchor": "socialbuttons",
+        "snippet": "Render social login buttons for specific providers:"
       },
       {
         "level": 2,
-        "text": "Organization Client",
-        "anchor": "organization-client",
-        "snippet": "Banata re-exports an organization client wrapper that accepts your project's custom role slugs."
+        "text": "Auth Provider and Hooks",
+        "anchor": "auth-provider-and-hooks",
+        "snippet": "To access auth state in client components throughout your app, wrap your layout with BanataAuthProvider:"
+      },
+      {
+        "level": 3,
+        "text": "useUser()",
+        "anchor": "useuser",
+        "snippet": "Get the current user and auth status:"
+      },
+      {
+        "level": 3,
+        "text": "useSession()",
+        "anchor": "usesession",
+        "snippet": "Access the raw session data:"
+      },
+      {
+        "level": 3,
+        "text": "useOrganization()",
+        "anchor": "useorganization",
+        "snippet": "Get the active organization:"
+      },
+      {
+        "level": 3,
+        "text": "useBanataAuth()",
+        "anchor": "usebanataauth",
+        "snippet": "Access the full auth context:"
+      },
+      {
+        "level": 2,
+        "text": "Organization Client Plugin",
+        "anchor": "organization-client-plugin",
+        "snippet": "If your app uses organizations with custom roles, add the organizationClient plugin to support your project's role catalog:"
       },
       {
         "level": 2,
         "text": "Convex Bridge",
         "anchor": "convex-bridge",
-        "snippet": "If your frontend also talks to Convex directly, use BanataConvexProvider from @banata-auth/react/convex to bridge Banata auth tokens into your Convex client."
+        "snippet": "If your app uses Convex for data alongside Banata for auth, use BanataConvexProvider to bridge auth tokens into your Convex client:"
       },
       {
         "level": 2,
-        "text": "Related Guides",
-        "anchor": "related-guides",
-        "snippet": "Quick Start Next.js SDK Reference Roles & Permissions"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Next.js Integration — Server-side auth helpers SDK Reference — Programmatic access to Banata Organizations — Multi-tenant workspaces Roles & Permissions — Access control within organizations"
       }
     ],
-    "searchText": "react use banata's react package for auth ui, provider state, and client-side organization helpers. what it provides --- create the browser client use the prebuilt forms provider and hooks if you want auth state inside client components, wrap your app with banataauthprovider and provide an adapter: organization client banata re-exports an organization client wrapper that accepts your project's custom role slugs. convex bridge if your frontend also talks to convex directly, use banataconvexprovider from @banata-auth/react/convex to bridge banata auth tokens into your convex client. related guides quick start next.js sdk reference roles & permissions"
+    "searchText": "react pre-built sign-in and sign-up forms, auth provider, hooks for user and session state, and organization helpers. package exports --- browser auth client before using any components or hooks, create a browser auth client. this client talks to your app's /api/auth route: pre-built forms signinform a complete sign-in form that supports all enabled auth methods: signupform socialbuttons render social login buttons for specific providers: auth provider and hooks to access auth state in client components throughout your app, wrap your layout with banataauthprovider: useuser() get the current user and auth status: usesession() access the raw session data: useorganization() get the active organization: usebanataauth() access the full auth context: organization client plugin if your app uses organizations with custom roles, add the organizationclient plugin to support your project's role catalog: convex bridge if your app uses convex for data alongside banata for auth, use banataconvexprovider to bridge auth tokens into your convex client: next steps next.js integration — server-side auth helpers sdk reference — programmatic access to banata organizations — multi-tenant workspaces roles & permissions — access control within organizations"
   },
   {
     "slug": "redirects",
     "title": "Redirects",
-    "description": "Configure redirect URIs, sign-in/sign-out endpoints, and Admin Portal callback URLs for authentication flows.",
-    "section": "Configuration",
+    "description": "Control where users are sent after sign-in, sign-out, email verification, password reset, and Admin Portal operations.",
+    "section": "Operate Your Project",
     "headings": [
       {
         "level": 2,
-        "text": "How Redirects Work",
-        "anchor": "how-redirects-work",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Redirect Settings",
-        "anchor": "redirect-settings",
-        "snippet": ""
-      },
-      {
-        "level": 3,
         "text": "Application Redirects",
         "anchor": "application-redirects",
-        "snippet": ""
+        "snippet": "These settings govern the core authentication experience for your end users."
       },
       {
-        "level": 3,
+        "level": 2,
         "text": "Admin Portal Redirects",
         "anchor": "admin-portal-redirects",
-        "snippet": "---"
+        "snippet": "These settings control where organization admins are sent after completing setup tasks in the Admin Portal."
       },
       {
         "level": 2,
-        "text": "Redirect Data Model",
-        "anchor": "redirect-data-model",
-        "snippet": "The entire redirect configuration is stored as a flat key-value map:"
-      },
-      {
-        "level": 2,
-        "text": "Managing Redirects via the Dashboard",
-        "anchor": "managing-redirects-via-the-dashboard",
-        "snippet": "Navigate to Redirects in the dashboard sidebar Each redirect setting is displayed as a card"
+        "text": "Managing Redirects in the Dashboard",
+        "anchor": "managing-redirects-in-the-dashboard",
+        "snippet": "Open the Redirects page from the dashboard sidebar. Every redirect setting is displayed as its own card."
       },
       {
         "level": 3,
-        "text": "Editing Single-Value Redirects",
-        "anchor": "editing-single-value-redirects",
-        "snippet": "Click Edit on any single-value redirect card Enter the URL in the inline input field Press Enter to save or Escape to cancel Changes are saved to the backend immediately"
+        "text": "Single-Value Settings",
+        "anchor": "single-value-settings",
+        "snippet": "Click Edit on the card you want to change. Enter the URL in the inline input field. Press Enter to save, or Escape to cancel."
       },
       {
         "level": 3,
-        "text": "Editing Multi-Value Redirects",
-        "anchor": "editing-multi-value-redirects",
-        "snippet": "Multi-value fields (Redirect URIs, Sign-out redirects) support multiple URLs:"
+        "text": "Multi-Value Settings",
+        "anchor": "multi-value-settings",
+        "snippet": "Redirect URIs and Sign-out Redirects support multiple URLs:"
       },
       {
         "level": 3,
-        "text": "Admin Portal Redirects",
-        "anchor": "admin-portal-redirects",
-        "snippet": "Click Edit Admin Portal redirects to switch all 5 Admin Portal fields to edit mode simultaneously Update the values as needed Click Save to persist all changes or Cancel to revert"
+        "text": "Admin Portal Settings",
+        "anchor": "admin-portal-settings",
+        "snippet": "Click Edit Admin Portal redirects to unlock all five Admin Portal fields at once. Update the values you need. Click Save to persist your changes, or Cancel to discard them."
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 2 redirect endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Get Redirects",
-        "anchor": "get-redirects",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Save Redirects",
-        "anchor": "save-redirects",
-        "snippet": ""
+        "text": "Validation Rules",
+        "anchor": "validation-rules",
+        "snippet": "Keep these rules in mind when entering redirect URLs:"
       },
       {
         "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Redirects are stored as a singleton row in the redirectConfig table in Convex:"
-      },
-      {
-        "level": 2,
-        "text": "Using Redirects Programmatically",
-        "anchor": "using-redirects-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Redirect Validation",
-        "anchor": "redirect-validation",
-        "snippet": "When configuring redirects, follow these rules:"
-      },
-      {
-        "level": 2,
-        "text": "Security Considerations",
-        "anchor": "security-considerations",
-        "snippet": "Open redirect prevention — Only redirect to URIs that are explicitly configured. Banata Auth does not allow dynamic redirect targets. Admin-only access — Redirect configuration requires admin authenti"
+        "text": "Security Best Practices",
+        "anchor": "security-best-practices",
+        "snippet": "No wildcard URIs. Banata Auth requires every redirect URI to be an exact match. Wildcards are not supported, which prevents redirect-hijacking attacks."
       },
       {
         "level": 2,
         "text": "Troubleshooting",
         "anchor": "troubleshooting",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "\"Redirect URI mismatch\"",
-        "anchor": "redirect-uri-mismatch",
-        "snippet": "The URL your client is requesting doesn't match any configured redirect URI. Check the Redirect URIs field in the dashboard and ensure the requested URL is in the list (exact match, including trailing"
-      },
-      {
-        "level": 3,
-        "text": "\"Not configured\" showing for all fields",
-        "anchor": "not-configured-showing-for-all-fields",
-        "snippet": "Redirect configuration is empty until you save at least one value. Navigate to Redirects in the dashboard and configure the fields you need."
-      },
-      {
-        "level": 3,
-        "text": "\"Changes not persisting\"",
-        "anchor": "changes-not-persisting",
-        "snippet": "Redirect configuration is saved to the backend on every edit. If changes aren't persisting, check that you have admin privileges and that the Convex backend is running."
+        "snippet": "\"Redirect URI mismatch\" — The URL your client is requesting does not match any entry in your Redirect URIs list. Open the Redirects page in the dashboard and verify the URL is present exactly as your "
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Domains — Configure custom domains for auth services Email & Password — Authentication flow that uses password reset redirects Social OAuth — OAuth flows that use redirect URIs"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Domains — Set up custom domains for your authentication services. Email & Password — Learn about the authentication flow that relies on password-reset redirects."
       }
     ],
-    "searchText": "redirects configure redirect uris, sign-in/sign-out endpoints, and admin portal callback urls for authentication flows. how redirects work redirect settings application redirects admin portal redirects --- redirect data model the entire redirect configuration is stored as a flat key-value map: managing redirects via the dashboard navigate to redirects in the dashboard sidebar each redirect setting is displayed as a card editing single-value redirects click edit on any single-value redirect card enter the url in the inline input field press enter to save or escape to cancel changes are saved to the backend immediately editing multi-value redirects multi-value fields (redirect uris, sign-out redirects) support multiple urls: admin portal redirects click edit admin portal redirects to switch all 5 admin portal fields to edit mode simultaneously update the values as needed click save to persist all changes or cancel to revert api endpoints the configplugin exposes 2 redirect endpoints: get redirects save redirects database storage redirects are stored as a singleton row in the redirectconfig table in convex: using redirects programmatically via the dashboard api client redirect validation when configuring redirects, follow these rules: security considerations open redirect prevention — only redirect to uris that are explicitly configured. banata auth does not allow dynamic redirect targets. admin-only access — redirect configuration requires admin authenti troubleshooting \"redirect uri mismatch\" the url your client is requesting doesn't match any configured redirect uri. check the redirect uris field in the dashboard and ensure the requested url is in the list (exact match, including trailing \"not configured\" showing for all fields redirect configuration is empty until you save at least one value. navigate to redirects in the dashboard and configure the fields you need. \"changes not persisting\" redirect configuration is saved to the backend on every edit. if changes aren't persisting, check that you have admin privileges and that the convex backend is running. what's next domains — configure custom domains for auth services email & password — authentication flow that uses password reset redirects social oauth — oauth flows that use redirect uris"
+    "searchText": "redirects control where users are sent after sign-in, sign-out, email verification, password reset, and admin portal operations. application redirects these settings govern the core authentication experience for your end users. admin portal redirects these settings control where organization admins are sent after completing setup tasks in the admin portal. managing redirects in the dashboard open the redirects page from the dashboard sidebar. every redirect setting is displayed as its own card. single-value settings click edit on the card you want to change. enter the url in the inline input field. press enter to save, or escape to cancel. multi-value settings redirect uris and sign-out redirects support multiple urls: admin portal settings click edit admin portal redirects to unlock all five admin portal fields at once. update the values you need. click save to persist your changes, or cancel to discard them. validation rules keep these rules in mind when entering redirect urls: security best practices no wildcard uris. banata auth requires every redirect uri to be an exact match. wildcards are not supported, which prevents redirect-hijacking attacks. troubleshooting \"redirect uri mismatch\" — the url your client is requesting does not match any entry in your redirect uris list. open the redirects page in the dashboard and verify the url is present exactly as your  next steps domains — set up custom domains for your authentication services. email & password — learn about the authentication flow that relies on password-reset redirects."
   },
   {
     "slug": "resource-types",
     "title": "Resource Types",
-    "description": "Define custom resource types for fine-grained authorization — scope permissions to specific resources in your application.",
-    "section": "Enterprise",
+    "description": "Define categories of resources in your application for fine-grained authorization.",
+    "section": "Organizations & RBAC",
     "headings": [
       {
         "level": 2,
-        "text": "How Resource Types Work",
-        "anchor": "how-resource-types-work",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Resource Type Data Model",
-        "anchor": "resource-type-data-model",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "The slug Convention",
+        "text": "The Slug Convention",
         "anchor": "the-slug-convention",
-        "snippet": "Resource type slugs are used as the prefix in permission strings:"
+        "snippet": "Every resource type has a slug — a short, lowercase identifier that becomes the prefix in your permission strings:"
       },
       {
         "level": 2,
-        "text": "Creating Resource Types",
-        "anchor": "creating-resource-types",
-        "snippet": ""
+        "text": "Creating Resource Types in the Dashboard",
+        "anchor": "creating-resource-types-in-the-dashboard",
+        "snippet": "The fastest way to set up resource types is through your Banata Auth dashboard."
       },
       {
         "level": 3,
-        "text": "Via the Dashboard",
-        "anchor": "via-the-dashboard",
-        "snippet": "Navigate to Authorization > Resource Types in the dashboard sidebar Click Create resource type Enter a Name (e.g., \"Document\") — the slug is auto-generated from the name"
-      },
-      {
-        "level": 3,
-        "text": "Via the API",
-        "anchor": "via-the-api",
-        "snippet": ""
+        "text": "Auto-Generated Slugs",
+        "anchor": "auto-generated-slugs",
+        "snippet": "When you type a name, the dashboard automatically generates a slug by converting to lowercase and replacing spaces and special characters with hyphens."
       },
       {
         "level": 2,
-        "text": "Managing Resource Types",
-        "anchor": "managing-resource-types",
-        "snippet": ""
+        "text": "Managing via SDK or API",
+        "anchor": "managing-via-sdk-or-api",
+        "snippet": "You can also manage resource types programmatically using the Banata Auth SDK or REST API."
       },
       {
         "level": 3,
         "text": "List All Resource Types",
         "anchor": "list-all-resource-types",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Create a Resource Type",
+        "anchor": "create-a-resource-type",
         "snippet": ""
       },
       {
@@ -4300,75 +3160,45 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The configPlugin exposes 3 resource type endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Duplicate Slug Prevention",
-        "anchor": "duplicate-slug-prevention",
-        "snippet": "The create endpoint enforces unique slugs. If you attempt to create a resource type with a slug that already exists, the API returns a CONFLICT error:"
-      },
-      {
-        "level": 2,
-        "text": "Database Storage",
-        "anchor": "database-storage",
-        "snippet": "Resource types are stored in the resourceType table in Convex:"
-      },
-      {
-        "level": 2,
-        "text": "Using Resource Types Programmatically",
-        "anchor": "using-resource-types-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Via the Dashboard API Client",
-        "anchor": "via-the-dashboard-api-client",
-        "snippet": ""
-      },
-      {
-        "level": 2,
         "text": "Connecting Resource Types to Permissions",
         "anchor": "connecting-resource-types-to-permissions",
-        "snippet": "Once you've defined resource types, use them to build your permission model:"
+        "snippet": "Resource types are the foundation of your permission model. Here is how you build from resource types to runtime authorization checks."
       },
       {
         "level": 3,
-        "text": "Step 1: Define Resource Types",
-        "anchor": "step-1-define-resource-types",
-        "snippet": ""
+        "text": "Step 1: Define Your Resource Types",
+        "anchor": "step-1-define-your-resource-types",
+        "snippet": "Start by identifying the core objects in your application that need access control."
       },
       {
         "level": 3,
-        "text": "Step 2: Define Actions per Resource",
-        "anchor": "step-2-define-actions-per-resource",
-        "snippet": ""
+        "text": "Step 2: Define Actions for Each Resource",
+        "anchor": "step-2-define-actions-for-each-resource",
+        "snippet": "Decide what users can do with each resource type."
       },
       {
         "level": 3,
         "text": "Step 3: Create Permission Strings",
         "anchor": "step-3-create-permission-strings",
-        "snippet": ""
+        "snippet": "Combine resource type slugs with actions to form permission strings."
       },
       {
         "level": 3,
         "text": "Step 4: Assign Permissions to Roles",
         "anchor": "step-4-assign-permissions-to-roles",
-        "snippet": ""
+        "snippet": "Group permissions into roles that match your application's access levels."
       },
       {
         "level": 3,
         "text": "Step 5: Check Permissions at Runtime",
         "anchor": "step-5-check-permissions-at-runtime",
-        "snippet": ""
+        "snippet": "Use the SDK to verify access in your application code."
       },
       {
         "level": 2,
-        "text": "Common Resource Type Patterns",
-        "anchor": "common-resource-type-patterns",
-        "snippet": ""
+        "text": "Common Patterns",
+        "anchor": "common-patterns",
+        "snippet": "Here are resource type setups that work well for different types of applications."
       },
       {
         "level": 3,
@@ -4392,7 +3222,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Best Practices",
         "anchor": "best-practices",
-        "snippet": "Use singular nouns — document not documents. The slug represents a _type_, not a collection. Keep slugs short — They appear in every permission string. doc is fine; documentation-file-resource is exce"
+        "snippet": "Use singular nouns — Use document, not documents. The slug represents a _type_, not a collection. Keep slugs short — Slugs appear in every permission string. doc is fine; documentation-file-resource i"
       },
       {
         "level": 2,
@@ -4404,121 +3234,151 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "\"A resource type with this slug already exists\"",
         "anchor": "a-resource-type-with-this-slug-already-exists",
-        "snippet": "Slugs must be unique. Either use a different slug or delete the existing resource type first."
+        "snippet": "Slugs must be unique across your project. Either choose a different slug or delete the existing resource type first if it is no longer needed."
       },
       {
         "level": 3,
-        "text": "\"Resource types not appearing\"",
-        "anchor": "resource-types-not-appearing",
-        "snippet": "Ensure you're signed in as an admin. The list endpoint requires admin authentication."
+        "text": "Resource types not appearing in the dashboard",
+        "anchor": "resource-types-not-appearing-in-the-dashboard",
+        "snippet": "Make sure you are signed in with an account that has admin access. Resource type management requires admin-level authentication."
       },
       {
         "level": 3,
-        "text": "\"Deleted resource type still referenced in permissions\"",
+        "text": "Deleted resource type still referenced in permissions",
         "anchor": "deleted-resource-type-still-referenced-in-permissions",
-        "snippet": "Deleting a resource type doesn't cascade to permission definitions. Manually update any roles that reference permissions with the deleted resource type's slug."
+        "snippet": "Deleting a resource type does not cascade to permission or role definitions. After deleting a resource type, review your roles and remove any permissions that used the deleted slug. Otherwise, those p"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Roles & Permissions — Assign permissions to roles using resource type slugs Auth Configuration — Configure authorization behavior Organizations — Multi-tenant workspaces where authorization is applied"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Roles & Permissions — Assign permissions to roles using your resource type slugs Organizations — Set up multi-tenant workspaces where authorization is applied"
       }
     ],
-    "searchText": "resource types define custom resource types for fine-grained authorization — scope permissions to specific resources in your application. how resource types work resource type data model the slug convention resource type slugs are used as the prefix in permission strings: creating resource types via the dashboard navigate to authorization > resource types in the dashboard sidebar click create resource type enter a name (e.g., \"document\") — the slug is auto-generated from the name via the api managing resource types list all resource types delete a resource type api endpoints the configplugin exposes 3 resource type endpoints: duplicate slug prevention the create endpoint enforces unique slugs. if you attempt to create a resource type with a slug that already exists, the api returns a conflict error: database storage resource types are stored in the resourcetype table in convex: using resource types programmatically via the dashboard api client connecting resource types to permissions once you've defined resource types, use them to build your permission model: step 1: define resource types step 2: define actions per resource step 3: create permission strings step 4: assign permissions to roles step 5: check permissions at runtime common resource type patterns b2b saas developer tool content platform --- best practices use singular nouns — document not documents. the slug represents a _type_, not a collection. keep slugs short — they appear in every permission string. doc is fine; documentation-file-resource is exce troubleshooting \"a resource type with this slug already exists\" slugs must be unique. either use a different slug or delete the existing resource type first. \"resource types not appearing\" ensure you're signed in as an admin. the list endpoint requires admin authentication. \"deleted resource type still referenced in permissions\" deleting a resource type doesn't cascade to permission definitions. manually update any roles that reference permissions with the deleted resource type's slug. what's next roles & permissions — assign permissions to roles using resource type slugs auth configuration — configure authorization behavior organizations — multi-tenant workspaces where authorization is applied"
+    "searchText": "resource types define categories of resources in your application for fine-grained authorization. the slug convention every resource type has a slug — a short, lowercase identifier that becomes the prefix in your permission strings: creating resource types in the dashboard the fastest way to set up resource types is through your banata auth dashboard. auto-generated slugs when you type a name, the dashboard automatically generates a slug by converting to lowercase and replacing spaces and special characters with hyphens. managing via sdk or api you can also manage resource types programmatically using the banata auth sdk or rest api. list all resource types create a resource type delete a resource type connecting resource types to permissions resource types are the foundation of your permission model. here is how you build from resource types to runtime authorization checks. step 1: define your resource types start by identifying the core objects in your application that need access control. step 2: define actions for each resource decide what users can do with each resource type. step 3: create permission strings combine resource type slugs with actions to form permission strings. step 4: assign permissions to roles group permissions into roles that match your application's access levels. step 5: check permissions at runtime use the sdk to verify access in your application code. common patterns here are resource type setups that work well for different types of applications. b2b saas developer tool content platform --- best practices use singular nouns — use document, not documents. the slug represents a _type_, not a collection. keep slugs short — slugs appear in every permission string. doc is fine; documentation-file-resource i troubleshooting \"a resource type with this slug already exists\" slugs must be unique across your project. either choose a different slug or delete the existing resource type first if it is no longer needed. resource types not appearing in the dashboard make sure you are signed in with an account that has admin access. resource type management requires admin-level authentication. deleted resource type still referenced in permissions deleting a resource type does not cascade to permission or role definitions. after deleting a resource type, review your roles and remove any permissions that used the deleted slug. otherwise, those p next steps roles & permissions — assign permissions to roles using your resource type slugs organizations — set up multi-tenant workspaces where authorization is applied"
   },
   {
     "slug": "roles-permissions",
     "title": "Roles & Permissions",
-    "description": "Super-admin-first RBAC with dynamic custom roles, built-in permissions, and project-scoped permission catalogs.",
-    "section": "Enterprise",
+    "description": "Define custom roles, create permissions, and control what users can do within organizations.",
+    "section": "Organizations & RBAC",
     "headings": [
       {
         "level": 2,
-        "text": "Role Model",
-        "anchor": "role-model",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Visible default role",
-        "anchor": "visible-default-role",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Reserved role slugs",
-        "anchor": "reserved-role-slugs",
-        "snippet": "The following role slugs are reserved:"
+        "text": "The Default Role: super_admin",
+        "anchor": "the-default-role-superadmin",
+        "snippet": "When your project is created, Banata seeds a single role called super_admin. This role has full access to every built-in permission and serves as the starting point for your authorization model."
       },
       {
         "level": 2,
         "text": "Permission Model",
         "anchor": "permission-model",
-        "snippet": "Permissions are project-scoped and shared by all organizations in that project."
+        "snippet": "Permissions in Banata are project-scoped. That means the permission catalog you define is shared across all organizations in your project. Individual organizations do not maintain separate permission "
+      },
+      {
+        "level": 3,
+        "text": "Built-in Permissions",
+        "anchor": "built-in-permissions",
+        "snippet": "These are seeded automatically when your project is created. They cover core platform operations and cannot be deleted or edited. Examples include:"
+      },
+      {
+        "level": 3,
+        "text": "Custom Permissions",
+        "anchor": "custom-permissions",
+        "snippet": "These are the permissions you create for your own application logic. Use the resource.action naming convention to keep things consistent. Examples:"
       },
       {
         "level": 2,
-        "text": "Bootstrap Behavior",
-        "anchor": "bootstrap-behavior",
-        "snippet": "When a project is created (or default project is ensured):"
+        "text": "Creating Roles and Permissions from the Dashboard",
+        "anchor": "creating-roles-and-permissions-from-the-dashboard",
+        "snippet": "The dashboard gives you a visual way to manage your entire authorization model. Follow these steps:"
+      },
+      {
+        "level": 3,
+        "text": "Step 1: Create Your Permissions",
+        "anchor": "step-1-create-your-permissions",
+        "snippet": "Open your project in the dashboard. Navigate to Authorization > Permissions. Click Create Permission. Enter a slug using the resource.action format (for example, employee.read)."
+      },
+      {
+        "level": 3,
+        "text": "Step 2: Create Your Roles",
+        "anchor": "step-2-create-your-roles",
+        "snippet": "Navigate to Authorization > Roles. Click Create Role. Enter a slug (for example, hr_manager), a display name, and an optional description."
+      },
+      {
+        "level": 3,
+        "text": "Step 3: Assign Permissions to Roles",
+        "anchor": "step-3-assign-permissions-to-roles",
+        "snippet": "From the roles list, find the role you just created and click Manage Permissions. You will see the full list of available permissions (both built-in and custom)."
+      },
+      {
+        "level": 3,
+        "text": "Step 4: Assign Roles to Members",
+        "anchor": "step-4-assign-roles-to-members",
+        "snippet": "Open the organization member screen. Select a member and assign them the appropriate role slug."
       },
       {
         "level": 2,
-        "text": "Dashboard Management",
-        "anchor": "dashboard-management",
-        "snippet": "Use the dashboard in this order:"
+        "text": "Creating Roles and Permissions via the SDK",
+        "anchor": "creating-roles-and-permissions-via-the-sdk",
+        "snippet": "You can also manage roles and permissions programmatically using the Banata SDK."
+      },
+      {
+        "level": 3,
+        "text": "Initialize the Client",
+        "anchor": "initialize-the-client",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Manage Roles",
+        "anchor": "manage-roles",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Manage Permissions",
+        "anchor": "manage-permissions",
+        "snippet": ""
       },
       {
         "level": 2,
-        "text": "SDK (@banata-auth/sdk)",
-        "anchor": "sdk-banata-authsdk",
-        "snippet": ""
+        "text": "Assigning and Revoking Roles",
+        "anchor": "assigning-and-revoking-roles",
+        "snippet": "Roles are assigned at the organization level. A user can hold a role within a specific organization."
       },
       {
-        "level": 3,
-        "text": "Roles",
-        "anchor": "roles",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Permissions",
-        "anchor": "permissions",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Assign or Revoke Roles",
-        "anchor": "assign-or-revoke-roles",
-        "snippet": ""
-      },
-      {
-        "level": 3,
+        "level": 2,
         "text": "Permission Checks",
         "anchor": "permission-checks",
-        "snippet": "Permission checks are project-scoped. You can pass a full slug string or { resource, action }."
+        "snippet": "Use permission checks to determine whether a user is allowed to perform a specific action. You can pass the permission as a { resource, action } object."
       },
       {
-        "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "Role and permission management endpoints:"
+        "level": 3,
+        "text": "Check a Single Permission",
+        "anchor": "check-a-single-permission",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Check Multiple Permissions",
+        "anchor": "check-multiple-permissions",
+        "snippet": "Use the operator field to require that the user has all of the listed permissions:"
       },
       {
         "level": 2,
         "text": "Best Practices",
         "anchor": "best-practices",
-        "snippet": "Keep super_admin limited to trusted org owners. Prefer capability-based roles (for example sandbox_operator, billing_viewer) over generic titles. Keep permissions granular and explicit (resource.actio"
+        "snippet": "Keep super_admin limited. Only assign it to trusted organization owners. Create purpose-built roles for everyone else."
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Organizations Auth Configuration Resource Types"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Organizations Overview — Learn how organizations work and how members are managed. API Keys — Set up API key authentication for your project. Getting Started — Return to the setup guide if you haven't"
       }
     ],
-    "searchText": "roles & permissions super-admin-first rbac with dynamic custom roles, built-in permissions, and project-scoped permission catalogs. role model visible default role reserved role slugs the following role slugs are reserved: permission model permissions are project-scoped and shared by all organizations in that project. bootstrap behavior when a project is created (or default project is ensured): dashboard management use the dashboard in this order: sdk (@banata-auth/sdk) roles permissions assign or revoke roles permission checks permission checks are project-scoped. you can pass a full slug string or { resource, action }. api endpoints role and permission management endpoints: best practices keep super_admin limited to trusted org owners. prefer capability-based roles (for example sandbox_operator, billing_viewer) over generic titles. keep permissions granular and explicit (resource.actio what's next organizations auth configuration resource types"
+    "searchText": "roles & permissions define custom roles, create permissions, and control what users can do within organizations. the default role: super_admin when your project is created, banata seeds a single role called super_admin. this role has full access to every built-in permission and serves as the starting point for your authorization model. permission model permissions in banata are project-scoped. that means the permission catalog you define is shared across all organizations in your project. individual organizations do not maintain separate permission  built-in permissions these are seeded automatically when your project is created. they cover core platform operations and cannot be deleted or edited. examples include: custom permissions these are the permissions you create for your own application logic. use the resource.action naming convention to keep things consistent. examples: creating roles and permissions from the dashboard the dashboard gives you a visual way to manage your entire authorization model. follow these steps: step 1: create your permissions open your project in the dashboard. navigate to authorization > permissions. click create permission. enter a slug using the resource.action format (for example, employee.read). step 2: create your roles navigate to authorization > roles. click create role. enter a slug (for example, hr_manager), a display name, and an optional description. step 3: assign permissions to roles from the roles list, find the role you just created and click manage permissions. you will see the full list of available permissions (both built-in and custom). step 4: assign roles to members open the organization member screen. select a member and assign them the appropriate role slug. creating roles and permissions via the sdk you can also manage roles and permissions programmatically using the banata sdk. initialize the client manage roles manage permissions assigning and revoking roles roles are assigned at the organization level. a user can hold a role within a specific organization. permission checks use permission checks to determine whether a user is allowed to perform a specific action. you can pass the permission as a { resource, action } object. check a single permission check multiple permissions use the operator field to require that the user has all of the listed permissions: best practices keep super_admin limited. only assign it to trusted organization owners. create purpose-built roles for everyone else. next steps organizations overview — learn how organizations work and how members are managed. api keys — set up api key authentication for your project. getting started — return to the setup guide if you haven't"
   },
   {
     "slug": "scim",
@@ -4528,9 +3388,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "headings": [
       {
         "level": 2,
-        "text": "Overview",
-        "anchor": "overview",
-        "snippet": "Directory Sync enables automated user provisioning and deprovisioning between your identity provider (IdP) and Banata Auth using the SCIM 2.0 protocol. When an employee is added, updated, or removed i"
+        "text": "Key Capabilities",
+        "anchor": "key-capabilities",
+        "snippet": "Automatic provisioning — New employees added in the IdP are automatically created as users in your application. Automatic deprovisioning — Employees removed from the IdP are disabled and their session"
       },
       {
         "level": 2,
@@ -4542,13 +3402,13 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Directories and Organizations",
         "anchor": "directories-and-organizations",
-        "snippet": "Each SCIM directory is tied to a specific organization in Banata Auth. This means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped an"
+        "snippet": "Each SCIM directory is scoped to a specific organization in Banata Auth. This means every customer organization can have its own directory connection, keeping user provisioning isolated per tenant. Yo"
       },
       {
         "level": 3,
         "text": "Push-Based Synchronization",
         "anchor": "push-based-synchronization",
-        "snippet": "Banata Auth exposes a SCIM 2.0-compliant endpoint for each directory. The IdP is configured to push user and group changes to this endpoint. Whenever a change occurs in the IdP (a new hire, a terminat"
+        "snippet": "Banata Auth exposes a SCIM 2.0-compliant endpoint for each directory. The IdP pushes user and group changes to this endpoint in real time. Whenever a change occurs in the IdP — a new hire, a terminati"
       },
       {
         "level": 3,
@@ -4557,16 +3417,16 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "All SCIM endpoints are authenticated using a bearer token. Each directory has its own unique token, generated at the time of directory creation. The IdP must include this token in the Authorization he"
       },
       {
-        "level": 3,
-        "text": "Supported SCIM Events",
-        "anchor": "supported-scim-events",
+        "level": 2,
+        "text": "Supported SCIM Operations",
+        "anchor": "supported-scim-operations",
         "snippet": "Banata Auth processes the following SCIM operations:"
       },
       {
         "level": 2,
         "text": "Dashboard Setup",
         "anchor": "dashboard-setup",
-        "snippet": ""
+        "snippet": "You can create and manage SCIM directories directly from the Banata Auth dashboard."
       },
       {
         "level": 3,
@@ -4584,7 +3444,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Step 3: Copy the SCIM Endpoint and Bearer Token",
         "anchor": "step-3-copy-the-scim-endpoint-and-bearer-token",
-        "snippet": "After creating the directory, Banata Auth will display:"
+        "snippet": "After creating the directory, Banata Auth displays:"
       },
       {
         "level": 3,
@@ -4596,7 +3456,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "SDK Usage",
         "anchor": "sdk-usage",
-        "snippet": "The Banata Auth SDK provides methods for managing SCIM directories programmatically."
+        "snippet": "You can also manage SCIM directories programmatically using the Banata Auth SDK."
       },
       {
         "level": 3,
@@ -4630,210 +3490,579 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Create a SCIM Directory",
-        "anchor": "create-a-scim-directory",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "List All Directories",
-        "anchor": "list-all-directories",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Directory Object",
-        "anchor": "directory-object",
-        "snippet": "Each SCIM directory is represented by the following object:"
-      },
-      {
-        "level": 2,
         "text": "SCIM Events",
         "anchor": "scim-events",
         "snippet": "When the IdP pushes changes to the SCIM endpoint, Banata Auth processes each operation and triggers the corresponding internal action. The table below summarizes the supported events and their effects"
       },
       {
         "level": 3,
-        "text": "Webhooks for SCIM Events",
-        "anchor": "webhooks-for-scim-events",
+        "text": "Webhook Integration",
+        "anchor": "webhook-integration",
         "snippet": "You can subscribe to SCIM-related events via webhooks to trigger custom logic in your application when directory changes occur. The following webhook event types are available:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Organizations — Learn how to set up the organizations that SCIM directories are scoped to. Single Sign-On (SSO) — Pair Directory Sync with SSO to give your enterprise customers a complete identity man"
       }
     ],
-    "searchText": "directory sync (scim) automated user provisioning and deprovisioning via scim 2.0 directory synchronization. overview directory sync enables automated user provisioning and deprovisioning between your identity provider (idp) and banata auth using the scim 2.0 protocol. when an employee is added, updated, or removed i how it works directories and organizations each scim directory is tied to a specific organization in banata auth. this means every organization your customers belong to can have its own directory connection, keeping user provisioning scoped an push-based synchronization banata auth exposes a scim 2.0-compliant endpoint for each directory. the idp is configured to push user and group changes to this endpoint. whenever a change occurs in the idp (a new hire, a terminat authentication all scim endpoints are authenticated using a bearer token. each directory has its own unique token, generated at the time of directory creation. the idp must include this token in the authorization he supported scim events banata auth processes the following scim operations: dashboard setup step 1: navigate to directory sync open the banata auth dashboard and navigate to the directory sync section under your project settings. this page lists all configured scim directories across your organizations. step 2: create a directory click create directory and fill in the required fields: step 3: copy the scim endpoint and bearer token after creating the directory, banata auth will display: step 4: configure your identity provider use the scim endpoint url and bearer token to configure provisioning in your idp. the exact steps vary by provider: sdk usage the banata auth sdk provides methods for managing scim directories programmatically. initialize the client list scim directories retrieve all configured scim directories across your project: get a specific directory retrieve details about a single directory by its id: create a directory delete a directory api endpoints create a scim directory list all directories directory object each scim directory is represented by the following object: scim events when the idp pushes changes to the scim endpoint, banata auth processes each operation and triggers the corresponding internal action. the table below summarizes the supported events and their effects webhooks for scim events you can subscribe to scim-related events via webhooks to trigger custom logic in your application when directory changes occur. the following webhook event types are available:"
+    "searchText": "directory sync (scim) automated user provisioning and deprovisioning via scim 2.0 directory synchronization. key capabilities automatic provisioning — new employees added in the idp are automatically created as users in your application. automatic deprovisioning — employees removed from the idp are disabled and their session how it works directories and organizations each scim directory is scoped to a specific organization in banata auth. this means every customer organization can have its own directory connection, keeping user provisioning isolated per tenant. yo push-based synchronization banata auth exposes a scim 2.0-compliant endpoint for each directory. the idp pushes user and group changes to this endpoint in real time. whenever a change occurs in the idp — a new hire, a terminati authentication all scim endpoints are authenticated using a bearer token. each directory has its own unique token, generated at the time of directory creation. the idp must include this token in the authorization he supported scim operations banata auth processes the following scim operations: dashboard setup you can create and manage scim directories directly from the banata auth dashboard. step 1: navigate to directory sync open the banata auth dashboard and navigate to the directory sync section under your project settings. this page lists all configured scim directories across your organizations. step 2: create a directory click create directory and fill in the required fields: step 3: copy the scim endpoint and bearer token after creating the directory, banata auth displays: step 4: configure your identity provider use the scim endpoint url and bearer token to configure provisioning in your idp. the exact steps vary by provider: sdk usage you can also manage scim directories programmatically using the banata auth sdk. initialize the client list scim directories retrieve all configured scim directories across your project: get a specific directory retrieve details about a single directory by its id: create a directory delete a directory scim events when the idp pushes changes to the scim endpoint, banata auth processes each operation and triggers the corresponding internal action. the table below summarizes the supported events and their effects webhook integration you can subscribe to scim-related events via webhooks to trigger custom logic in your application when directory changes occur. the following webhook event types are available: next steps organizations — learn how to set up the organizations that scim directories are scoped to. single sign-on (sso) — pair directory sync with sso to give your enterprise customers a complete identity man"
   },
   {
     "slug": "sdk",
     "title": "SDK Reference",
-    "description": "Manage Banata projects, users, organizations, RBAC, and dashboard-backed configuration by code.",
+    "description": "The admin SDK for managing users, organizations, roles, webhooks, and project configuration programmatically.",
     "section": "Build Your App",
     "headings": [
       {
         "level": 2,
-        "text": "Initialization",
-        "anchor": "initialization",
+        "text": "Getting Started",
+        "anchor": "getting-started",
+        "snippet": "Initialize the SDK with your project-scoped API key:"
+      },
+      {
+        "level": 2,
+        "text": "Resource Managers",
+        "anchor": "resource-managers",
+        "snippet": "The SDK organizes its functionality into resource managers, each accessed as a property on the BanataAuth instance:"
+      },
+      {
+        "level": 2,
+        "text": "User Management",
+        "anchor": "user-management",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Dashboard And Code Stay In Sync",
-        "anchor": "dashboard-and-code-stay-in-sync",
-        "snippet": "Banata is dashboard-first, but configuration can also be updated by code."
-      },
-      {
-        "level": 2,
-        "text": "Configure Auth Methods By Code",
-        "anchor": "configure-auth-methods-by-code",
+        "text": "Organizations",
+        "anchor": "organizations",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Configure Branding By Code",
-        "anchor": "configure-branding-by-code",
+        "text": "Roles and Permissions",
+        "anchor": "roles-and-permissions",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Configure Social Providers By Code",
-        "anchor": "configure-social-providers-by-code",
+        "text": "Configuration",
+        "anchor": "configuration",
+        "snippet": "The SDK can update the same project configuration that the dashboard manages:"
+      },
+      {
+        "level": 3,
+        "text": "Auth Methods",
+        "anchor": "auth-methods",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Branding",
+        "anchor": "branding",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Social Provider Credentials",
+        "anchor": "social-provider-credentials",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Example Admin Workflow",
-        "anchor": "example-admin-workflow",
+        "text": "Webhooks",
+        "anchor": "webhooks",
         "snippet": ""
       },
       {
         "level": 2,
-        "text": "Scope Rules",
-        "anchor": "scope-rules",
-        "snippet": "the project-scoped API key is the normal scope boundary routine SDK calls should not require you to pass projectId one project's key should not be able to read or mutate another project's data"
+        "text": "Audit Logs",
+        "anchor": "audit-logs",
+        "snippet": ""
       },
       {
         "level": 2,
-        "text": "Related Guides",
-        "anchor": "related-guides",
-        "snippet": "Quick Start API Keys Next.js Projects"
+        "text": "Error Handling",
+        "anchor": "error-handling",
+        "snippet": "The SDK throws typed errors from @banata-auth/shared:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "API Keys — Creating and managing API keys Organizations — Multi-tenant workspaces Roles & Permissions — Access control Webhooks — Event-driven integrations"
       }
     ],
-    "searchText": "sdk reference manage banata projects, users, organizations, rbac, and dashboard-backed configuration by code. initialization dashboard and code stay in sync banata is dashboard-first, but configuration can also be updated by code. configure auth methods by code configure branding by code configure social providers by code example admin workflow scope rules the project-scoped api key is the normal scope boundary routine sdk calls should not require you to pass projectid one project's key should not be able to read or mutate another project's data related guides quick start api keys next.js projects"
+    "searchText": "sdk reference the admin sdk for managing users, organizations, roles, webhooks, and project configuration programmatically. getting started initialize the sdk with your project-scoped api key: resource managers the sdk organizes its functionality into resource managers, each accessed as a property on the banataauth instance: user management organizations roles and permissions configuration the sdk can update the same project configuration that the dashboard manages: auth methods branding social provider credentials webhooks audit logs error handling the sdk throws typed errors from @banata-auth/shared: next steps api keys — creating and managing api keys organizations — multi-tenant workspaces roles & permissions — access control webhooks — event-driven integrations"
+  },
+  {
+    "slug": "self-hosting",
+    "title": "Self-Hosting",
+    "description": "Run the full Banata platform on your own infrastructure.",
+    "section": "Platform Operators",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Product Shape",
+        "anchor": "product-shape",
+        "snippet": "The self-hosted and hosted versions of Banata follow the same workflow:"
+      },
+      {
+        "level": 2,
+        "text": "What You Need",
+        "anchor": "what-you-need",
+        "snippet": "To run Banata yourself, you need four things:"
+      },
+      {
+        "level": 2,
+        "text": "Local Convex Wiring",
+        "anchor": "local-convex-wiring",
+        "snippet": "Your self-hosted deployment keeps a small set of local Convex files alongside the published @banata-auth/convex package:"
+      },
+      {
+        "level": 3,
+        "text": "What stays local",
+        "anchor": "what-stays-local",
+        "snippet": "These files live in your repository because they bind platform configuration to your specific environment:"
+      },
+      {
+        "level": 3,
+        "text": "What comes from @banata-auth/convex",
+        "anchor": "what-comes-from-banata-authconvex",
+        "snippet": "The published package provides everything that is shared across all Banata deployments:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Quick Start -- integrate Banata auth into a customer application. Deploy -- step-by-step guide for deploying the Banata platform. Environment Variables -- every configuration value your self-hosted in"
+      }
+    ],
+    "searchText": "self-hosting run the full banata platform on your own infrastructure. product shape the self-hosted and hosted versions of banata follow the same workflow: what you need to run banata yourself, you need four things: local convex wiring your self-hosted deployment keeps a small set of local convex files alongside the published @banata-auth/convex package: what stays local these files live in your repository because they bind platform configuration to your specific environment: what comes from @banata-auth/convex the published package provides everything that is shared across all banata deployments: next steps quick start -- integrate banata auth into a customer application. deploy -- step-by-step guide for deploying the banata platform. environment variables -- every configuration value your self-hosted in"
   },
   {
     "slug": "settings",
     "title": "Settings",
-    "description": "Configure your Banata Auth project name, auth method overview, team management, and danger zone.",
-    "section": "Configuration",
+    "description": "Manage your project identity, review your auth configuration at a glance, and handle destructive actions from the Settings page.",
+    "section": "Operate Your Project",
     "headings": [
       {
         "level": 2,
-        "text": "Settings Sub-Pages",
-        "anchor": "settings-sub-pages",
-        "snippet": "Navigating to /settings automatically redirects to /settings/general."
-      },
-      {
-        "level": 2,
-        "text": "General Settings",
-        "anchor": "general-settings",
-        "snippet": "The General page manages your project identity."
+        "text": "General",
+        "anchor": "general",
+        "snippet": "The General page is where you manage your project's identity. You land here by default when you open Settings."
       },
       {
         "level": 3,
-        "text": "Project Identity",
-        "anchor": "project-identity",
-        "snippet": "Project name — A human-readable name for your project (max 100 characters). Shown in the dashboard header. Description — An optional description of your project (max 500 characters)."
+        "text": "Project Name",
+        "anchor": "project-name",
+        "snippet": "Your project name is the human-readable label that appears throughout the dashboard. You can change it at any time - just type a new name (up to 100 characters) and click Save changes."
+      },
+      {
+        "level": 3,
+        "text": "Description",
+        "anchor": "description",
+        "snippet": "Add an optional description (up to 500 characters) to help your team understand what the project is for. This is especially useful if you manage multiple Banata Auth projects."
       },
       {
         "level": 3,
         "text": "Client ID",
         "anchor": "client-id",
-        "snippet": "A read-only identifier for your project. Banata uses it in callback URLs, public configuration lookups, and internal project metadata. The normal SDK flow does not use clientId to choose a project; pr"
-      },
-      {
-        "level": 3,
-        "text": "Saving",
-        "anchor": "saving",
-        "snippet": "Changes to project name and description are persisted to the backend when you click Save changes. The save button is disabled when there are no unsaved changes."
+        "snippet": "Your Client ID is a read-only identifier assigned to your project. Banata uses it internally for callback URLs and public configuration lookups. You don't need it for day-to-day SDK usage - project-sc"
       },
       {
         "level": 2,
         "text": "Auth Overview",
         "anchor": "auth-overview",
-        "snippet": "A read-only dashboard showing the current state of your authentication configuration. This page does not allow editing — it links to the appropriate configuration pages for changes."
-      },
-      {
-        "level": 3,
-        "text": "What's Displayed",
-        "anchor": "whats-displayed",
-        "snippet": "Summary stats — Count of enabled auth methods, social providers, and features Authentication Methods — All 9 methods (Email & Password, Magic Link, Email OTP, Passkey, Two-Factor Auth, Organizations, "
+        "snippet": "The Auth Overview page gives you a read-only snapshot of your current authentication setup. Nothing is editable here - it's purely informational, with links to the relevant configuration pages if you "
       },
       {
         "level": 2,
         "text": "Team",
         "anchor": "team",
-        "snippet": "Team management is coming soon. Currently the page shows:"
+        "snippet": "The Team page shows the account that is currently managing the active project, along with its access level. Banata now limits this page to live access information instead of showing placeholder invite"
       },
       {
         "level": 2,
         "text": "Danger Zone",
         "anchor": "danger-zone",
-        "snippet": "Contains destructive, irreversible actions that affect your entire project."
+        "snippet": "The Danger Zone contains irreversible actions that affect your entire project. Both actions require you to type a confirmation phrase before they execute."
       },
       {
         "level": 3,
         "text": "Reset Configuration",
         "anchor": "reset-configuration",
-        "snippet": "Resets all dashboard configuration to defaults: Branding settings Email configuration Detection rules (Radar) All custom configuration"
+        "snippet": "Resetting your configuration returns dashboard-managed settings to their defaults. This clears:"
       },
       {
         "level": 3,
         "text": "Delete Project",
         "anchor": "delete-project",
-        "snippet": "Permanently deletes the project and all associated data: Users and sessions Organizations and memberships API keys and webhooks All configuration"
+        "snippet": "Deleting your project permanently removes everything associated with it:"
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The settings backend uses the configPlugin with project config endpoints:"
-      },
-      {
-        "level": 3,
-        "text": "Get Project Config",
-        "anchor": "get-project-config",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Save Project Config",
-        "anchor": "save-project-config",
-        "snippet": ""
+        "text": "Branding",
+        "anchor": "branding",
+        "snippet": "Branding is configured from the Branding page in the dashboard sidebar (not under Settings). From there you control how your sign-in/sign-up forms and transactional emails look. See the Email Template"
       },
       {
         "level": 2,
-        "text": "Data Model",
-        "anchor": "data-model",
-        "snippet": "Project configuration is stored as a singleton row in the projectConfig table:"
-      },
-      {
-        "level": 2,
-        "text": "Using Settings Programmatically",
-        "anchor": "using-settings-programmatically",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Radar & Bot Protection — Configure bot detection with provider credentials Bot Protection Package — Integrate bot detection in your Next.js app Domains — Configure custom domains for auth services"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Radar & Bot Protection - Set up bot detection rules and provider credentials. Bot Protection Package - Integrate bot detection into your Next.js app. Domains - Configure custom domains for your auth s"
       }
     ],
-    "searchText": "settings configure your banata auth project name, auth method overview, team management, and danger zone. settings sub-pages navigating to /settings automatically redirects to /settings/general. general settings the general page manages your project identity. project identity project name — a human-readable name for your project (max 100 characters). shown in the dashboard header. description — an optional description of your project (max 500 characters). client id a read-only identifier for your project. banata uses it in callback urls, public configuration lookups, and internal project metadata. the normal sdk flow does not use clientid to choose a project; pr saving changes to project name and description are persisted to the backend when you click save changes. the save button is disabled when there are no unsaved changes. auth overview a read-only dashboard showing the current state of your authentication configuration. this page does not allow editing — it links to the appropriate configuration pages for changes. what's displayed summary stats — count of enabled auth methods, social providers, and features authentication methods — all 9 methods (email & password, magic link, email otp, passkey, two-factor auth, organizations,  team team management is coming soon. currently the page shows: danger zone contains destructive, irreversible actions that affect your entire project. reset configuration resets all dashboard configuration to defaults: branding settings email configuration detection rules (radar) all custom configuration delete project permanently deletes the project and all associated data: users and sessions organizations and memberships api keys and webhooks all configuration api endpoints the settings backend uses the configplugin with project config endpoints: get project config save project config data model project configuration is stored as a singleton row in the projectconfig table: using settings programmatically what's next radar & bot protection — configure bot detection with provider credentials bot protection package — integrate bot detection in your next.js app domains — configure custom domains for auth services"
+    "searchText": "settings manage your project identity, review your auth configuration at a glance, and handle destructive actions from the settings page. general the general page is where you manage your project's identity. you land here by default when you open settings. project name your project name is the human-readable label that appears throughout the dashboard. you can change it at any time - just type a new name (up to 100 characters) and click save changes. description add an optional description (up to 500 characters) to help your team understand what the project is for. this is especially useful if you manage multiple banata auth projects. client id your client id is a read-only identifier assigned to your project. banata uses it internally for callback urls and public configuration lookups. you don't need it for day-to-day sdk usage - project-sc auth overview the auth overview page gives you a read-only snapshot of your current authentication setup. nothing is editable here - it's purely informational, with links to the relevant configuration pages if you  team the team page shows the account that is currently managing the active project, along with its access level. banata now limits this page to live access information instead of showing placeholder invite danger zone the danger zone contains irreversible actions that affect your entire project. both actions require you to type a confirmation phrase before they execute. reset configuration resetting your configuration returns dashboard-managed settings to their defaults. this clears: delete project deleting your project permanently removes everything associated with it: branding branding is configured from the branding page in the dashboard sidebar (not under settings). from there you control how your sign-in/sign-up forms and transactional emails look. see the email template next steps radar & bot protection - set up bot detection rules and provider credentials. bot protection package - integrate bot detection into your next.js app. domains - configure custom domains for your auth s"
+  },
+  {
+    "slug": "shared",
+    "title": "Shared Package",
+    "description": "Types, constants, validation utilities, ID generation, and error classes shared across all Banata Auth packages.",
+    "section": "Platform Operators",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Installation",
+        "anchor": "installation",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Package Structure",
+        "anchor": "package-structure",
+        "snippet": "The shared package exports six modules, all re-exported from the package root:"
+      },
+      {
+        "level": 2,
+        "text": "TypeScript Interfaces",
+        "anchor": "typescript-interfaces",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "User",
+        "anchor": "user",
+        "snippet": "The central identity record. Every authenticated person in a Banata project has one."
+      },
+      {
+        "level": 3,
+        "text": "Session",
+        "anchor": "session",
+        "snippet": "Represents an active login. Sessions are tied to a user and optionally scoped to an organization."
+      },
+      {
+        "level": 3,
+        "text": "Account",
+        "anchor": "account",
+        "snippet": "Links a user to an authentication provider (email/password, GitHub, Google, SSO, etc.)."
+      },
+      {
+        "level": 3,
+        "text": "Organization",
+        "anchor": "organization",
+        "snippet": "A workspace that groups users together. Organizations can enforce MFA, restrict email domains, and enable SSO."
+      },
+      {
+        "level": 3,
+        "text": "OrganizationMember",
+        "anchor": "organizationmember",
+        "snippet": "Tracks a user's membership and role within an organization."
+      },
+      {
+        "level": 3,
+        "text": "SSO and Directory Types",
+        "anchor": "sso-and-directory-types",
+        "snippet": "SSO connections (SsoConnection) and directory sync resources (Directory, DirectoryUser, DirectoryGroup) follow the same pattern. Key type aliases you will encounter:"
+      },
+      {
+        "level": 3,
+        "text": "Other Resources",
+        "anchor": "other-resources",
+        "snippet": "The shared package also defines interfaces for OrganizationInvitation, Team, SsoProfile, AuditEvent, WebhookEndpoint, ApiKey, VaultSecret, DomainVerification, and Project. Each follows the same conven"
+      },
+      {
+        "level": 2,
+        "text": "Constants",
+        "anchor": "constants",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "ID Prefixes",
+        "anchor": "id-prefixes",
+        "snippet": "Every Banata Auth resource uses a prefixed ULID as its identifier. The prefix makes IDs self-documenting -- you can tell at a glance what kind of resource you are looking at."
+      },
+      {
+        "level": 3,
+        "text": "Rate Limits",
+        "anchor": "rate-limits",
+        "snippet": "Default rate limits per endpoint category, expressed as requests per minute:"
+      },
+      {
+        "level": 3,
+        "text": "Token Lifetimes",
+        "anchor": "token-lifetimes",
+        "snippet": "Default lifetimes for tokens and sessions, in seconds:"
+      },
+      {
+        "level": 3,
+        "text": "Webhook Constants",
+        "anchor": "webhook-constants",
+        "snippet": "Webhook retry behavior is controlled by three constants:"
+      },
+      {
+        "level": 2,
+        "text": "ID Generation",
+        "anchor": "id-generation",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "generateId",
+        "anchor": "generateid",
+        "snippet": "Generate a prefixed ULID for any resource type:"
+      },
+      {
+        "level": 3,
+        "text": "ulid",
+        "anchor": "ulid",
+        "snippet": "Generate a raw ULID without a prefix:"
+      },
+      {
+        "level": 3,
+        "text": "getResourceType",
+        "anchor": "getresourcetype",
+        "snippet": "Extract the resource type from a prefixed ID:"
+      },
+      {
+        "level": 3,
+        "text": "validateId",
+        "anchor": "validateid",
+        "snippet": "Check whether an ID has the correct prefix for a given resource type:"
+      },
+      {
+        "level": 3,
+        "text": "generateRandomToken",
+        "anchor": "generaterandomtoken",
+        "snippet": "Generate a URL-safe base64 random token (useful for password-reset links, magic links, etc.):"
+      },
+      {
+        "level": 3,
+        "text": "generateOtp",
+        "anchor": "generateotp",
+        "snippet": "Generate a random numeric one-time password:"
+      },
+      {
+        "level": 2,
+        "text": "Validation Schemas",
+        "anchor": "validation-schemas",
+        "snippet": "All validation schemas are built with Zod. They are used throughout the backend for input validation, and you can use them in your own code for form validation or API contracts."
+      },
+      {
+        "level": 3,
+        "text": "Primitive Schemas",
+        "anchor": "primitive-schemas",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Resource Schemas",
+        "anchor": "resource-schemas",
+        "snippet": "Each resource has a create and update schema, plus a corresponding TypeScript input type:"
+      },
+      {
+        "level": 2,
+        "text": "Error Classes",
+        "anchor": "error-classes",
+        "snippet": "All Banata Auth errors extend BanataAuthError, which provides structured error information with HTTP status codes, machine-readable codes, and request IDs."
+      },
+      {
+        "level": 3,
+        "text": "Specialized Errors",
+        "anchor": "specialized-errors",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Usage",
+        "anchor": "usage",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Email Block System",
+        "anchor": "email-block-system",
+        "snippet": "The shared package defines the block type system used by the email template editor, SDK, and backend renderer. Block types include heading, text, button, image, divider, spacer, link, code, and column"
+      },
+      {
+        "level": 2,
+        "text": "Pagination Types",
+        "anchor": "pagination-types",
+        "snippet": "All list endpoints use cursor-based pagination with a consistent shape:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Convex Integration -- the platform runtime that uses these shared definitions SDK Reference -- the admin SDK that consumes these types Email Templates -- full guide to the block-based email system"
+      }
+    ],
+    "searchText": "shared package types, constants, validation utilities, id generation, and error classes shared across all banata auth packages. installation package structure the shared package exports six modules, all re-exported from the package root: typescript interfaces user the central identity record. every authenticated person in a banata project has one. session represents an active login. sessions are tied to a user and optionally scoped to an organization. account links a user to an authentication provider (email/password, github, google, sso, etc.). organization a workspace that groups users together. organizations can enforce mfa, restrict email domains, and enable sso. organizationmember tracks a user's membership and role within an organization. sso and directory types sso connections (ssoconnection) and directory sync resources (directory, directoryuser, directorygroup) follow the same pattern. key type aliases you will encounter: other resources the shared package also defines interfaces for organizationinvitation, team, ssoprofile, auditevent, webhookendpoint, apikey, vaultsecret, domainverification, and project. each follows the same conven constants id prefixes every banata auth resource uses a prefixed ulid as its identifier. the prefix makes ids self-documenting -- you can tell at a glance what kind of resource you are looking at. rate limits default rate limits per endpoint category, expressed as requests per minute: token lifetimes default lifetimes for tokens and sessions, in seconds: webhook constants webhook retry behavior is controlled by three constants: id generation generateid generate a prefixed ulid for any resource type: ulid generate a raw ulid without a prefix: getresourcetype extract the resource type from a prefixed id: validateid check whether an id has the correct prefix for a given resource type: generaterandomtoken generate a url-safe base64 random token (useful for password-reset links, magic links, etc.): generateotp generate a random numeric one-time password: validation schemas all validation schemas are built with zod. they are used throughout the backend for input validation, and you can use them in your own code for form validation or api contracts. primitive schemas resource schemas each resource has a create and update schema, plus a corresponding typescript input type: error classes all banata auth errors extend banataautherror, which provides structured error information with http status codes, machine-readable codes, and request ids. specialized errors usage email block system the shared package defines the block type system used by the email template editor, sdk, and backend renderer. block types include heading, text, button, image, divider, spacer, link, code, and column pagination types all list endpoints use cursor-based pagination with a consistent shape: next steps convex integration -- the platform runtime that uses these shared definitions sdk reference -- the admin sdk that consumes these types email templates -- full guide to the block-based email system"
+  },
+  {
+    "slug": "social-oauth",
+    "title": "Social OAuth",
+    "description": "Add social login with Google, GitHub, Apple, Microsoft, and more. Step-by-step setup for each provider.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Supported Providers",
+        "anchor": "supported-providers",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Setting Up a Provider",
+        "anchor": "setting-up-a-provider",
+        "snippet": "The setup is the same for every provider:"
+      },
+      {
+        "level": 3,
+        "text": "Callback URL Pattern",
+        "anchor": "callback-url-pattern",
+        "snippet": "All providers use the same callback URL format:"
+      },
+      {
+        "level": 3,
+        "text": "Adding Credentials via Dashboard",
+        "anchor": "adding-credentials-via-dashboard",
+        "snippet": "Go to Authentication > Providers in your project. Select the provider you want to configure. Enter the Client ID and Client Secret. Save."
+      },
+      {
+        "level": 3,
+        "text": "Adding Credentials via Convex Environment",
+        "anchor": "adding-credentials-via-convex-environment",
+        "snippet": "For self-hosted setups, set the credentials on your Convex deployment:"
+      },
+      {
+        "level": 2,
+        "text": "Provider Setup Guides",
+        "anchor": "provider-setup-guides",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Google",
+        "anchor": "google",
+        "snippet": "Go to Google Cloud Console > Credentials. Create a new OAuth client ID (Web application type). Add authorized redirect URI: http://localhost:3000/api/auth/callback/google"
+      },
+      {
+        "level": 3,
+        "text": "GitHub",
+        "anchor": "github",
+        "snippet": "Go to GitHub Developer Settings > OAuth Apps. Click New OAuth App. Set Homepage URL to http://localhost:3000. Set Authorization callback URL to http://localhost:3000/api/auth/callback/github."
+      },
+      {
+        "level": 3,
+        "text": "Apple",
+        "anchor": "apple",
+        "snippet": "Go to Apple Developer Portal. Create an App ID with Sign in with Apple enabled. Create a Services ID (this is your clientId). Configure the redirect URL: http://localhost:3000/api/auth/callback/apple"
+      },
+      {
+        "level": 3,
+        "text": "Microsoft (Azure AD)",
+        "anchor": "microsoft-azure-ad",
+        "snippet": "Go to Azure Portal > App registrations. Click New registration. Set redirect URI to http://localhost:3000/api/auth/callback/microsoft (Web platform). Note the Application (client) ID and Directory (te"
+      },
+      {
+        "level": 3,
+        "text": "Facebook",
+        "anchor": "facebook",
+        "snippet": "Go to Meta for Developers. Create a new app (Consumer type). Add Facebook Login and set the redirect URI: http://localhost:3000/api/auth/callback/facebook"
+      },
+      {
+        "level": 3,
+        "text": "Twitter (X)",
+        "anchor": "twitter-x",
+        "snippet": "Go to the Twitter Developer Portal. Create a new project and app with OAuth 2.0 enabled. Set callback URL: http://localhost:3000/api/auth/callback/twitter"
+      },
+      {
+        "level": 3,
+        "text": "Discord",
+        "anchor": "discord",
+        "snippet": "Go to the Discord Developer Portal. Create a new application. Go to OAuth2 and add redirect: http://localhost:3000/api/auth/callback/discord"
+      },
+      {
+        "level": 3,
+        "text": "Spotify, Twitch, LinkedIn",
+        "anchor": "spotify-twitch-linkedin",
+        "snippet": "Follow the same pattern on each provider's developer portal: Spotify Dashboard Twitch Developer Console LinkedIn Developer Portal"
+      },
+      {
+        "level": 2,
+        "text": "Client-Side Usage",
+        "anchor": "client-side-usage",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Initiating Social Sign-In",
+        "anchor": "initiating-social-sign-in",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Using the SocialButtons Component",
+        "anchor": "using-the-socialbuttons-component",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "How the OAuth Flow Works",
+        "anchor": "how-the-oauth-flow-works",
+        "snippet": "Here's what happens when a user clicks \"Sign in with GitHub\":"
+      },
+      {
+        "level": 2,
+        "text": "Account Linking",
+        "anchor": "account-linking",
+        "snippet": "When a user signs in with a social provider and their email matches an existing account:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "\"redirect_uri_mismatch\" error",
+        "anchor": "redirecturimismatch-error",
+        "snippet": "The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly: Development: http://localhost:3000/api/auth/callback/{provider}"
+      },
+      {
+        "level": 3,
+        "text": "\"Access Denied\" after granting permission",
+        "anchor": "access-denied-after-granting-permission",
+        "snippet": "Verify the Client Secret is correctly set. Check that the provider is configured in your Banata project. For Microsoft, make sure tenantId is set."
+      },
+      {
+        "level": 3,
+        "text": "User created without name or email",
+        "anchor": "user-created-without-name-or-email",
+        "snippet": "Some providers don't return all user fields by default. Check the provider's scope settings to ensure you're requesting the right permissions."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Magic Links — Passwordless authentication via email Multi-Factor Auth — Add TOTP as a second factor Organizations — Multi-tenant workspaces"
+      }
+    ],
+    "searchText": "social oauth add social login with google, github, apple, microsoft, and more. step-by-step setup for each provider. supported providers --- setting up a provider the setup is the same for every provider: callback url pattern all providers use the same callback url format: adding credentials via dashboard go to authentication > providers in your project. select the provider you want to configure. enter the client id and client secret. save. adding credentials via convex environment for self-hosted setups, set the credentials on your convex deployment: provider setup guides google go to google cloud console > credentials. create a new oauth client id (web application type). add authorized redirect uri: http://localhost:3000/api/auth/callback/google github go to github developer settings > oauth apps. click new oauth app. set homepage url to http://localhost:3000. set authorization callback url to http://localhost:3000/api/auth/callback/github. apple go to apple developer portal. create an app id with sign in with apple enabled. create a services id (this is your clientid). configure the redirect url: http://localhost:3000/api/auth/callback/apple microsoft (azure ad) go to azure portal > app registrations. click new registration. set redirect uri to http://localhost:3000/api/auth/callback/microsoft (web platform). note the application (client) id and directory (te facebook go to meta for developers. create a new app (consumer type). add facebook login and set the redirect uri: http://localhost:3000/api/auth/callback/facebook twitter (x) go to the twitter developer portal. create a new project and app with oauth 2.0 enabled. set callback url: http://localhost:3000/api/auth/callback/twitter discord go to the discord developer portal. create a new application. go to oauth2 and add redirect: http://localhost:3000/api/auth/callback/discord spotify, twitch, linkedin follow the same pattern on each provider's developer portal: spotify dashboard twitch developer console linkedin developer portal client-side usage initiating social sign-in using the socialbuttons component how the oauth flow works here's what happens when a user clicks \"sign in with github\": account linking when a user signs in with a social provider and their email matches an existing account: troubleshooting \"redirect_uri_mismatch\" error the callback url in your provider settings doesn't match the actual url. make sure it's exactly: development: http://localhost:3000/api/auth/callback/{provider} \"access denied\" after granting permission verify the client secret is correctly set. check that the provider is configured in your banata project. for microsoft, make sure tenantid is set. user created without name or email some providers don't return all user fields by default. check the provider's scope settings to ensure you're requesting the right permissions. next steps magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
   },
   {
     "slug": "sso",
@@ -4849,21 +4078,21 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "How It Works",
-        "anchor": "how-it-works",
+        "text": "How SSO Works",
+        "anchor": "how-sso-works",
         "snippet": ""
       },
       {
         "level": 3,
-        "text": "Connection Model",
-        "anchor": "connection-model",
-        "snippet": "SSO connections are always tied to an organization. This means:"
+        "text": "Organization-Scoped Connections",
+        "anchor": "organization-scoped-connections",
+        "snippet": "Every SSO connection belongs to an organization. This gives you fine-grained control over which identity providers serve which customers:"
       },
       {
         "level": 3,
         "text": "Domain-Based Routing",
         "anchor": "domain-based-routing",
-        "snippet": "When a user initiates SSO login, Banata Auth uses the email domain to determine which identity provider to route them to:"
+        "snippet": "When a user initiates SSO login, Banata Auth uses their email domain to determine which identity provider to route them to:"
       },
       {
         "level": 3,
@@ -4875,31 +4104,31 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Dashboard Setup",
         "anchor": "dashboard-setup",
-        "snippet": ""
+        "snippet": "The fastest way to set up SSO is through the Banata Auth dashboard."
       },
       {
         "level": 3,
         "text": "Creating an SSO Connection",
         "anchor": "creating-an-sso-connection",
-        "snippet": "Navigate to the SSO section in the Banata Auth dashboard. Click Create Connection. Select the organization that this connection belongs to. Choose the protocol: SAML 2.0 or OIDC."
+        "snippet": "Navigate to the SSO section in the dashboard. Click Create Connection. Select the organization that this connection belongs to. Choose the protocol: SAML 2.0 or OIDC."
       },
       {
         "level": 3,
         "text": "Configuring SAML 2.0",
         "anchor": "configuring-saml-20",
-        "snippet": "After creating the connection, you need to exchange metadata with the IdP:"
+        "snippet": "After creating a SAML connection, you need to exchange metadata between Banata Auth and the IdP."
       },
       {
         "level": 3,
         "text": "Configuring OIDC",
         "anchor": "configuring-oidc",
-        "snippet": "For OIDC connections, provide the following from the IdP:"
+        "snippet": "For OIDC connections, you'll need the following from the IdP:"
       },
       {
         "level": 2,
         "text": "SDK Usage",
         "anchor": "sdk-usage",
-        "snippet": "Use the Banata Auth SDK to manage SSO connections programmatically."
+        "snippet": "You can also manage SSO connections programmatically with the Banata Auth SDK."
       },
       {
         "level": 3,
@@ -4933,33 +4162,9 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "API Endpoints",
-        "anchor": "api-endpoints",
-        "snippet": "The following API endpoints are available for SSO operations:"
-      },
-      {
-        "level": 3,
-        "text": "POST /sso/register",
-        "anchor": "post-ssoregister",
-        "snippet": "Create a new SSO connection for an organization."
-      },
-      {
-        "level": 3,
-        "text": "POST /sso/sign-in",
-        "anchor": "post-ssosign-in",
-        "snippet": "Initiate SSO login for a user. Returns a redirect URL pointing to the appropriate IdP."
-      },
-      {
-        "level": 3,
-        "text": "POST /sso/list-providers",
-        "anchor": "post-ssolist-providers",
-        "snippet": "List all SSO connections for the current project."
-      },
-      {
-        "level": 2,
-        "text": "Connection Types",
-        "anchor": "connection-types",
-        "snippet": "Each protocol requires different configuration fields. The table below summarizes what each type expects:"
+        "text": "Connection Field Reference",
+        "anchor": "connection-field-reference",
+        "snippet": "Each protocol requires different configuration fields. Use these tables as a reference when setting up connections."
       },
       {
         "level": 3,
@@ -4983,28 +4188,169 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Project Scoping",
         "anchor": "project-scoping",
-        "snippet": "SSO connections are scoped to the project they belong to. A connection created in one project cannot be accessed or used by another project, even within the same account. This ensures tenant isolation"
+        "snippet": "SSO connections are scoped to your project. A connection created in one project cannot be accessed or used by another project, even within the same account. This ensures tenant isolation in multi-proj"
       },
       {
         "level": 3,
         "text": "Domain Verification",
         "anchor": "domain-verification",
-        "snippet": "When domains are associated with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and en"
+        "snippet": "When you associate domains with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ens"
       },
       {
         "level": 3,
         "text": "Signature Validation",
         "anchor": "signature-validation",
-        "snippet": "For SAML connections, Banata Auth validates the XML signature on every assertion using the X.509 certificate provided during setup. Assertions with invalid, expired, or missing signatures are rejected"
+        "snippet": "For SAML connections, Banata Auth validates the XML signature on every assertion using the X.509 certificate you provided during setup. Assertions with invalid, expired, or missing signatures are reje"
       },
       {
         "level": 3,
         "text": "Additional Safeguards",
         "anchor": "additional-safeguards",
         "snippet": "Replay protection — SAML assertions include a unique ID and timestamp. Banata Auth rejects assertions that have already been consumed or that fall outside the allowed time window."
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Organizations — Learn how to create and manage the organizations that SSO connections belong to. Authentication — See how SSO fits into the broader Banata Auth authentication flow."
       }
     ],
-    "searchText": "single sign-on (sso) enterprise sso with saml 2.0 and openid connect (oidc) for organization-level authentication. supported protocols banata auth supports the two industry-standard sso protocols: how it works connection model sso connections are always tied to an organization. this means: domain-based routing when a user initiates sso login, banata auth uses the email domain to determine which identity provider to route them to: just-in-time (jit) provisioning when a user authenticates via sso for the first time and no matching account exists, banata auth automatically: dashboard setup creating an sso connection navigate to the sso section in the banata auth dashboard. click create connection. select the organization that this connection belongs to. choose the protocol: saml 2.0 or oidc. configuring saml 2.0 after creating the connection, you need to exchange metadata with the idp: configuring oidc for oidc connections, provide the following from the idp: sdk usage use the banata auth sdk to manage sso connections programmatically. initialize the client list sso connections retrieve all sso connections for your project: get a specific connection fetch details for a single connection by id: create a connection initiate sso login redirect the user to their idp for authentication: api endpoints the following api endpoints are available for sso operations: post /sso/register create a new sso connection for an organization. post /sso/sign-in initiate sso login for a user. returns a redirect url pointing to the appropriate idp. post /sso/list-providers list all sso connections for the current project. connection types each protocol requires different configuration fields. the table below summarizes what each type expects: saml 2.0 oidc fields marked as provided by banata auth (acsurl, spentityid) are generated when the connection is created and must be configured in the idp. security project scoping sso connections are scoped to the project they belong to. a connection created in one project cannot be accessed or used by another project, even within the same account. this ensures tenant isolation domain verification when domains are associated with an sso connection, banata auth enforces that only users with matching email domains are routed through that connection. this prevents unauthorized domain claims and en signature validation for saml connections, banata auth validates the xml signature on every assertion using the x.509 certificate provided during setup. assertions with invalid, expired, or missing signatures are rejected additional safeguards replay protection — saml assertions include a unique id and timestamp. banata auth rejects assertions that have already been consumed or that fall outside the allowed time window."
+    "searchText": "single sign-on (sso) enterprise sso with saml 2.0 and openid connect (oidc) for organization-level authentication. supported protocols banata auth supports the two industry-standard sso protocols: how sso works organization-scoped connections every sso connection belongs to an organization. this gives you fine-grained control over which identity providers serve which customers: domain-based routing when a user initiates sso login, banata auth uses their email domain to determine which identity provider to route them to: just-in-time (jit) provisioning when a user authenticates via sso for the first time and no matching account exists, banata auth automatically: dashboard setup the fastest way to set up sso is through the banata auth dashboard. creating an sso connection navigate to the sso section in the dashboard. click create connection. select the organization that this connection belongs to. choose the protocol: saml 2.0 or oidc. configuring saml 2.0 after creating a saml connection, you need to exchange metadata between banata auth and the idp. configuring oidc for oidc connections, you'll need the following from the idp: sdk usage you can also manage sso connections programmatically with the banata auth sdk. initialize the client list sso connections retrieve all sso connections for your project: get a specific connection fetch details for a single connection by id: create a connection initiate sso login redirect the user to their idp for authentication: connection field reference each protocol requires different configuration fields. use these tables as a reference when setting up connections. saml 2.0 oidc fields marked as provided by banata auth (acsurl, spentityid) are generated when the connection is created and must be configured in the idp. security project scoping sso connections are scoped to your project. a connection created in one project cannot be accessed or used by another project, even within the same account. this ensures tenant isolation in multi-proj domain verification when you associate domains with an sso connection, banata auth enforces that only users with matching email domains are routed through that connection. this prevents unauthorized domain claims and ens signature validation for saml connections, banata auth validates the xml signature on every assertion using the x.509 certificate you provided during setup. assertions with invalid, expired, or missing signatures are reje additional safeguards replay protection — saml assertions include a unique id and timestamp. banata auth rejects assertions that have already been consumed or that fall outside the allowed time window. next steps organizations — learn how to create and manage the organizations that sso connections belong to. authentication — see how sso fits into the broader banata auth authentication flow."
+  },
+  {
+    "slug": "username-auth",
+    "title": "Username Authentication",
+    "description": "Sign in with a username and password instead of an email address.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "When to Use Username Auth",
+        "anchor": "when-to-use-username-auth",
+        "snippet": "---"
+      },
+      {
+        "level": 2,
+        "text": "Enabling Username Auth",
+        "anchor": "enabling-username-auth",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Open your project in the Banata Auth dashboard. Go to Authentication > Methods. Toggle on Username & Password. Click Save."
+      },
+      {
+        "level": 3,
+        "text": "From the SDK",
+        "anchor": "from-the-sdk",
+        "snippet": "You can also enable username auth programmatically:"
+      },
+      {
+        "level": 2,
+        "text": "Username Validation Rules",
+        "anchor": "username-validation-rules",
+        "snippet": "Banata Auth enforces the following rules on all usernames:"
+      },
+      {
+        "level": 2,
+        "text": "Client API",
+        "anchor": "client-api",
+        "snippet": "The auth client exposes three methods for username auth:"
+      },
+      {
+        "level": 3,
+        "text": "Sign Up",
+        "anchor": "sign-up",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Sign In",
+        "anchor": "sign-in",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Check Availability",
+        "anchor": "check-availability",
+        "snippet": "Before the user submits the sign-up form, you can check if their desired username is available:"
+      },
+      {
+        "level": 2,
+        "text": "Complete Sign-Up Form with Availability Checking",
+        "anchor": "complete-sign-up-form-with-availability-checking",
+        "snippet": "Here is a full React example that debounces the availability check and disables the submit button when the username is taken:"
+      },
+      {
+        "level": 2,
+        "text": "Sign-In Form Example",
+        "anchor": "sign-in-form-example",
+        "snippet": "A minimal sign-in form for username auth:"
+      },
+      {
+        "level": 2,
+        "text": "Combining Username with Email/Password",
+        "anchor": "combining-username-with-emailpassword",
+        "snippet": "You can enable both authentication methods so users can sign in with either a username or an email address:"
+      },
+      {
+        "level": 2,
+        "text": "Password Reset Without Email",
+        "anchor": "password-reset-without-email",
+        "snippet": "If a user signed up with only a username and no email, the standard \"forgot password\" email flow is not available. You have a few options:"
+      },
+      {
+        "level": 2,
+        "text": "Rate Limits",
+        "anchor": "rate-limits",
+        "snippet": "Username auth endpoints are rate-limited to prevent brute-force attacks:"
+      },
+      {
+        "level": 2,
+        "text": "Error Reference",
+        "anchor": "error-reference",
+        "snippet": "You can handle these by checking the error.status code:"
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "\"Invalid username format\"",
+        "anchor": "invalid-username-format",
+        "snippet": "The username does not meet the validation rules. Make sure it:"
+      },
+      {
+        "level": 3,
+        "text": "\"Username already taken\"",
+        "anchor": "username-already-taken",
+        "snippet": "Another user has already claimed that username. Remember that usernames are case-insensitive, so JaneDoe and janedoe count as the same name. Prompt the user to choose a different one, or use checkAvai"
+      },
+      {
+        "level": 3,
+        "text": "\"Cannot reset password\"",
+        "anchor": "cannot-reset-password",
+        "snippet": "The user signed up with a username only and has no email on their account. Use the admin SDK to reset their password, or ask them to add an email address first."
+      },
+      {
+        "level": 3,
+        "text": "Sign-in returns 401 but the username exists",
+        "anchor": "sign-in-returns-401-but-the-username-exists",
+        "snippet": "The most likely cause is an incorrect password. The error message is intentionally vague (\"Invalid username or password\") to prevent username enumeration. Double-check that the password is correct and"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Email & Password -- Add traditional email-based authentication alongside username auth Social OAuth -- Let users link a Google, GitHub, or other social account"
+      }
+    ],
+    "searchText": "username authentication sign in with a username and password instead of an email address. when to use username auth --- enabling username auth from the dashboard open your project in the banata auth dashboard. go to authentication > methods. toggle on username & password. click save. from the sdk you can also enable username auth programmatically: username validation rules banata auth enforces the following rules on all usernames: client api the auth client exposes three methods for username auth: sign up sign in check availability before the user submits the sign-up form, you can check if their desired username is available: complete sign-up form with availability checking here is a full react example that debounces the availability check and disables the submit button when the username is taken: sign-in form example a minimal sign-in form for username auth: combining username with email/password you can enable both authentication methods so users can sign in with either a username or an email address: password reset without email if a user signed up with only a username and no email, the standard \"forgot password\" email flow is not available. you have a few options: rate limits username auth endpoints are rate-limited to prevent brute-force attacks: error reference you can handle these by checking the error.status code: troubleshooting \"invalid username format\" the username does not meet the validation rules. make sure it: \"username already taken\" another user has already claimed that username. remember that usernames are case-insensitive, so janedoe and janedoe count as the same name. prompt the user to choose a different one, or use checkavai \"cannot reset password\" the user signed up with a username only and has no email on their account. use the admin sdk to reset their password, or ask them to add an email address first. sign-in returns 401 but the username exists the most likely cause is an incorrect password. the error message is intentionally vague (\"invalid username or password\") to prevent username enumeration. double-check that the password is correct and next steps email & password -- add traditional email-based authentication alongside username auth social oauth -- let users link a google, github, or other social account"
   },
   {
     "slug": "vault",
@@ -5016,19 +4362,19 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "How It Works",
         "anchor": "how-it-works",
-        "snippet": "The Vault uses AES-256-GCM (Galois/Counter Mode) authenticated encryption with the following process:"
+        "snippet": "The Vault uses AES-256-GCM (Galois/Counter Mode) authenticated encryption. Here's what happens under the hood:"
       },
       {
         "level": 2,
         "text": "What Gets Encrypted",
         "anchor": "what-gets-encrypted",
-        "snippet": "The Vault automatically encrypts sensitive data stored by Banata Auth's internal subsystems:"
+        "snippet": "The Vault automatically encrypts sensitive data across Banata Auth's internal subsystems:"
       },
       {
         "level": 2,
         "text": "Configuration",
         "anchor": "configuration",
-        "snippet": "The Vault is enabled by default when BETTER_AUTH_SECRET is set in your environment. No additional configuration is required."
+        "snippet": "The Vault is enabled by default when the BETTER_AUTH_SECRET environment variable is set in your deployment. No additional configuration is required — the encryption key is derived directly from this s"
       },
       {
         "level": 3,
@@ -5074,12 +4420,6 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Data Model",
-        "anchor": "data-model",
-        "snippet": ""
-      },
-      {
-        "level": 2,
         "text": "Envelope Encryption",
         "anchor": "envelope-encryption",
         "snippet": "The Vault uses envelope encryption to balance security and performance:"
@@ -5106,13 +4446,13 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "\"Decryption failed\"",
         "anchor": "decryption-failed",
-        "snippet": "Verify the context parameter matches the value used during encryption Ensure BETTER_AUTH_SECRET has not been changed since encryption Check that the secret has not been corrupted (GCM will reject tamp"
+        "snippet": "Verify the context parameter matches the value used during encryption. Ensure BETTER_AUTH_SECRET has not been changed since the secret was encrypted. Check that the secret has not been corrupted — GCM"
       },
       {
         "level": 3,
         "text": "\"Vault secret not found\"",
         "anchor": "vault-secret-not-found",
-        "snippet": "Confirm the secretId is correct (should start with vsec_) The secret may have been deleted Check organization scoping — secrets scoped to one org are not visible to another"
+        "snippet": "Confirm the secretId is correct (it should start with vsec_). The secret may have been deleted. Check organization scoping — secrets scoped to one org are not visible to another."
       },
       {
         "level": 3,
@@ -5122,25 +4462,19 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
+        "text": "Next Steps",
+        "anchor": "next-steps",
         "snippet": "SDK Reference — Complete API reference for all Vault methods Audit Logs — Monitor Vault access events Environment Variables — Configure BETTER_AUTH_SECRET and other secrets"
       }
     ],
-    "searchText": "vault & encryption application-level encryption for sensitive data with key management and field-level encryption support. how it works the vault uses aes-256-gcm (galois/counter mode) authenticated encryption with the following process: what gets encrypted the vault automatically encrypts sensitive data stored by banata auth's internal subsystems: configuration the vault is enabled by default when better_auth_secret is set in your environment. no additional configuration is required. requirements better_auth_secret must be at least 32 characters use a cryptographically random value (e.g., openssl rand -base64 48) store it in your deployment's environment variables, not in source control sdk usage encrypting data store a secret in the vault: decrypting data retrieve and decrypt a stored secret: listing secrets list vault secrets (metadata only — encrypted values are never returned in list responses): deleting a secret permanently remove a secret from the vault: key rotation rotate the vault encryption key. this re-encrypts all existing secrets with a new key derived from the current better_auth_secret: data model envelope encryption the vault uses envelope encryption to balance security and performance: security best practices protect better_auth_secret — this is the root of all vault encryption. use a secrets manager (aws secrets manager, vercel env vars, etc.) and never commit it to source control. audit events --- troubleshooting \"decryption failed\" verify the context parameter matches the value used during encryption ensure better_auth_secret has not been changed since encryption check that the secret has not been corrupted (gcm will reject tamp \"vault secret not found\" confirm the secretid is correct (should start with vsec_) the secret may have been deleted check organization scoping — secrets scoped to one org are not visible to another \"better_auth_secret is required\" set the better_auth_secret environment variable in your deployment. it must be at least 32 characters. what's next sdk reference — complete api reference for all vault methods audit logs — monitor vault access events environment variables — configure better_auth_secret and other secrets"
+    "searchText": "vault & encryption application-level encryption for sensitive data with key management and field-level encryption support. how it works the vault uses aes-256-gcm (galois/counter mode) authenticated encryption. here's what happens under the hood: what gets encrypted the vault automatically encrypts sensitive data across banata auth's internal subsystems: configuration the vault is enabled by default when the better_auth_secret environment variable is set in your deployment. no additional configuration is required — the encryption key is derived directly from this s requirements better_auth_secret must be at least 32 characters use a cryptographically random value (e.g., openssl rand -base64 48) store it in your deployment's environment variables, not in source control sdk usage encrypting data store a secret in the vault: decrypting data retrieve and decrypt a stored secret: listing secrets list vault secrets (metadata only — encrypted values are never returned in list responses): deleting a secret permanently remove a secret from the vault: key rotation rotate the vault encryption key. this re-encrypts all existing secrets with a new key derived from the current better_auth_secret: envelope encryption the vault uses envelope encryption to balance security and performance: security best practices protect better_auth_secret — this is the root of all vault encryption. use a secrets manager (aws secrets manager, vercel env vars, etc.) and never commit it to source control. audit events --- troubleshooting \"decryption failed\" verify the context parameter matches the value used during encryption. ensure better_auth_secret has not been changed since the secret was encrypted. check that the secret has not been corrupted — gcm \"vault secret not found\" confirm the secretid is correct (it should start with vsec_). the secret may have been deleted. check organization scoping — secrets scoped to one org are not visible to another. \"better_auth_secret is required\" set the better_auth_secret environment variable in your deployment. it must be at least 32 characters. next steps sdk reference — complete api reference for all vault methods audit logs — monitor vault access events environment variables — configure better_auth_secret and other secrets"
   },
   {
     "slug": "webhooks",
     "title": "Webhooks",
-    "description": "Event-driven webhooks with HMAC-SHA256 signatures, automatic retries, and delivery tracking.",
-    "section": "Enterprise",
+    "description": "Receive real-time notifications when auth events occur — user sign-ups, session changes, organization updates, and more.",
+    "section": "Operate Your Project",
     "headings": [
-      {
-        "level": 2,
-        "text": "How Webhooks Work",
-        "anchor": "how-webhooks-work",
-        "snippet": ""
-      },
       {
         "level": 2,
         "text": "Setting Up Webhooks",
@@ -5149,87 +4483,63 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
-        "text": "Via the Admin Dashboard",
-        "anchor": "via-the-admin-dashboard",
-        "snippet": "Navigate to Settings > Webhooks Click Add Endpoint Enter the Endpoint URL (e.g., https://myapp.com/api/webhooks/banata) Select which events to subscribe to"
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Go to Settings > Webhooks in your project dashboard. Click Add Endpoint. Enter your Endpoint URL (e.g., https://myapp.com/api/webhooks/banata). Select which events you want to receive."
       },
       {
         "level": 3,
-        "text": "Via the Admin SDK",
-        "anchor": "via-the-admin-sdk",
-        "snippet": ""
+        "text": "Using the SDK",
+        "anchor": "using-the-sdk",
+        "snippet": "You can also manage webhook endpoints programmatically:"
       },
       {
         "level": 2,
-        "text": "Webhook Payload",
-        "anchor": "webhook-payload",
-        "snippet": "Every webhook delivery sends a POST request with a JSON body:"
+        "text": "Webhook Payload Format",
+        "anchor": "webhook-payload-format",
+        "snippet": "Every webhook arrives as a POST request with a JSON body:"
       },
       {
         "level": 3,
         "text": "Headers",
         "anchor": "headers",
-        "snippet": "---"
+        "snippet": "Each request includes these headers:"
       },
       {
         "level": 2,
-        "text": "Signing & Verification",
-        "anchor": "signing-verification",
-        "snippet": ""
+        "text": "Signing and Verification",
+        "anchor": "signing-and-verification",
+        "snippet": "Every webhook is signed so you can confirm it was sent by Banata Auth and has not been tampered with."
       },
       {
         "level": 3,
         "text": "Signature Format",
         "anchor": "signature-format",
-        "snippet": "The Webhook-Signature header uses this format:"
-      },
-      {
-        "level": 3,
-        "text": "Signing Process (Server-Side)",
-        "anchor": "signing-process-server-side",
-        "snippet": "The webhook system signs payloads as follows:"
-      },
-      {
-        "level": 3,
-        "text": "Signing Secret Format",
-        "anchor": "signing-secret-format",
-        "snippet": "Webhook secrets are prefixed with whsec_ for identification:"
-      },
-      {
-        "level": 2,
-        "text": "Verifying Webhooks",
-        "anchor": "verifying-webhooks",
-        "snippet": ""
+        "snippet": "The Webhook-Signature header looks like this:"
       },
       {
         "level": 3,
         "text": "Using the SDK (Recommended)",
         "anchor": "using-the-sdk-recommended",
-        "snippet": "The SDK provides an async constructEvent method that verifies the signature:"
+        "snippet": "The SDK's constructEvent method handles verification for you. It is async because it uses the Web Crypto API under the hood — always await it."
       },
       {
         "level": 3,
         "text": "Manual Verification",
         "anchor": "manual-verification",
-        "snippet": "If you need to verify signatures without the SDK:"
+        "snippet": "If you prefer to verify signatures without the SDK (or you are using a language other than TypeScript), here is the process:"
       },
       {
         "level": 2,
         "text": "Retry Policy",
         "anchor": "retry-policy",
-        "snippet": "Failed webhook deliveries are automatically retried with exponential backoff:"
-      },
-      {
-        "level": 3,
-        "text": "Retry Best Practices",
-        "anchor": "retry-best-practices",
-        "snippet": "Return 200 quickly — Process webhooks asynchronously. Return 200 immediately and process the event in a background job. Implement idempotency — Use the Webhook-Id header to deduplicate. Store processe"
+        "snippet": "If your endpoint returns a non-2xx status code (or is unreachable), Banata Auth retries with exponential backoff:"
       },
       {
         "level": 2,
         "text": "Available Events",
         "anchor": "available-events",
-        "snippet": "The webhook system can deliver notifications for 30+ auth events:"
+        "snippet": "You can subscribe to any combination of the following events."
       },
       {
         "level": 3,
@@ -5257,53 +4567,29 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
-        "text": "Webhook Endpoint Handler Example",
-        "anchor": "webhook-endpoint-handler-example",
-        "snippet": "Complete Next.js API route handler:"
+        "text": "Complete Next.js Handler Example",
+        "anchor": "complete-nextjs-handler-example",
+        "snippet": "Here is a full webhook handler you can drop into a Next.js App Router project:"
       },
       {
         "level": 2,
-        "text": "Delivery Monitoring",
-        "anchor": "delivery-monitoring",
-        "snippet": "Webhook deliveries are tracked in the webhookDelivery table. You can view delivery status, response codes, and retry history through:"
-      },
-      {
-        "level": 3,
-        "text": "Delivery Record",
-        "anchor": "delivery-record",
-        "snippet": ""
-      },
-      {
-        "level": 2,
-        "text": "Testing Webhooks Locally",
-        "anchor": "testing-webhooks-locally",
-        "snippet": "During development, your local server isn't publicly accessible. Use a tunnel:"
-      },
-      {
-        "level": 3,
-        "text": "Using ngrok",
-        "anchor": "using-ngrok",
-        "snippet": ""
-      },
-      {
-        "level": 3,
-        "text": "Using the Convex Dashboard",
-        "anchor": "using-the-convex-dashboard",
-        "snippet": "Convex function logs show webhook dispatch activity. Check the logs at dashboard.convex.dev to debug delivery issues."
+        "text": "Testing Locally",
+        "anchor": "testing-locally",
+        "snippet": "During development, your local server is not publicly accessible. Use a tunneling tool like ngrok to expose it:"
       },
       {
         "level": 2,
         "text": "Security Best Practices",
         "anchor": "security-best-practices",
-        "snippet": "Always verify signatures — Never process a webhook without verifying the HMAC signature. Check timestamp freshness — Reject webhooks with timestamps older than 5 minutes to prevent replay attacks."
+        "snippet": "Always verify signatures. Never process a webhook payload without checking the HMAC signature first. Check timestamp freshness. Reject webhooks with timestamps older than 5 minutes to guard against re"
       },
       {
         "level": 2,
-        "text": "What's Next",
-        "anchor": "whats-next",
-        "snippet": "Audit Logs — Comprehensive event logging SDK Reference — Complete SDK API reference Deploy — Production deployment with webhook monitoring"
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "Audit Logs — Track and query a detailed history of auth events. SDK Reference — Explore the full SDK API, including webhook management methods. Deploy — Take your project to production with monitoring"
       }
     ],
-    "searchText": "webhooks event-driven webhooks with hmac-sha256 signatures, automatic retries, and delivery tracking. how webhooks work setting up webhooks via the admin dashboard navigate to settings > webhooks click add endpoint enter the endpoint url (e.g., https://myapp.com/api/webhooks/banata) select which events to subscribe to via the admin sdk webhook payload every webhook delivery sends a post request with a json body: headers --- signing & verification signature format the webhook-signature header uses this format: signing process (server-side) the webhook system signs payloads as follows: signing secret format webhook secrets are prefixed with whsec_ for identification: verifying webhooks using the sdk (recommended) the sdk provides an async constructevent method that verifies the signature: manual verification if you need to verify signatures without the sdk: retry policy failed webhook deliveries are automatically retried with exponential backoff: retry best practices return 200 quickly — process webhooks asynchronously. return 200 immediately and process the event in a background job. implement idempotency — use the webhook-id header to deduplicate. store processe available events the webhook system can deliver notifications for 30+ auth events: user events session events organization events security events --- webhook endpoint handler example complete next.js api route handler: delivery monitoring webhook deliveries are tracked in the webhookdelivery table. you can view delivery status, response codes, and retry history through: delivery record testing webhooks locally during development, your local server isn't publicly accessible. use a tunnel: using ngrok using the convex dashboard convex function logs show webhook dispatch activity. check the logs at dashboard.convex.dev to debug delivery issues. security best practices always verify signatures — never process a webhook without verifying the hmac signature. check timestamp freshness — reject webhooks with timestamps older than 5 minutes to prevent replay attacks. what's next audit logs — comprehensive event logging sdk reference — complete sdk api reference deploy — production deployment with webhook monitoring"
+    "searchText": "webhooks receive real-time notifications when auth events occur — user sign-ups, session changes, organization updates, and more. setting up webhooks from the dashboard go to settings > webhooks in your project dashboard. click add endpoint. enter your endpoint url (e.g., https://myapp.com/api/webhooks/banata). select which events you want to receive. using the sdk you can also manage webhook endpoints programmatically: webhook payload format every webhook arrives as a post request with a json body: headers each request includes these headers: signing and verification every webhook is signed so you can confirm it was sent by banata auth and has not been tampered with. signature format the webhook-signature header looks like this: using the sdk (recommended) the sdk's constructevent method handles verification for you. it is async because it uses the web crypto api under the hood — always await it. manual verification if you prefer to verify signatures without the sdk (or you are using a language other than typescript), here is the process: retry policy if your endpoint returns a non-2xx status code (or is unreachable), banata auth retries with exponential backoff: available events you can subscribe to any combination of the following events. user events session events organization events security events --- complete next.js handler example here is a full webhook handler you can drop into a next.js app router project: testing locally during development, your local server is not publicly accessible. use a tunneling tool like ngrok to expose it: security best practices always verify signatures. never process a webhook payload without checking the hmac signature first. check timestamp freshness. reject webhooks with timestamps older than 5 minutes to guard against re next steps audit logs — track and query a detailed history of auth events. sdk reference — explore the full sdk api, including webhook management methods. deploy — take your project to production with monitoring"
   }
 ];

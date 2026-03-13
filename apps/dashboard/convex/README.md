@@ -35,7 +35,12 @@ npx convex run --component banataAuth migrations:removeEnvironmentIds
 Push schema and functions to your Convex deployment:
 
 ```bash
-npx convex dev
+bun run --cwd apps/dashboard dev:convex
 ```
 
 The Convex bundling is slow. Run `convex dev` from your own terminal and let it watch for changes.
+
+Important: `convex dev` compiles the workspace package outputs it sees at startup.
+If you change code in `packages/convex` or any package consumed by it, rebuild the
+packages and restart `convex dev`. Otherwise the dashboard can keep serving a stale
+Banata auth runtime even while Next.js has picked up newer frontend code.

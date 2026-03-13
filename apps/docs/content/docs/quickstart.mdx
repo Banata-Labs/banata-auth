@@ -40,18 +40,19 @@ Create or update your `.env.local` file:
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-NEXT_PUBLIC_CONVEX_URL=https://your-banata-instance.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://your-banata-instance.convex.site
-
 BANATA_API_KEY=sk_test_your_project_key
+
+# Optional: only set this if you use a custom Banata auth domain
+# or a self-hosted deployment. Hosted Banata defaults to:
+# https://auth.banata.dev
+# BANATA_AUTH_URL=https://auth.yourcompany.com
 ```
 
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | Your app's public URL |
-| `NEXT_PUBLIC_CONVEX_URL` | The Banata backend URL (Convex cloud) |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | The Banata auth API URL (Convex site) |
 | `BANATA_API_KEY` | Your project-scoped API key (keep this server-side only) |
+| `BANATA_AUTH_URL` | Optional override for custom/self-hosted Banata auth domains |
 
 > **Important:** `BANATA_API_KEY` must not have the `NEXT_PUBLIC_` prefix. It should only be accessible on the server.
 
@@ -80,11 +81,12 @@ export const {
   fetchAuthMutation,
   fetchAuthAction,
 } = createBanataAuthServer({
-  convexUrl: requireEnv("NEXT_PUBLIC_CONVEX_URL"),
-  convexSiteUrl: requireEnv("NEXT_PUBLIC_CONVEX_SITE_URL"),
   apiKey: requireEnv("BANATA_API_KEY"),
+  authUrl: process.env.BANATA_AUTH_URL,
 });
 ```
+
+If you do not pass `authUrl`, the helper automatically uses `https://auth.banata.dev`.
 
 Here's what each export does:
 
@@ -267,6 +269,7 @@ Changes made by the SDK update the same configuration the dashboard reads — th
 - Verify the auth method is enabled in the dashboard (e.g., Email & Password is toggled on).
 - Check that provider credentials are configured if using social OAuth.
 - Confirm `BANATA_API_KEY` is set in your server environment.
+- If you set `BANATA_AUTH_URL`, verify it points at your Banata auth domain and not a raw `*.convex.cloud` URL.
 
 ### Sign-in succeeds but the app shows no session
 

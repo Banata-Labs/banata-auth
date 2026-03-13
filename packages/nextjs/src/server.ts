@@ -8,24 +8,22 @@ import {
 	type BanataProjectRouteScope,
 } from "./route-handler";
 
+const DEFAULT_BANATA_AUTH_URL = "https://auth.banata.dev";
+
 const cache =
 	React.cache ??
 	((fn: (...args: never[]) => unknown) => {
 		return (...args: never[]) => fn(...args);
 	});
 
-function parseConvexSiteUrl(url: string): string {
-	if (!url) {
+function resolveAuthBaseUrl(url?: string): string {
+	const normalizedUrl = typeof url === "string" && url.trim().length > 0 ? url.trim() : DEFAULT_BANATA_AUTH_URL;
+	if (normalizedUrl.endsWith(".convex.cloud")) {
 		throw new Error(
-			"NEXT_PUBLIC_CONVEX_SITE_URL is required. Point it at your Banata instance .convex.site URL.",
+			`authUrl must point to your Banata auth base URL, not the raw Convex cloud URL ${normalizedUrl}.`,
 		);
 	}
-	if (url.endsWith(".convex.cloud")) {
-		throw new Error(
-			`convexSiteUrl must point to the Convex site URL (.convex.site), not ${url}.`,
-		);
-	}
-	return url;
+	return normalizedUrl.replace(/\/$/, "");
 }
 
 type OptionalArgs<FuncRef extends FunctionReference<any, any>> = keyof FuncRef["_args"] extends never
@@ -76,16 +74,12 @@ type StaticProjectScope = Omit<BanataProjectRouteScope, "resolve">;
 
 interface BanataAuthServerBaseOptions extends GetTokenOptions {
 	/**
-	 * Your Convex cloud URL (e.g. `https://adjective-animal-123.convex.cloud`).
-	 * Typically `process.env.NEXT_PUBLIC_CONVEX_URL`.
+	 * Hosted or self-hosted Banata auth base URL.
+	 *
+	 * Defaults to `https://auth.banata.dev` for managed Banata projects.
+	 * Set this only when you use a custom Banata auth domain or a self-hosted deployment.
 	 */
-	convexUrl: string;
-
-	/**
-	 * Your Convex site URL (e.g. `https://adjective-animal-123.convex.site`).
-	 * Typically `process.env.NEXT_PUBLIC_CONVEX_SITE_URL`.
-	 */
-	convexSiteUrl: string;
+	authUrl?: string;
 	/** Origins allowed to call the auth proxy cross-origin. */
 	allowedOrigins?: string[];
 }
@@ -125,7 +119,7 @@ export type BanataAuthServerOptions = BanataAuthServerBaseOptions &
  * project with a server-side API key.
  */
 export function createBanataAuthServer(opts: BanataAuthServerOptions) {
-	const siteUrl = parseConvexSiteUrl(opts.convexSiteUrl);
+	const siteUrl = resolveAuthBaseUrl(opts.authUrl);
 
 	const cachedGetToken = cache(async ({ forceRefresh }: { forceRefresh?: boolean } = {}) => {
 		const requestHeaders = await (await import("next/headers.js")).headers();
@@ -146,14 +140,14 @@ export function createBanataAuthServer(opts: BanataAuthServerOptions) {
 
 	const handler = opts.allowInternalProjectScope
 		? createRouteHandler({
-				convexSiteUrl: opts.convexSiteUrl,
+				authUrl: siteUrl,
 				allowInternalProjectScope: true,
 				allowedOrigins: opts.allowedOrigins,
 				apiKey: opts.apiKey,
 				project: opts.project,
 			})
 		: createRouteHandler({
-				convexSiteUrl: opts.convexSiteUrl,
+				authUrl: siteUrl,
 				allowedOrigins: opts.allowedOrigins,
 				apiKey: opts.apiKey,
 				project: opts.project,

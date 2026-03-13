@@ -724,6 +724,30 @@ export const handleAuthRequest = internalAction({
 		const runtimeConfig = useProjectRuntimeConfig
 			? await getRequestConfig(ctx, scope, { apiKey })
 			: await getRequestConfig(ctx, null, { apiKey });
+
+		// When an API key is present, trust the origin derived from x-forwarded-host.
+		// This allows proxy-based integrations (non-Next.js frameworks) to pass origin
+		// validation without needing to set origin to a hardcoded trusted value.
+		if (apiKey) {
+			const forwardedHost = getHeaderValue(args.request.headers, "x-forwarded-host");
+			const forwardedProto = getHeaderValue(args.request.headers, "x-forwarded-proto") ?? "https";
+			const requestOrigin = getHeaderValue(args.request.headers, "origin");
+			const originsToTrust: string[] = [];
+			if (forwardedHost) {
+				originsToTrust.push(`${forwardedProto}://${forwardedHost}`);
+			}
+			if (requestOrigin) {
+				originsToTrust.push(requestOrigin);
+			}
+			if (originsToTrust.length > 0) {
+				const existing = runtimeConfig.trustedOrigins ?? [];
+				runtimeConfig.trustedOrigins = [
+					...existing,
+					...originsToTrust.filter((o) => !existing.includes(o)),
+				];
+			}
+		}
+
 		const dashboardProjectId =
 			!apiKey && hasInternalProjectScopeBypass(args.request.headers)
 				? effectiveDashboardProjectId

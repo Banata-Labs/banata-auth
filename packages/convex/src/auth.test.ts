@@ -79,6 +79,26 @@ describe("createBanataAuthOptions()", () => {
 		expect(warn).toHaveBeenCalled();
 	});
 
+	it("fails fast when runtime auth is created without BETTER_AUTH_SECRET", () => {
+		expect(() =>
+			createBanataAuthOptions(
+				{ runQuery: vi.fn() } as never,
+				{
+					authComponent: {
+						adapter: () => ({}),
+					} as never,
+					authConfig: {
+						providers: [getAuthConfigProvider()],
+					},
+					config: {
+						siteUrl: "http://localhost:3000",
+						secret: "",
+					},
+				},
+			),
+		).toThrow(/BETTER_AUTH_SECRET is required/i);
+	});
+
 	it("skips adapter resolution during static module evaluation", () => {
 		vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -224,8 +244,8 @@ describe("createBanataAuthOptions()", () => {
 		expect(findOne).toHaveBeenCalledWith({
 			model: "user",
 			where: [
-				{ field: "email", value: "test@example.com" },
-				{ field: "projectId", value: "proj_test" },
+				{ field: "email", operator: "eq", value: "test@example.com" },
+				{ field: "projectId", operator: "eq", value: "proj_test" },
 			],
 		});
 	});

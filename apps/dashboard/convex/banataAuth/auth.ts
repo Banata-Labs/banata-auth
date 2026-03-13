@@ -97,6 +97,44 @@ function getTrustedOrigins(): string[] {
 	];
 }
 
+function getRuntimeTrustedOrigins(siteUrl: string): string[] {
+	const origins = new Set(
+		process.env.TRUSTED_ORIGINS
+			? process.env.TRUSTED_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+			: [],
+	);
+
+	try {
+		const site = new URL(siteUrl);
+		origins.add(site.origin);
+		if (site.hostname === "localhost" || site.hostname === "127.0.0.1") {
+			for (const origin of getTrustedOrigins()) {
+				origins.add(origin);
+			}
+		}
+	} catch {
+		// Fall back to explicit TRUSTED_ORIGINS only.
+	}
+
+	return Array.from(origins);
+}
+
+async function sendRuntimeEmail(to: string, subject: string, html: string): Promise<void> {
+	const apiKey = process.env.RESEND_API_KEY;
+	if (apiKey) {
+		await sendEmail(to, subject, html);
+		return;
+	}
+
+	const message =
+		`[banata-auth] RESEND_API_KEY is not set - email to ${to} ("${subject}") was not delivered. ` +
+		"Set RESEND_API_KEY via `npx convex env set RESEND_API_KEY re_xxx` to enable email delivery.";
+	if (process.env.NODE_ENV === "production") {
+		throw new Error(message);
+	}
+	console.warn(message);
+}
+
 function getPlatformSocialProviders(): BanataAuthSocialProviders | undefined {
 	if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
 		return undefined;
@@ -140,8 +178,8 @@ function getPlatformConfig(): BanataAuthConfig {
 	return {
 		appName: "Banata Auth Dashboard",
 		siteUrl,
-		secret: process.env.BETTER_AUTH_SECRET ?? "placeholder-for-module-analysis",
-		trustedOrigins: getTrustedOrigins(),
+		secret: process.env.BETTER_AUTH_SECRET ?? "",
+		trustedOrigins: getRuntimeTrustedOrigins(siteUrl),
 		authMethods: {
 			emailPassword: false,
 			magicLink: false,
@@ -161,7 +199,7 @@ function getPlatformConfig(): BanataAuthConfig {
 				user,
 				url,
 			}: { user: { email: string; name: string }; url: string; token: string }) => {
-				await sendEmail(
+				await sendRuntimeEmail(
 					user.email,
 					"Verify your email - Banata Auth",
 					`<h2>Verify your email</h2><p>Click the link below to verify your email address:</p><p><a href="${url}">${url}</a></p>`,
@@ -171,21 +209,21 @@ function getPlatformConfig(): BanataAuthConfig {
 				user,
 				url,
 			}: { user: { email: string; name: string }; url: string; token: string }) => {
-				await sendEmail(
+				await sendRuntimeEmail(
 					user.email,
 					"Reset your password - Banata Auth",
 					`<h2>Reset your password</h2><p>Click the link below to reset your password:</p><p><a href="${url}">${url}</a></p>`,
 				);
 			},
 			sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
-				await sendEmail(
+				await sendRuntimeEmail(
 					email,
 					"Sign in to Banata Auth",
 					`<h2>Sign in</h2><p>Click the link below to sign in:</p><p><a href="${url}">${url}</a></p>`,
 				);
 			},
 			sendOtp: async ({ email, otp }: { email: string; otp: string }) => {
-				await sendEmail(
+				await sendRuntimeEmail(
 					email,
 					"Your verification code - Banata Auth",
 					`<h2>Your verification code</h2><p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${otp}</p><p>This code expires in 10 minutes.</p>`,
@@ -196,7 +234,7 @@ function getPlatformConfig(): BanataAuthConfig {
 				organizationName,
 				inviterName,
 			}: { email: string; organizationName: string; inviterName: string }) => {
-				await sendEmail(
+				await sendRuntimeEmail(
 					email,
 					`You've been invited to ${organizationName}`,
 					`<h2>Organization Invitation</h2><p>${inviterName} has invited you to join <strong>${organizationName}</strong>.</p><p>Sign in to your dashboard to accept the invitation.</p>`,
@@ -232,7 +270,7 @@ function buildProjectConfig(projectName: string, secret: string): BanataAuthConf
 		siteUrl,
 		hostedUiUrl: resolveHostedUiUrl(siteUrl),
 		secret,
-		trustedOrigins: getTrustedOrigins(),
+		trustedOrigins: getRuntimeTrustedOrigins(siteUrl),
 		authMethods: {
 			emailPassword: true,
 			magicLink: false,

@@ -1,5 +1,5 @@
 import type { BetterAuthPlugin } from "better-auth";
-import { createAuthEndpoint, sessionMiddleware } from "better-auth/api";
+import { createAuthEndpoint } from "better-auth/api";
 import { generateRandomString } from "better-auth/crypto";
 import { z } from "zod";
 import {
@@ -182,72 +182,95 @@ async function fetchTxtAnswers(recordName: string): Promise<string[]> {
 export function domainsPlugin(): BetterAuthPlugin {
 	return {
 		id: "banata-domains",
+		schema: {
+			domainVerification: {
+				fields: {
+					organizationId: { type: "string" as const, required: true },
+					domain: { type: "string" as const, required: true },
+					projectId: { type: "string" as const, required: false },
+					state: { type: "string" as const, required: true },
+					method: { type: "string" as const, required: true },
+					txtRecordName: { type: "string" as const, required: true },
+					txtRecordValue: { type: "string" as const, required: true },
+					verifiedAt: { type: "number" as const, required: false },
+					expiresAt: { type: "number" as const, required: false },
+					lastCheckedAt: { type: "number" as const, required: false },
+					checkCount: { type: "number" as const, required: false },
+					createdAt: { type: "number" as const, required: true },
+					updatedAt: { type: "number" as const, required: true },
+				},
+			},
+		},
 		endpoints: {
 			createVerification: createAuthEndpoint(
 				"/banata/domains/create",
 				{
 					method: "POST", requireHeaders: true,
 					body: createVerificationSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
-						db,
-						projectId: scope.projectId,
-						permission: "sso.manage",
-					});
-					await ensureOrganizationInProject(db, ctx.body.organizationId, scope.projectId!);
-
-					const now = Date.now();
-					const domain = normalizeDomain(ctx.body.domain);
-					const recordData = {
-						projectId: scope.projectId,
-						organizationId: ctx.body.organizationId,
-						domain,
-						state: "pending" as const,
-						method: "dns_txt" as const,
-						txtRecordName: buildTxtRecordName(domain),
-						txtRecordValue: generateRandomString(32),
-						verifiedAt: null,
-						expiresAt: now + ONE_WEEK_MS,
-						lastCheckedAt: null,
-						checkCount: 0,
-						updatedAt: now,
-					};
-
-					const existing = await db.findOne<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [
-							{ field: "projectId", value: scope.projectId! },
-							{ field: "organizationId", value: ctx.body.organizationId },
-							{ field: "domain", value: domain },
-						],
-					});
-
-					const record = existing
-						? await db.update<DomainVerificationRow>({
-								model: "domainVerification",
-								where: [{ field: "id", value: existing.id }],
-								update: recordData,
-							})
-						: await db.create<DomainVerificationRow>({
-								model: "domainVerification",
-								data: {
-									...recordData,
-									createdAt: now,
-								},
-							});
-
-					if (!record) {
-						throw ctx.error("INTERNAL_SERVER_ERROR", {
-							message: "Failed to create domain verification",
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(ctx.body);
+						await requireProjectPermission(ctx, {
+							db,
+							projectId: scope.projectId,
+							permission: "sso.manage",
 						});
-					}
+						await ensureOrganizationInProject(db, ctx.body.organizationId, scope.projectId!);
 
-					await recomputeProviderDomainVerification(db, scope.projectId!, ctx.body.organizationId);
-					return ctx.json(serializeVerification(record));
+						const now = Date.now();
+						const domain = normalizeDomain(ctx.body.domain);
+						const recordData = {
+							projectId: scope.projectId,
+							organizationId: ctx.body.organizationId,
+							domain,
+							state: "pending" as const,
+							method: "dns_txt" as const,
+							txtRecordName: buildTxtRecordName(domain),
+							txtRecordValue: generateRandomString(32),
+							expiresAt: now + ONE_WEEK_MS,
+							checkCount: 0,
+							updatedAt: now,
+						};
+
+						const existing = await db.findOne<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [
+								{ field: "projectId", value: scope.projectId! },
+								{ field: "organizationId", value: ctx.body.organizationId },
+								{ field: "domain", value: domain },
+							],
+						});
+
+						const record = existing
+							? await db.update<DomainVerificationRow>({
+									model: "domainVerification",
+									where: [{ field: "id", value: existing.id }],
+									update: recordData,
+								})
+							: await db.create<DomainVerificationRow>({
+									model: "domainVerification",
+									data: {
+										...recordData,
+										createdAt: now,
+									},
+								});
+
+						if (!record) {
+							throw ctx.error("INTERNAL_SERVER_ERROR", {
+								message: "Failed to create domain verification",
+							});
+						}
+
+						await recomputeProviderDomainVerification(db, scope.projectId!, ctx.body.organizationId);
+						return ctx.json(serializeVerification(record));
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ error: message });
+					}
 				},
 			),
 
@@ -256,27 +279,33 @@ export function domainsPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: verificationIdSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
-						db,
-						projectId: scope.projectId,
-						permission: "sso.read",
-					});
-					const record = await db.findOne<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [
-							{ field: "id", value: ctx.body.id },
-							{ field: "projectId", value: scope.projectId! },
-						],
-					});
-					if (!record) {
-						throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(ctx.body);
+						await requireProjectPermission(ctx, {
+							db,
+							projectId: scope.projectId,
+							permission: "sso.read",
+						});
+						const record = await db.findOne<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [
+								{ field: "id", value: ctx.body.id },
+								{ field: "projectId", value: scope.projectId! },
+							],
+						});
+						if (!record) {
+							throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
+						}
+						return ctx.json(serializeVerification(record));
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ error: message });
 					}
-					return ctx.json(serializeVerification(record));
 				},
 			),
 
@@ -285,58 +314,64 @@ export function domainsPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: verificationIdSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
-						db,
-						projectId: scope.projectId,
-						permission: "sso.manage",
-					});
-					const record = await db.findOne<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [
-							{ field: "id", value: ctx.body.id },
-							{ field: "projectId", value: scope.projectId! },
-						],
-					});
-					if (!record) {
-						throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
-					}
-
-					const now = Date.now();
-					const answers = await fetchTxtAnswers(record.txtRecordName);
-					const nextState = answers.includes(record.txtRecordValue)
-						? "verified"
-						: record.expiresAt != null && record.expiresAt < now
-							? "expired"
-							: "failed";
-					const updated = await db.update<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [{ field: "id", value: record.id }],
-						update: {
-							state: nextState,
-							verifiedAt: nextState === "verified" ? now : null,
-							lastCheckedAt: now,
-							checkCount: (record.checkCount ?? 0) + 1,
-							updatedAt: now,
-						},
-					});
-
-					if (!updated) {
-						throw ctx.error("INTERNAL_SERVER_ERROR", {
-							message: "Failed to update domain verification",
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(ctx.body);
+						await requireProjectPermission(ctx, {
+							db,
+							projectId: scope.projectId,
+							permission: "sso.manage",
 						});
-					}
+						const record = await db.findOne<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [
+								{ field: "id", value: ctx.body.id },
+								{ field: "projectId", value: scope.projectId! },
+							],
+						});
+						if (!record) {
+							throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
+						}
 
-					await recomputeProviderDomainVerification(
-						db,
-						scope.projectId!,
-						record.organizationId,
-					);
-					return ctx.json(serializeVerification(updated));
+						const now = Date.now();
+						const answers = await fetchTxtAnswers(record.txtRecordName);
+						const nextState = answers.includes(record.txtRecordValue)
+							? "verified"
+							: record.expiresAt != null && record.expiresAt < now
+								? "expired"
+								: "failed";
+						const updated = await db.update<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [{ field: "id", value: record.id }],
+							update: {
+								state: nextState,
+								verifiedAt: nextState === "verified" ? now : undefined,
+								lastCheckedAt: now,
+								checkCount: (record.checkCount ?? 0) + 1,
+								updatedAt: now,
+							},
+						});
+
+						if (!updated) {
+							throw ctx.error("INTERNAL_SERVER_ERROR", {
+								message: "Failed to update domain verification",
+							});
+						}
+
+						await recomputeProviderDomainVerification(
+							db,
+							scope.projectId!,
+							record.organizationId,
+						);
+						return ctx.json(serializeVerification(updated));
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ error: message });
+					}
 				},
 			),
 
@@ -345,30 +380,36 @@ export function domainsPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: listVerificationsSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
-						db,
-						projectId: scope.projectId,
-						permission: "sso.read",
-					});
-					const rows = await db.findMany<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [
-							...scope.where,
-							...(ctx.body.organizationId
-								? [{ field: "organizationId", value: ctx.body.organizationId }]
-								: []),
-						],
-						limit: Math.min(ctx.body.limit ?? 100, 100),
-						sortBy: { field: "createdAt", direction: "desc" },
-					});
-					return ctx.json({
-						data: rows.map(serializeVerification),
-					});
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(ctx.body);
+						await requireProjectPermission(ctx, {
+							db,
+							projectId: scope.projectId,
+							permission: "sso.read",
+						});
+						const rows = await db.findMany<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [
+								...scope.where,
+								...(ctx.body.organizationId
+									? [{ field: "organizationId", value: ctx.body.organizationId }]
+									: []),
+							],
+							limit: Math.min(ctx.body.limit ?? 100, 100),
+							sortBy: { field: "createdAt", direction: "desc" },
+						});
+						return ctx.json({
+							data: rows.map(serializeVerification),
+						});
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ error: message, data: [] });
+					}
 				},
 			),
 
@@ -377,36 +418,42 @@ export function domainsPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: verificationIdSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
-					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const scope = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
-						db,
-						projectId: scope.projectId,
-						permission: "sso.manage",
-					});
-					const record = await db.findOne<DomainVerificationRow>({
-						model: "domainVerification",
-						where: [
-							{ field: "id", value: ctx.body.id },
-							{ field: "projectId", value: scope.projectId! },
-						],
-					});
-					if (!record) {
-						throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
+					try {
+						const db = ctx.context.adapter as unknown as PluginDBAdapter;
+						const scope = getProjectScope(ctx.body);
+						await requireProjectPermission(ctx, {
+							db,
+							projectId: scope.projectId,
+							permission: "sso.manage",
+						});
+						const record = await db.findOne<DomainVerificationRow>({
+							model: "domainVerification",
+							where: [
+								{ field: "id", value: ctx.body.id },
+								{ field: "projectId", value: scope.projectId! },
+							],
+						});
+						if (!record) {
+							throw ctx.error("NOT_FOUND", { message: "Domain verification not found" });
+						}
+						await db.delete({
+							model: "domainVerification",
+							where: [{ field: "id", value: record.id }],
+						});
+						await recomputeProviderDomainVerification(
+							db,
+							scope.projectId!,
+							record.organizationId,
+						);
+						return ctx.json({ success: true });
+					} catch (err) {
+						if (err && typeof err === "object" && "status" in err) throw err;
+						const message = err instanceof Error ? err.message : "Unknown error";
+						return ctx.json({ error: message });
 					}
-					await db.delete({
-						model: "domainVerification",
-						where: [{ field: "id", value: record.id }],
-					});
-					await recomputeProviderDomainVerification(
-						db,
-						scope.projectId!,
-						record.organizationId,
-					);
-					return ctx.json({ success: true });
 				},
 			),
 		},

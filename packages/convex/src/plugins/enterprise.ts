@@ -1,5 +1,5 @@
 import type { BetterAuthPlugin } from "better-auth";
-import { createAuthEndpoint, sessionMiddleware } from "better-auth/api";
+import { createAuthEndpoint } from "better-auth/api";
 import { generateRandomString } from "better-auth/crypto";
 import { base64Url } from "@better-auth/utils/base64";
 import { defaultKeyHasher } from "better-auth/plugins";
@@ -24,7 +24,11 @@ type DirectoryProvider =
 
 interface OrganizationRow extends Record<string, unknown> {
 	id: string;
+	name: string;
+	slug?: string | null;
 	projectId?: string | null;
+	createdAt: number;
+	updatedAt: number;
 }
 
 interface SSOProviderRow extends Record<string, unknown> {
@@ -540,6 +544,24 @@ function serializeDirectoryUser(
 	};
 }
 
+function serializeDirectoryGroup(
+	directory: SCIMProviderRow,
+	organization: OrganizationRow,
+	memberCount: number,
+) {
+	return {
+		id: organization.id,
+		directoryId: directory.providerId,
+		organizationId: organization.id,
+		externalId: organization.slug ?? organization.id,
+		name: organization.name,
+		displayName: organization.name,
+		memberCount,
+		createdAt: organization.createdAt,
+		updatedAt: organization.updatedAt,
+	};
+}
+
 async function ensureOrganizationInProject(
 	ctx: any,
 	db: PluginDBAdapter,
@@ -595,6 +617,34 @@ async function countDirectoryUsers(db: PluginDBAdapter, providerId: string) {
 	});
 }
 
+async function findOrganization(
+	db: PluginDBAdapter,
+	organizationId: string,
+	projectId: string,
+) {
+	return db.findOne<OrganizationRow>({
+		model: "organization",
+		where: [
+			{ field: "id", value: organizationId },
+			{ field: "projectId", value: projectId },
+		],
+	});
+}
+
+async function countOrganizationMembers(
+	db: PluginDBAdapter,
+	organizationId: string,
+	projectId: string,
+) {
+	return db.count({
+		model: "member",
+		where: [
+			{ field: "organizationId", value: organizationId },
+			{ field: "projectId", value: projectId },
+		],
+	});
+}
+
 export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 	return {
 		id: "banata-enterprise",
@@ -642,7 +692,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: listSsoProvidersSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -667,7 +717,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 						limit: Math.min(ctx.body.limit ?? 100, 100),
 					});
 					const data = rows.map((row) => serializeConnection(row, ctx.context.baseURL));
-					return ctx.json({ data, connections: data });
+					return ctx.json({ data, connections: [...data] });
 				},
 			),
 
@@ -676,7 +726,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: getSsoProviderSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -700,7 +750,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: createSsoProviderSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -763,7 +813,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: updateSsoProviderSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -837,7 +887,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: deleteSsoProviderSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -863,7 +913,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: listDirectoriesSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -889,7 +939,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 							serializeDirectory(row, await countDirectoryUsers(db, row.providerId)),
 						),
 					);
-					return ctx.json({ data, directories: data });
+					return ctx.json({ data, directories: [...data] });
 				},
 			),
 
@@ -898,7 +948,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: getDirectorySchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -923,7 +973,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: createDirectorySchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1001,7 +1051,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: deleteDirectorySchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1027,7 +1077,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: listDirectoryUsersSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1072,7 +1122,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: getDirectoryUserSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1115,7 +1165,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: listDirectoryGroupsSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1125,7 +1175,25 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 						projectId,
 						permission: "directory.read",
 					});
-					return ctx.json({ data: [], groups: [] });
+
+					const directory = await findDirectory(db, ctx.body.providerId, projectId!);
+					if (!directory || !directory.organizationId) {
+						return ctx.json({ data: [], groups: [] });
+					}
+
+					const organization = await findOrganization(db, directory.organizationId, projectId!);
+					if (!organization) {
+						return ctx.json({ data: [], groups: [] });
+					}
+
+					const memberCount = await countOrganizationMembers(
+						db,
+						directory.organizationId,
+						projectId!,
+					);
+					const group = serializeDirectoryGroup(directory, organization, memberCount);
+
+					return ctx.json({ data: [group], groups: [group] });
 				},
 			),
 
@@ -1134,7 +1202,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				{
 					method: "POST", requireHeaders: true,
 					body: getDirectoryGroupSchema,
-					use: [sessionMiddleware],
+					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
@@ -1144,9 +1212,27 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 						projectId,
 						permission: "directory.read",
 					});
-					throw ctx.error("NOT_FOUND", {
-						message: "SCIM groups are not implemented in this release",
+
+					const organization = await findOrganization(db, ctx.body.groupId, projectId!);
+					if (!organization) {
+						throw ctx.error("NOT_FOUND", { message: "Directory group not found" });
+					}
+
+					const directoryRows = await db.findMany<SCIMProviderRow>({
+						model: "scimProvider",
+						where: [
+							{ field: "organizationId", value: organization.id },
+							{ field: "projectId", value: projectId! },
+						],
+						limit: 1,
 					});
+					const directory = directoryRows[0] ?? null;
+					if (!directory) {
+						throw ctx.error("NOT_FOUND", { message: "Directory group not found" });
+					}
+
+					const memberCount = await countOrganizationMembers(db, organization.id, projectId!);
+					return ctx.json(serializeDirectoryGroup(directory, organization, memberCount));
 				},
 			),
 		},

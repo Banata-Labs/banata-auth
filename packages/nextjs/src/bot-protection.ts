@@ -19,7 +19,7 @@
  * import { withBotProtection, createBotIdVerifier } from "@banata-auth/nextjs/bot-protection";
  *
  * const handler = createRouteHandler({
- *   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+ *   apiKey: process.env.BANATA_API_KEY!,
  * });
  *
  * export const GET = handler.GET;
@@ -169,7 +169,7 @@ const DEFAULT_PROTECTED_PATHS = [
  * import { withBotProtection } from "@banata-auth/nextjs/bot-protection";
  * import { checkBotId } from "botid/server";
  *
- * const handler = createRouteHandler({ convexSiteUrl: "..." });
+ * const handler = createRouteHandler({ apiKey: process.env.BANATA_API_KEY! });
  *
  * export const GET = handler.GET;
  * export const POST = withBotProtection(handler.POST, {
