@@ -429,27 +429,39 @@ function InspectorField({ label, children }: { label: string; children: React.Re
 	);
 }
 
-function VariableInsert({ text, onTextChange }: { text: string; onTextChange: (t: string) => void }) {
+function VariableInsert({
+	text,
+	onTextChange,
+}: { text: string; onTextChange: (t: string) => void }) {
 	return (
 		<div className="grid gap-1 px-3 py-1.5">
 			<Label className="text-[10px] text-muted-foreground">Insert Variable</Label>
 			<Select
 				value=""
 				onValueChange={(varName) => {
-					onTextChange(text + `{{${varName}}}`);
+					onTextChange(`${text}{{${varName}}}`);
 				}}
 			>
 				<SelectTrigger className="h-6 text-[10px]">
 					<SelectValue placeholder="{{variable}}" />
 				</SelectTrigger>
 				<SelectContent>
-					{["userName", "appName", "verificationUrl", "resetUrl", "magicLinkUrl", "otp", "inviterName", "organizationName", "acceptUrl", "dashboardUrl"].map(
-						(v) => (
-							<SelectItem key={v} value={v} className="text-[10px]">
-								{`{{${v}}}`}
-							</SelectItem>
-						),
-					)}
+					{[
+						"userName",
+						"appName",
+						"verificationUrl",
+						"resetUrl",
+						"magicLinkUrl",
+						"otp",
+						"inviterName",
+						"organizationName",
+						"acceptUrl",
+						"dashboardUrl",
+					].map((v) => (
+						<SelectItem key={v} value={v} className="text-[10px]">
+							{`{{${v}}}`}
+						</SelectItem>
+					))}
 				</SelectContent>
 			</Select>
 		</div>
@@ -795,7 +807,9 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 					<button
 						type="button"
 						className={`h-7 w-7 rounded-md border text-[11px] ${
-							style.textDecoration === "underline" ? "border-primary bg-primary/10" : "border-border"
+							style.textDecoration === "underline"
+								? "border-primary bg-primary/10"
+								: "border-border"
 						}`}
 						onClick={() =>
 							updateStyle({
@@ -809,11 +823,14 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 					<button
 						type="button"
 						className={`h-7 w-7 rounded-md border text-[11px] ${
-							style.fontWeight === "bold" || style.fontWeight === "700" ? "border-primary bg-primary/10" : "border-border"
+							style.fontWeight === "bold" || style.fontWeight === "700"
+								? "border-primary bg-primary/10"
+								: "border-border"
 						}`}
 						onClick={() =>
 							updateStyle({
-								fontWeight: style.fontWeight === "bold" || style.fontWeight === "700" ? "normal" : "bold",
+								fontWeight:
+									style.fontWeight === "bold" || style.fontWeight === "700" ? "normal" : "bold",
 							})
 						}
 						title="Bold"
@@ -825,28 +842,32 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 			<div className="grid gap-1 px-3 py-1.5">
 				<Label className="text-[10px] text-muted-foreground">Padding</Label>
 				<div className="grid grid-cols-2 gap-1">
-					{(["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"] as const).map(
-						(side) => (
-							<div key={side} className="flex items-center gap-1">
-								<span className="text-[8px] text-muted-foreground/60 w-3">
-									{side === "paddingTop" ? "T" : side === "paddingBottom" ? "B" : side === "paddingLeft" ? "L" : "R"}
-								</span>
-								<Input
-									type="number"
-									value={style[side] ?? ""}
-									onChange={(e) =>
-										updateStyle({
-											[side]: e.target.value ? Number(e.target.value) : undefined,
-										})
-									}
-									className="h-6 text-[10px] w-full"
-									placeholder="0"
-									min={0}
-									max={60}
-								/>
-							</div>
-						),
-					)}
+					{(["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"] as const).map((side) => (
+						<div key={side} className="flex items-center gap-1">
+							<span className="text-[8px] text-muted-foreground/60 w-3">
+								{side === "paddingTop"
+									? "T"
+									: side === "paddingBottom"
+										? "B"
+										: side === "paddingLeft"
+											? "L"
+											: "R"}
+							</span>
+							<Input
+								type="number"
+								value={style[side] ?? ""}
+								onChange={(e) =>
+									updateStyle({
+										[side]: e.target.value ? Number(e.target.value) : undefined,
+									})
+								}
+								className="h-6 text-[10px] w-full"
+								placeholder="0"
+								min={0}
+								max={60}
+							/>
+						</div>
+					))}
 				</div>
 			</div>
 			<div className="grid gap-1 px-3 py-1.5">
@@ -856,9 +877,7 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 						<input
 							type="color"
 							value={style.backgroundColor ?? "#ffffff"}
-							onChange={(e) =>
-								updateStyle({ backgroundColor: e.target.value })
-							}
+							onChange={(e) => updateStyle({ backgroundColor: e.target.value })}
 							className="absolute inset-0 cursor-pointer opacity-0"
 						/>
 						<div
@@ -868,9 +887,7 @@ function StyleInspector<T extends EmailBlock & { style?: EmailBlockStyle }>({
 					</div>
 					<Input
 						value={style.backgroundColor ?? ""}
-						onChange={(e) =>
-							updateStyle({ backgroundColor: e.target.value || undefined })
-						}
+						onChange={(e) => updateStyle({ backgroundColor: e.target.value || undefined })}
 						className="h-6 flex-1 font-mono text-[9px]"
 						placeholder="transparent"
 					/>

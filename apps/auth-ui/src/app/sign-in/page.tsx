@@ -29,12 +29,18 @@ type SignInViewModel = {
 	callbackURL: string;
 };
 
-function formatAuthError(error: {
-	message?: string;
-	code?: string;
-	status?: number;
-	details?: { tryAgainIn?: number };
-} | null | undefined, fallbackMessage: string) {
+function formatAuthError(
+	error:
+		| {
+				message?: string;
+				code?: string;
+				status?: number;
+				details?: { tryAgainIn?: number };
+		  }
+		| null
+		| undefined,
+	fallbackMessage: string,
+) {
 	if (!error) {
 		return fallbackMessage;
 	}

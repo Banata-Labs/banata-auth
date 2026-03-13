@@ -39,7 +39,9 @@ function createMissingApiKeyResponse(): Response {
 	);
 }
 
-function withApiKeyGuard<THandler extends (request: Request) => Promise<Response>>(handler: THandler) {
+function withApiKeyGuard<THandler extends (request: Request) => Promise<Response>>(
+	handler: THandler,
+) {
 	return (async (request: Request) => {
 		if (!process.env.BANATA_API_KEY) {
 			return createMissingApiKeyResponse();

@@ -75,7 +75,9 @@ export default function TeamSettingsPage() {
 						</p>
 						<div className="mt-6 flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
 							<Users className="size-4 text-muted-foreground" />
-							<span>{activeProject ? `Active project: ${activeProject.name}` : "No active project"}</span>
+							<span>
+								{activeProject ? `Active project: ${activeProject.name}` : "No active project"}
+							</span>
 						</div>
 					</div>
 				</CardContent>

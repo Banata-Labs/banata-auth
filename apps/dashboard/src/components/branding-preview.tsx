@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
 import { ProviderIcon } from "@/components/provider-icons";
+import { useEffect, useMemo } from "react";
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -188,7 +188,18 @@ export function parseCssVariables(css: string): Record<string, string> {
 
 function FingerprintIcon() {
 	return (
-		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+		<svg
+			width="18"
+			height="18"
+			viewBox="0 0 24 24"
+			aria-hidden="true"
+			focusable="false"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		>
 			<path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
 			<path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
 			<path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
@@ -204,7 +215,18 @@ function FingerprintIcon() {
 
 function MailIcon() {
 	return (
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+		<svg
+			width="16"
+			height="16"
+			viewBox="0 0 24 24"
+			aria-hidden="true"
+			focusable="false"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		>
 			<rect width="20" height="16" x="2" y="4" rx="2" />
 			<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
 		</svg>
@@ -213,7 +235,18 @@ function MailIcon() {
 
 function KeyIcon() {
 	return (
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+		<svg
+			width="16"
+			height="16"
+			viewBox="0 0 24 24"
+			aria-hidden="true"
+			focusable="false"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		>
 			<path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
 			<path d="m21 2-9.6 9.6" />
 			<circle cx="7.5" cy="15.5" r="5.5" />
@@ -231,20 +264,29 @@ function MockInput({
 }: { label: string; placeholder: string; type?: string; icon?: React.ReactNode }) {
 	return (
 		<div style={{ display: "grid", gap: 6 }}>
-			<span style={{ fontSize: 13, fontWeight: 500, color: "hsl(var(--foreground))", letterSpacing: "-0.01em" }}>
+			<span
+				style={{
+					fontSize: 13,
+					fontWeight: 500,
+					color: "hsl(var(--foreground))",
+					letterSpacing: "-0.01em",
+				}}
+			>
 				{label}
 			</span>
 			<div style={{ position: "relative" }}>
 				{icon && (
-					<span style={{
-						position: "absolute",
-						left: 12,
-						top: "50%",
-						transform: "translateY(-50%)",
-						color: "hsl(var(--muted-foreground))",
-						display: "inline-flex",
-						opacity: 0.5,
-					}}>
+					<span
+						style={{
+							position: "absolute",
+							left: 12,
+							top: "50%",
+							transform: "translateY(-50%)",
+							color: "hsl(var(--muted-foreground))",
+							display: "inline-flex",
+							opacity: 0.5,
+						}}
+					>
 						{icon}
 					</span>
 				)}
@@ -364,51 +406,61 @@ function OrDivider() {
 
 function MockCardSkeleton({ b }: { b: BrandingValues }) {
 	const bar = (w: string, h = 10) => (
-		<div style={{
-			width: w,
-			height: h,
-			borderRadius: 4,
-			backgroundColor: "hsl(var(--muted))",
-			opacity: 0.5,
-		}} />
+		<div
+			style={{
+				width: w,
+				height: h,
+				borderRadius: 4,
+				backgroundColor: "hsl(var(--muted))",
+				opacity: 0.5,
+			}}
+		/>
 	);
 	const field = () => (
 		<div style={{ display: "grid", gap: 6 }}>
 			{bar("60px", 8)}
-			<div style={{
-				height: 42,
-				width: "100%",
-				borderRadius: `${b.borderRadius}px`,
-				backgroundColor: "hsl(var(--muted))",
-				opacity: 0.3,
-			}} />
+			<div
+				style={{
+					height: 42,
+					width: "100%",
+					borderRadius: `${b.borderRadius}px`,
+					backgroundColor: "hsl(var(--muted))",
+					opacity: 0.3,
+				}}
+			/>
 		</div>
 	);
 
 	return (
 		<div style={getCardStyle(b)}>
 			<div style={{ textAlign: "center", marginBottom: 24 }}>
-				<div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>{bar("100px", 14)}</div>
+				<div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+					{bar("100px", 14)}
+				</div>
 				<div style={{ display: "flex", justifyContent: "center" }}>{bar("180px", 10)}</div>
 			</div>
 			<div style={{ display: "grid", gap: 16 }}>
 				{field()}
 				{field()}
-				<div style={{
-					height: 42,
-					width: "100%",
-					borderRadius: `${b.borderRadius}px`,
-					backgroundColor: "hsl(var(--primary))",
-					opacity: 0.3,
-				}} />
+				<div
+					style={{
+						height: 42,
+						width: "100%",
+						borderRadius: `${b.borderRadius}px`,
+						backgroundColor: "hsl(var(--primary))",
+						opacity: 0.3,
+					}}
+				/>
 				<OrDivider />
-				<div style={{
-					height: 42,
-					width: "100%",
-					borderRadius: `${b.borderRadius}px`,
-					backgroundColor: "hsl(var(--muted))",
-					opacity: 0.2,
-				}} />
+				<div
+					style={{
+						height: 42,
+						width: "100%",
+						borderRadius: `${b.borderRadius}px`,
+						backgroundColor: "hsl(var(--muted))",
+						opacity: 0.2,
+					}}
+				/>
 			</div>
 		</div>
 	);
@@ -446,7 +498,15 @@ function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 		<div style={getCardStyle(b)}>
 			{logo}
 			<div style={{ textAlign: "center", marginBottom: 24 }}>
-				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
+				<h2
+					style={{
+						margin: 0,
+						fontSize: 22,
+						fontWeight: 700,
+						color: "hsl(var(--foreground))",
+						letterSpacing: "-0.02em",
+					}}
+				>
 					Sign in
 				</h2>
 				<p style={{ margin: "8px 0 0", fontSize: 14, color: "hsl(var(--muted-foreground))" }}>
@@ -469,7 +529,9 @@ function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 				)}
 				{showEmailField && (
 					<MockBtn
-						label={showEmail ? "Continue" : showMagicLink ? "Send magic link" : "Send verification code"}
+						label={
+							showEmail ? "Continue" : showMagicLink ? "Send magic link" : "Send verification code"
+						}
 						primary
 						r={b.borderRadius}
 					/>
@@ -483,9 +545,7 @@ function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 						icon={<FingerprintIcon />}
 					/>
 				)}
-				{hasTopSection && socialProviders.length > 0 && (
-					<OrDivider />
-				)}
+				{hasTopSection && socialProviders.length > 0 && <OrDivider />}
 				{socialProviders.map((p) => (
 					<MockSocial
 						key={p.id}
@@ -495,15 +555,17 @@ function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 					/>
 				))}
 				{!hasAnySections && (
-					<div style={{
-						textAlign: "center",
-						padding: "24px 16px",
-						fontSize: 13,
-						color: "hsl(var(--muted-foreground))",
-						backgroundColor: "hsl(var(--muted))",
-						borderRadius: `${b.borderRadius}px`,
-						lineHeight: 1.5,
-					}}>
+					<div
+						style={{
+							textAlign: "center",
+							padding: "24px 16px",
+							fontSize: 13,
+							color: "hsl(var(--muted-foreground))",
+							backgroundColor: "hsl(var(--muted))",
+							borderRadius: `${b.borderRadius}px`,
+							lineHeight: 1.5,
+						}}
+					>
 						No auth methods enabled.
 						<br />
 						<span style={{ fontSize: 12, opacity: 0.7 }}>
@@ -520,7 +582,9 @@ function MockSignIn({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 					}}
 				>
 					Don't have an account?{" "}
-					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>Sign up</span>
+					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>
+						Sign up
+					</span>
 				</div>
 			</div>
 		</div>
@@ -556,7 +620,15 @@ function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 		<div style={getCardStyle(b)}>
 			{logo}
 			<div style={{ textAlign: "center", marginBottom: 24 }}>
-				<h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "hsl(var(--foreground))", letterSpacing: "-0.02em" }}>
+				<h2
+					style={{
+						margin: 0,
+						fontSize: 22,
+						fontWeight: 700,
+						color: "hsl(var(--foreground))",
+						letterSpacing: "-0.02em",
+					}}
+				>
 					Create account
 				</h2>
 				<p style={{ margin: "8px 0 0", fontSize: 14, color: "hsl(var(--muted-foreground))" }}>
@@ -571,11 +643,22 @@ function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 					</>
 				)}
 				{showPasswordField && (
-					<MockInput label="Password" placeholder="Create a password" type="password" icon={<KeyIcon />} />
+					<MockInput
+						label="Password"
+						placeholder="Create a password"
+						type="password"
+						icon={<KeyIcon />}
+					/>
 				)}
 				{showEmailField && (
 					<MockBtn
-						label={showEmail ? "Create account" : showMagicLink ? "Send magic link" : "Send verification code"}
+						label={
+							showEmail
+								? "Create account"
+								: showMagicLink
+									? "Send magic link"
+									: "Send verification code"
+						}
 						primary
 						r={b.borderRadius}
 					/>
@@ -589,9 +672,7 @@ function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 						icon={<FingerprintIcon />}
 					/>
 				)}
-				{hasTopSection && socialProviders.length > 0 && (
-					<OrDivider />
-				)}
+				{hasTopSection && socialProviders.length > 0 && <OrDivider />}
 				{socialProviders.map((p) => (
 					<MockSocial
 						key={p.id}
@@ -601,15 +682,17 @@ function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 					/>
 				))}
 				{!hasAnySections && (
-					<div style={{
-						textAlign: "center",
-						padding: "24px 16px",
-						fontSize: 13,
-						color: "hsl(var(--muted-foreground))",
-						backgroundColor: "hsl(var(--muted))",
-						borderRadius: `${b.borderRadius}px`,
-						lineHeight: 1.5,
-					}}>
+					<div
+						style={{
+							textAlign: "center",
+							padding: "24px 16px",
+							fontSize: 13,
+							color: "hsl(var(--muted-foreground))",
+							backgroundColor: "hsl(var(--muted))",
+							borderRadius: `${b.borderRadius}px`,
+							lineHeight: 1.5,
+						}}
+					>
 						No auth methods enabled.
 						<br />
 						<span style={{ fontSize: 12, opacity: 0.7 }}>
@@ -626,7 +709,9 @@ function MockSignUp({ b, authConfig }: { b: BrandingValues; authConfig?: AuthPre
 					}}
 				>
 					Already have an account?{" "}
-					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>Sign in</span>
+					<span style={{ color: "hsl(var(--primary))", cursor: "pointer", fontWeight: 500 }}>
+						Sign in
+					</span>
 				</div>
 			</div>
 		</div>

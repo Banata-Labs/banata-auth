@@ -53,6 +53,22 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
+	"typesVersions": {
+		"*": {
+			"bot-protection": [
+				"./dist/bot-protection.d.ts"
+			],
+			"client": [
+				"./dist/client.d.ts"
+			],
+			"middleware": [
+				"./dist/middleware.d.ts"
+			],
+			"server": [
+				"./dist/server.d.ts"
+			]
+		}
+	},
 	"files": [
 		"dist"
 	],

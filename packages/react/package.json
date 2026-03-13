@@ -49,6 +49,19 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
+	"typesVersions": {
+		"*": {
+			"convex": [
+				"./dist/convex-provider.d.ts"
+			],
+			"plugins": [
+				"./dist/client-plugins.d.ts"
+			],
+			"plugins/convex": [
+				"./dist/convex-plugins.d.ts"
+			]
+		}
+	},
 	"files": [
 		"dist"
 	],

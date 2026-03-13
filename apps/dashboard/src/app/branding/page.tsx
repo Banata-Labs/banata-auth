@@ -1,10 +1,10 @@
 "use client";
 
 import {
+	type AuthPreviewConfig,
 	BrandingCanvas,
 	type BrandingValues,
 	type CanvasView,
-	type AuthPreviewConfig,
 	deriveCssVariables,
 	parseCssVariables,
 } from "@/components/branding-preview";
@@ -39,7 +39,12 @@ import {
 	updateEmailTemplate,
 } from "@/lib/dashboard-api";
 import type { EmailBlock, EmailBlockType, EmailTemplateCategory } from "@banata-auth/shared";
-import { extractVariables, getBlankTemplateBlocks, getBuiltInTemplateBlocks, SYSTEM_TEMPLATE_VARIABLES } from "@banata-auth/shared";
+import {
+	SYSTEM_TEMPLATE_VARIABLES,
+	extractVariables,
+	getBlankTemplateBlocks,
+	getBuiltInTemplateBlocks,
+} from "@banata-auth/shared";
 import {
 	Check,
 	Code2,
@@ -491,38 +496,42 @@ export default function BrandingPage() {
 							</SelectTrigger>
 							<SelectContent align="start">
 								{/* System templates */}
-								{templates.filter(t => t.builtIn).length > 0 && (
+								{templates.filter((t) => t.builtIn).length > 0 && (
 									<>
 										<div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
 											System Templates
 										</div>
-										{templates.filter(t => t.builtIn).map((tpl) => (
-											<SelectItem key={tpl.id} value={tpl.id}>
-												<div className="flex items-center gap-2 text-[12px]">
-													<Lock className="size-3 text-muted-foreground/40" />
-													{tpl.name}
-												</div>
-											</SelectItem>
-										))}
+										{templates
+											.filter((t) => t.builtIn)
+											.map((tpl) => (
+												<SelectItem key={tpl.id} value={tpl.id}>
+													<div className="flex items-center gap-2 text-[12px]">
+														<Lock className="size-3 text-muted-foreground/40" />
+														{tpl.name}
+													</div>
+												</SelectItem>
+											))}
 									</>
 								)}
 								{/* Custom templates */}
-								{templates.filter(t => !t.builtIn).length > 0 && (
+								{templates.filter((t) => !t.builtIn).length > 0 && (
 									<>
 										<div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
 											Custom Templates
 										</div>
-										{templates.filter(t => !t.builtIn).map((tpl) => (
-											<SelectItem key={tpl.id} value={tpl.id}>
-												<div className="flex items-center gap-2 text-[12px]">
-													<span
-														className="size-1.5 rounded-full"
-														style={{ backgroundColor: "#10b981" }}
-													/>
-													{tpl.name}
-												</div>
-											</SelectItem>
-										))}
+										{templates
+											.filter((t) => !t.builtIn)
+											.map((tpl) => (
+												<SelectItem key={tpl.id} value={tpl.id}>
+													<div className="flex items-center gap-2 text-[12px]">
+														<span
+															className="size-1.5 rounded-full"
+															style={{ backgroundColor: "#10b981" }}
+														/>
+														{tpl.name}
+													</div>
+												</SelectItem>
+											))}
 									</>
 								)}
 							</SelectContent>
@@ -618,13 +627,17 @@ export default function BrandingPage() {
 										<div className="grid gap-1">
 											<Label className="text-[10px] text-muted-foreground">Type</Label>
 											<div className="flex h-7 items-center">
-												<span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium ${
-													activeTemplate?.builtIn
-														? "bg-blue-500/10 text-blue-500"
-														: "bg-emerald-500/10 text-emerald-500"
-												}`}>
+												<span
+													className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium ${
+														activeTemplate?.builtIn
+															? "bg-blue-500/10 text-blue-500"
+															: "bg-emerald-500/10 text-emerald-500"
+													}`}
+												>
 													{activeTemplate?.builtIn ? (
-														<><Lock className="size-2.5" /> System</>
+														<>
+															<Lock className="size-2.5" /> System
+														</>
 													) : (
 														"Custom"
 													)}
@@ -652,14 +665,21 @@ export default function BrandingPage() {
 										<span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/40">
 											Variables
 										</span>
-										{activeTemplate?.builtIn && activeTemplate.builtInType && SYSTEM_TEMPLATE_VARIABLES[activeTemplate.builtInType] ? (
+										{activeTemplate?.builtIn &&
+										activeTemplate.builtInType &&
+										SYSTEM_TEMPLATE_VARIABLES[activeTemplate.builtInType] ? (
 											<div className="space-y-1.5">
 												{SYSTEM_TEMPLATE_VARIABLES[activeTemplate.builtInType]!.map((v) => (
-													<div key={v.name} className="rounded-md border border-border bg-muted/30 p-2">
+													<div
+														key={v.name}
+														className="rounded-md border border-border bg-muted/30 p-2"
+													>
 														<code className="font-mono text-[10px] font-semibold text-foreground">
-															{"{{" + v.name + "}}"}
+															{`{{${v.name}}}`}
 														</code>
-														<p className="mt-0.5 text-[9px] text-muted-foreground">{v.description}</p>
+														<p className="mt-0.5 text-[9px] text-muted-foreground">
+															{v.description}
+														</p>
 													</div>
 												))}
 											</div>
@@ -667,9 +687,12 @@ export default function BrandingPage() {
 											<div className="space-y-1.5">
 												{extractVariables(blocks).length > 0 ? (
 													extractVariables(blocks).map((varName) => (
-														<div key={varName} className="rounded-md border border-border bg-muted/30 p-2">
+														<div
+															key={varName}
+															className="rounded-md border border-border bg-muted/30 p-2"
+														>
 															<code className="font-mono text-[10px] font-semibold text-foreground">
-																{"{{" + varName + "}}"}
+																{`{{${varName}}}`}
 															</code>
 														</div>
 													))
@@ -846,7 +869,12 @@ export default function BrandingPage() {
 							maxWidth: deviceWidth === "mobile" ? 375 : undefined,
 						}}
 					>
-						<BrandingCanvas branding={branding} view={view} emailTemplate="verification" authConfig={authConfig} />
+						<BrandingCanvas
+							branding={branding}
+							view={view}
+							emailTemplate="verification"
+							authConfig={authConfig}
+						/>
 					</div>
 				</div>
 

@@ -164,10 +164,11 @@ function RenderButton({
 		const rv = Number.parseInt(m[1], 16) / 255;
 		const gv = Number.parseInt(m[2], 16) / 255;
 		const bv = Number.parseInt(m[3], 16) / 255;
-		const mx = Math.max(rv, gv, bv), mn = Math.min(rv, gv, bv);
+		const mx = Math.max(rv, gv, bv);
+		const mn = Math.min(rv, gv, bv);
 		return { l: ((mx + mn) / 2) * 100 };
 	})();
-	const color = variant === "primary" ? ((pcHsl && pcHsl.l > 55) ? "#000000" : "#ffffff") : pc;
+	const color = variant === "primary" ? (pcHsl && pcHsl.l > 55 ? "#000000" : "#ffffff") : pc;
 	const border = variant === "outline" ? `1px solid ${pc}` : "none";
 
 	return (

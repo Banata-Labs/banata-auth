@@ -1042,7 +1042,11 @@ export async function saveDashboardConfig(
 
 export async function resetDashboardConfiguration(): Promise<void> {
 	const payload = await postJson("/api/auth/banata/config/dashboard/reset", {});
-	if (typeof payload !== "object" || payload === null || (payload as { success?: boolean }).success !== true) {
+	if (
+		typeof payload !== "object" ||
+		payload === null ||
+		(payload as { success?: boolean }).success !== true
+	) {
 		throw new Error("Failed to reset dashboard configuration");
 	}
 	invalidateCache();
