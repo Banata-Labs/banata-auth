@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/convex",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": true,
 	"license": "MIT",
 	"type": "module",
@@ -72,7 +72,10 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"files": ["dist", "src/component"],
+	"files": [
+		"dist",
+		"src/component"
+	],
 	"scripts": {
 		"build": "tsup && tsc",
 		"dev": "tsup --watch",
