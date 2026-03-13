@@ -1,6 +1,6 @@
 {
 	"name": "@banata-auth/nextjs",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"private": false,
 	"license": "MIT",
 	"type": "module",
@@ -81,7 +81,7 @@
 		"clean": "rm -rf dist .turbo"
 	},
 	"dependencies": {
-		"@banata-auth/react": "^0.2.0",
+		"@banata-auth/react": "^0.2.1",
 		"@banata-auth/shared": "^0.1.1"
 	},
 	"peerDependencies": {

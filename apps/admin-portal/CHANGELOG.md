@@ -1,5 +1,12 @@
 # @banata-auth/admin-portal
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`88eb08f`](https://github.com/Banata-Labs/banata-auth/commit/88eb08f4e1696c1cfd47e34eb5bc0a2f102630c3)]:
+  - @banata-auth/nextjs@0.2.3
+
 ## 0.0.6
 
 ### Patch Changes

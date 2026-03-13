@@ -1,5 +1,14 @@
 # @banata-auth/nextjs
 
+## 0.2.3
+
+### Patch Changes
+
+- [`88eb08f`](https://github.com/Banata-Labs/banata-auth/commit/88eb08f4e1696c1cfd47e34eb5bc0a2f102630c3) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Fix subpath typing for package consumers and update the Next.js helper to default hosted auth integrations to `https://auth.banata.dev`.
+
+- Updated dependencies [[`88eb08f`](https://github.com/Banata-Labs/banata-auth/commit/88eb08f4e1696c1cfd47e34eb5bc0a2f102630c3)]:
+  - @banata-auth/react@0.2.1
+
 ## 0.2.2
 
 ### Patch Changes
