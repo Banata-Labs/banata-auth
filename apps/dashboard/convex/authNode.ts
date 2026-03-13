@@ -42,6 +42,7 @@ interface RuntimeSessionRow extends Record<string, unknown> {
 	id: string;
 	userId?: string | null;
 	token?: string | null;
+	projectId?: string | null;
 }
 
 interface RuntimeVerificationRow extends Record<string, unknown> {
@@ -633,6 +634,43 @@ async function resolveSessionUserForRequest(
 	return { id: session.userId };
 }
 
+async function reconcileProjectScopedSession(
+	db: PluginDBAdapter,
+	request: SerializedAuthRequest,
+	projectId: string | null,
+): Promise<void> {
+	if (!projectId) {
+		return;
+	}
+
+	const sessionToken = extractSessionTokenFromRequest(request);
+	if (!sessionToken) {
+		return;
+	}
+
+	const session = (await db.findOne({
+		model: "session",
+		where: [{ field: "token", value: sessionToken }],
+		select: ["id", "projectId"],
+	})) as RuntimeSessionRow | null;
+	if (!session?.id || normalizeScopeValue(session.projectId) === projectId) {
+		return;
+	}
+
+	if (normalizeScopeValue(session.projectId)) {
+		return;
+	}
+
+	await db.update<RuntimeSessionRow>({
+		model: "session",
+		where: [{ field: "id", operator: "eq", value: session.id }],
+		update: {
+			projectId,
+			updatedAt: Date.now(),
+		},
+	});
+}
+
 function getApiKeyPermissionForPath(pathname: string): string | null {
 	if (pathname === "/api/auth/api-key/create") return "api_key.create";
 	if (pathname === "/api/auth/api-key/list" || pathname === "/api/auth/api-key/get") {
@@ -976,6 +1014,9 @@ export const handleAuthRequest = internalAction({
 			apiKeyProjectId: resolvedScope.apiKeyProjectId ?? null,
 			dashboardProjectId,
 		});
+		if (response.status < 400 && runtimeRequestProjectId) {
+			await reconcileProjectScopedSession(pluginDb, effectiveRequest, runtimeRequestProjectId);
+		}
 		if (getPathname(effectiveRequest.url) === "/api/auth/sign-in/social" && effectiveResolvedProjectId) {
 			const redirectLocation = extractOAuthRedirectLocation(response);
 			const oauthState = redirectLocation ? extractOAuthStateFromUrl(redirectLocation) : null;

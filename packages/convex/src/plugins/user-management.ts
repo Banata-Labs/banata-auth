@@ -65,6 +65,11 @@ interface AccountRow extends Record<string, unknown> {
 	idToken?: string;
 }
 
+interface ProjectOwnerRow extends Record<string, unknown> {
+	id: string;
+	ownerId: string;
+}
+
 interface UserManagementContext {
 	context: {
 		adapter: PluginDBAdapter;
@@ -407,6 +412,69 @@ async function findSessionRow(
 	return null;
 }
 
+const PROJECT_USER_RELATION_LIMIT = 5000;
+
+async function listProjectUserIds(
+	db: PluginDBAdapter,
+	projectId: string,
+): Promise<Set<string>> {
+	const [projectRows, scopedUsers, memberRows, sessionRows, accountRows] = await Promise.all([
+		db.findMany<ProjectOwnerRow>({
+			model: "project",
+			where: [{ field: "id", value: projectId }],
+			limit: 1,
+		}),
+		db.findMany<Pick<UserRow, "id">>({
+			model: "user",
+			where: [{ field: "projectId", value: projectId }],
+			limit: PROJECT_USER_RELATION_LIMIT,
+		}),
+		db.findMany<{ userId: string }>({
+			model: "member",
+			where: [{ field: "projectId", value: projectId }],
+			limit: PROJECT_USER_RELATION_LIMIT,
+		}),
+		db.findMany<Pick<SessionRow, "userId">>({
+			model: "session",
+			where: [{ field: "projectId", value: projectId }],
+			limit: PROJECT_USER_RELATION_LIMIT,
+		}),
+		db.findMany<Pick<AccountRow, "userId">>({
+			model: "account",
+			where: [{ field: "projectId", value: projectId }],
+			limit: PROJECT_USER_RELATION_LIMIT,
+		}),
+	]);
+
+	const userIds = new Set<string>();
+	const projectOwnerId = projectRows[0]?.ownerId;
+	if (projectOwnerId) {
+		userIds.add(projectOwnerId);
+	}
+	for (const user of scopedUsers) {
+		if (user.id) {
+			userIds.add(user.id);
+		}
+	}
+	for (const row of memberRows) {
+		if (row.userId) {
+			userIds.add(row.userId);
+		}
+	}
+	for (const row of sessionRows) {
+		if (row.userId) {
+			userIds.add(row.userId);
+		}
+	}
+	for (const row of accountRows) {
+		if (row.userId) {
+			userIds.add(row.userId);
+		}
+	}
+
+	return userIds;
+}
+
 async function requireListPermission(
 	ctx: UserManagementContext,
 	db: PluginDBAdapter,
@@ -639,7 +707,9 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				: "createdAt";
 		const sortBy = ALLOWED_SORT_FIELDS.has(rawSortBy) ? rawSortBy : "createdAt";
 
-		const where: WhereClause[] = [...scope.where];
+		const where: WhereClause[] = [];
+		let scopedUserIds =
+			scope.projectId != null ? await listProjectUserIds(db, scope.projectId) : null;
 		if (typeof payload.email === "string" && payload.email.length > 0) {
 			where.push({ field: "email", value: payload.email.toLowerCase() });
 		}
@@ -689,24 +759,49 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				where: [{ field: "organizationId", value: payload.organizationId }, ...scope.where],
 				limit: 1000,
 			});
-			const userIds = Array.from(new Set(memberships.map((membership) => membership.userId)));
-			if (userIds.length === 0) {
+			const organizationUserIds = new Set(
+				memberships.map((membership) => membership.userId).filter(Boolean),
+			);
+			if (organizationUserIds.size === 0) {
 				return ctx.json({ users: [], data: [], total: 0, limit, offset });
 			}
-			where.push({ field: "id", operator: "in", value: userIds });
+			if (scopedUserIds) {
+				scopedUserIds = new Set(
+					Array.from(scopedUserIds).filter((userId) => organizationUserIds.has(userId)),
+				);
+			} else {
+				scopedUserIds = organizationUserIds;
+			}
 		}
 
-		const users = await db.findMany<UserRow>({
-			model: "user",
-			where,
-			limit,
-			offset,
-			sortBy: { field: sortBy, direction: sortDirection },
-		});
-		const total = await db.count({
-			model: "user",
-			where,
-		});
+		let users: UserRow[];
+		let total: number;
+		if (scopedUserIds) {
+			if (scopedUserIds.size === 0) {
+				return ctx.json({ users: [], data: [], total: 0, limit, offset });
+			}
+			const candidateUsers = await db.findMany<UserRow>({
+				model: "user",
+				where,
+				limit: PROJECT_USER_RELATION_LIMIT,
+				sortBy: { field: sortBy, direction: sortDirection },
+			});
+			const filteredUsers = candidateUsers.filter((user) => scopedUserIds?.has(user.id));
+			total = filteredUsers.length;
+			users = filteredUsers.slice(offset, offset + limit);
+		} else {
+			users = await db.findMany<UserRow>({
+				model: "user",
+				where,
+				limit,
+				offset,
+				sortBy: { field: sortBy, direction: sortDirection },
+			});
+			total = await db.count({
+				model: "user",
+				where,
+			});
+		}
 		return ctx.json({
 			users,
 			data: users,
