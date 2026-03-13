@@ -38,6 +38,12 @@ interface RuntimeApiKeyRow extends Record<string, unknown> {
 	metadata?: unknown;
 }
 
+interface RuntimeSessionRow extends Record<string, unknown> {
+	id: string;
+	userId?: string | null;
+	token?: string | null;
+}
+
 interface ConvexJwtClaims extends Record<string, unknown> {
 	sub?: string;
 	sessionId?: string;
@@ -171,6 +177,24 @@ function readCookieValue(cookieHeader: string | null, name: string): string | nu
 		}
 	}
 
+	return null;
+}
+
+const SESSION_TOKEN_COOKIE_NAMES = [
+	"better-auth.session_token",
+	"__Secure-better-auth.session_token",
+	"better-auth-session_token",
+	"__Secure-better-auth-session_token",
+] as const;
+
+function extractSessionTokenFromRequest(request: SerializedAuthRequest): string | null {
+	const cookieHeader = getHeaderValue(request.headers, "cookie");
+	for (const cookieName of SESSION_TOKEN_COOKIE_NAMES) {
+		const value = readCookieValue(cookieHeader, cookieName);
+		if (value) {
+			return value;
+		}
+	}
 	return null;
 }
 
@@ -464,7 +488,7 @@ async function assertApiKeyRecordInProject(
 }
 
 async function resolveSessionUserForRequest(
-	_ctx: GenericCtx<DataModel>,
+	db: PluginDBAdapter,
 	request: SerializedAuthRequest,
 ): Promise<RuntimeUserRow | null> {
 	const convexJwtClaims = extractConvexJwtClaimsFromRequest(request);
@@ -474,7 +498,31 @@ async function resolveSessionUserForRequest(
 	) {
 		return { id: convexJwtClaims.sub };
 	}
-	return null;
+
+	const sessionToken = extractSessionTokenFromRequest(request);
+	if (!sessionToken) {
+		return null;
+	}
+
+	const session = (await db.findOne({
+		model: "session",
+		where: [{ field: "token", value: sessionToken }],
+		select: ["id", "userId", "token"],
+	})) as RuntimeSessionRow | null;
+	if (!session?.userId) {
+		return null;
+	}
+
+	const user = (await db.findOne({
+		model: "user",
+		where: [{ field: "id", value: session.userId }],
+		select: ["id", "role"],
+	})) as RuntimeUserRow | null;
+	if (user?.id) {
+		return user;
+	}
+
+	return { id: session.userId };
 }
 
 function getApiKeyPermissionForPath(pathname: string): string | null {
@@ -503,7 +551,7 @@ async function enforceDashboardProjectPermission(
 		return null;
 	}
 
-	const user = await resolveSessionUserForRequest(ctx, request);
+	const user = await resolveSessionUserForRequest(db, request);
 	if (!user?.id) {
 		return jsonResponse(401, {
 			error: "AUTHENTICATION_REQUIRED",
@@ -772,6 +820,9 @@ export const handleAuthRequest = internalAction({
 			dashboardProjectId && getPathname(requestForHandler.url).startsWith("/api/auth/api-key/")
 				? applyProjectScopeToRequest(requestForHandler, dashboardProjectId)
 				: requestForHandler;
+		const runtimeRequestProjectId = hasInternalProjectScopeBypass(args.request.headers)
+			? null
+			: resolvedScope.projectId ?? null;
 		let response;
 		try {
 			response = await handleBanataNodeAuthRequest(
@@ -781,7 +832,7 @@ export const handleAuthRequest = internalAction({
 						authComponent,
 						authConfig,
 						config: runtimeConfig,
-						requestProjectId: resolvedScope.projectId ?? dashboardProjectId ?? null,
+						requestProjectId: runtimeRequestProjectId,
 					}),
 				effectiveRequest,
 			);

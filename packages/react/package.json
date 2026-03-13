@@ -26,7 +26,7 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
@@ -48,7 +48,7 @@
 	},
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"types": "./index.d.ts",
 	"typesVersions": {
 		"*": {
 			"convex": [
@@ -63,7 +63,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"index.d.ts"
 	],
 	"scripts": {
 		"build": "tsup && node ../../scripts/ensure-use-client.mjs dist/index.js dist/convex-provider.js dist/client-plugins.js dist/convex-plugins.js",

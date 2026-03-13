@@ -109,7 +109,7 @@ function redirectToSignIn(): void {
 	const pathname = window.location.pathname;
 	if (pathname === "/sign-in") return;
 	const redirectUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-	window.location.replace(`/sign-in?redirect_url=${encodeURIComponent(redirectUrl)}`);
+	window.location.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(redirectUrl)}`);
 }
 
 // ── Client-side in-memory cache ──────────────────────────────────────

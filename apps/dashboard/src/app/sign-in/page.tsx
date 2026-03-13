@@ -17,14 +17,31 @@ export default function SignInPage() {
 	const { data: session, isPending } = authClient.useSession();
 	const searchParams = useSearchParams();
 	const redirectUrl = searchParams.get("redirect_url") ?? "/";
+	const forceSignIn = searchParams.get("force") === "1";
 
 	// If already authenticated, redirect immediately + pre-warm dashboard data
 	useEffect(() => {
-		if (!isPending && session?.user) {
-			prefetchDashboardData();
-			window.location.href = redirectUrl;
+		if (isPending || !session?.user || forceSignIn) {
+			return;
 		}
-	}, [isPending, session, redirectUrl]);
+
+		let cancelled = false;
+
+		void authClient
+			.getSession()
+			.then((result) => {
+				if (cancelled || !result.data?.user) {
+					return;
+				}
+				prefetchDashboardData();
+				window.location.href = redirectUrl;
+			})
+			.catch(() => {});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [forceSignIn, isPending, redirectUrl, session?.user]);
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background">

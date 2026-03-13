@@ -126,15 +126,50 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { data: session, isPending } = authClient.useSession();
+	const [isVerifyingSession, setIsVerifyingSession] = useState(true);
+	const [hasVerifiedSession, setHasVerifiedSession] = useState(false);
 
 	useEffect(() => {
-		if (isPending) return;
-		if (!session?.user) {
-			router.replace(`/sign-in?redirect_url=${encodeURIComponent(pathname)}`);
+		if (isPending) {
+			setIsVerifyingSession(true);
+			return;
 		}
-	}, [isPending, session, pathname, router]);
 
-	if (isPending) {
+		let cancelled = false;
+
+		async function verifySession() {
+			if (!session?.user) {
+				setHasVerifiedSession(false);
+				setIsVerifyingSession(false);
+				router.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(pathname)}`);
+				return;
+			}
+
+			setIsVerifyingSession(true);
+			const result = await authClient.getSession().catch(() => null);
+			if (cancelled) {
+				return;
+			}
+
+			if (!result?.data?.user) {
+				setHasVerifiedSession(false);
+				setIsVerifyingSession(false);
+				router.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(pathname)}`);
+				return;
+			}
+
+			setHasVerifiedSession(true);
+			setIsVerifyingSession(false);
+		}
+
+		void verifySession();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [isPending, pathname, router, session?.user]);
+
+	if (isPending || isVerifyingSession) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -142,7 +177,7 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
 		);
 	}
 
-	if (!session?.user) {
+	if (!hasVerifiedSession) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<Loader2 className="size-6 animate-spin text-muted-foreground" />
