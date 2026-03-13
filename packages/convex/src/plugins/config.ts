@@ -55,6 +55,7 @@ import {
 	projectScopeSchema,
 	requireAuthenticated,
 	requireProjectPermission,
+	resolveProjectIdFromApiKey,
 } from "./types";
 import {
 	deleteProjectSocialProviderSecret,
@@ -1215,7 +1216,20 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		body: Record<string, unknown>,
 		permission: string,
 	) {
-		const scope = getProjectScope(body);
+		const explicitScope = getProjectScope(body, { optional: true });
+		const apiKeyProjectId = await resolveProjectIdFromApiKey(ctx, db);
+		const projectId = apiKeyProjectId ?? explicitScope.projectId;
+		if (!projectId) {
+			throw ctx.error("BAD_REQUEST", {
+				message:
+					"Project scope is required. Provide projectId explicitly or use a project-scoped API key.",
+			});
+		}
+		const scope = {
+			where: [{ field: "projectId", value: projectId }] as WhereClause[],
+			data: { projectId },
+			projectId,
+		};
 		await requireProjectPermission(ctx, {
 			db,
 			permission,
@@ -1313,6 +1327,11 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		db: PluginDBAdapter,
 		body: Record<string, unknown>,
 	): Promise<string | undefined> {
+		const apiKeyProjectId = await resolveProjectIdFromApiKey(ctx, db);
+		if (apiKeyProjectId) {
+			return apiKeyProjectId;
+		}
+
 		const clientId =
 			typeof body.clientId === "string" && body.clientId.trim().length > 0
 				? body.clientId.trim()

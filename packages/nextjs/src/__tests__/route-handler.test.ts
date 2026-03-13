@@ -336,6 +336,28 @@ describe("createRouteHandler", () => {
 			expect(body.errorCallbackURL).toBe("https://app.acme.test/sign-in?error=1");
 		});
 
+		it("forwards JSON request bodies when callback URLs are already absolute", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler();
+
+			const request = createMockRequest("https://app.acme.test/api/auth/sign-in/social", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					provider: "github",
+					callbackURL: "https://app.acme.test/auth/callback",
+				}),
+			});
+			await handler.POST(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			const body = JSON.parse(await fetchedRequest.text()) as Record<string, string>;
+			expect(body.callbackURL).toBe("https://app.acme.test/auth/callback");
+		});
+
 		it("rewrites relative callback params in query strings to the customer app origin", async () => {
 			mockFetch.mockResolvedValue(createMockResponse("ok"));
 

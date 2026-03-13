@@ -487,6 +487,14 @@ interface ProjectOwnerRow extends Record<string, unknown> {
 	ownerId: string;
 }
 
+interface ApiKeyRow extends Record<string, unknown> {
+	id: string;
+	key: string;
+	userId: string;
+	projectId?: string | null;
+	metadata?: unknown;
+}
+
 export function parseRoleSlugs(value: string | string[] | null | undefined): string[] {
 	const raw = Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [];
 	return Array.from(new Set(raw.map((role) => role.trim()).filter(Boolean)));
@@ -703,6 +711,90 @@ export async function requireProjectPermission(
 	});
 }
 
+function normalizeScopeValue(value: unknown): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+async function hashApiKeyValue(value: string): Promise<string> {
+	const encoder = new TextEncoder();
+	const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
+	return Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, "0"))
+		.join("");
+}
+
+function readProjectIdFromApiKeyMetadata(metadata: unknown): string | null {
+	if (!metadata || typeof metadata !== "object") {
+		return null;
+	}
+
+	const metadataRecord = metadata as Record<string, unknown>;
+	return normalizeScopeValue(
+		metadataRecord.projectId ??
+			metadataRecord.project_id ??
+			metadataRecord.project ??
+			null,
+	);
+}
+
+function readProjectIdFromApiKeyRow(row: ApiKeyRow | null | undefined): string | null {
+	if (!row) {
+		return null;
+	}
+
+	return normalizeScopeValue(row.projectId) ?? readProjectIdFromApiKeyMetadata(row.metadata);
+}
+
+function readApiKeyFromContext(ctx: PluginEndpointContext): string | null {
+	const headerValue =
+		ctx.headers?.get("x-api-key") ?? ctx.request?.headers.get("x-api-key") ?? null;
+	if (headerValue) {
+		return normalizeScopeValue(headerValue);
+	}
+
+	const authorizationHeader =
+		ctx.headers?.get("authorization") ?? ctx.request?.headers.get("authorization") ?? null;
+	if (!authorizationHeader) {
+		return null;
+	}
+
+	const [scheme, token] = authorizationHeader.split(/\s+/, 2);
+	if (scheme?.toLowerCase() !== "bearer" || !token) {
+		return null;
+	}
+
+	return normalizeScopeValue(token);
+}
+
+export async function resolveProjectIdFromApiKey(
+	ctx: PluginEndpointContext,
+	db: PluginDBAdapter,
+): Promise<string | null> {
+	const apiKey = readApiKeyFromContext(ctx);
+	if (!apiKey) {
+		return null;
+	}
+
+	const lookupCandidates = Array.from(new Set([await hashApiKeyValue(apiKey), apiKey]));
+
+	for (const candidate of lookupCandidates) {
+		try {
+			const row = await db.findOne<ApiKeyRow>({
+				model: "apikey",
+				where: [{ field: "key", value: candidate }],
+			});
+			const projectId = readProjectIdFromApiKeyRow(row);
+			if (projectId) {
+				return projectId;
+			}
+		} catch {
+			// Keep trying raw and hashed key formats for compatibility.
+		}
+	}
+
+	return null;
+}
+
 // â”€â”€â”€ Shared Zod Schemas for Project Scoping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
@@ -750,4 +842,3 @@ export function getProjectScope(
 		projectId,
 	};
 }
-

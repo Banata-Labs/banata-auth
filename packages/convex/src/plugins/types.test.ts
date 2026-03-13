@@ -10,6 +10,7 @@ import {
 	getRolePermissions,
 	requireGlobalAdmin,
 	requireProjectPermission,
+	resolveProjectIdFromApiKey,
 } from "./types";
 
 type Row = Record<string, unknown>;
@@ -97,6 +98,8 @@ function createCtx(params?: {
 		context: {
 			session: authenticated ? { user, session } : null,
 		},
+		headers: new Headers(),
+		request: new Request("https://example.com"),
 		error(status: string, body?: { message?: string }) {
 			const error = new Error(body?.message ?? status) as Error & {
 				status: string;
@@ -295,5 +298,27 @@ describe("RBAC helpers", () => {
 				permission: "webhook.manage",
 			}),
 		).rejects.toMatchObject({ status: "FORBIDDEN" });
+	});
+
+	it("resolves project scope from a project-scoped API key header", async () => {
+		const encoder = new TextEncoder();
+		const digest = await crypto.subtle.digest("SHA-256", encoder.encode("ba_live_project_key"));
+		const hashedKey = Array.from(new Uint8Array(digest))
+			.map((byte) => byte.toString(16).padStart(2, "0"))
+			.join("");
+		const db = createAdapter({
+			apikey: [
+				{
+					id: "key_1",
+					key: hashedKey,
+					userId: "owner_1",
+					projectId: "project_1",
+				},
+			],
+		});
+		const ctx = createCtx();
+		ctx.headers = new Headers({ "x-api-key": "ba_live_project_key" });
+
+		await expect(resolveProjectIdFromApiKey(ctx, db)).resolves.toBe("project_1");
 	});
 });

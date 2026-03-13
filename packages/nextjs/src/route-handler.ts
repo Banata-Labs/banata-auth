@@ -329,18 +329,18 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 			forwardedHeaders.set("x-banata-client-id", resolvedScope.clientId);
 		}
 
-		let requestBody: BodyInit | null | undefined = request.body;
+		const forwardedRequest = request.clone();
+		let requestBody: BodyInit | null | undefined = forwardedRequest.body;
 		const contentType = forwardedHeaders.get("content-type") ?? "";
 		if (
-			request.body &&
+			requestBody &&
 			contentType.includes("application/json") &&
 			request.method !== "GET" &&
 			request.method !== "HEAD"
 		) {
-			const parsedBody = (await request
-				.clone()
-				.json()
-				.catch(() => null)) as Record<string, unknown> | null;
+			const parsedBody = (await request.clone().json().catch(() => null)) as
+				| Record<string, unknown>
+				| null;
 			if (parsedBody && typeof parsedBody === "object") {
 				const rewrittenBody = rewriteCallbackFieldsInBody(parsedBody, requestOrigin);
 				if (rewrittenBody !== parsedBody) {
