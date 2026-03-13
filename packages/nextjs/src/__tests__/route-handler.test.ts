@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRouteHandler } from "../route-handler";
 
 // Mock global fetch
@@ -45,9 +45,7 @@ function firstFetchCall(): [Request, RequestInit?] {
 	return call as [Request, RequestInit?];
 }
 
-function createManagedHandler(
-	options: Partial<Parameters<typeof createRouteHandler>[0]> = {},
-) {
+function createManagedHandler(options: Partial<Parameters<typeof createRouteHandler>[0]> = {}) {
 	return createRouteHandler({
 		authUrl: "https://auth.acme.test",
 		apiKey: "sk_test_project_key",
@@ -96,9 +94,7 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/sign-in",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in");
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
@@ -129,19 +125,13 @@ describe("createRouteHandler", () => {
 				authUrl: "https://auth.acme.test/",
 			});
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/callback",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/callback");
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
 			// Should not have double slash
-			expect(fetchedRequest.url).not.toContain(
-				"auth.acme.test//api",
-			);
-			expect(fetchedRequest.url).toContain(
-				"https://auth.acme.test/api/auth/callback",
-			);
+			expect(fetchedRequest.url).not.toContain("auth.acme.test//api");
+			expect(fetchedRequest.url).toContain("https://auth.acme.test/api/auth/callback");
 		});
 
 		it("preserves query string parameters", async () => {
@@ -165,24 +155,30 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-				{
-					headers: {
-						authorization: "Bearer token-123",
-						"content-type": "application/json",
-					},
+			const request = createMockRequest("http://localhost:3000/api/auth/session", {
+				headers: {
+					authorization: "Bearer token-123",
+					"content-type": "application/json",
 				},
-			);
+			});
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
-			expect(fetchedRequest.headers.get("authorization")).toBe(
-				"Bearer token-123",
-			);
-			expect(fetchedRequest.headers.get("content-type")).toBe(
-				"application/json",
-			);
+			expect(fetchedRequest.headers.get("authorization")).toBe("Bearer token-123");
+			expect(fetchedRequest.headers.get("content-type")).toBe("application/json");
+		});
+
+		it("injects forwarded host and proto from the customer app request", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler();
+
+			const request = createMockRequest("https://app.acme.test/api/auth/session");
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			expect(fetchedRequest.headers.get("x-forwarded-host")).toBe("app.acme.test");
+			expect(fetchedRequest.headers.get("x-forwarded-proto")).toBe("https");
 		});
 
 		it("forwards the Better Auth cookie handoff header for hosted auth", async () => {
@@ -212,9 +208,7 @@ describe("createRouteHandler", () => {
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
-			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
-				"customer-app",
-			);
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe("customer-app");
 		});
 
 		it("injects a configured Banata API key as a private upstream header", async () => {
@@ -256,12 +250,8 @@ describe("createRouteHandler", () => {
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
-			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
-				"customer-app",
-			);
-			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe(
-				"project_123",
-			);
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe("customer-app");
+			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe("project_123");
 		});
 
 		it("resolves Banata scope from cookies", async () => {
@@ -269,23 +259,16 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-				{
-					headers: {
-						cookie: "banata_client_id=customer-app; banata_project_id=project_123",
-					},
+			const request = createMockRequest("http://localhost:3000/api/auth/session", {
+				headers: {
+					cookie: "banata_client_id=customer-app; banata_project_id=project_123",
 				},
-			);
+			});
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
-			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe(
-				"customer-app",
-			);
-			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe(
-				"project_123",
-			);
+			expect(fetchedRequest.headers.get("x-banata-client-id")).toBe("customer-app");
+			expect(fetchedRequest.headers.get("x-banata-project-id")).toBe("project_123");
 		});
 
 		it("sets host header to the Convex site host", async () => {
@@ -293,15 +276,11 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
 			await handler.GET(request);
 
 			const [fetchedRequest] = firstFetchCall();
-			expect(fetchedRequest.headers.get("host")).toBe(
-				"auth.acme.test",
-			);
+			expect(fetchedRequest.headers.get("host")).toBe("auth.acme.test");
 		});
 
 		it("uses request.method in the forwarded fetch call", async () => {
@@ -309,10 +288,10 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/sign-in",
-				{ method: "POST", body: '{"email":"a@b.com"}' },
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in", {
+				method: "POST",
+				body: '{"email":"a@b.com"}',
+			});
 			await handler.POST(request);
 
 			const [, fetchOptionsRaw] = firstFetchCall();
@@ -325,14 +304,53 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/callback",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/callback");
 			await handler.GET(request);
 
 			const [, fetchOptionsRaw] = firstFetchCall();
 			const fetchOptions = fetchOptionsRaw as RequestInit;
 			expect(fetchOptions.redirect).toBe("manual");
+		});
+
+		it("rewrites relative callback URLs in JSON bodies to the customer app origin", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler();
+
+			const request = createMockRequest("https://app.acme.test/api/auth/sign-in/social", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					provider: "github",
+					callbackURL: "/auth/callback?next=%2Fdashboard",
+					errorCallbackURL: "/sign-in?error=1",
+				}),
+			});
+			await handler.POST(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			const body = JSON.parse(await fetchedRequest.text()) as Record<string, string>;
+			expect(body.callbackURL).toBe("https://app.acme.test/auth/callback?next=%2Fdashboard");
+			expect(body.errorCallbackURL).toBe("https://app.acme.test/sign-in?error=1");
+		});
+
+		it("rewrites relative callback params in query strings to the customer app origin", async () => {
+			mockFetch.mockResolvedValue(createMockResponse("ok"));
+
+			const handler = createManagedHandler();
+
+			const request = createMockRequest(
+				"https://app.acme.test/api/auth/verify-email?callbackURL=%2Fwelcome%3Ftab%3Dprofile",
+			);
+			await handler.GET(request);
+
+			const [fetchedRequest] = firstFetchCall();
+			const fetchedUrl = new URL(fetchedRequest.url);
+			expect(fetchedUrl.searchParams.get("callbackURL")).toBe(
+				"https://app.acme.test/welcome?tab=profile",
+			);
 		});
 	});
 
@@ -343,9 +361,7 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
 			const response = await handler.GET(request);
 			const body = await response.text();
 
@@ -359,9 +375,7 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/nonexistent",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/nonexistent");
 			const response = await handler.GET(request);
 
 			expect(response.status).toBe(404);
@@ -379,9 +393,7 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/sign-in",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/sign-in");
 			const response = await handler.GET(request);
 
 			expect(response.headers.get("x-custom")).toBe("value");
@@ -493,9 +505,7 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
 			const response = await handler.GET(request);
 
 			expect(response.status).toBe(502);
@@ -509,14 +519,10 @@ describe("createRouteHandler", () => {
 
 			const handler = createManagedHandler();
 
-			const request = createMockRequest(
-				"http://localhost:3000/api/auth/session",
-			);
+			const request = createMockRequest("http://localhost:3000/api/auth/session");
 			const response = await handler.GET(request);
 
-			expect(response.headers.get("Content-Type")).toBe(
-				"application/json",
-			);
+			expect(response.headers.get("Content-Type")).toBe("application/json");
 		});
 	});
 });

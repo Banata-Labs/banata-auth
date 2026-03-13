@@ -49,6 +49,14 @@ const STRIPPED_RESPONSE_HEADERS = new Set([
 const PROJECT_ID_COOKIE = "banata_project_id";
 const CLIENT_ID_COOKIE = "banata_client_id";
 const DEFAULT_BANATA_AUTH_URL = "https://auth.banata.dev";
+const CALLBACK_URL_PARAM_NAMES = [
+	"callbackURL",
+	"callbackUrl",
+	"newUserCallbackURL",
+	"errorCallbackURL",
+	"redirectTo",
+	"redirectURL",
+] as const;
 
 export interface BanataProjectRouteScope {
 	projectId?: string;
@@ -187,14 +195,62 @@ function mirrorCrossDomainCookieHeader(request: Request, headers: Headers): Head
 	return headers;
 }
 
+function getRequestOrigin(request: Request): string {
+	const requestUrl = new URL(request.url);
+	const forwardedHost =
+		normalizeScopeValue(request.headers.get("x-forwarded-host")) ??
+		normalizeScopeValue(request.headers.get("host"));
+	const forwardedProto =
+		normalizeScopeValue(request.headers.get("x-forwarded-proto")) ??
+		requestUrl.protocol.replace(/:$/, "");
+	const host = forwardedHost ?? requestUrl.host;
+	return `${forwardedProto}://${host}`;
+}
+
+function absolutizeCallbackValue(value: unknown, requestOrigin: string): unknown {
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	const trimmed = value.trim();
+	if (!trimmed.startsWith("/")) {
+		return value;
+	}
+
+	return new URL(trimmed, requestOrigin).toString();
+}
+
+function rewriteCallbackParams(searchParams: URLSearchParams, requestOrigin: string): void {
+	for (const key of CALLBACK_URL_PARAM_NAMES) {
+		const value = searchParams.get(key);
+		if (!value) {
+			continue;
+		}
+		searchParams.set(key, absolutizeCallbackValue(value, requestOrigin) as string);
+	}
+}
+
+function rewriteCallbackFieldsInBody(
+	body: Record<string, unknown>,
+	requestOrigin: string,
+): Record<string, unknown> {
+	let changed = false;
+	const nextBody: Record<string, unknown> = { ...body };
+
+	for (const key of CALLBACK_URL_PARAM_NAMES) {
+		const currentValue = nextBody[key];
+		const nextValue = absolutizeCallbackValue(currentValue, requestOrigin);
+		if (nextValue !== currentValue) {
+			nextBody[key] = nextValue;
+			changed = true;
+		}
+	}
+
+	return changed ? nextBody : body;
+}
+
 export function createRouteHandler(options: BanataRouteHandlerOptions) {
-	const {
-		allowInternalProjectScope,
-		allowedOrigins,
-		apiKey,
-		authUrl,
-		project,
-	} = options;
+	const { allowInternalProjectScope, allowedOrigins, apiKey, authUrl, project } = options;
 	const siteUrl = resolveAuthBaseUrl(authUrl);
 	const normalizedApiKey = normalizeScopeValue(apiKey);
 	if (!normalizedApiKey && !allowInternalProjectScope) {
@@ -241,7 +297,10 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 		}
 
 		const requestUrl = new URL(request.url);
-		const targetUrl = `${siteUrl}${requestUrl.pathname}${requestUrl.search}`;
+		const requestOrigin = getRequestOrigin(request);
+		const targetSearchParams = new URLSearchParams(requestUrl.search);
+		rewriteCallbackParams(targetSearchParams, requestOrigin);
+		const targetUrl = `${siteUrl}${requestUrl.pathname}${targetSearchParams.toString() ? `?${targetSearchParams.toString()}` : ""}`;
 
 		// Only forward allowed headers to the upstream auth API
 		const forwardedHeaders = new Headers();
@@ -249,6 +308,12 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 			if (FORWARDED_HEADERS.has(key.toLowerCase())) {
 				forwardedHeaders.set(key, value);
 			}
+		}
+		if (!forwardedHeaders.has("x-forwarded-host")) {
+			forwardedHeaders.set("x-forwarded-host", new URL(requestOrigin).host);
+		}
+		if (!forwardedHeaders.has("x-forwarded-proto")) {
+			forwardedHeaders.set("x-forwarded-proto", new URL(requestOrigin).protocol.replace(/:$/, ""));
 		}
 		const resolvedScope = await resolveProjectScope(request, project);
 		if (normalizedApiKey) {
@@ -264,10 +329,31 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 			forwardedHeaders.set("x-banata-client-id", resolvedScope.clientId);
 		}
 
+		let requestBody: BodyInit | null | undefined = request.body;
+		const contentType = forwardedHeaders.get("content-type") ?? "";
+		if (
+			request.body &&
+			contentType.includes("application/json") &&
+			request.method !== "GET" &&
+			request.method !== "HEAD"
+		) {
+			const parsedBody = (await request
+				.clone()
+				.json()
+				.catch(() => null)) as Record<string, unknown> | null;
+			if (parsedBody && typeof parsedBody === "object") {
+				const rewrittenBody = rewriteCallbackFieldsInBody(parsedBody, requestOrigin);
+				if (rewrittenBody !== parsedBody) {
+					requestBody = JSON.stringify(rewrittenBody);
+					forwardedHeaders.delete("content-length");
+				}
+			}
+		}
+
 		const newRequest = new Request(targetUrl, {
 			method: request.method,
 			headers: forwardedHeaders,
-			body: request.body,
+			body: requestBody,
 			// @ts-expect-error - duplex is needed for streaming bodies
 			duplex: "half",
 		});
@@ -288,10 +374,7 @@ export function createRouteHandler(options: BanataRouteHandlerOptions) {
 				statusText: response.statusText,
 				headers: applyCorsHeaders(
 					request,
-					mirrorCrossDomainCookieHeader(
-						request,
-						sanitizeUpstreamResponseHeaders(response.headers),
-					),
+					mirrorCrossDomainCookieHeader(request, sanitizeUpstreamResponseHeaders(response.headers)),
 				),
 			});
 		} catch (error) {

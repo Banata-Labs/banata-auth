@@ -37,6 +37,10 @@ The setup is the same for every provider:
 3. **Copy the Client ID and Client Secret**.
 4. **Add the credentials** to the Banata dashboard or your Convex environment.
 
+For customer apps using `@banata-auth/nextjs`, this provider callback stays on your app's `/api/auth/callback/{provider}` route. Your in-app `callbackURL` such as `/dashboard` or `/auth/callback` is a separate post-login destination.
+
+If you are using the Banata-hosted auth UI itself, Banata owns the provider callback and then hands the session back to your app afterward.
+
 ### Callback URL Pattern
 
 All providers use the same callback URL format:
@@ -150,7 +154,9 @@ await authClient.signIn.social({
 });
 ```
 
-This redirects the user to the provider's OAuth consent page. After they grant permission, they're redirected back through your callback URL, and then to the `callbackURL` you specified.
+`callbackURL` here is where your app should land after Banata finishes the auth flow. It is not the provider callback URL you register in GitHub or Google.
+
+This redirects the user to the provider's OAuth consent page. After they grant permission, they're redirected back through your app's auth route, and then to the `callbackURL` you specified.
 
 ### Using the SocialButtons Component
 
@@ -200,6 +206,8 @@ Here's what happens when a user clicks "Sign in with GitHub":
 
 ## Account Linking
 
+For customer apps, the provider callback registered in GitHub or Google is still `/api/auth/callback/{provider}` on your app domain. The `callbackURL` in `authClient.signIn.social(...)` is only the page Banata redirects to after the auth flow is finished.
+
 When a user signs in with a social provider and their email matches an existing account:
 
 - **Auto-link** — if the email is verified on both sides, the social account is linked to the existing user.
@@ -216,6 +224,8 @@ After linking, the user can sign in with either method (email/password or social
 The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly:
 - Development: `http://localhost:3000/api/auth/callback/{provider}`
 - Production: `https://your-domain.com/api/auth/callback/{provider}`
+
+Do not register `/dashboard`, `/auth/callback`, or any other post-login page as the provider callback. Those belong in your app's `callbackURL` option instead.
 
 ### "Access Denied" after granting permission
 
