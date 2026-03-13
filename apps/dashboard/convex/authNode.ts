@@ -44,6 +44,13 @@ interface RuntimeSessionRow extends Record<string, unknown> {
 	token?: string | null;
 }
 
+interface RuntimeVerificationRow extends Record<string, unknown> {
+	id: string;
+	identifier: string;
+	value: string;
+	expiresAt: number;
+}
+
 interface ConvexJwtClaims extends Record<string, unknown> {
 	sub?: string;
 	sessionId?: string;
@@ -157,6 +164,13 @@ function getHeaderValue(
 ): string | null {
 	const match = headers.find((item) => item.key.toLowerCase() === name.toLowerCase());
 	return match?.value ?? null;
+}
+
+function getResponseHeaderValue(
+	headers: Array<{ key: string; value: string }>,
+	name: string,
+): string | null {
+	return getHeaderValue(headers, name);
 }
 
 function readCookieValue(cookieHeader: string | null, name: string): string | null {
@@ -326,6 +340,100 @@ function readProjectIdFromRecord(record: Record<string, unknown>): string | null
 
 function serializeRequestBody(body: Record<string, unknown>): string {
 	return JSON.stringify(body);
+}
+
+function getOAuthStateIdentifier(state: string): string {
+	return `oauth-project-scope:${state}`;
+}
+
+function extractOAuthStateFromUrl(urlValue: string): string | null {
+	try {
+		const url = new URL(urlValue, "http://localhost");
+		return normalizeScopeValue(url.searchParams.get("state"));
+	} catch {
+		return null;
+	}
+}
+
+function extractOAuthRedirectLocation(response: {
+	headers: Array<{ key: string; value: string }>;
+	body: string | null;
+}): string | null {
+	const headerLocation = normalizeScopeValue(getResponseHeaderValue(response.headers, "location"));
+	if (headerLocation) {
+		return headerLocation;
+	}
+
+	if (!response.body) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(response.body) as Record<string, unknown>;
+		return normalizeScopeValue(parsed.url);
+	} catch {
+		return null;
+	}
+}
+
+async function storeProjectScopeForOAuthState(
+	db: PluginDBAdapter,
+	state: string,
+	projectId: string,
+): Promise<void> {
+	const now = Date.now();
+	const identifier = getOAuthStateIdentifier(state);
+	const expiresAt = now + 15 * 60 * 1000;
+	const value = JSON.stringify({ projectId });
+	const existing = (await db.findOne({
+		model: "verification",
+		where: [{ field: "identifier", value: identifier }],
+	})) as RuntimeVerificationRow | null;
+
+	if (existing?.id) {
+		await db.update<RuntimeVerificationRow>({
+			model: "verification",
+			where: [{ field: "id", operator: "eq", value: existing.id }],
+			update: { value, expiresAt, updatedAt: now },
+		});
+		return;
+	}
+
+	await db.create<RuntimeVerificationRow>({
+		model: "verification",
+		data: {
+			identifier,
+			value,
+			expiresAt,
+			createdAt: now,
+			updatedAt: now,
+		},
+	});
+}
+
+async function resolveProjectIdFromOAuthState(
+	db: PluginDBAdapter,
+	request: SerializedAuthRequest,
+): Promise<string | null> {
+	const state = extractOAuthStateFromUrl(request.url);
+	if (!state) {
+		return null;
+	}
+
+	const row = (await db.findOne({
+		model: "verification",
+		where: [{ field: "identifier", value: getOAuthStateIdentifier(state) }],
+	})) as RuntimeVerificationRow | null;
+	if (!row || row.expiresAt <= Date.now()) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(row.value) as Record<string, unknown>;
+		return normalizeScopeValue(parsed.projectId) ?? normalizeScopeValue(parsed.project_id);
+	} catch {
+		return null;
+	}
 }
 
 export function applyProjectScopeToRequest(
@@ -689,6 +797,11 @@ export const handleAuthRequest = internalAction({
 		console.info("[banata-auth] auth request start", summarizeRequestForLog(args.request));
 		const scope = resolveRequestProjectScope(args.request);
 		const apiKey = extractApiKeyFromRequest(args.request);
+		const pluginDb = getPluginDb(ctx);
+		const oauthStateProjectId =
+			!apiKey && !scope.hasExplicitScope
+				? await resolveProjectIdFromOAuthState(pluginDb, args.request)
+				: null;
 		const internalDashboardProjectId =
 			!apiKey && hasInternalProjectScopeBypass(args.request.headers)
 				? normalizeScopeValue(scope.projectId) ?? null
@@ -708,8 +821,9 @@ export const handleAuthRequest = internalAction({
 			scope,
 			apiKey,
 		});
+		const effectiveResolvedProjectId = resolvedScope.projectId ?? oauthStateProjectId ?? null;
 		const effectiveDashboardProjectId =
-			internalDashboardProjectId ?? resolvedScope.projectId ?? null;
+			internalDashboardProjectId ?? effectiveResolvedProjectId;
 		if (requiresDashboardProjectScope(args.request) && !effectiveDashboardProjectId) {
 			console.warn("[banata-auth] missing dashboard project scope", {
 				...summarizeRequestForLog(args.request),
@@ -748,11 +862,12 @@ export const handleAuthRequest = internalAction({
 			});
 		}
 		if (useProjectRuntimeConfig && (scope.hasExplicitScope || Boolean(apiKey))) {
-			if (!resolvedScope.projectId) {
+			if (!effectiveResolvedProjectId) {
 				console.warn("[banata-auth] unknown project scope", {
 					...summarizeRequestForLog(args.request),
 					scope,
 					resolvedScope,
+					oauthStateProjectId,
 				});
 				return {
 					status: 404,
@@ -770,7 +885,9 @@ export const handleAuthRequest = internalAction({
 			return requestForHandler;
 		}
 		const runtimeConfig = useProjectRuntimeConfig
-			? await getRequestConfig(ctx, scope, { apiKey })
+			? effectiveResolvedProjectId
+				? await getRequestConfig(ctx, { projectId: effectiveResolvedProjectId }, { apiKey })
+				: await getRequestConfig(ctx, scope, { apiKey })
 			: await getRequestConfig(ctx, null, { apiKey });
 
 		// When an API key is present, trust the origin derived from x-forwarded-host.
@@ -801,7 +918,6 @@ export const handleAuthRequest = internalAction({
 				? effectiveDashboardProjectId
 				: null;
 		if (dashboardProjectId) {
-			const pluginDb = getPluginDb(ctx, runtimeConfig);
 			const permissionError = await enforceDashboardProjectPermission(
 				ctx,
 				pluginDb,
@@ -822,7 +938,7 @@ export const handleAuthRequest = internalAction({
 				: requestForHandler;
 		const runtimeRequestProjectId = hasInternalProjectScopeBypass(args.request.headers)
 			? null
-			: resolvedScope.projectId ?? null;
+			: effectiveResolvedProjectId;
 		let response;
 		try {
 			response = await handleBanataNodeAuthRequest(
@@ -856,10 +972,17 @@ export const handleAuthRequest = internalAction({
 		console.info("[banata-auth] auth request complete", {
 			...summarizeRequestForLog(effectiveRequest),
 			status: response.status,
-			resolvedProjectId: resolvedScope.projectId ?? null,
+			resolvedProjectId: effectiveResolvedProjectId,
 			apiKeyProjectId: resolvedScope.apiKeyProjectId ?? null,
 			dashboardProjectId,
 		});
+		if (getPathname(effectiveRequest.url) === "/api/auth/sign-in/social" && effectiveResolvedProjectId) {
+			const redirectLocation = extractOAuthRedirectLocation(response);
+			const oauthState = redirectLocation ? extractOAuthStateFromUrl(redirectLocation) : null;
+			if (oauthState) {
+				await storeProjectScopeForOAuthState(pluginDb, oauthState, effectiveResolvedProjectId);
+			}
+		}
 		return {
 			...response,
 			body: filterProjectScopedResponseBody(

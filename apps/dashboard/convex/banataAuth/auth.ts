@@ -5,7 +5,6 @@ import {
 	createBanataAuth,
 	createBanataAuthComponent,
 	createBanataAuthOptions,
-	ensureProjectAuthSecret,
 	listProjectSocialProviderSecrets,
 	banataAuthSchema,
 } from "@banata-auth/convex";
@@ -24,7 +23,23 @@ interface PersistedDashboardConfig {
 	socialProviders?: Record<string, PersistedSocialProviderStatus>;
 }
 
+interface PersistedRedirectConfig {
+	redirectUris?: string[];
+	appHomepage?: string;
+	signInEndpoint?: string;
+	signOutRedirects?: string[];
+	externalSignUp?: string;
+	userInvitation?: string;
+	passwordReset?: string;
+}
+
 interface DashboardConfigRow {
+	configJson: string;
+	projectId?: string | null;
+}
+
+interface RedirectConfigRow extends Record<string, unknown> {
+	id: string;
 	configJson: string;
 	projectId?: string | null;
 }
@@ -97,7 +112,37 @@ function getTrustedOrigins(): string[] {
 	];
 }
 
-function getRuntimeTrustedOrigins(siteUrl: string): string[] {
+function readTrustedOriginsFromRedirects(redirects?: PersistedRedirectConfig | null): string[] {
+	if (!redirects) {
+		return [];
+	}
+
+	const candidates = [
+		...(redirects.redirectUris ?? []),
+		...(redirects.signOutRedirects ?? []),
+		redirects.appHomepage,
+		redirects.signInEndpoint,
+		redirects.externalSignUp,
+		redirects.userInvitation,
+		redirects.passwordReset,
+	].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+
+	const origins = new Set<string>();
+	for (const value of candidates) {
+		try {
+			origins.add(new URL(value).origin);
+		} catch {
+			// Ignore malformed saved URLs so a single bad entry does not break auth.
+		}
+	}
+
+	return Array.from(origins);
+}
+
+function getRuntimeTrustedOrigins(
+	siteUrl: string,
+	redirects?: PersistedRedirectConfig | null,
+): string[] {
 	const origins = new Set(
 		process.env.TRUSTED_ORIGINS
 			? process.env.TRUSTED_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
@@ -114,6 +159,10 @@ function getRuntimeTrustedOrigins(siteUrl: string): string[] {
 		}
 	} catch {
 		// Fall back to explicit TRUSTED_ORIGINS only.
+	}
+
+	for (const origin of readTrustedOriginsFromRedirects(redirects)) {
+		origins.add(origin);
 	}
 
 	return Array.from(origins);
@@ -262,7 +311,11 @@ export function getPluginDb(
 	) as unknown as PluginDBAdapter;
 }
 
-function buildProjectConfig(projectName: string, secret: string): BanataAuthConfig {
+function buildProjectConfig(
+	projectName: string,
+	secret: string,
+	redirects?: PersistedRedirectConfig | null,
+): BanataAuthConfig {
 	const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 	return {
@@ -270,7 +323,7 @@ function buildProjectConfig(projectName: string, secret: string): BanataAuthConf
 		siteUrl,
 		hostedUiUrl: resolveHostedUiUrl(siteUrl),
 		secret,
-		trustedOrigins: getRuntimeTrustedOrigins(siteUrl),
+		trustedOrigins: getRuntimeTrustedOrigins(siteUrl, redirects),
 		authMethods: {
 			emailPassword: true,
 			magicLink: false,
@@ -395,6 +448,29 @@ async function loadPersistedDashboardConfig(
 		})) as DashboardConfigRow | null;
 		if (scopedRow?.configJson) {
 			return JSON.parse(scopedRow.configJson) as PersistedDashboardConfig;
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadPersistedRedirectConfig(
+	ctx: GenericCtx<DataModel>,
+	projectId?: string | null,
+): Promise<PersistedRedirectConfig | null> {
+	if (!projectId) {
+		return null;
+	}
+
+	const db = getPluginDb(ctx);
+	try {
+		const scopedRow = (await db.findOne({
+			model: "redirectConfig",
+			where: [{ field: "projectId", value: projectId }],
+		})) as RedirectConfigRow | null;
+		if (scopedRow?.configJson) {
+			return JSON.parse(scopedRow.configJson) as PersistedRedirectConfig;
 		}
 		return null;
 	} catch {
@@ -545,14 +621,23 @@ async function buildProjectRequestConfig(
 	projectId: string,
 ): Promise<BanataAuthConfig> {
 	const db = getPluginDb(ctx);
-	const [project, overrides, secret] = await Promise.all([
+	const [project, overrides, redirects] = await Promise.all([
 		loadProjectById(ctx, projectId),
 		loadPersistedDashboardConfig(ctx, projectId),
-		ensureProjectAuthSecret(db, projectId),
+		loadPersistedRedirectConfig(ctx, projectId),
 	]);
 	const socialProviders = await loadProjectSocialProviders(db, projectId, overrides);
 	const projectName = project?.name?.trim() || "Banata Project";
-	return mergeRuntimeConfig(buildProjectConfig(projectName, secret), overrides, socialProviders);
+	const platformSecret = getPlatformConfig().secret;
+
+	// Convex Better Auth stores JWKS in a shared table for the deployment.
+	// Project-scoped runtimes still need the platform signing secret so they
+	// can decrypt the shared private key and mint SSR tokens consistently.
+	return mergeRuntimeConfig(
+		buildProjectConfig(projectName, platformSecret, redirects),
+		overrides,
+		socialProviders,
+	);
 }
 
 export async function getRequestConfig(
