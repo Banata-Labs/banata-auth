@@ -1,5 +1,11 @@
 # @banata-auth/nextjs
 
+## 0.2.4
+
+### Patch Changes
+
+- [`e6cbfd8`](https://github.com/Banata-Labs/banata-auth/commit/e6cbfd8cc6cb47174dc0e136e6c1decc636b5e2e) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Preserve the customer app origin when proxying managed auth flows so relative callback URLs resolve back to the app instead of the hosted Banata auth domain.
+
 ## 0.2.3
 
 ### Patch Changes
