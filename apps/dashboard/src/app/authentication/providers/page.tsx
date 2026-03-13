@@ -21,6 +21,8 @@ import {
 	type DashboardConfig,
 	type SocialProviderCredentials,
 	deleteSocialProviderCredential,
+	getCachedDashboardConfig,
+	getCachedSocialProviderCredentials,
 	getDashboardConfig,
 	getSocialProviderCredentials,
 	saveSocialProviderCredential,
@@ -74,10 +76,16 @@ function toDrafts(credentials: SocialProviderCredentials): Record<string, Provid
 }
 
 export default function ProvidersPage() {
-	const [config, setConfig] = useState<DashboardConfig | null>(null);
-	const [credentials, setCredentials] = useState<SocialProviderCredentials>({});
-	const [drafts, setDrafts] = useState<Record<string, ProviderDraft>>({});
-	const [isLoading, setIsLoading] = useState(true);
+	const [config, setConfig] = useState<DashboardConfig | null>(() => getCachedDashboardConfig());
+	const [credentials, setCredentials] = useState<SocialProviderCredentials>(
+		() => getCachedSocialProviderCredentials() ?? {},
+	);
+	const [drafts, setDrafts] = useState<Record<string, ProviderDraft>>(() =>
+		toDrafts(getCachedSocialProviderCredentials() ?? {}),
+	);
+	const [isLoading, setIsLoading] = useState(
+		() => getCachedDashboardConfig() === null && getCachedSocialProviderCredentials() === null,
+	);
 	const [savingProvider, setSavingProvider] = useState<string | null>(null);
 	const [deletingProvider, setDeletingProvider] = useState<string | null>(null);
 	const [togglingProviders, setTogglingProviders] = useState<Record<string, boolean>>({});
@@ -87,7 +95,20 @@ export default function ProvidersPage() {
 
 	useEffect(() => {
 		let cancelled = false;
-		setIsLoading(true);
+		const cachedConfig = getCachedDashboardConfig();
+		const cachedCredentials = getCachedSocialProviderCredentials();
+		if (cachedConfig || cachedCredentials) {
+			if (cachedConfig) {
+				setConfig(cachedConfig);
+			}
+			if (cachedCredentials) {
+				setCredentials(cachedCredentials);
+				setDrafts(toDrafts(cachedCredentials));
+			}
+			setIsLoading(false);
+		} else {
+			setIsLoading(true);
+		}
 		Promise.all([getDashboardConfig(), getSocialProviderCredentials()])
 			.then(([dashboardConfig, providerCredentials]) => {
 				if (cancelled) return;

@@ -4,10 +4,9 @@ import { ProjectEnvironmentProvider } from "@/components/project-environment-pro
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Loader2, Moon, Search, Sun } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { ChevronRight, Moon, Search, Sun } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const breadcrumbMap: Record<string, string> = {
@@ -111,80 +110,7 @@ function ThemeToggle() {
 	);
 }
 
-/**
- * Client-side auth guard for protected (non-auth) pages.
- * Uses Better Auth's useSession hook as a secondary check.
- *
- * **Limitation:** This guard runs client-side only. There is no server-side
- * middleware protecting dashboard routes, which means a brief flash of the
- * loading spinner is possible before the redirect to `/sign-in` fires.
- * For production deployments, consider adding server-side middleware
- * (e.g., `banataAuthProxy` from `@banata-auth/nextjs`) to the dashboard
- * app's `proxy.ts`/`middleware.ts` for immediate server-side redirects.
- */
 function ProtectedContent({ children }: { children: React.ReactNode }) {
-	const pathname = usePathname();
-	const router = useRouter();
-	const { data: session, isPending } = authClient.useSession();
-	const [isVerifyingSession, setIsVerifyingSession] = useState(true);
-	const [hasVerifiedSession, setHasVerifiedSession] = useState(false);
-
-	useEffect(() => {
-		if (isPending) {
-			setIsVerifyingSession(true);
-			return;
-		}
-
-		let cancelled = false;
-
-		async function verifySession() {
-			if (!session?.user) {
-				setHasVerifiedSession(false);
-				setIsVerifyingSession(false);
-				router.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(pathname)}`);
-				return;
-			}
-
-			setIsVerifyingSession(true);
-			const result = await authClient.getSession().catch(() => null);
-			if (cancelled) {
-				return;
-			}
-
-			if (!result?.data?.user) {
-				setHasVerifiedSession(false);
-				setIsVerifyingSession(false);
-				router.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(pathname)}`);
-				return;
-			}
-
-			setHasVerifiedSession(true);
-			setIsVerifyingSession(false);
-		}
-
-		void verifySession();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [isPending, pathname, router, session?.user]);
-
-	if (isPending || isVerifyingSession) {
-		return (
-			<div className="flex min-h-screen items-center justify-center bg-background">
-				<Loader2 className="size-6 animate-spin text-muted-foreground" />
-			</div>
-		);
-	}
-
-	if (!hasVerifiedSession) {
-		return (
-			<div className="flex min-h-screen items-center justify-center bg-background">
-				<Loader2 className="size-6 animate-spin text-muted-foreground" />
-			</div>
-		);
-	}
-
 	return (
 		<ProjectEnvironmentProvider>
 			<div className="min-h-screen bg-background">

@@ -20,7 +20,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { createApiKey, deleteApiKey, listApiKeys } from "@/lib/dashboard-api";
+import { createApiKey, deleteApiKey, getCachedApiKeys, listApiKeys } from "@/lib/dashboard-api";
 import type { ApiKey } from "@banata-auth/shared";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -30,7 +30,7 @@ export default function ApiKeysPage() {
 	const activeProjectId = useActiveProjectId();
 	const [name, setName] = useState("");
 	const [prefix, setPrefix] = useState("");
-	const [keys, setKeys] = useState<ApiKey[]>([]);
+	const [keys, setKeys] = useState<ApiKey[]>(() => getCachedApiKeys() ?? []);
 	const [newKey, setNewKey] = useState<string | null>(null);
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
@@ -39,6 +39,10 @@ export default function ApiKeysPage() {
 		if (!activeProjectId) {
 			setKeys([]);
 			return;
+		}
+		const cachedKeys = getCachedApiKeys();
+		if (cachedKeys) {
+			setKeys(cachedKeys);
 		}
 		setKeys(await listApiKeys());
 	}, [activeProjectId]);

@@ -221,6 +221,8 @@ await banata.configuration.saveSocialProviderCredential({
 
 Changes made through the SDK are reflected in the dashboard immediately, and vice versa.
 
+Banata does not inspect your app code to infer provider state. If your app renders a GitHub sign-in button locally, the dashboard will still show GitHub as off until you save the provider credentials and enabled state through the dashboard or these SDK methods.
+
 ---
 
 ## Webhooks

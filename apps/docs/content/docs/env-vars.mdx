@@ -47,6 +47,8 @@ npx convex env set SITE_URL "http://localhost:3000"
 
 You only need to set credentials for the providers you've enabled in your `socialProviders` configuration.
 
+For hosted Banata projects, setting environment variables in your own app is not enough to register a provider in the Banata dashboard. The provider must also be saved to the project through the dashboard or `saveSocialProviderCredential(...)`.
+
 | Variable | Provider | Description |
 |---|---|---|
 | `GOOGLE_CLIENT_ID` | Google | OAuth 2.0 client ID from Google Cloud Console |

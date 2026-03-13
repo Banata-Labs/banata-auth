@@ -23,7 +23,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { banUser, createUser, listUsers, unbanUser } from "@/lib/dashboard-api";
+import { banUser, createUser, getCachedUsers, listUsers, unbanUser } from "@/lib/dashboard-api";
 import { formatDate } from "@/lib/utils";
 import type { User } from "@banata-auth/shared";
 import { Eye, EyeOff, Filter, Mail, Plus, RefreshCw } from "lucide-react";
@@ -43,8 +43,8 @@ type TabValue = "users" | "invitations";
 export default function UsersPage() {
 	const router = useRouter();
 	const activeProjectId = useActiveProjectId();
-	const [users, setUsers] = useState<User[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [users, setUsers] = useState<User[]>(() => getCachedUsers() ?? []);
+	const [isLoading, setIsLoading] = useState(() => getCachedUsers() === null);
 	const [query, setQuery] = useState("");
 	const [activeTab, setActiveTab] = useState<TabValue>("users");
 	const [statusFilter, setStatusFilter] = useState<"all" | "active" | "banned">("all");
@@ -59,7 +59,13 @@ export default function UsersPage() {
 
 	const refreshUsers = useCallback(async () => {
 		try {
-			setIsLoading(true);
+			const cachedUsers = getCachedUsers();
+			if (cachedUsers) {
+				setUsers(cachedUsers);
+				setIsLoading(false);
+			} else {
+				setIsLoading(true);
+			}
 			setUsers(await listUsers());
 		} catch {
 			toast.error("Unable to load users");

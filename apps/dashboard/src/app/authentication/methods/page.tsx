@@ -10,6 +10,7 @@ import { SkeletonHeader, SkeletonMethodCard } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
 	type DashboardConfig,
+	getCachedDashboardConfig,
 	getDashboardConfig,
 	saveDashboardConfig,
 	toggleAuthMethod,
@@ -76,8 +77,8 @@ const methodDefs: AuthMethod[] = [
 ];
 
 export default function MethodsPage() {
-	const [config, setConfig] = useState<DashboardConfig | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [config, setConfig] = useState<DashboardConfig | null>(() => getCachedDashboardConfig());
+	const [isLoading, setIsLoading] = useState(() => getCachedDashboardConfig() === null);
 	const [togglingMethods, setTogglingMethods] = useState<Record<string, boolean>>({});
 	const [savingEmailPolicy, setSavingEmailPolicy] = useState(false);
 
@@ -91,7 +92,13 @@ export default function MethodsPage() {
 			return;
 		}
 
-		setIsLoading(true);
+		const cachedConfig = getCachedDashboardConfig();
+		if (cachedConfig) {
+			setConfig(cachedConfig);
+			setIsLoading(false);
+		} else {
+			setIsLoading(true);
+		}
 		getDashboardConfig()
 			.then(setConfig)
 			.catch((err) => {

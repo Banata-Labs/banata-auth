@@ -120,19 +120,49 @@ const apiCache = new Map<string, { data: unknown; expiry: number }>();
 
 const DEFAULT_CACHE_TTL = 30_000; // 30 seconds
 
+function buildScopedCacheKey(
+	path: string,
+	body: Record<string, unknown>,
+	method: "GET" | "POST",
+): string {
+	const scopeKey = getEffectiveActiveProjectId() ?? "";
+	return `${method}|${scopeKey}|${path}:${method === "GET" ? "" : JSON.stringify(body)}`;
+}
+
+function readCachedValue(
+	path: string,
+	body: Record<string, unknown>,
+	method: "GET" | "POST",
+): unknown {
+	const cached = apiCache.get(buildScopedCacheKey(path, body, method));
+	if (!cached || Date.now() >= cached.expiry) {
+		return undefined;
+	}
+	return cached.data;
+}
+
 async function cachedPostJson(
 	path: string,
 	body: Record<string, unknown>,
 	ttlMs = DEFAULT_CACHE_TTL,
 ): Promise<unknown> {
-	// Include active scope in cache key so different projects don't share cached data
-	const scopeKey = getEffectiveActiveProjectId() ?? "";
-	const key = `${scopeKey}|${path}:${JSON.stringify(body)}`;
-	const cached = apiCache.get(key);
-	if (cached && Date.now() < cached.expiry) {
-		return cached.data;
+	const key = buildScopedCacheKey(path, body, "POST");
+	const cached = readCachedValue(path, body, "POST");
+	if (cached !== undefined) {
+		return cached;
 	}
 	const data = await postJson(path, body);
+	apiCache.set(key, { data, expiry: Date.now() + ttlMs });
+	return data;
+}
+
+async function cachedGetJson(path: string, ttlMs = DEFAULT_CACHE_TTL): Promise<unknown> {
+	const key = buildScopedCacheKey(path, {}, "GET");
+	const cached = readCachedValue(path, {}, "GET");
+	if (cached !== undefined) {
+		return cached;
+	}
+	const data = await getJson(path);
 	apiCache.set(key, { data, expiry: Date.now() + ttlMs });
 	return data;
 }
@@ -168,6 +198,65 @@ export function prefetchDashboardData() {
 	];
 	for (const path of endpoints) {
 		cachedPostJson(path, {}).catch(() => {});
+	}
+}
+
+export function prefetchRouteData(pathname: string) {
+	const normalizedPath = pathname.split("?")[0] ?? pathname;
+	const warmers: Array<Promise<unknown>> = [];
+
+	switch (normalizedPath) {
+		case "/":
+		case "/users":
+			warmers.push(cachedPostJson("/api/auth/admin/list-users", {}));
+			break;
+		case "/organizations":
+			warmers.push(cachedPostJson("/api/auth/organization/list", {}));
+			warmers.push(cachedPostJson("/api/auth/banata/config/roles/list", {}));
+			break;
+		case "/api-keys":
+			warmers.push(cachedGetJson("/api/auth/api-key/list"));
+			break;
+		case "/connections":
+			warmers.push(cachedPostJson("/api/auth/banata/sso/list-providers", {}));
+			break;
+		case "/directories":
+			warmers.push(cachedPostJson("/api/auth/banata/scim/list-providers", {}));
+			break;
+		case "/audit-logs":
+			warmers.push(cachedPostJson("/api/auth/banata/audit-logs/list", {}));
+			break;
+		case "/authentication":
+		case "/authentication/methods":
+		case "/authentication/features":
+		case "/authentication/sessions":
+		case "/authentication/addons":
+			warmers.push(cachedPostJson("/api/auth/banata/config/dashboard", {}));
+			break;
+		case "/authentication/providers":
+			warmers.push(cachedPostJson("/api/auth/banata/config/dashboard", {}));
+			warmers.push(cachedPostJson("/api/auth/banata/config/social-providers/get", {}));
+			break;
+		case "/branding":
+			warmers.push(cachedPostJson("/api/auth/banata/config/branding/get", {}));
+			warmers.push(cachedPostJson("/api/auth/banata/config/dashboard", {}));
+			break;
+		case "/domains":
+			warmers.push(cachedPostJson("/api/auth/banata/config/domains/list", {}));
+			break;
+		case "/redirects":
+			warmers.push(cachedPostJson("/api/auth/banata/config/redirects/get", {}));
+			break;
+		case "/emails/providers":
+			warmers.push(cachedPostJson("/api/auth/banata/config/email-providers/get", {}));
+			break;
+		case "/emails/configuration":
+			warmers.push(cachedPostJson("/api/auth/banata/config/emails/list", {}));
+			break;
+	}
+
+	for (const warmer of warmers) {
+		void warmer.catch(() => {});
 	}
 }
 
@@ -412,12 +501,32 @@ export async function listUsers(): Promise<User[]> {
 	return filterByActiveProject(users);
 }
 
+export function getCachedUsers(): User[] | null {
+	const payload = readCachedValue("/api/auth/admin/list-users", {}, "POST");
+	if (payload === undefined) {
+		return null;
+	}
+	return getArrayFromPayload(payload)
+		.map(parseUser)
+		.filter((user): user is User => user !== null);
+}
+
 export async function listOrganizations(): Promise<Organization[]> {
 	const payload = await cachedPostJson("/api/auth/organization/list", {});
 	const orgs = getArrayFromPayload(payload)
 		.map(parseOrganization)
 		.filter((organization): organization is Organization => organization !== null);
 	return filterByActiveProject(orgs);
+}
+
+export function getCachedOrganizations(): Organization[] | null {
+	const payload = readCachedValue("/api/auth/organization/list", {}, "POST");
+	if (payload === undefined) {
+		return null;
+	}
+	return getArrayFromPayload(payload)
+		.map(parseOrganization)
+		.filter((organization): organization is Organization => organization !== null);
 }
 
 export async function listConnections(): Promise<SsoConnection[]> {
@@ -444,11 +553,21 @@ export async function listAuditEvents(): Promise<AuditEvent[]> {
 }
 
 export async function listApiKeys(): Promise<ApiKey[]> {
-	const payload = await getJson("/api/auth/api-key/list");
+	const payload = await cachedGetJson("/api/auth/api-key/list");
 	const keys = getArrayFromPayload(payload)
 		.map(parseApiKey)
 		.filter((key): key is ApiKey => key !== null);
 	return filterByActiveProject(keys);
+}
+
+export function getCachedApiKeys(): ApiKey[] | null {
+	const payload = readCachedValue("/api/auth/api-key/list", {}, "GET");
+	if (payload === undefined) {
+		return null;
+	}
+	return getArrayFromPayload(payload)
+		.map(parseApiKey)
+		.filter((key): key is ApiKey => key !== null);
 }
 
 export async function createApiKey(name: string, prefix?: string): Promise<{ key: string }> {
@@ -1015,6 +1134,14 @@ export async function getDashboardConfig(): Promise<DashboardConfig> {
 	return payload as DashboardConfig;
 }
 
+export function getCachedDashboardConfig(): DashboardConfig | null {
+	const payload = readCachedValue("/api/auth/banata/config/dashboard", {}, "POST");
+	if (typeof payload !== "object" || payload === null) {
+		return null;
+	}
+	return payload as DashboardConfig;
+}
+
 export async function getPublicAuthConfig(): Promise<RuntimeAuthConfig> {
 	const payload = await publicPostJson("/api/auth/banata/config/public", {});
 	if (typeof payload !== "object" || payload === null) {
@@ -1092,6 +1219,14 @@ export async function getSocialProviderCredentials(): Promise<SocialProviderCred
 	const payload = await cachedPostJson("/api/auth/banata/config/social-providers/get", {});
 	if (!isObject(payload) || !isObject((payload as { providers?: unknown }).providers)) {
 		return {};
+	}
+	return (payload as { providers: SocialProviderCredentials }).providers;
+}
+
+export function getCachedSocialProviderCredentials(): SocialProviderCredentials | null {
+	const payload = readCachedValue("/api/auth/banata/config/social-providers/get", {}, "POST");
+	if (!isObject(payload) || !isObject((payload as { providers?: unknown }).providers)) {
+		return null;
 	}
 	return (payload as { providers: SocialProviderCredentials }).providers;
 }

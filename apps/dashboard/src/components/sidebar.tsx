@@ -15,6 +15,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { prefetchRouteData } from "@/lib/dashboard-api";
 import { cn } from "@/lib/utils";
 import {
 	BarChart3,
@@ -42,7 +43,7 @@ import {
 	Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface NavItem {
 	label: string;
@@ -127,6 +128,8 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 	return (
 		<Link
 			href={item.href}
+			onMouseEnter={() => prefetchRouteData(item.href)}
+			onFocus={() => prefetchRouteData(item.href)}
 			className={cn(
 				"flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
 				isActive
@@ -147,6 +150,7 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 
 export function Sidebar() {
 	const pathname = usePathname();
+	const router = useRouter();
 	const { data } = authClient.useSession();
 	const userName = data?.user?.name ?? "User";
 	const userEmail = data?.user?.email ?? "user@example.com";
@@ -242,7 +246,7 @@ export function Sidebar() {
 							<DropdownMenuGroup>
 								<DropdownMenuItem
 									onSelect={() => {
-										window.location.href = "/account/profile";
+										router.push("/account/profile");
 									}}
 								>
 									<User className="size-4" />
@@ -250,7 +254,7 @@ export function Sidebar() {
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onSelect={() => {
-										window.location.href = "/settings/general";
+										router.push("/settings/general");
 									}}
 								>
 									<UserCog className="size-4" />
@@ -262,7 +266,7 @@ export function Sidebar() {
 								variant="destructive"
 								onSelect={async () => {
 									await authClient.signOut();
-									window.location.href = "/sign-in";
+									router.replace("/sign-in");
 								}}
 							>
 								<LogOut className="size-4" />

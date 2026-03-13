@@ -1,17 +1,25 @@
 "use client";
 
 import { OrganizationsPanel } from "@/components/organizations-panel";
-import { listOrganizations } from "@/lib/dashboard-api";
+import { getCachedOrganizations, listOrganizations } from "@/lib/dashboard-api";
 import type { Organization } from "@banata-auth/shared";
 import { useEffect, useState } from "react";
 
 export default function OrganizationsPage() {
-	const [organizations, setOrganizations] = useState<Organization[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [organizations, setOrganizations] = useState<Organization[]>(
+		() => getCachedOrganizations() ?? [],
+	);
+	const [loading, setLoading] = useState(() => getCachedOrganizations() === null);
 
 	useEffect(() => {
 		let cancelled = false;
-		setLoading(true);
+		const cachedOrganizations = getCachedOrganizations();
+		if (cachedOrganizations) {
+			setOrganizations(cachedOrganizations);
+			setLoading(false);
+		} else {
+			setLoading(true);
+		}
 		listOrganizations()
 			.then((orgs) => {
 				if (!cancelled) {

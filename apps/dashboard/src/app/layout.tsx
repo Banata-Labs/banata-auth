@@ -1,7 +1,6 @@
 import { BackendStatusProvider } from "@/components/backend-status";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { DashboardLayout } from "@/components/dashboard-layout";
-import { getToken } from "@/lib/auth-server";
 import { resolveDashboardConvexSiteUrl } from "@/lib/convex-urls";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -15,8 +14,7 @@ export const metadata = {
 	description: "Developer dashboard for users, orgs, and enterprise SSO",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-	const token = await getToken();
+export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const convexSiteUrl = resolveDashboardConvexSiteUrl();
 
 	return (
@@ -38,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			</head>
 			<body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
 				<BackendStatusProvider>
-					<ConvexClientProvider initialToken={token}>
+					<ConvexClientProvider>
 						<DashboardLayout>{children}</DashboardLayout>
 					</ConvexClientProvider>
 				</BackendStatusProvider>

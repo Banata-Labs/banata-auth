@@ -1,6 +1,7 @@
 "use client";
 
 import { Separator } from "@/components/ui/separator";
+import { prefetchRouteData } from "@/lib/dashboard-api";
 import { cn } from "@/lib/utils";
 import {
 	Clock,
@@ -64,6 +65,8 @@ export default function AuthenticationLayout({
 								<Link
 									key={item.href}
 									href={item.href}
+									onMouseEnter={() => prefetchRouteData(item.href)}
+									onFocus={() => prefetchRouteData(item.href)}
 									className={cn(
 										"flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
 										active
@@ -90,6 +93,8 @@ export default function AuthenticationLayout({
 								<Link
 									key={item.href}
 									href={item.href}
+									onMouseEnter={() => prefetchRouteData(item.href)}
+									onFocus={() => prefetchRouteData(item.href)}
 									className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
 								>
 									<Icon className="size-4 shrink-0" />
