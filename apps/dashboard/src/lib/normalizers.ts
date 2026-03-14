@@ -100,6 +100,13 @@ function asStringRecord(value: unknown): Record<string, string> {
 	);
 }
 
+function asUnknownRecord(value: unknown): Record<string, unknown> | null {
+	if (!isObject(value)) {
+		return null;
+	}
+	return value;
+}
+
 export function parseUser(payload: unknown): User | null {
 	if (!isObject(payload)) {
 		return null;
@@ -124,13 +131,18 @@ export function parseUser(payload: unknown): User | null {
 		banReason: asNullableString(payload.banReason),
 		banExpires: null,
 		twoFactorEnabled: asBoolean(payload.twoFactorEnabled),
-		metadata: null,
+		metadata: asUnknownRecord(payload.metadata),
 		createdAt: asDate(payload.createdAt),
 		updatedAt: asDate(payload.updatedAt),
 	};
 	// Preserve projectId for client-side project filtering
 	if (typeof payload.projectId === "string") {
 		result.projectId = payload.projectId;
+	} else if (
+		result.metadata &&
+		typeof (result.metadata as Record<string, unknown>).projectId === "string"
+	) {
+		result.projectId = (result.metadata as Record<string, unknown>).projectId as string;
 	}
 	return result;
 }

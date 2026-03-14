@@ -495,9 +495,15 @@ async function publicPostJson(path: string, body: Record<string, unknown>): Prom
 
 export async function listUsers(): Promise<User[]> {
 	const payload = await cachedPostJson("/api/auth/admin/list-users", {});
+	const activeProjectId = getEffectiveActiveProjectId();
 	const users = getArrayFromPayload(payload)
 		.map(parseUser)
-		.filter((user): user is User => user !== null);
+		.filter((user): user is User => user !== null)
+		.map((user) =>
+			activeProjectId && !(user as User & { projectId?: string }).projectId
+				? ({ ...user, projectId: activeProjectId } as User)
+				: user,
+		);
 	return filterByActiveProject(users);
 }
 
@@ -506,9 +512,15 @@ export function getCachedUsers(): User[] | null {
 	if (payload === undefined) {
 		return null;
 	}
+	const activeProjectId = getEffectiveActiveProjectId();
 	return getArrayFromPayload(payload)
 		.map(parseUser)
-		.filter((user): user is User => user !== null);
+		.filter((user): user is User => user !== null)
+		.map((user) =>
+			activeProjectId && !(user as User & { projectId?: string }).projectId
+				? ({ ...user, projectId: activeProjectId } as User)
+				: user,
+		);
 }
 
 export async function listOrganizations(): Promise<Organization[]> {

@@ -61,14 +61,21 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = handler;
 
 ### 4. OAuth Provider Callback URLs
 
-When you configure GitHub, Google, or another OAuth provider for a customer app, register your app callback URL, not a Banata-hosted page:
+For managed Banata projects, register the provider callback on your Banata auth domain:
 
 ```text
-http://localhost:3000/api/auth/callback/github
-https://your-app.com/api/auth/callback/github
+https://auth.banata.dev/api/auth/callback/github
+```
+
+If you use a custom Banata auth domain, register that domain instead:
+
+```text
+https://auth.yourcompany.com/api/auth/callback/github
 ```
 
 Your app's `callbackURL` in `authClient.signIn.social(...)` is different. That is the page Banata sends the user to after the OAuth flow is complete, for example `/dashboard` or `/auth/callback`.
+
+If you self-host Banata instead of using the managed service, then the provider callback belongs on your own auth deployment and will usually still be `/api/auth/callback/{provider}` on your app/auth domain.
 
 ---
 

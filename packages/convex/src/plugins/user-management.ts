@@ -16,6 +16,7 @@ import {
 	requireAuthenticated,
 	requireGlobalAdmin,
 	requireProjectPermission,
+	resolveProjectIdFromApiKey,
 } from "./types";
 
 interface UserRow extends Record<string, unknown> {
@@ -375,6 +376,16 @@ function scopeFromProjectId(projectId?: string) {
 	};
 }
 
+export async function resolveScopedProjectId(
+	ctx: UserManagementContext,
+	db: PluginDBAdapter,
+	body: Record<string, unknown>,
+): Promise<string | undefined> {
+	const explicitScope = getProjectScope(body, { optional: true });
+	const apiKeyProjectId = await resolveProjectIdFromApiKey(ctx as any, db);
+	return apiKeyProjectId ?? explicitScope.projectId;
+}
+
 async function findUserById(db: PluginDBAdapter, userId: string): Promise<UserRow | null> {
 	const rows = await db.findMany<UserRow>({
 		model: "user",
@@ -481,17 +492,17 @@ async function requireListPermission(
 	body: Record<string, unknown>,
 	permission: string,
 ) {
-	const scope = getProjectScope(body, { optional: true });
-	if (!scope.projectId) {
+	const projectId = await resolveScopedProjectId(ctx, db, body);
+	if (!projectId) {
 		await requireGlobalAdmin(ctx);
-		return scope;
+		return scopeFromProjectId(undefined);
 	}
 	await requireProjectPermission(ctx, {
 		db,
 		permission,
-		projectId: scope.projectId,
+		projectId,
 	});
-	return scope;
+	return scopeFromProjectId(projectId);
 }
 
 async function resolveUserAccess(
@@ -509,11 +520,16 @@ async function resolveUserAccess(
 	}
 
 	const explicitScope = getProjectScope(params.body, { optional: true });
-	if (explicitScope.projectId && user.projectId && user.projectId !== explicitScope.projectId) {
+	const resolvedScopeProjectId = await resolveScopedProjectId(ctx, db, params.body);
+	if (
+		resolvedScopeProjectId &&
+		user.projectId &&
+		user.projectId !== resolvedScopeProjectId
+	) {
 		throw ctx.error("FORBIDDEN", { message: "User does not belong to the requested project" });
 	}
 
-	const projectId = explicitScope.projectId ?? user.projectId;
+	const projectId = resolvedScopeProjectId ?? user.projectId;
 	if (!projectId) {
 		await requireGlobalAdmin(ctx);
 		return { user, scope: explicitScope };
@@ -545,15 +561,16 @@ async function resolveSessionAccess(
 	}
 
 	const explicitScope = getProjectScope(params.body, { optional: true });
+	const resolvedScopeProjectId = await resolveScopedProjectId(ctx, db, params.body);
 	if (
-		explicitScope.projectId &&
+		resolvedScopeProjectId &&
 		session.projectId &&
-		session.projectId !== explicitScope.projectId
+		session.projectId !== resolvedScopeProjectId
 	) {
 		throw ctx.error("FORBIDDEN", { message: "Session does not belong to the requested project" });
 	}
 
-	const projectId = explicitScope.projectId ?? session.projectId;
+	const projectId = resolvedScopeProjectId ?? session.projectId;
 	if (!projectId) {
 		await requireGlobalAdmin(ctx);
 		return { session, scope: explicitScope };
@@ -573,6 +590,7 @@ async function resolvePermissionCheckSubject(
 	body: Record<string, unknown>,
 ): Promise<Set<string>> {
 	const explicitScope = getProjectScope(body, { optional: true });
+	const resolvedScopeProjectId = await resolveScopedProjectId(ctx, db, body);
 	const roleInput =
 		typeof body.role === "string" || Array.isArray(body.role) ? body.role : undefined;
 
@@ -582,7 +600,7 @@ async function resolvePermissionCheckSubject(
 			throw ctx.error("BAD_REQUEST", { message: "Role is required" });
 		}
 
-		if (!explicitScope.projectId) {
+		if (!resolvedScopeProjectId) {
 			if (isGlobalAdminUser({ role: roleSlugs.join(",") })) {
 				return new Set(["*"]);
 			}
@@ -592,7 +610,7 @@ async function resolvePermissionCheckSubject(
 		}
 
 		return getRolePermissions(db, {
-			projectId: explicitScope.projectId,
+			projectId: resolvedScopeProjectId,
 			roleSlugs,
 		});
 	}
@@ -609,7 +627,7 @@ async function resolvePermissionCheckSubject(
 		throw ctx.error("FORBIDDEN", { message: "User does not belong to the requested project" });
 	}
 
-	const projectId = explicitScope.projectId ?? user.projectId;
+	const projectId = resolvedScopeProjectId ?? explicitScope.projectId ?? user.projectId;
 	if (!projectId) {
 		if (isGlobalAdminUser(user)) {
 			return new Set(["*"]);
@@ -639,15 +657,16 @@ async function assertImpersonationTargetAllowed(
 	}
 
 	const explicitScope = getProjectScope(params.body, { optional: true });
+	const resolvedScopeProjectId = await resolveScopedProjectId(ctx, db, params.body);
 	if (
-		explicitScope.projectId &&
+		resolvedScopeProjectId &&
 		params.targetUser.projectId &&
-		params.targetUser.projectId !== explicitScope.projectId
+		params.targetUser.projectId !== resolvedScopeProjectId
 	) {
 		throw ctx.error("FORBIDDEN", { message: "User does not belong to the requested project" });
 	}
 
-	const projectId = explicitScope.projectId ?? params.targetUser.projectId;
+	const projectId = resolvedScopeProjectId ?? explicitScope.projectId ?? params.targetUser.projectId;
 	if (!projectId) {
 		await requireGlobalAdmin(ctx);
 		if (isGlobalAdminUser(params.targetUser)) {
@@ -802,9 +821,29 @@ export function userManagementPlugin(): BetterAuthPlugin {
 				where,
 			});
 		}
+		const scopedUsers =
+			scope.projectId != null
+				? users.map((user) => {
+						const existingMetadata =
+							typeof user.metadata === "object" && user.metadata !== null
+								? (user.metadata as Record<string, unknown>)
+								: {};
+						const nextUser: UserRow = {
+							...user,
+							metadata:
+								typeof existingMetadata.projectId === "string"
+									? existingMetadata
+									: { ...existingMetadata, projectId: scope.projectId },
+						};
+						if (!nextUser.projectId) {
+							nextUser.projectId = scope.projectId;
+						}
+						return nextUser;
+					})
+				: users;
 		return ctx.json({
-			users,
-			data: users,
+			users: scopedUsers,
+			data: scopedUsers,
 			total,
 			limit,
 			offset,

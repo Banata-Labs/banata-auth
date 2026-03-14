@@ -2190,7 +2190,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "4. OAuth Provider Callback URLs",
         "anchor": "4-oauth-provider-callback-urls",
-        "snippet": "When you configure GitHub, Google, or another OAuth provider for a customer app, register your app callback URL, not a Banata-hosted page:"
+        "snippet": "For managed Banata projects, register the provider callback on your Banata auth domain:"
       },
       {
         "level": 2,
@@ -2259,7 +2259,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "React Components — Add pre-built UI and auth hooks SDK Reference — Manage Banata resources by code Email & Password — Configure email/password sign-in"
       }
     ],
-    "searchText": "next.js integrate banata auth into your next.js app with server-side auth helpers, route proxying, and session management. setup if you haven't set up the basics yet, follow the quick start guide first. here's a summary of what you need: 1. environment variables 2. server auth helpers 3. auth route 4. oauth provider callback urls when you configure github, google, or another oauth provider for a customer app, register your app callback url, not a banata-hosted page: server-side auth helpers checking authentication use isauthenticated in server components and route handlers to check if the current request has a valid session: getting the auth token use gettoken when you need the raw auth token for server-side api calls: fetching data with auth context if your app also uses convex, the auth helpers let you run authenticated convex queries and mutations from the server: how the proxy works when your browser calls /api/auth/sign-in/email, the next.js route handler proxies that request to the banata backend. the response (including session cookies) is passed back to the browser on your ap programmatic configuration the @banata-auth/nextjs package handles transport and authentication. to change your project's configuration by code (auth methods, branding, providers), use the sdk: troubleshooting auth calls fail with a network error check that banata_auth_url is correct if you overrode it. verify banata_api_key is set in your environment. no session after sign-in make sure the auth route exists at src/app/api/auth/[...all]/route.ts. verify /api/auth/get-session returns session data in your browser. ensure your app and the auth route are on the same origin. \"do i need a projectid or clientid?\" no. the api key handles project binding automatically. next steps react components — add pre-built ui and auth hooks sdk reference — manage banata resources by code email & password — configure email/password sign-in"
+    "searchText": "next.js integrate banata auth into your next.js app with server-side auth helpers, route proxying, and session management. setup if you haven't set up the basics yet, follow the quick start guide first. here's a summary of what you need: 1. environment variables 2. server auth helpers 3. auth route 4. oauth provider callback urls for managed banata projects, register the provider callback on your banata auth domain: server-side auth helpers checking authentication use isauthenticated in server components and route handlers to check if the current request has a valid session: getting the auth token use gettoken when you need the raw auth token for server-side api calls: fetching data with auth context if your app also uses convex, the auth helpers let you run authenticated convex queries and mutations from the server: how the proxy works when your browser calls /api/auth/sign-in/email, the next.js route handler proxies that request to the banata backend. the response (including session cookies) is passed back to the browser on your ap programmatic configuration the @banata-auth/nextjs package handles transport and authentication. to change your project's configuration by code (auth methods, branding, providers), use the sdk: troubleshooting auth calls fail with a network error check that banata_auth_url is correct if you overrode it. verify banata_api_key is set in your environment. no session after sign-in make sure the auth route exists at src/app/api/auth/[...all]/route.ts. verify /api/auth/get-session returns session data in your browser. ensure your app and the auth route are on the same origin. \"do i need a projectid or clientid?\" no. the api key handles project binding automatically. next steps react components — add pre-built ui and auth hooks sdk reference — manage banata resources by code email & password — configure email/password sign-in"
   },
   {
     "slug": "notifications",
@@ -3939,7 +3939,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Callback URL Pattern",
         "anchor": "callback-url-pattern",
-        "snippet": "All providers use the same callback URL format:"
+        "snippet": "Managed Banata projects use the Banata auth domain for all provider callbacks:"
       },
       {
         "level": 3,
@@ -3963,43 +3963,43 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Google",
         "anchor": "google",
-        "snippet": "Go to Google Cloud Console > Credentials. Create a new OAuth client ID (Web application type). Add authorized redirect URI: http://localhost:3000/api/auth/callback/google"
+        "snippet": "Go to Google Cloud Console > Credentials. Create a new OAuth client ID (Web application type). Add authorized redirect URI: https://auth.banata.dev/api/auth/callback/google"
       },
       {
         "level": 3,
         "text": "GitHub",
         "anchor": "github",
-        "snippet": "Go to GitHub Developer Settings > OAuth Apps. Click New OAuth App. Set Homepage URL to http://localhost:3000. Set Authorization callback URL to http://localhost:3000/api/auth/callback/github."
+        "snippet": "Go to GitHub Developer Settings > OAuth Apps. Click New OAuth App. Set Homepage URL to your app URL, for example http://localhost:3000. Set Authorization callback URL to https://auth.banata.dev/api/au"
       },
       {
         "level": 3,
         "text": "Apple",
         "anchor": "apple",
-        "snippet": "Go to Apple Developer Portal. Create an App ID with Sign in with Apple enabled. Create a Services ID (this is your clientId). Configure the redirect URL: http://localhost:3000/api/auth/callback/apple"
+        "snippet": "Go to Apple Developer Portal. Create an App ID with Sign in with Apple enabled. Create a Services ID (this is your clientId). Configure the redirect URL: https://auth.banata.dev/api/auth/callback/appl"
       },
       {
         "level": 3,
         "text": "Microsoft (Azure AD)",
         "anchor": "microsoft-azure-ad",
-        "snippet": "Go to Azure Portal > App registrations. Click New registration. Set redirect URI to http://localhost:3000/api/auth/callback/microsoft (Web platform). Note the Application (client) ID and Directory (te"
+        "snippet": "Go to Azure Portal > App registrations. Click New registration. Set redirect URI to https://auth.banata.dev/api/auth/callback/microsoft (Web platform). Note the Application (client) ID and Directory ("
       },
       {
         "level": 3,
         "text": "Facebook",
         "anchor": "facebook",
-        "snippet": "Go to Meta for Developers. Create a new app (Consumer type). Add Facebook Login and set the redirect URI: http://localhost:3000/api/auth/callback/facebook"
+        "snippet": "Go to Meta for Developers. Create a new app (Consumer type). Add Facebook Login and set the redirect URI: https://auth.banata.dev/api/auth/callback/facebook"
       },
       {
         "level": 3,
         "text": "Twitter (X)",
         "anchor": "twitter-x",
-        "snippet": "Go to the Twitter Developer Portal. Create a new project and app with OAuth 2.0 enabled. Set callback URL: http://localhost:3000/api/auth/callback/twitter"
+        "snippet": "Go to the Twitter Developer Portal. Create a new project and app with OAuth 2.0 enabled. Set callback URL: https://auth.banata.dev/api/auth/callback/twitter"
       },
       {
         "level": 3,
         "text": "Discord",
         "anchor": "discord",
-        "snippet": "Go to the Discord Developer Portal. Create a new application. Go to OAuth2 and add redirect: http://localhost:3000/api/auth/callback/discord"
+        "snippet": "Go to the Discord Developer Portal. Create a new application. Go to OAuth2 and add redirect: https://auth.banata.dev/api/auth/callback/discord"
       },
       {
         "level": 3,
@@ -4035,7 +4035,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Account Linking",
         "anchor": "account-linking",
-        "snippet": "For customer apps, the provider callback registered in GitHub or Google is still /api/auth/callback/{provider} on your app domain. The callbackURL in authClient.signIn.social(...) is only the page Ban"
+        "snippet": "For managed Banata projects, the provider callback registered in GitHub or Google is on your Banata auth domain, for example https://auth.banata.dev/api/auth/callback/{provider}. The callbackURL in au"
       },
       {
         "level": 2,
@@ -4047,7 +4047,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "\"redirect_uri_mismatch\" error",
         "anchor": "redirecturimismatch-error",
-        "snippet": "The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly: Development: http://localhost:3000/api/auth/callback/{provider}"
+        "snippet": "The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly: Managed Banata: https://auth.banata.dev/api/auth/callback/{provider}"
       },
       {
         "level": 3,
@@ -4068,7 +4068,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Magic Links — Passwordless authentication via email Multi-Factor Auth — Add TOTP as a second factor Organizations — Multi-tenant workspaces"
       }
     ],
-    "searchText": "social oauth add social login with google, github, apple, microsoft, and more. step-by-step setup for each provider. supported providers --- setting up a provider the setup is the same for every provider: callback url pattern all providers use the same callback url format: adding credentials via dashboard go to authentication > providers in your project. select the provider you want to configure. enter the client id and client secret. save. adding credentials via convex environment for self-hosted setups, set the credentials on your convex deployment: provider setup guides google go to google cloud console > credentials. create a new oauth client id (web application type). add authorized redirect uri: http://localhost:3000/api/auth/callback/google github go to github developer settings > oauth apps. click new oauth app. set homepage url to http://localhost:3000. set authorization callback url to http://localhost:3000/api/auth/callback/github. apple go to apple developer portal. create an app id with sign in with apple enabled. create a services id (this is your clientid). configure the redirect url: http://localhost:3000/api/auth/callback/apple microsoft (azure ad) go to azure portal > app registrations. click new registration. set redirect uri to http://localhost:3000/api/auth/callback/microsoft (web platform). note the application (client) id and directory (te facebook go to meta for developers. create a new app (consumer type). add facebook login and set the redirect uri: http://localhost:3000/api/auth/callback/facebook twitter (x) go to the twitter developer portal. create a new project and app with oauth 2.0 enabled. set callback url: http://localhost:3000/api/auth/callback/twitter discord go to the discord developer portal. create a new application. go to oauth2 and add redirect: http://localhost:3000/api/auth/callback/discord spotify, twitch, linkedin follow the same pattern on each provider's developer portal: spotify dashboard twitch developer console linkedin developer portal client-side usage initiating social sign-in using the socialbuttons component how the oauth flow works here's what happens when a user clicks \"sign in with github\": account linking for customer apps, the provider callback registered in github or google is still /api/auth/callback/{provider} on your app domain. the callbackurl in authclient.signin.social(...) is only the page ban troubleshooting \"redirect_uri_mismatch\" error the callback url in your provider settings doesn't match the actual url. make sure it's exactly: development: http://localhost:3000/api/auth/callback/{provider} \"access denied\" after granting permission verify the client secret is correctly set. check that the provider is configured in your banata project. for microsoft, make sure tenantid is set. user created without name or email some providers don't return all user fields by default. check the provider's scope settings to ensure you're requesting the right permissions. next steps magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
+    "searchText": "social oauth add social login with google, github, apple, microsoft, and more. step-by-step setup for each provider. supported providers --- setting up a provider the setup is the same for every provider: callback url pattern managed banata projects use the banata auth domain for all provider callbacks: adding credentials via dashboard go to authentication > providers in your project. select the provider you want to configure. enter the client id and client secret. save. adding credentials via convex environment for self-hosted setups, set the credentials on your convex deployment: provider setup guides google go to google cloud console > credentials. create a new oauth client id (web application type). add authorized redirect uri: https://auth.banata.dev/api/auth/callback/google github go to github developer settings > oauth apps. click new oauth app. set homepage url to your app url, for example http://localhost:3000. set authorization callback url to https://auth.banata.dev/api/au apple go to apple developer portal. create an app id with sign in with apple enabled. create a services id (this is your clientid). configure the redirect url: https://auth.banata.dev/api/auth/callback/appl microsoft (azure ad) go to azure portal > app registrations. click new registration. set redirect uri to https://auth.banata.dev/api/auth/callback/microsoft (web platform). note the application (client) id and directory ( facebook go to meta for developers. create a new app (consumer type). add facebook login and set the redirect uri: https://auth.banata.dev/api/auth/callback/facebook twitter (x) go to the twitter developer portal. create a new project and app with oauth 2.0 enabled. set callback url: https://auth.banata.dev/api/auth/callback/twitter discord go to the discord developer portal. create a new application. go to oauth2 and add redirect: https://auth.banata.dev/api/auth/callback/discord spotify, twitch, linkedin follow the same pattern on each provider's developer portal: spotify dashboard twitch developer console linkedin developer portal client-side usage initiating social sign-in using the socialbuttons component how the oauth flow works here's what happens when a user clicks \"sign in with github\": account linking for managed banata projects, the provider callback registered in github or google is on your banata auth domain, for example https://auth.banata.dev/api/auth/callback/{provider}. the callbackurl in au troubleshooting \"redirect_uri_mismatch\" error the callback url in your provider settings doesn't match the actual url. make sure it's exactly: managed banata: https://auth.banata.dev/api/auth/callback/{provider} \"access denied\" after granting permission verify the client secret is correctly set. check that the provider is configured in your banata project. for microsoft, make sure tenantid is set. user created without name or email some providers don't return all user fields by default. check the provider's scope settings to ensure you're requesting the right permissions. next steps magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
   },
   {
     "slug": "sso",

@@ -33,21 +33,28 @@ Banata Auth supports **10 social OAuth providers** out of the box.
 The setup is the same for every provider:
 
 1. **Create an OAuth app** on the provider's developer portal.
-2. **Set the callback URL** to `{YOUR_APP_URL}/api/auth/callback/{provider}`.
+2. **Set the callback URL** to the Banata auth domain that owns the provider callback.
 3. **Copy the Client ID and Client Secret**.
 4. **Add the credentials** to the Banata dashboard or your Convex environment.
 
-For customer apps using `@banata-auth/nextjs`, this provider callback stays on your app's `/api/auth/callback/{provider}` route. Your in-app `callbackURL` such as `/dashboard` or `/auth/callback` is a separate post-login destination.
+For managed Banata projects, Banata owns the provider callback and then hands the session back to your app afterward. Your in-app `callbackURL` such as `/dashboard` or `/auth/callback` is a separate post-login destination.
 
-If you are using the Banata-hosted auth UI itself, Banata owns the provider callback and then hands the session back to your app afterward.
+If you self-host Banata, the provider callback belongs on your own auth deployment instead.
 
 ### Callback URL Pattern
 
-All providers use the same callback URL format:
+Managed Banata projects use the Banata auth domain for all provider callbacks:
 
 ```
-http://localhost:3000/api/auth/callback/github     ← Development
-https://myapp.com/api/auth/callback/github         ← Production
+https://auth.banata.dev/api/auth/callback/github          ← Managed Banata
+https://auth.yourcompany.com/api/auth/callback/github     ← Custom Banata auth domain
+```
+
+If you self-host Banata, the callback is on your own auth/app domain instead:
+
+```
+http://localhost:3000/api/auth/callback/github     ← Self-hosted development
+https://myapp.com/api/auth/callback/github         ← Self-hosted production
 ```
 
 ### Adding Credentials via Dashboard
@@ -74,17 +81,17 @@ npx convex env set GITHUB_CLIENT_SECRET "your-client-secret"
 
 1. Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials).
 2. Create a new **OAuth client ID** (Web application type).
-3. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+3. Add authorized redirect URI: `https://auth.banata.dev/api/auth/callback/google`
 4. Copy the Client ID and Client Secret.
 
-> For production, update the redirect URI to `https://your-domain.com/api/auth/callback/google`.
+> If you use a custom Banata auth domain, register that domain instead. If you self-host Banata, use your own app/auth domain callback.
 
 ### GitHub
 
 1. Go to [GitHub Developer Settings > OAuth Apps](https://github.com/settings/developers).
 2. Click **New OAuth App**.
-3. Set **Homepage URL** to `http://localhost:3000`.
-4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`.
+3. Set **Homepage URL** to your app URL, for example `http://localhost:3000`.
+4. Set **Authorization callback URL** to `https://auth.banata.dev/api/auth/callback/github`.
 5. Copy the Client ID and generate a Client Secret.
 
 ### Apple
@@ -92,7 +99,7 @@ npx convex env set GITHUB_CLIENT_SECRET "your-client-secret"
 1. Go to [Apple Developer Portal](https://developer.apple.com/account).
 2. Create an **App ID** with Sign in with Apple enabled.
 3. Create a **Services ID** (this is your `clientId`).
-4. Configure the redirect URL: `http://localhost:3000/api/auth/callback/apple`
+4. Configure the redirect URL: `https://auth.banata.dev/api/auth/callback/apple`
 5. Create a **Key** with Sign in with Apple enabled and generate the client secret.
 
 > **Important:** Apple client secrets expire after 6 months and need periodic regeneration.
@@ -101,7 +108,7 @@ npx convex env set GITHUB_CLIENT_SECRET "your-client-secret"
 
 1. Go to [Azure Portal > App registrations](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps).
 2. Click **New registration**.
-3. Set redirect URI to `http://localhost:3000/api/auth/callback/microsoft` (Web platform).
+3. Set redirect URI to `https://auth.banata.dev/api/auth/callback/microsoft` (Web platform).
 4. Note the Application (client) ID and Directory (tenant) ID.
 5. Create a new client secret under **Certificates & secrets**.
 
@@ -118,19 +125,19 @@ Microsoft requires a `tenantId`. Options:
 
 1. Go to [Meta for Developers](https://developers.facebook.com/apps/).
 2. Create a new app (Consumer type).
-3. Add **Facebook Login** and set the redirect URI: `http://localhost:3000/api/auth/callback/facebook`
+3. Add **Facebook Login** and set the redirect URI: `https://auth.banata.dev/api/auth/callback/facebook`
 
 ### Twitter (X)
 
 1. Go to the [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard).
 2. Create a new project and app with **OAuth 2.0** enabled.
-3. Set callback URL: `http://localhost:3000/api/auth/callback/twitter`
+3. Set callback URL: `https://auth.banata.dev/api/auth/callback/twitter`
 
 ### Discord
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
 2. Create a new application.
-3. Go to **OAuth2** and add redirect: `http://localhost:3000/api/auth/callback/discord`
+3. Go to **OAuth2** and add redirect: `https://auth.banata.dev/api/auth/callback/discord`
 
 ### Spotify, Twitch, LinkedIn
 
@@ -156,7 +163,7 @@ await authClient.signIn.social({
 
 `callbackURL` here is where your app should land after Banata finishes the auth flow. It is not the provider callback URL you register in GitHub or Google.
 
-This redirects the user to the provider's OAuth consent page. After they grant permission, they're redirected back through your app's auth route, and then to the `callbackURL` you specified.
+This redirects the user to the provider's OAuth consent page. After they grant permission, the provider sends the user back to Banata's callback URL, Banata finalizes the session, and then redirects the browser to the `callbackURL` you specified.
 
 ### Using the SocialButtons Component
 
@@ -196,9 +203,9 @@ Here's what happens when a user clicks "Sign in with GitHub":
 3. Banata → returns redirect to GitHub OAuth consent page
 4. Browser → redirected to github.com/login/oauth/authorize
 5. User → grants permission on GitHub
-6. GitHub → redirects to /api/auth/callback/github?code=xxx
-7. Your app → proxies callback to Banata
-8. Banata → exchanges code for tokens, creates/links user, creates session
+6. GitHub → redirects to https://auth.banata.dev/api/auth/callback/github?code=xxx
+7. Banata → exchanges code for tokens, creates/links user, creates session
+8. Banata → hands the session back to your app
 9. Browser → redirected to your callbackURL with session cookie set
 ```
 
@@ -206,7 +213,7 @@ Here's what happens when a user clicks "Sign in with GitHub":
 
 ## Account Linking
 
-For customer apps, the provider callback registered in GitHub or Google is still `/api/auth/callback/{provider}` on your app domain. The `callbackURL` in `authClient.signIn.social(...)` is only the page Banata redirects to after the auth flow is finished.
+For managed Banata projects, the provider callback registered in GitHub or Google is on your Banata auth domain, for example `https://auth.banata.dev/api/auth/callback/{provider}`. The `callbackURL` in `authClient.signIn.social(...)` is only the page Banata redirects to after the auth flow is finished.
 
 When a user signs in with a social provider and their email matches an existing account:
 
@@ -222,8 +229,9 @@ After linking, the user can sign in with either method (email/password or social
 ### "redirect_uri_mismatch" error
 
 The callback URL in your provider settings doesn't match the actual URL. Make sure it's exactly:
-- Development: `http://localhost:3000/api/auth/callback/{provider}`
-- Production: `https://your-domain.com/api/auth/callback/{provider}`
+- Managed Banata: `https://auth.banata.dev/api/auth/callback/{provider}`
+- Custom Banata auth domain: `https://auth.yourcompany.com/api/auth/callback/{provider}`
+- Self-hosted Banata: `https://your-domain.com/api/auth/callback/{provider}`
 
 Do not register `/dashboard`, `/auth/callback`, or any other post-login page as the provider callback. Those belong in your app's `callbackURL` option instead.
 

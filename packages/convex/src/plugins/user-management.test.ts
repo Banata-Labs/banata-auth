@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	flattenPermissionCheckInput,
 	hasRequestedPermissions,
+	resolveScopedProjectId,
 } from "./user-management";
 
 describe("user-management helpers", () => {
@@ -31,5 +32,30 @@ describe("user-management helpers", () => {
 			hasRequestedPermissions(new Set(["dashboard.read"]), ["dashboard.read", "user.impersonate"]),
 		).toBe(false);
 		expect(hasRequestedPermissions(new Set(["*"]), ["anything.here"])).toBe(true);
+	});
+
+	it("resolves project scope from the API key when the body omits projectId", async () => {
+		const apiKey = "banata_test_key";
+		const db = {
+			findOne: vi.fn(async ({ model, where }: { model: string; where: Array<{ value: string }> }) => {
+				if (model !== "apikey") {
+					return null;
+				}
+				const values = where.map((clause) => clause.value);
+				return values.includes(apiKey)
+					? { id: "key_1", key: apiKey, userId: "user_1", projectId: "project_api_key" }
+					: null;
+			}),
+		} as any;
+
+		const ctx = {
+			headers: new Headers({ "x-api-key": apiKey }),
+			request: new Request("https://auth.banata.dev/api/auth/admin/list-users", {
+				method: "POST",
+				headers: { "x-api-key": apiKey },
+			}),
+		} as any;
+
+		await expect(resolveScopedProjectId(ctx, db, {})).resolves.toBe("project_api_key");
 	});
 });
