@@ -48,6 +48,7 @@ The SDK organizes its functionality into resource managers, each accessed as a p
 | `banata.domains` | Domain verification management |
 | `banata.apiKeys` | Create and manage API keys |
 | `banata.configuration` | Update auth methods, branding, and social provider credentials |
+| `banata.phoneAndDevices` | Start phone OTP flows and manage linked devices |
 | `banata.portal` | Generate admin portal links |
 | `banata.projects` | List and manage projects |
 | `banata.events` | Poll the event stream |
@@ -217,11 +218,62 @@ await banata.configuration.saveSocialProviderCredential({
   clientSecret: process.env.GITHUB_CLIENT_SECRET!,
   enabled: true,
 });
+
+const githubReadiness = await banata.configuration.validateSocialProviderSetup("github");
+
+if (!githubReadiness.ready) {
+  console.log(githubReadiness.errors);
+}
 ```
 
 Changes made through the SDK are reflected in the dashboard immediately, and vice versa.
 
 Banata does not inspect your app code to infer provider state. If your app renders a GitHub sign-in button locally, the dashboard will still show GitHub as off until you save the provider credentials and enabled state through the dashboard or these SDK methods.
+
+Use `validateSocialProviderSetup(...)` before production launch to confirm credentials are present, demo credentials are not in use, and the HTTPS callback URLs that must be registered in the OAuth provider console are known. This local validation does not replace the required real GitHub/Google callback test.
+
+---
+
+## Phone and Devices
+
+Use `banata.phoneAndDevices` from trusted backend code to start Phone OTP flows, approve linked devices, revoke devices, and issue POS offline snapshots.
+
+```ts
+await banata.phoneAndDevices.startPhoneOtp({
+  projectId: "proj_123",
+  phoneNumber: "+254712345678",
+  purpose: "sign_in",
+  channel: "whatsapp",
+});
+
+await banata.phoneAndDevices.startDeviceAuthorization({
+  projectId: "proj_123",
+  clientId: "whatspoppin-web",
+  deviceName: "Chrome on Windows",
+  deviceType: "browser",
+  platform: "Windows",
+  requestedAudience: "whatspoppin-web",
+  requestedScopes: ["chat.operate"],
+});
+```
+
+For the full flow, including mobile primary login, linked-device approval, revocation, and offline POS snapshots, see [Phone & Devices](/docs/phone-and-linked-devices).
+
+---
+
+## API Key Rotation
+
+```ts
+const replacement = await banata.apiKeys.rotate({
+  oldKeyId: "key_old",
+  name: "Production Web App replacement",
+});
+
+// After deploying and verifying the replacement:
+await banata.apiKeys.delete("key_old");
+```
+
+`rotate(...)` creates a replacement key. It leaves the old key active by default so production traffic can be moved safely before revocation.
 
 ---
 

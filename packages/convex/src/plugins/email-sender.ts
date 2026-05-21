@@ -11,11 +11,18 @@
  * - Amazon SES (https://aws.amazon.com/ses) — via SES v2 HTTP API
  * - Mailgun (https://mailgun.com)
  * - Postmark (https://postmarkapp.com)
+ * - Cloudflare Email Service (https://developers.cloudflare.com/email-service/)
  */
 
 // ─── Types ─────────────────────────────────────────────────────────
 
-export type EmailProviderId = "resend" | "sendgrid" | "ses" | "mailgun" | "postmark";
+export type EmailProviderId =
+	| "resend"
+	| "sendgrid"
+	| "ses"
+	| "mailgun"
+	| "postmark"
+	| "cloudflare";
 
 export interface EmailMessage {
 	/** Sender address (e.g., "noreply@acme.com" or "Acme <noreply@acme.com>"). */
@@ -43,6 +50,8 @@ export interface EmailProviderCredentials {
 	secretAccessKey?: string;
 	/** Mailgun domain (e.g., "mg.example.com"). */
 	domain?: string;
+	/** Cloudflare account ID (used by Cloudflare Email Service REST API). */
+	accountId?: string;
 }
 
 export interface SendResult {
@@ -204,6 +213,41 @@ async function sendViaSes(msg: EmailMessage, creds: EmailProviderCredentials): P
 		creds.region ?? "us-east-1",
 		creds.secretAccessKey,
 	);
+}
+
+async function sendViaCloudflare(
+	msg: EmailMessage,
+	creds: EmailProviderCredentials,
+): Promise<SendResult> {
+	if (!creds.apiKey) return { success: false, error: "Cloudflare API token not configured" };
+	if (!creds.accountId) return { success: false, error: "Cloudflare account ID not configured" };
+
+	const res = await fetch(
+		`https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/email/sending/send`,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${creds.apiKey}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				from: msg.from,
+				to: msg.to,
+				subject: msg.subject,
+				html: msg.html,
+				text: msg.text,
+				...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
+			}),
+		},
+	);
+
+	if (res.ok) {
+		const data = (await res.json()) as { result?: { id?: string }; id?: string };
+		return { success: true, messageId: data.result?.id ?? data.id };
+	}
+
+	const err = await res.text();
+	return { success: false, error: `Cloudflare ${res.status}: ${err}` };
 }
 
 /**
@@ -384,6 +428,8 @@ export async function sendEmail(
 			return sendViaMailgun(message, credentials);
 		case "postmark":
 			return sendViaPostmark(message, credentials);
+		case "cloudflare":
+			return sendViaCloudflare(message, credentials);
 		default: {
 			const _exhaustive: never = provider;
 			return {
@@ -412,6 +458,10 @@ export function validateCredentials(
 		case "mailgun":
 			if (!credentials.apiKey) missing.push("apiKey");
 			if (!credentials.domain) missing.push("domain");
+			break;
+		case "cloudflare":
+			if (!credentials.apiKey) missing.push("apiKey");
+			if (!credentials.accountId) missing.push("accountId");
 			break;
 		case "ses":
 			if (!credentials.accessKeyId) missing.push("accessKeyId");

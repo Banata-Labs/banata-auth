@@ -48,6 +48,12 @@ interface SessionRow extends Record<string, unknown> {
 	userAgent?: string | null;
 	activeOrganizationId?: string | null;
 	impersonatedBy?: string | null;
+	impersonationReason?: string | null;
+	impersonationSupportTicketId?: string | null;
+	impersonationApprovedBy?: string | null;
+	impersonationCustomerVisible?: boolean | null;
+	impersonationStartedAt?: number | Date | null;
+	impersonationExpiresAt?: number | Date | null;
 	createdAt: number | Date;
 	updatedAt: number | Date;
 }
@@ -250,6 +256,9 @@ const revokeUserSessionsBodySchema = z
 const impersonateUserBodySchema = z
 	.object({
 		userId: z.string(),
+		reason: z.string().min(10).max(500).optional(),
+		supportTicketId: z.string().min(1).max(120).optional(),
+		approvedByUserId: z.string().min(1).optional(),
 	})
 	.merge(projectScopeSchema);
 
@@ -347,6 +356,12 @@ function sanitizeSession(session: SessionRow) {
 		userAgent: session.userAgent ?? null,
 		activeOrganizationId: session.activeOrganizationId ?? null,
 		impersonatedBy: session.impersonatedBy ?? null,
+		impersonationReason: session.impersonationReason ?? null,
+		impersonationSupportTicketId: session.impersonationSupportTicketId ?? null,
+		impersonationApprovedBy: session.impersonationApprovedBy ?? null,
+		impersonationCustomerVisible: session.impersonationCustomerVisible ?? null,
+		impersonationStartedAt: session.impersonationStartedAt ?? null,
+		impersonationExpiresAt: session.impersonationExpiresAt ?? null,
 		expiresAt: session.expiresAt,
 		createdAt: session.createdAt,
 		updatedAt: session.updatedAt,
@@ -1176,12 +1191,23 @@ export function userManagementPlugin(): BetterAuthPlugin {
 						body: ctx.body,
 					});
 
+					const now = Date.now();
+					const expiresAt = new Date(now + 60 * 60 * 1000);
 					const session = await typedCtx.context.internalAdapter.createSession(
 						targetUser.id,
 						true,
 						{
 							impersonatedBy: auth.user.id,
-							expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+							impersonationReason:
+								ctx.body.reason ?? "Support impersonation requested from admin console",
+							impersonationSupportTicketId: ctx.body.supportTicketId ?? "not-provided",
+							impersonationApprovedBy: ctx.body.approvedByUserId ?? auth.user.id,
+							impersonationCustomerVisible: true,
+							impersonationStartedAt: now,
+							impersonationExpiresAt: expiresAt.getTime(),
+							sessionClass: "support_impersonation_session",
+							authStrength: "admin_step_up",
+							expiresAt,
 							...(projectId ? { projectId } : {}),
 						},
 						true,

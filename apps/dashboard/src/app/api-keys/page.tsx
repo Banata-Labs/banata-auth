@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { createApiKey, deleteApiKey, getCachedApiKeys, listApiKeys } from "@/lib/dashboard-api";
 import type { ApiKey } from "@banata-auth/shared";
-import { Trash2 } from "lucide-react";
+import { RotateCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ export default function ApiKeysPage() {
 	const [keys, setKeys] = useState<ApiKey[]>(() => getCachedApiKeys() ?? []);
 	const [newKey, setNewKey] = useState<string | null>(null);
 	const [deletingId, setDeletingId] = useState<string | null>(null);
+	const [rotatingId, setRotatingId] = useState<string | null>(null);
 	const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
 	const refreshKeys = useCallback(async () => {
@@ -64,6 +65,20 @@ export default function ApiKeysPage() {
 			toast.error("Failed to revoke API key");
 		} finally {
 			setDeletingId(null);
+		}
+	}
+
+	async function handleRotate(key: ApiKey) {
+		setRotatingId(key.id);
+		try {
+			const result = await createApiKey(`${key.name} replacement`);
+			setNewKey(result.key);
+			await refreshKeys();
+			toast.success("Replacement API key created");
+		} catch {
+			toast.error("Failed to create replacement API key");
+		} finally {
+			setRotatingId(null);
 		}
 	}
 
@@ -117,7 +132,10 @@ export default function ApiKeysPage() {
 				<Card className="border-primary/20 bg-primary/5">
 					<CardHeader>
 						<CardTitle className="text-sm text-primary">New API key created</CardTitle>
-						<CardDescription>Copy it now - it will not be shown again.</CardDescription>
+						<CardDescription>
+							Copy it now - it will not be shown again. Deploy the replacement, verify
+							traffic, then revoke the old key.
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<code className="block break-all rounded bg-muted p-2 font-mono text-xs">{newKey}</code>
@@ -132,7 +150,7 @@ export default function ApiKeysPage() {
 								<TableHead>Name</TableHead>
 								<TableHead>Key Prefix</TableHead>
 								<TableHead>Created</TableHead>
-								<TableHead className="w-[80px]" />
+								<TableHead className="w-[112px]" />
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -153,6 +171,16 @@ export default function ApiKeysPage() {
 											{k.createdAt.toLocaleString()}
 										</TableCell>
 										<TableCell>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="size-8 text-muted-foreground"
+												disabled={rotatingId === k.id}
+												onClick={() => void handleRotate(k)}
+											>
+												<RotateCw className="size-4" />
+												<span className="sr-only">Create replacement key</span>
+											</Button>
 											<Button
 												variant="ghost"
 												size="icon"

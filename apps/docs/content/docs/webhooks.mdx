@@ -246,6 +246,24 @@ After 5 failed attempts, the delivery is marked as permanently failed.
 - **Deduplicate with `Webhook-Id`.** Store processed message IDs and skip any you have already seen.
 - **Handle out-of-order delivery.** Retries can arrive after newer events. Use the `timestamp` field to determine the correct state.
 
+## Delivery Operations
+
+Operators can inspect delivery records and create replay records for idempotent reprocessing:
+
+```ts
+await banata.webhooks.listDeliveries({
+  endpointId: "wh_123",
+  status: "failed",
+  limit: 50,
+});
+
+await banata.webhooks.replayDelivery({
+  deliveryId: "whd_123",
+});
+```
+
+Replay creates a new pending delivery with `replayOfDeliveryId` pointing at the original delivery. Only replay events that your receiver can deduplicate safely.
+
 ---
 
 ## Available Events

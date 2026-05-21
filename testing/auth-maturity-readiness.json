@@ -1,0 +1,54 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"capabilities": [
+		{
+			"id": "enterprise-byok",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "p2",
+			"evidence": [],
+			"notes": "Track enterprise bring-your-own-key design, custody boundaries, tenant key lifecycle, revocation, and support policy before marketing BYOK."
+		},
+		{
+			"id": "device-risk-scoring",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "p2",
+			"evidence": [],
+			"notes": "Track device risk scoring inputs, score bands, policy hooks, operator visibility, and false-positive review for device-heavy customer flows."
+		},
+		{
+			"id": "auth-anomaly-detection",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "p2",
+			"evidence": [],
+			"notes": "Track anomaly detection for impossible travel, OTP abuse, credential stuffing, provider callback spikes, and suspicious admin actions."
+		},
+		{
+			"id": "session-forensics",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "p2",
+			"evidence": [],
+			"notes": "Track session forensics tooling for incident timelines, session family history, revocation lineage, device changes, and support-safe inspection."
+		},
+		{
+			"id": "fine-grained-authorization",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "p2",
+			"evidence": [],
+			"notes": "Track fine-grained authorization beyond simple roles, including resource scopes, policy evaluation, audit visibility, and customer namespace isolation."
+		},
+		{
+			"id": "enterprise-compliance-packaging",
+			"status": "planned",
+			"owner": "platform-security",
+			"targetPhase": "enterprise-only",
+			"evidence": [],
+			"notes": "Track enterprise compliance packaging such as SOC 2 evidence, HIPAA support materials, DPA/privacy artifacts, and customer security review exports."
+		}
+	]
+}

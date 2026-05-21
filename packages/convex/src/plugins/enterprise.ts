@@ -6,10 +6,9 @@ import { defaultKeyHasher } from "better-auth/plugins";
 import { z } from "zod";
 import {
 	type PluginDBAdapter,
-	getProjectScope,
 	projectScopeSchema,
 	requireAuthenticated,
-	requireProjectPermission,
+	requireProjectScopedPermission,
 } from "./types";
 
 type ConnectionType = "oidc" | "saml";
@@ -82,6 +81,26 @@ interface UserRow extends Record<string, unknown> {
 	metadata?: unknown;
 	createdAt: number;
 	updatedAt: number;
+}
+
+export interface SsoConnectionValidationInput {
+	domain?: string | null;
+	active?: boolean | null;
+	domainVerified?: boolean | null;
+	providerType?: string | null;
+	oidcConfig?: string | null;
+	samlConfig?: string | null;
+}
+
+export interface SsoConnectionValidationIssue {
+	code: string;
+	severity: "error" | "warning";
+	message: string;
+}
+
+export interface SsoConnectionValidationResult {
+	status: "passed" | "warning" | "failed";
+	issues: SsoConnectionValidationIssue[];
 }
 
 interface BetterAuthOidcConfig {
@@ -198,6 +217,7 @@ const getSsoProviderSchema = z
 	.merge(projectScopeSchema);
 
 const deleteSsoProviderSchema = getSsoProviderSchema;
+const validateSsoProviderSchema = getSsoProviderSchema;
 
 const createDirectorySchema = z
 	.object({
@@ -229,6 +249,7 @@ const getDirectorySchema = z
 	.merge(projectScopeSchema);
 
 const deleteDirectorySchema = getDirectorySchema;
+const rotateDirectoryTokenSchema = getDirectorySchema;
 
 const listDirectoryUsersSchema = z
 	.object({
@@ -319,9 +340,7 @@ function mergeOidcConfig(
 		clientId: partial.clientId ?? current?.clientId ?? "",
 		clientSecret: partial.clientSecret ?? current?.clientSecret ?? "",
 		discoveryEndpoint:
-			partial.discoveryUrl ??
-			current?.discoveryEndpoint ??
-			defaultOidcDiscoveryUrl(issuer),
+			partial.discoveryUrl ?? current?.discoveryEndpoint ?? defaultOidcDiscoveryUrl(issuer),
 		authorizationEndpoint: partial.authorizationUrl ?? current?.authorizationEndpoint,
 		tokenEndpoint: partial.tokenUrl ?? current?.tokenEndpoint,
 		userInfoEndpoint: partial.userinfoUrl ?? current?.userInfoEndpoint,
@@ -393,9 +412,7 @@ function mergeSamlConfig(
 		entryPoint,
 		cert,
 		callbackUrl:
-			partial.spAcsUrl ??
-			current?.callbackUrl ??
-			`${baseURL}/sso/saml2/sp/acs/${providerId}`,
+			partial.spAcsUrl ?? current?.callbackUrl ?? `${baseURL}/sso/saml2/sp/acs/${providerId}`,
 		audience: partial.spEntityId ?? current?.audience,
 		wantAssertionsSigned: current?.wantAssertionsSigned ?? true,
 		authnRequestsSigned: partial.signRequest ?? current?.authnRequestsSigned ?? false,
@@ -421,13 +438,15 @@ function mergeSamlConfig(
 function serializeConnection(row: SSOProviderRow, baseURL: string) {
 	const oidcConfig = parseJson<BetterAuthOidcConfig>(row.oidcConfig);
 	const samlConfig = parseJson<BetterAuthSamlConfig>(row.samlConfig);
-	const type = (row.providerType === "saml"
-		? "saml"
-		: row.providerType === "oidc"
-			? "oidc"
-			: samlConfig
-				? "saml"
-				: "oidc") as ConnectionType;
+	const type = (
+		row.providerType === "saml"
+			? "saml"
+			: row.providerType === "oidc"
+				? "oidc"
+				: samlConfig
+					? "saml"
+					: "oidc"
+	) as ConnectionType;
 	return {
 		id: row.providerId,
 		providerId: row.providerId,
@@ -436,7 +455,11 @@ function serializeConnection(row: SSOProviderRow, baseURL: string) {
 		type,
 		name: row.name ?? row.providerId,
 		domain: row.domain,
-		domains: row.domain?.split(",").map((value) => value.trim()).filter(Boolean) ?? [],
+		domains:
+			row.domain
+				?.split(",")
+				.map((value) => value.trim())
+				.filter(Boolean) ?? [],
 		active: row.active !== false,
 		state: row.active === false ? "inactive" : "active",
 		domainVerified: row.domainVerified === true,
@@ -470,6 +493,96 @@ function serializeConnection(row: SSOProviderRow, baseURL: string) {
 				: null,
 		spMetadataUrl: `${baseURL}/sso/saml2/sp/metadata?providerId=${encodeURIComponent(row.providerId)}`,
 	};
+}
+
+export function validateSsoConnectionReadiness(
+	row: SsoConnectionValidationInput,
+): SsoConnectionValidationResult {
+	const issues: SsoConnectionValidationIssue[] = [];
+	const domains = normalizeDomains(undefined, row.domain ?? undefined);
+	const oidcConfig = parseJson<BetterAuthOidcConfig>(row.oidcConfig);
+	const samlConfig = parseJson<BetterAuthSamlConfig>(row.samlConfig);
+	const type = row.providerType === "saml" ? "saml" : "oidc";
+
+	if (row.active === false) {
+		issues.push({
+			code: "connection_inactive",
+			severity: "warning",
+			message: "Connection is disabled and will not route sign-ins.",
+		});
+	}
+	if (domains.length === 0) {
+		issues.push({
+			code: "missing_routing_domain",
+			severity: "error",
+			message: "At least one routing domain is required.",
+		});
+	}
+	if (row.domainVerified !== true) {
+		issues.push({
+			code: "domain_not_verified",
+			severity: "error",
+			message: "Routing domain must be verified before production SSO routing.",
+		});
+	}
+	if (type === "oidc") {
+		if (!oidcConfig?.issuer) {
+			issues.push({
+				code: "missing_oidc_issuer",
+				severity: "error",
+				message: "OIDC issuer is required.",
+			});
+		}
+		if (!oidcConfig?.clientId || !oidcConfig?.clientSecret) {
+			issues.push({
+				code: "missing_oidc_client_credentials",
+				severity: "error",
+				message: "OIDC client ID and secret are required.",
+			});
+		}
+		if (!oidcConfig?.discoveryEndpoint && !oidcConfig?.jwksEndpoint) {
+			issues.push({
+				code: "missing_oidc_discovery",
+				severity: "warning",
+				message: "OIDC discovery or JWKS endpoint should be configured for provider validation.",
+			});
+		}
+	} else {
+		if (!samlConfig?.issuer || !samlConfig.entryPoint || !samlConfig.cert) {
+			issues.push({
+				code: "missing_saml_metadata",
+				severity: "error",
+				message: "SAML issuer, sign-on URL, and certificate are required.",
+			});
+		}
+		if (samlConfig?.wantAssertionsSigned !== true) {
+			issues.push({
+				code: "saml_assertions_not_required_signed",
+				severity: "error",
+				message: "SAML assertions must be signed for production.",
+			});
+		}
+		if (samlConfig?.authnRequestsSigned !== true) {
+			issues.push({
+				code: "saml_authn_requests_unsigned",
+				severity: "warning",
+				message: "Signed AuthnRequests are recommended for production SAML.",
+			});
+		}
+	}
+
+	return {
+		status: issues.some((issue) => issue.severity === "error")
+			? "failed"
+			: issues.length > 0
+				? "warning"
+				: "passed",
+		issues,
+	};
+}
+
+function validateSsoConnection(row: SSOProviderRow) {
+	return validateSsoConnectionReadiness(row);
 }
 
 function serializeDirectory(
@@ -514,11 +627,7 @@ function splitName(name: string) {
 	return { givenName, familyName: rest.join(" ") };
 }
 
-function serializeDirectoryUser(
-	directory: SCIMProviderRow,
-	user: UserRow,
-	account: AccountRow,
-) {
+function serializeDirectoryUser(directory: SCIMProviderRow, user: UserRow, account: AccountRow) {
 	const name = splitName(user.name);
 	return {
 		id: user.id,
@@ -582,11 +691,7 @@ async function ensureOrganizationInProject(
 	}
 }
 
-async function findSsoProvider(
-	db: PluginDBAdapter,
-	providerId: string,
-	projectId: string,
-) {
+async function findSsoProvider(db: PluginDBAdapter, providerId: string, projectId: string) {
 	return db.findOne<SSOProviderRow>({
 		model: "ssoProvider",
 		where: [
@@ -596,11 +701,7 @@ async function findSsoProvider(
 	});
 }
 
-async function findDirectory(
-	db: PluginDBAdapter,
-	providerId: string,
-	projectId: string,
-) {
+async function findDirectory(db: PluginDBAdapter, providerId: string, projectId: string) {
 	return db.findOne<SCIMProviderRow>({
 		model: "scimProvider",
 		where: [
@@ -617,11 +718,7 @@ async function countDirectoryUsers(db: PluginDBAdapter, providerId: string) {
 	});
 }
 
-async function findOrganization(
-	db: PluginDBAdapter,
-	organizationId: string,
-	projectId: string,
-) {
+async function findOrganization(db: PluginDBAdapter, organizationId: string, projectId: string) {
 	return db.findOne<OrganizationRow>({
 		model: "organization",
 		where: [
@@ -690,16 +787,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			listSsoProviders: createAuthEndpoint(
 				"/banata/sso/list-providers",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: listSsoProvidersSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId, where } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { where } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "sso.read",
 					});
 
@@ -724,16 +821,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			getSsoProvider: createAuthEndpoint(
 				"/banata/sso/get-provider",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: getSsoProviderSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "sso.read",
 					});
 
@@ -745,20 +842,47 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				},
 			),
 
+			validateSsoProvider: createAuthEndpoint(
+				"/banata/sso/validate-provider",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: validateSsoProviderSchema,
+					/* API-key auth handled by requireProjectPermission */
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const { projectId } = await requireProjectScopedPermission(ctx, {
+						db,
+						body: ctx.body,
+						permission: "sso.read",
+					});
+
+					const row = await findSsoProvider(db, ctx.body.providerId, projectId!);
+					if (!row) {
+						throw ctx.error("NOT_FOUND", { message: "SSO provider not found" });
+					}
+					return ctx.json({
+						providerId: row.providerId,
+						...validateSsoConnection(row),
+					});
+				},
+			),
+
 			registerSsoProvider: createAuthEndpoint(
 				"/banata/sso/register",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createSsoProviderSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const { user } = await requireAuthenticated(ctx);
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "sso.manage",
 					});
 					await ensureOrganizationInProject(ctx, db, ctx.body.organizationId, projectId!);
@@ -811,16 +935,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			updateSsoProvider: createAuthEndpoint(
 				"/banata/sso/update-provider",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: updateSsoProviderSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "sso.manage",
 					});
 
@@ -837,7 +961,9 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 					if (ctx.body.domains !== undefined || ctx.body.domain !== undefined) {
 						const domains = normalizeDomains(ctx.body.domains, ctx.body.domain);
 						if (domains.length === 0) {
-							throw ctx.error("BAD_REQUEST", { message: "At least one routing domain is required" });
+							throw ctx.error("BAD_REQUEST", {
+								message: "At least one routing domain is required",
+							});
 						}
 						update.domain = domains.join(",");
 						update.domainVerified = false;
@@ -885,16 +1011,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			deleteSsoProvider: createAuthEndpoint(
 				"/banata/sso/delete-provider",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteSsoProviderSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "sso.manage",
 					});
 					await db.delete({
@@ -911,16 +1037,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			listDirectories: createAuthEndpoint(
 				"/banata/scim/list-providers",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: listDirectoriesSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId, where } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { where } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 
@@ -946,42 +1072,40 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			getDirectory: createAuthEndpoint(
 				"/banata/scim/get-provider",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: getDirectorySchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 					const row = await findDirectory(db, ctx.body.providerId, projectId!);
 					if (!row) {
 						throw ctx.error("NOT_FOUND", { message: "SCIM directory not found" });
 					}
-					return ctx.json(
-						serializeDirectory(row, await countDirectoryUsers(db, row.providerId)),
-					);
+					return ctx.json(serializeDirectory(row, await countDirectoryUsers(db, row.providerId)));
 				},
 			),
 
 			registerDirectory: createAuthEndpoint(
 				"/banata/scim/register",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createDirectorySchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
 					const { user } = await requireAuthenticated(ctx);
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.manage",
 					});
 					await ensureOrganizationInProject(ctx, db, ctx.body.organizationId, projectId!);
@@ -1049,16 +1173,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			deleteDirectory: createAuthEndpoint(
 				"/banata/scim/delete-provider",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteDirectorySchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.manage",
 					});
 					await db.delete({
@@ -1072,19 +1196,71 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 				},
 			),
 
+			rotateDirectoryToken: createAuthEndpoint(
+				"/banata/scim/rotate-token",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: rotateDirectoryTokenSchema,
+					/* API-key auth handled by requireProjectPermission */
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const { projectId } = await requireProjectScopedPermission(ctx, {
+						db,
+						body: ctx.body,
+						permission: "directory.manage",
+					});
+					const current = await findDirectory(db, ctx.body.providerId, projectId!);
+					if (!current) {
+						throw ctx.error("NOT_FOUND", { message: "SCIM directory not found" });
+					}
+
+					const baseToken = generateRandomString(24);
+					const bearerToken = base64Url.encode(
+						`${baseToken}:${current.providerId}:${current.organizationId ?? ""}`,
+					);
+					const storedToken = await defaultKeyHasher(baseToken);
+					const updated = await db.update<SCIMProviderRow>({
+						model: "scimProvider",
+						where: [
+							{ field: "providerId", value: current.providerId },
+							{ field: "projectId", value: projectId! },
+						],
+						update: {
+							scimToken: storedToken,
+							tokenHash: storedToken,
+							lastSyncStatus: "token_rotated",
+							updatedAt: Date.now(),
+						},
+					});
+					if (!updated) {
+						throw ctx.error("INTERNAL_SERVER_ERROR", {
+							message: "Failed to rotate SCIM token",
+						});
+					}
+
+					return ctx.json(
+						serializeDirectory(updated, await countDirectoryUsers(db, updated.providerId), {
+							bearerToken,
+						}),
+					);
+				},
+			),
+
 			listDirectoryUsers: createAuthEndpoint(
 				"/banata/scim/list-users",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: listDirectoryUsersSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 					const directory = await findDirectory(db, ctx.body.providerId, projectId!);
@@ -1120,16 +1296,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			getDirectoryUser: createAuthEndpoint(
 				"/banata/scim/get-user",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: getDirectoryUserSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 
@@ -1137,9 +1313,7 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 						model: "account",
 						where: [
 							{ field: "userId", value: ctx.body.userId },
-							...(ctx.body.providerId
-								? [{ field: "providerId", value: ctx.body.providerId }]
-								: []),
+							...(ctx.body.providerId ? [{ field: "providerId", value: ctx.body.providerId }] : []),
 						],
 					});
 					if (!account) {
@@ -1163,16 +1337,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			listDirectoryGroups: createAuthEndpoint(
 				"/banata/scim/list-groups",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: listDirectoryGroupsSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 
@@ -1200,16 +1374,16 @@ export function enterpriseProvisioningPlugin(): BetterAuthPlugin {
 			getDirectoryGroup: createAuthEndpoint(
 				"/banata/scim/get-group",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: getDirectoryGroupSchema,
 					/* API-key auth handled by requireProjectPermission */
 				},
 				async (ctx) => {
 					const db = ctx.context.adapter as unknown as PluginDBAdapter;
-					const { projectId } = getProjectScope(ctx.body);
-					await requireProjectPermission(ctx, {
+					const { projectId } = await requireProjectScopedPermission(ctx, {
 						db,
-						projectId,
+						body: ctx.body,
 						permission: "directory.read",
 					});
 

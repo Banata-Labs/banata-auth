@@ -5,12 +5,29 @@ export {
 	Configuration,
 	type AuthConfiguration,
 	type SaveSocialProviderCredentialOptions,
+	type RateLimitBucket,
 	type SocialProviderCredentialRecord,
 	type SocialProviderCredentials,
+	type ValidateSocialProviderResult,
 } from "./resources/configuration";
 export { UserManagement } from "./resources/user-management";
 export { Organizations } from "./resources/organizations";
+export {
+	PhoneAndDevices,
+	type DecideDeviceAuthorizationOptions,
+	type IssuePosOfflineSnapshotOptions,
+	type LinkPhoneOptions,
+	type ListDevicesOptions,
+	type PollDeviceAuthorizationOptions,
+	type ResendPhoneOtpOptions,
+	type RevokeDeviceOptions,
+	type StartDeviceAuthorizationOptions,
+	type StartPhoneOtpOptions,
+	type UnlinkPhoneOptions,
+	type VerifyPhoneOtpOptions,
+} from "./resources/phone-and-devices";
 export { SSO } from "./resources/sso";
+export type { ValidateConnectionResult } from "./resources/sso";
 export { DirectorySync } from "./resources/directory-sync";
 export {
 	AuditLogs,
@@ -52,6 +69,11 @@ export {
 	type CreateProjectOptions,
 	type UpdateProjectOptions,
 } from "./resources/projects";
+export {
+	SecurityControls,
+	type CheckTokenRevocationOptions,
+	type CreateTokenRevocationOptions,
+} from "./resources/security";
 
 // Re-export types from shared
 export type {
@@ -67,6 +89,7 @@ export type {
 	DirectoryUser,
 	DirectoryGroup,
 	AuditEvent,
+	WebhookDelivery,
 	WebhookEndpoint,
 	WebhookEvent,
 	VaultSecret,

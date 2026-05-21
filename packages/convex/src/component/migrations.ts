@@ -31,6 +31,7 @@ const ALL_TABLES = [
 	"actionConfig",
 	"radarConfig",
 	"emailProviderConfig",
+	"smsProviderConfig",
 	"resourceType",
 	"addonConfig",
 	"projectConfig",
@@ -67,6 +68,7 @@ const TABLES_WITH_PROJECT_ID = [
 	"actionConfig",
 	"radarConfig",
 	"emailProviderConfig",
+	"smsProviderConfig",
 	"resourceType",
 	"addonConfig",
 	"projectConfig",
@@ -155,6 +157,7 @@ const TABLES_WITH_ENVIRONMENT_ID = [
 	"actionConfig",
 	"radarConfig",
 	"emailProviderConfig",
+	"smsProviderConfig",
 ] as const;
 
 export const removeEnvironmentIds = internalMutationGeneric({

@@ -25,6 +25,12 @@ interface ProviderMeta {
 	keyLabel: string;
 	keyPlaceholder: string;
 	docsUrl: string;
+	extraFields?: Array<{
+		key: "accountId" | "domain" | "region" | "accessKeyId" | "secretAccessKey";
+		label: string;
+		placeholder: string;
+		type?: "text" | "password";
+	}>;
 }
 
 const PROVIDERS: ProviderMeta[] = [
@@ -51,6 +57,15 @@ const PROVIDERS: ProviderMeta[] = [
 		keyLabel: "AWS Access Key ID",
 		keyPlaceholder: "AKIA...",
 		docsUrl: "https://docs.aws.amazon.com/ses/latest/dg/send-email.html",
+		extraFields: [
+			{
+				key: "secretAccessKey",
+				label: "AWS Secret Access Key",
+				placeholder: "xxxxxxxx...",
+				type: "password",
+			},
+			{ key: "region", label: "AWS Region", placeholder: "us-east-1" },
+		],
 	},
 	{
 		id: "mailgun",
@@ -59,6 +74,7 @@ const PROVIDERS: ProviderMeta[] = [
 		keyLabel: "Mailgun API Key",
 		keyPlaceholder: "key-xxxxxxxx...",
 		docsUrl: "https://app.mailgun.com/settings/api_security",
+		extraFields: [{ key: "domain", label: "Mailgun Domain", placeholder: "mg.example.com" }],
 	},
 	{
 		id: "postmark",
@@ -67,6 +83,21 @@ const PROVIDERS: ProviderMeta[] = [
 		keyLabel: "Postmark Server Token",
 		keyPlaceholder: "xxxxxxxx-xxxx...",
 		docsUrl: "https://account.postmarkapp.com/servers",
+	},
+	{
+		id: "cloudflare",
+		name: "Cloudflare Email Service",
+		description: "Outbound email delivery through Cloudflare's Email Service REST API.",
+		keyLabel: "Cloudflare API Token",
+		keyPlaceholder: "cf_xxxxxxxx...",
+		docsUrl: "https://developers.cloudflare.com/email-service/api/send-emails/rest-api/",
+		extraFields: [
+			{
+				key: "accountId",
+				label: "Cloudflare Account ID",
+				placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+			},
+		],
 	},
 ];
 
@@ -108,6 +139,7 @@ export default function EmailProvidersPage() {
 				const keys: Record<string, string> = {};
 				for (const [id, entry] of Object.entries(remote.providers)) {
 					if (entry.apiKey) keys[id] = entry.apiKey;
+					if (id === "ses" && entry.accessKeyId) keys[id] = entry.accessKeyId;
 				}
 				setDraftKeys(keys);
 			} catch (err) {
@@ -149,7 +181,7 @@ export default function EmailProvidersPage() {
 
 			try {
 				const saved = await saveEmailProviderConfig({
-					providers: { [id]: { enabled: newEnabled, apiKey: updatedProviders[id]?.apiKey } },
+					providers: { [id]: { ...updatedProviders[id], enabled: newEnabled } },
 					activeProvider: newActive,
 				});
 				setConfig(saved);
@@ -171,8 +203,19 @@ export default function EmailProvidersPage() {
 
 			setSavingKeyId(id);
 			try {
+				const meta = PROVIDERS.find((provider) => provider.id === id);
+				const providerConfig = { ...(config.providers[id] ?? {}), enabled: isProviderEnabled(id) };
+				if (id === "ses") {
+					providerConfig.accessKeyId = key;
+				} else {
+					providerConfig.apiKey = key;
+				}
+				for (const field of meta?.extraFields ?? []) {
+					const value = draftKeys[`${id}.${field.key}`]?.trim();
+					if (value) providerConfig[field.key] = value;
+				}
 				const saved = await saveEmailProviderConfig({
-					providers: { [id]: { enabled: isProviderEnabled(id), apiKey: key } },
+					providers: { [id]: providerConfig },
 					activeProvider: config.activeProvider,
 				});
 				setConfig(saved);
@@ -369,6 +412,25 @@ export default function EmailProvidersPage() {
 													}
 													className="max-w-md font-mono text-xs"
 												/>
+												{meta.extraFields?.map((field) => (
+													<Input
+														key={field.key}
+														type={field.type ?? "text"}
+														placeholder={field.placeholder}
+														aria-label={field.label}
+														value={
+															draftKeys[`${meta.id}.${field.key}`] ??
+															String(config.providers[meta.id]?.[field.key] ?? "")
+														}
+														onChange={(e) =>
+															setDraftKeys((prev) => ({
+																...prev,
+																[`${meta.id}.${field.key}`]: e.target.value,
+															}))
+														}
+														className="max-w-xs font-mono text-xs"
+													/>
+												))}
 												<Button
 													size="sm"
 													variant="outline"

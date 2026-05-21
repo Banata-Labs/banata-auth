@@ -1,0 +1,51 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"items": [
+		{
+			"id": "monitoring-signals",
+			"status": "pending",
+			"description": "Verify production monitoring covers auth errors, latency, token issuance, OTP sends, webhook delivery, SCIM sync, SSO failures, audit sink status, and provider callback failures."
+		},
+		{
+			"id": "alert-routing",
+			"status": "pending",
+			"description": "Verify high-severity alerts route to the on-call owner with escalation for auth outage, key compromise, provider outage, webhook dead-letter growth, and audit sink failure."
+		},
+		{
+			"id": "status-reporting",
+			"status": "pending",
+			"description": "Verify a customer-visible status page or equivalent incident communication channel exists for auth availability and provider-impacting incidents."
+		},
+		{
+			"id": "incident-runbook-drills",
+			"status": "pending",
+			"description": "Run drills for signing key compromise, API key leak, OAuth provider compromise, webhook outage, audit sink failure, and account takeover."
+		},
+		{
+			"id": "data-retention-policy",
+			"status": "pending",
+			"description": "Document and verify retention for users, sessions, devices, audit logs, webhook deliveries, SCIM sync state, OTP attempts, and deleted customer projects."
+		},
+		{
+			"id": "release-approval",
+			"status": "pending",
+			"description": "Verify production auth runtime releases require changelog, rollback plan, migration review, owner approval, and post-deploy smoke evidence."
+		},
+		{
+			"id": "customer-support-tooling",
+			"status": "pending",
+			"description": "Verify support can inspect users, sessions, devices, API keys, webhooks, audit events, and rate-limit buckets without direct database access."
+		},
+		{
+			"id": "environment-separation",
+			"status": "pending",
+			"description": "Verify production, staging, and development use separate deployments, databases, domains, secrets, OAuth apps, email/SMS providers, and webhook endpoints."
+		},
+		{
+			"id": "customer-facing-product-readiness",
+			"status": "pending",
+			"description": "Verify project setup wizard, redirect URI validation, provider setup checklists, environment separation, API key rotation, audit export, status page, and data retention policy before customer onboarding."
+		}
+	]
+}

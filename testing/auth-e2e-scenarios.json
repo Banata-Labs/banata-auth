@@ -1,0 +1,86 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"requiredScenarios": [
+		{
+			"id": "email-password",
+			"status": "pending",
+			"description": "User signs up, verifies email when required, signs in with password, and receives a project-scoped session."
+		},
+		{
+			"id": "github-oauth",
+			"status": "pending",
+			"description": "User completes GitHub OAuth against the real provider and returns to the customer app."
+		},
+		{
+			"id": "google-oauth",
+			"status": "pending",
+			"description": "User completes Google OAuth against the real provider and returns to the customer app."
+		},
+		{
+			"id": "oauth-state-and-origin",
+			"status": "pending",
+			"description": "OAuth state, trusted origin, hosted UI origin, and callback URI handling survive redirects."
+		},
+		{
+			"id": "email-otp",
+			"status": "pending",
+			"description": "Email OTP is delivered through a real provider, verified once, and rejected on replay."
+		},
+		{
+			"id": "phone-otp-sms",
+			"status": "pending",
+			"description": "Phone OTP is delivered over SMS, verified, rate-limited, and linked to a real session."
+		},
+		{
+			"id": "phone-otp-whatsapp",
+			"status": "pending",
+			"description": "Phone OTP is delivered over WhatsApp, verified, rate-limited, and linked to a real session."
+		},
+		{
+			"id": "passkey",
+			"status": "pending",
+			"description": "Passkey registration and sign-in work in a real browser with the configured RP ID and origin."
+		},
+		{
+			"id": "mfa-totp",
+			"status": "pending",
+			"description": "TOTP enrollment, challenge, recovery-code handling, and step-up are verified."
+		},
+		{
+			"id": "logout",
+			"status": "pending",
+			"description": "Logout clears active browser session state and prevents reuse of protected routes."
+		},
+		{
+			"id": "session-refresh",
+			"status": "pending",
+			"description": "Session refresh preserves valid sessions, rejects expired sessions, and respects revocation."
+		},
+		{
+			"id": "hosted-ui-callback",
+			"status": "pending",
+			"description": "Hosted UI completes auth, sets the right cookies, and redirects to the configured callback."
+		},
+		{
+			"id": "customer-app-return",
+			"status": "pending",
+			"description": "Customer app receives the return from hosted UI and can fetch the authenticated user."
+		},
+		{
+			"id": "convex-jwt-validation",
+			"status": "pending",
+			"description": "A consumer Convex app validates Banata-issued JWTs and rejects wrong audience, issuer, or revoked token claims."
+		},
+		{
+			"id": "org-rbac",
+			"status": "pending",
+			"description": "Organization membership, role assignment, and permission checks work end to end."
+		},
+		{
+			"id": "project-isolation",
+			"status": "pending",
+			"description": "Sessions, provider credentials, users, organizations, API keys, webhooks, and audit logs cannot cross project boundaries."
+		}
+	]
+}

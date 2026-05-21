@@ -49,6 +49,8 @@ export {
 	PROJECT_AUTH_SECRET_CONTEXT,
 	PROJECT_AUTH_SECRET_NAME,
 	SOCIAL_PROVIDER_SECRET_CONTEXT,
+	productionReadinessPlugin,
 	type SocialProviderVaultSecret,
+	type ProductionReadinessPluginOptions,
 	type PluginDBAdapter,
 } from "./plugins";

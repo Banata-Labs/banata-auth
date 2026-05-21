@@ -1,13 +1,24 @@
 {
-  "extends": "../../tooling/typescript/nextjs.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
     "baseUrl": ".",
-    "declaration": false,
-    "declarationMap": false,
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["./src/client/*"],
+      "@server/*": ["./src/server/*"],
+      "@shared/*": ["./src/shared/*"]
+    },
+    "types": ["bun"]
   },
-  "include": ["src", "next-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src", "vite.config.ts"]
 }

@@ -49,6 +49,8 @@ When a user initiates SSO login, Banata Auth uses their email domain to determin
 
 You can associate multiple domains with a single connection. For example, if an organization owns both `acme.com` and `acme.io`, users from either domain are routed to the same IdP.
 
+Routing only becomes production-ready after the domain is verified. New or updated connections start with `domainVerified: false`; the domain verification flow marks the connection verified only when every routing domain has a matching verified DNS record.
+
 ### Just-in-Time (JIT) Provisioning
 
 When a user authenticates via SSO for the first time and no matching account exists, Banata Auth automatically:
@@ -168,6 +170,19 @@ const { url } = await client.sso.getAuthorizationUrl({
 // Redirect the user to url
 ```
 
+### Validate Provider Setup
+
+Before enabling an enterprise connection for production routing, validate its required fields and domain status:
+
+```typescript
+const report = await client.sso.validateConnection("sso_xxx");
+if (report.status === "failed") {
+  console.log(report.issues);
+}
+```
+
+Validation checks routing domains, domain verification, OIDC issuer/client settings, discovery or JWKS availability, SAML metadata, signed assertions, and signed AuthnRequest posture. A connection with an unverified routing domain returns a `domain_not_verified` error and should not be used for production routing.
+
 ---
 
 ## Connection Field Reference
@@ -206,7 +221,7 @@ SSO connections are scoped to your project. A connection created in one project 
 
 ### Domain Verification
 
-When you associate domains with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ensures users are directed to the correct IdP.
+When you associate domains with an SSO connection, Banata Auth enforces that only users with matching verified email domains are routed through that connection. This prevents unauthorized domain claims and ensures users are directed to the correct IdP.
 
 ### Signature Validation
 
@@ -224,6 +239,6 @@ For OIDC connections, tokens are validated against the IdP's published JWKS (JSO
 
 ## Next Steps
 
-- [Organizations](/docs/organizations) — Learn how to create and manage the organizations that SSO connections belong to.
-- [Authentication](/docs/authentication) — See how SSO fits into the broader Banata Auth authentication flow.
-- [API Keys](/docs/api-keys) — Set up the project API key your SDK client needs to manage SSO connections.
+- [Organizations](/docs/organizations-overview) -- Learn how to create and manage the organizations that SSO connections belong to.
+- [Domains](/docs/domains) -- Verify the email domains used for SSO routing.
+- [API Keys](/docs/api-keys) -- Set up the project API key your SDK client needs to manage SSO connections.

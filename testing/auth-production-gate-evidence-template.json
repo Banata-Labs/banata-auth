@@ -1,0 +1,122 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"gates": [
+		{
+			"id": "final-domain-deploy-isolation",
+			"owner": "platform-ops",
+			"requiredEvidence": [
+				"Final service name and production auth domain decision record, including hosted UI and dashboard domains.",
+				"Production, staging, and development deployment identifiers showing separate runtimes and databases.",
+				"DNS and HTTPS evidence for every production auth, hosted UI, dashboard, and customer callback domain.",
+				"Proof that OAuth apps, email providers, SMS providers, webhook endpoints, and API keys are environment-specific.",
+				"Rollback or migration plan for any domain cutover from staging/default domains to production domains."
+			]
+		},
+		{
+			"id": "ci-monorepo-checks",
+			"owner": "platform-qa",
+			"requiredEvidence": [
+				"CI run URL for the exact commit being launched.",
+				"Full monorepo typecheck passed in CI without timeout or skipped workspaces.",
+				"Full monorepo test suite passed in CI without timeout, hidden failures, or quarantined auth tests.",
+				"Artifact or log retention location for the CI run."
+			]
+		},
+		{
+			"id": "sms-whatsapp-provider-delivery",
+			"owner": "platform-auth",
+			"requiredEvidence": [
+				"SMS provider production-like credential name and environment.",
+				"WhatsApp provider production-like credential name and environment.",
+				"Successful SMS OTP send log with message ID and redacted recipient.",
+				"Successful WhatsApp OTP send log with message ID and redacted recipient.",
+				"Failure and retry behavior observed or explicitly disabled with owner approval."
+			]
+		},
+		{
+			"id": "phone-otp-session-issuance",
+			"owner": "platform-auth",
+			"requiredEvidence": [
+				"Phone OTP sign-in creates a user session in the final deployed auth runtime.",
+				"Phone OTP link flow attaches the E.164 phone identity to an existing user.",
+				"Replay, expired code, and wrong-code attempts fail without account enumeration.",
+				"Audit events are recorded for start, verify, link, unlink, and failed attempts."
+			]
+		},
+		{
+			"id": "browser-e2e-core-auth",
+			"owner": "platform-qa",
+			"requiredEvidence": [
+				"Deployed browser E2E report for email/password signup, signin, logout, and session refresh.",
+				"Refresh-token rotation and reuse/revocation evidence from the deployed auth runtime.",
+				"Deployed browser E2E report for GitHub and Google OAuth.",
+				"Deployed browser E2E report for email OTP, phone OTP SMS, and phone OTP WhatsApp.",
+				"Deployed browser E2E report for passkey registration/signin and MFA challenge.",
+				"Deployed browser E2E report for hosted UI callback and customer-app return.",
+				"Project isolation and Convex JWT wrong-audience rejection evidence."
+			]
+		},
+		{
+			"id": "real-oauth-providers",
+			"owner": "platform-auth",
+			"requiredEvidence": [
+				"GitHub OAuth app callback URI screenshot or config export.",
+				"Google OAuth app callback URI screenshot or config export.",
+				"Successful OAuth callback logs for dashboard, hosted UI, and customer app domains.",
+				"Origin and redirect URI mismatch rejection evidence."
+			]
+		},
+		{
+			"id": "sso-scim-real-idp",
+			"owner": "enterprise-auth",
+			"requiredEvidence": [
+				"SAML or OIDC test IdP metadata and provider configuration evidence.",
+				"Successful enterprise SSO login with signed assertion or OIDC callback evidence.",
+				"SCIM create, update, deactivate, and token rotation evidence.",
+				"Either real IdP pass evidence or explicit beta/disabled launch decision with owner."
+			]
+		},
+		{
+			"id": "kms-key-custody",
+			"owner": "platform-security",
+			"requiredEvidence": [
+				"Validated ProductionKeyCustody payload for the target environment.",
+				"Distinct KMS/HSM/external references for app secret, JWT signing, vault, refresh token pepper, webhook signing, and offline POS snapshot signing.",
+				"Access logging evidence for each key custody provider.",
+				"Emergency rotation drill or rollback evidence."
+			]
+		},
+		{
+			"id": "production-env-inventory",
+			"owner": "platform-ops",
+			"requiredEvidence": [
+				"Target production environment name, deployment URL, and release identifier.",
+				"Redacted environment inventory showing required Banata Auth variables are present.",
+				"Proof that development, staging, and production variables use separate values and secret stores.",
+				"Log review evidence showing environment variables, API keys, cookies, tokens, and OTPs are not printed."
+			]
+		},
+		{
+			"id": "monitoring-alerting-incident-response",
+			"owner": "platform-oncall",
+			"requiredEvidence": [
+				"Validated OperationsReadinessEvidence payload for production.",
+				"Monitoring dashboards for required auth signals.",
+				"Alert route test evidence for outage, provider failure, audit sink failure, and webhook dead-letter growth.",
+				"Status page or customer incident communication evidence.",
+				"Incident drill records for key compromise, API key leak, OAuth compromise, webhook outage, audit sink failure, and account takeover."
+			]
+		},
+		{
+			"id": "security-review-signoff",
+			"owner": "platform-security",
+			"requiredEvidence": [
+				"Completed security review checklist.",
+				"Reviewer name, date, scope, and signoff decision.",
+				"Findings disposition for headers, CSP, cookies, CSRF/origin, OAuth callbacks, secret redaction, and incident logging.",
+				"Open risks accepted by an owner before launch."
+			]
+		}
+	]
+}

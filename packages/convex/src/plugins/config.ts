@@ -46,9 +46,11 @@ import {
 	type ProjectConfigRow,
 	type ProjectRow,
 	type RadarConfigRow,
+	type RateLimitRow,
 	type RedirectConfigRow,
 	type ResourceTypeRow,
 	type RoleDefinitionRow,
+	type SmsProviderConfigRow,
 	type WhereClause,
 	getEffectiveProjectPermissions,
 	getProjectScope,
@@ -63,6 +65,16 @@ import {
 	readProjectSocialProviderSecret,
 	saveProjectSocialProviderSecret,
 } from "./vault";
+import {
+	type EmailProviderCredentials,
+	type EmailProviderId,
+	validateCredentials as validateEmailCredentials,
+} from "./email-sender";
+import {
+	type SmsProviderCredentials,
+	type SmsProviderId,
+	validateSmsCredentials,
+} from "./sms-sender";
 
 // â”€â”€â”€ Plugin Options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -77,6 +89,9 @@ export interface ConfigPluginOptions {
 		passkey?: boolean;
 		magicLink?: boolean;
 		emailOtp?: boolean;
+		phoneOtp?: boolean;
+		whatsappOtp?: boolean;
+		linkedDevice?: boolean;
 		twoFactor?: boolean;
 		organization?: boolean;
 		anonymous?: boolean;
@@ -197,6 +212,16 @@ const BUILT_IN_PERMISSIONS: BuiltInPermissionSeed[] = [
 		slug: "email.manage",
 		name: "Manage emails",
 		description: "Manage email templates and provider settings.",
+	},
+	{
+		slug: "sms.manage",
+		name: "Manage SMS providers",
+		description: "Manage SMS and WhatsApp OTP provider settings.",
+	},
+	{
+		slug: "portal.create",
+		name: "Create Admin Portal links",
+		description: "Generate short-lived, scoped Admin Portal links.",
 	},
 	{
 		slug: "audit.read",
@@ -687,6 +712,18 @@ const saveRadarConfigSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const listRateLimitBucketsSchema = z
+	.object({
+		limit: z.number().int().min(1).max(500).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const resetRateLimitBucketSchema = z
+	.object({
+		key: z.string().min(1).max(1024).optional(),
+	})
+	.merge(projectScopeSchema);
+
 // â”€â”€â”€ Email Provider Config Schema â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const saveEmailProviderConfigSchema = z
@@ -697,12 +734,75 @@ const saveEmailProviderConfigSchema = z
 				z.object({
 					enabled: z.boolean(),
 					apiKey: z.string().optional(),
+					apiSecret: z.string().optional(),
+					accountId: z.string().optional(),
+					domain: z.string().optional(),
+					region: z.string().optional(),
+					accessKeyId: z.string().optional(),
+					secretAccessKey: z.string().optional(),
 				}),
 			)
 			.optional(),
 		activeProvider: z.string().nullable().optional(),
 	})
 	.merge(projectScopeSchema);
+
+const saveSmsProviderConfigSchema = z
+	.object({
+		providers: z
+			.record(
+				z.string(),
+				z.object({
+					enabled: z.boolean(),
+					apiKey: z.string().optional(),
+					apiSecret: z.string().optional(),
+					accountSid: z.string().optional(),
+					authToken: z.string().optional(),
+					fromNumber: z.string().optional(),
+					senderId: z.string().optional(),
+					username: z.string().optional(),
+					phoneNumberId: z.string().optional(),
+					templateName: z.string().optional(),
+					templateLanguage: z.string().optional(),
+					apiBaseUrl: z.string().optional(),
+				}),
+			)
+			.optional(),
+		activeProvider: z.string().nullable().optional(),
+		defaultChannel: z.enum(["sms", "whatsapp", "voice"]).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const validateEmailProviderConfigSchema = z
+	.object({
+		providerId: z.string().min(1).max(64).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const validateSmsProviderConfigSchema = z
+	.object({
+		providerId: z.string().min(1).max(64).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const EMAIL_PROVIDER_IDS = new Set([
+	"resend",
+	"sendgrid",
+	"ses",
+	"mailgun",
+	"postmark",
+	"cloudflare",
+]);
+
+const SMS_PROVIDER_IDS = new Set([
+	"twilio",
+	"messagebird",
+	"vonage",
+	"africas_talking",
+	"termii",
+	"mobitech",
+	"meta_whatsapp",
+]);
 
 // â”€â”€â”€ Resource Type Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -760,6 +860,9 @@ const saveDashboardConfigSchema = z
 				passkey: z.boolean().optional(),
 				magicLink: z.boolean().optional(),
 				emailOtp: z.boolean().optional(),
+				phoneOtp: z.boolean().optional(),
+				whatsappOtp: z.boolean().optional(),
+				linkedDevice: z.boolean().optional(),
 				twoFactor: z.boolean().optional(),
 				organization: z.boolean().optional(),
 				anonymous: z.boolean().optional(),
@@ -812,6 +915,8 @@ const saveSocialProviderCredentialSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const validateSocialProviderSchema = socialProviderCredentialSchema;
+
 // â”€â”€â”€ Static Config Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface StaticDashboardConfig {
@@ -821,6 +926,9 @@ interface StaticDashboardConfig {
 		passkey: boolean;
 		magicLink: boolean;
 		emailOtp: boolean;
+		phoneOtp: boolean;
+		whatsappOtp: boolean;
+		linkedDevice: boolean;
 		twoFactor: boolean;
 		organization: boolean;
 		anonymous: boolean;
@@ -859,6 +967,9 @@ function buildStaticConfig(
 				passkey: false,
 				magicLink: false,
 				emailOtp: false,
+				phoneOtp: false,
+				whatsappOtp: false,
+				linkedDevice: false,
 				twoFactor: false,
 				organization: true,
 				anonymous: false,
@@ -903,6 +1014,9 @@ function buildStaticConfig(
 			passkey: options?.authMethods?.passkey ?? false,
 			magicLink: options?.authMethods?.magicLink ?? false,
 			emailOtp: options?.authMethods?.emailOtp ?? false,
+			phoneOtp: options?.authMethods?.phoneOtp ?? false,
+			whatsappOtp: options?.authMethods?.whatsappOtp ?? false,
+			linkedDevice: options?.authMethods?.linkedDevice ?? false,
 			twoFactor: options?.authMethods?.twoFactor ?? false,
 			organization: options?.authMethods?.organization ?? false,
 			anonymous: options?.authMethods?.anonymous ?? false,
@@ -1092,7 +1206,9 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			return cfg;
 		}
 
-		const configuredProviders = await listProjectSocialProviderSecrets(db, projectId).catch(() => []);
+		const configuredProviders = await listProjectSocialProviderSecrets(db, projectId).catch(
+			() => [],
+		);
 		const nextProviders: Record<string, { enabled: boolean; demo: boolean }> = {};
 		for (const provider of configuredProviders) {
 			nextProviders[provider.name] = {
@@ -1178,6 +1294,250 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		);
 	}
 
+	async function validateSocialProviderSetup(
+		db: PluginDBAdapter,
+		projectId: string,
+		providerId: string,
+		cfg: StaticDashboardConfig,
+	): Promise<{
+		providerId: string;
+		ready: boolean;
+		errors: Array<{ code: string; message: string }>;
+		warnings: Array<{ code: string; message: string }>;
+		callbackUrls: string[];
+	}> {
+		const errors: Array<{ code: string; message: string }> = [];
+		const warnings: Array<{ code: string; message: string }> = [];
+		const provider = await readProjectSocialProviderSecret(db, projectId, providerId);
+		const providerStatus = cfg.socialProviders[providerId];
+
+		if (!provider) {
+			errors.push({
+				code: "missing_credentials",
+				message: "Provider credentials have not been saved for this project.",
+			});
+		} else {
+			if (!provider.data.clientId?.trim()) {
+				errors.push({
+					code: "missing_client_id",
+					message: "Provider client ID is required.",
+				});
+			}
+			if (!provider.data.clientSecret?.trim()) {
+				errors.push({
+					code: "missing_client_secret",
+					message: "Provider client secret is required.",
+				});
+			}
+		}
+
+		if (!providerStatus?.enabled) {
+			warnings.push({
+				code: "provider_disabled",
+				message: "Provider credentials exist, but this provider is not enabled for sign-in.",
+			});
+		}
+		if (providerStatus?.demo) {
+			errors.push({
+				code: "demo_credentials",
+				message: "Demo provider credentials cannot be used for production OAuth.",
+			});
+		}
+
+		const domains = await db.findMany<DomainConfigRow>({
+			model: "domainConfig",
+			where: [{ field: "projectId", value: projectId }],
+			limit: 100,
+		});
+		const callbackUrls = Array.from(
+			new Set(
+				domains
+					.map((domain) => domain.value?.trim())
+					.filter((value): value is string => Boolean(value))
+					.filter((value) => value.startsWith("https://"))
+					.map((origin) => `${origin.replace(/\/$/, "")}/api/auth/callback/${providerId}`),
+			),
+		).sort();
+
+		if (callbackUrls.length === 0) {
+			errors.push({
+				code: "missing_https_callback_origin",
+				message: "Add at least one HTTPS project domain before enabling production OAuth.",
+			});
+		}
+
+		return {
+			providerId,
+			ready: errors.length === 0,
+			errors,
+			warnings,
+			callbackUrls,
+		};
+	}
+
+	async function getStoredEmailProviderConfig(
+		db: PluginDBAdapter,
+		scopeWhere: WhereClause[],
+	): Promise<Record<string, unknown>> {
+		const rows = await db.findMany<EmailProviderConfigRow>({
+			model: "emailProviderConfig",
+			where: [...scopeWhere],
+			limit: 1,
+		});
+		return rows.length > 0 && rows[0]?.configJson
+			? (JSON.parse(rows[0].configJson) as Record<string, unknown>)
+			: { providers: {}, activeProvider: null };
+	}
+
+	async function getStoredSmsProviderConfig(
+		db: PluginDBAdapter,
+		scopeWhere: WhereClause[],
+	): Promise<Record<string, unknown>> {
+		const rows = await db.findMany<SmsProviderConfigRow>({
+			model: "smsProviderConfig",
+			where: [...scopeWhere],
+			limit: 1,
+		});
+		return rows.length > 0 && rows[0]?.configJson
+			? (JSON.parse(rows[0].configJson) as Record<string, unknown>)
+			: { providers: {}, activeProvider: null, defaultChannel: "sms" };
+	}
+
+	function validateEmailProviderSetup(
+		config: Record<string, unknown>,
+		requestedProviderId?: string,
+	): {
+		providerId: string | null;
+		ready: boolean;
+		errors: Array<{ code: string; message: string }>;
+		warnings: Array<{ code: string; message: string }>;
+	} {
+		const providers = (config.providers ?? {}) as Record<string, EmailProviderCredentials & { enabled?: boolean }>;
+		const activeProvider =
+			typeof config.activeProvider === "string" && config.activeProvider.trim().length > 0
+				? config.activeProvider.trim()
+				: null;
+		const providerId = requestedProviderId?.trim() || activeProvider;
+		const errors: Array<{ code: string; message: string }> = [];
+		const warnings: Array<{ code: string; message: string }> = [];
+
+		if (!providerId) {
+			errors.push({
+				code: "missing_active_provider",
+				message: "Enable one email provider before sending production email.",
+			});
+			return { providerId: null, ready: false, errors, warnings };
+		}
+		if (!EMAIL_PROVIDER_IDS.has(providerId)) {
+			errors.push({
+				code: "unknown_provider",
+				message: "Provider is not supported for email delivery.",
+			});
+			return { providerId, ready: false, errors, warnings };
+		}
+
+		const provider = providers[providerId];
+		if (!provider) {
+			errors.push({
+				code: "missing_provider_config",
+				message: "Provider credentials have not been saved for this project.",
+			});
+			return { providerId, ready: false, errors, warnings };
+		}
+
+		if (!provider.enabled) {
+			warnings.push({
+				code: "provider_disabled",
+				message: "Provider credentials exist, but this provider is not enabled for email delivery.",
+			});
+		}
+
+		const validation = validateEmailCredentials(providerId as EmailProviderId, provider);
+		for (const missing of validation.missing) {
+			errors.push({
+				code: `missing_${missing}`,
+				message: `Missing required ${missing} credential.`,
+			});
+		}
+
+		return { providerId, ready: errors.length === 0, errors, warnings };
+	}
+
+	function validateSmsProviderSetup(
+		config: Record<string, unknown>,
+		requestedProviderId?: string,
+	): {
+		providerId: string | null;
+		ready: boolean;
+		errors: Array<{ code: string; message: string }>;
+		warnings: Array<{ code: string; message: string }>;
+	} {
+		const providers = (config.providers ?? {}) as Record<string, SmsProviderCredentials & { enabled?: boolean }>;
+		const activeProvider =
+			typeof config.activeProvider === "string" && config.activeProvider.trim().length > 0
+				? config.activeProvider.trim()
+				: null;
+		const providerId = requestedProviderId?.trim() || activeProvider;
+		const errors: Array<{ code: string; message: string }> = [];
+		const warnings: Array<{ code: string; message: string }> = [];
+
+		if (!providerId) {
+			errors.push({
+				code: "missing_active_provider",
+				message: "Enable one SMS or WhatsApp provider before sending phone OTP.",
+			});
+			return { providerId: null, ready: false, errors, warnings };
+		}
+		if (!SMS_PROVIDER_IDS.has(providerId)) {
+			errors.push({
+				code: "unknown_provider",
+				message: "Provider is not supported for SMS or WhatsApp OTP delivery.",
+			});
+			return { providerId, ready: false, errors, warnings };
+		}
+
+		const provider = providers[providerId];
+		if (!provider) {
+			errors.push({
+				code: "missing_provider_config",
+				message: "Provider credentials have not been saved for this project.",
+			});
+			return { providerId, ready: false, errors, warnings };
+		}
+
+		if (!provider.enabled) {
+			warnings.push({
+				code: "provider_disabled",
+				message: "Provider credentials exist, but this provider is not enabled for phone OTP delivery.",
+			});
+		}
+
+		const validation = validateSmsCredentials(providerId as SmsProviderId, provider);
+		for (const missing of validation.missing) {
+			errors.push({
+				code: `missing_${missing}`,
+				message: `Missing required ${missing} credential.`,
+			});
+		}
+
+		return { providerId, ready: errors.length === 0, errors, warnings };
+	}
+
+	function summarizeRateLimitBucket(row: RateLimitRow, now = Date.now()) {
+		const [projectScope, ip, path, ...identifierParts] = row.key.split("|");
+		return {
+			id: row.id,
+			key: row.key,
+			projectId: row.projectId ?? (projectScope !== "__platform__" ? projectScope : undefined),
+			ip: ip ?? null,
+			path: path ?? null,
+			identifier: identifierParts.length > 0 ? identifierParts.join("|") : null,
+			count: row.count,
+			lastRequest: row.lastRequest,
+			ageSeconds: Math.max(0, Math.floor((now - row.lastRequest) / 1000)),
+		};
+	}
+
 	/**
 	 * Loads any persisted config overrides from the DB and merges them
 	 * into the in-memory config for the given project scope.
@@ -1248,6 +1608,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			"brandingConfig",
 			"emailConfig",
 			"emailProviderConfig",
+			"smsProviderConfig",
 			"roleDefinition",
 			"permissionDefinition",
 			"domainConfig",
@@ -1465,6 +1826,14 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 					updatedAt: { type: "number", required: true },
 				},
 			},
+			smsProviderConfig: {
+				fields: {
+					projectId: { type: "string" as const, required: false },
+					configJson: { type: "string", required: true },
+					createdAt: { type: "number", required: true },
+					updatedAt: { type: "number", required: true },
+				},
+			},
 			resourceType: {
 				fields: {
 					projectId: { type: "string" as const, required: false },
@@ -1526,7 +1895,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getDashboardConfig: createAuthEndpoint(
 				"/banata/config/dashboard",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -1541,7 +1911,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveDashboardConfig: createAuthEndpoint(
 				"/banata/config/dashboard/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveDashboardConfigSchema,
 				},
 				async (ctx) => {
@@ -1572,7 +1943,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			resetDashboardConfig: createAuthEndpoint(
 				"/banata/config/dashboard/reset",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -1590,7 +1962,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getSocialProviderCredentials: createAuthEndpoint(
 				"/banata/config/social-providers/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -1608,7 +1981,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveSocialProviderCredential: createAuthEndpoint(
 				"/banata/config/social-providers/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveSocialProviderCredentialSchema,
 				},
 				async (ctx) => {
@@ -1654,10 +2028,32 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 				},
 			),
 
+			validateSocialProviderSetup: createAuthEndpoint(
+				"/banata/config/social-providers/validate",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: validateSocialProviderSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "dashboard.read");
+					const projectId = requireScopedProjectId(ctx, scope);
+					const providerId = String(body.providerId).trim().toLowerCase();
+					const cfg = await getResolvedDashboardConfig(db, projectId);
+
+					return ctx.json(
+						await validateSocialProviderSetup(db, projectId, providerId, cfg),
+					);
+				},
+			),
+
 			deleteSocialProviderCredential: createAuthEndpoint(
 				"/banata/config/social-providers/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: socialProviderCredentialSchema,
 				},
 				async (ctx) => {
@@ -1686,7 +2082,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listRoles: createAuthEndpoint(
 				"/banata/config/roles/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -1723,7 +2120,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			createRole: createAuthEndpoint(
 				"/banata/config/roles/create",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createRoleSchema,
 				},
 				async (ctx) => {
@@ -1789,7 +2187,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			updateRole: createAuthEndpoint(
 				"/banata/config/roles/update",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: updateRoleSchema,
 				},
 				async (ctx) => {
@@ -1868,7 +2267,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			deleteRole: createAuthEndpoint(
 				"/banata/config/roles/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteByIdSchema,
 				},
 				async (ctx) => {
@@ -1912,7 +2312,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listPermissions: createAuthEndpoint(
 				"/banata/config/permissions/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -1949,7 +2350,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			createPermission: createAuthEndpoint(
 				"/banata/config/permissions/create",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createPermissionSchema,
 				},
 				async (ctx) => {
@@ -2005,7 +2407,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			updatePermission: createAuthEndpoint(
 				"/banata/config/permissions/update",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: updatePermissionSchema,
 				},
 				async (ctx) => {
@@ -2103,7 +2506,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			deletePermission: createAuthEndpoint(
 				"/banata/config/permissions/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteByIdSchema,
 				},
 				async (ctx) => {
@@ -2166,7 +2570,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			myPermissions: createAuthEndpoint(
 				"/banata/rbac/my-permissions",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2188,7 +2593,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			checkPermission: createAuthEndpoint(
 				"/banata/rbac/check-permission",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: checkPermissionSchema,
 				},
 				async (ctx) => {
@@ -2209,7 +2615,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			checkPermissions: createAuthEndpoint(
 				"/banata/rbac/check-permissions",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: checkPermissionsSchema,
 				},
 				async (ctx) => {
@@ -2241,7 +2648,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getBrandingConfig: createAuthEndpoint(
 				"/banata/config/branding/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2275,7 +2683,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveBrandingConfig: createAuthEndpoint(
 				"/banata/config/branding/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveBrandingSchema,
 				},
 				async (ctx) => {
@@ -2352,7 +2761,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listEmailConfig: createAuthEndpoint(
 				"/banata/config/emails/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2412,7 +2822,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			toggleEmailConfig: createAuthEndpoint(
 				"/banata/config/emails/toggle",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: toggleEmailSchema,
 				},
 				async (ctx) => {
@@ -2462,7 +2873,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listDomains: createAuthEndpoint(
 				"/banata/config/domains/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2497,7 +2909,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveDomain: createAuthEndpoint(
 				"/banata/config/domains/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveDomainSchema,
 				},
 				async (ctx) => {
@@ -2553,7 +2966,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			deleteDomain: createAuthEndpoint(
 				"/banata/config/domains/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteDomainSchema,
 				},
 				async (ctx) => {
@@ -2582,7 +2996,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getRedirects: createAuthEndpoint(
 				"/banata/config/redirects/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2611,7 +3026,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveRedirects: createAuthEndpoint(
 				"/banata/config/redirects/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveRedirectsSchema,
 				},
 				async (ctx) => {
@@ -2661,7 +3077,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listActions: createAuthEndpoint(
 				"/banata/config/actions/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2696,7 +3113,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			createAction: createAuthEndpoint(
 				"/banata/config/actions/create",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createActionSchema,
 				},
 				async (ctx) => {
@@ -2739,7 +3157,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			deleteAction: createAuthEndpoint(
 				"/banata/config/actions/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteActionSchema,
 				},
 				async (ctx) => {
@@ -2768,7 +3187,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getRadarConfig: createAuthEndpoint(
 				"/banata/config/radar/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2807,7 +3227,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveRadarConfig: createAuthEndpoint(
 				"/banata/config/radar/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveRadarConfigSchema,
 				},
 				async (ctx) => {
@@ -2860,6 +3281,68 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 				},
 			),
 
+			listRateLimitBuckets: createAuthEndpoint(
+				"/banata/config/rate-limits/list",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: listRateLimitBucketsSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.read",
+					);
+					const projectId = requireScopedProjectId(ctx, scope);
+					const now = Date.now();
+					const rows = await db.findMany<RateLimitRow>({
+						model: "rateLimit",
+						where: [{ field: "projectId", value: projectId }],
+						limit: body.limit ?? 100,
+						sortBy: { field: "lastRequest", direction: "desc" },
+					});
+
+					return ctx.json({
+						buckets: rows.map((row) => summarizeRateLimitBucket(row, now)),
+					});
+				},
+			),
+
+			resetRateLimitBucket: createAuthEndpoint(
+				"/banata/config/rate-limits/reset",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: resetRateLimitBucketSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.manage",
+					);
+					const projectId = requireScopedProjectId(ctx, scope);
+					const where: WhereClause[] = [{ field: "projectId", value: projectId }];
+					if (body.key) {
+						where.unshift({ field: "key", value: body.key });
+					}
+
+					await db.delete({
+						model: "rateLimit",
+						where,
+					});
+
+					return ctx.json({ success: true, scope: body.key ? "bucket" : "project" });
+				},
+			),
+
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 			// Email Provider Config
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2867,7 +3350,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getEmailProviderConfig: createAuthEndpoint(
 				"/banata/config/email-providers/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2879,24 +3363,15 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						"email.manage",
 					);
 
-					const rows = await db.findMany<EmailProviderConfigRow>({
-						model: "emailProviderConfig",
-						where: [...scope.where],
-						limit: 1,
-					});
-
-					if (rows.length > 0 && rows[0]?.configJson) {
-						return ctx.json(JSON.parse(rows[0].configJson));
-					}
-
-					return ctx.json({ providers: {}, activeProvider: null });
+					return ctx.json(await getStoredEmailProviderConfig(db, scope.where));
 				},
 			),
 
 			saveEmailProviderConfig: createAuthEndpoint(
 				"/banata/config/email-providers/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveEmailProviderConfigSchema,
 				},
 				async (ctx) => {
@@ -2916,11 +3391,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 						where: [...scope.where],
 						limit: 1,
 					});
-
-					const existing =
-						rows.length > 0 && rows[0]?.configJson
-							? (JSON.parse(rows[0].configJson) as Record<string, unknown>)
-							: { providers: {}, activeProvider: null };
+					const existing = await getStoredEmailProviderConfig(db, scope.where);
 
 					// Merge providers
 					const existingProviders = (existing.providers ?? {}) as Record<string, unknown>;
@@ -2958,6 +3429,123 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 				},
 			),
 
+			validateEmailProviderConfig: createAuthEndpoint(
+				"/banata/config/email-providers/validate",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: validateEmailProviderConfigSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as { providerId?: string } & Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "email.manage");
+					const config = await getStoredEmailProviderConfig(db, scope.where);
+
+					return ctx.json(validateEmailProviderSetup(config, body.providerId));
+				},
+			),
+
+			getSmsProviderConfig: createAuthEndpoint(
+				"/banata/config/sms-providers/get",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: projectScopedEmpty,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						ctx.body as Record<string, unknown>,
+						"sms.manage",
+					);
+
+					return ctx.json(await getStoredSmsProviderConfig(db, scope.where));
+				},
+			),
+
+			saveSmsProviderConfig: createAuthEndpoint(
+				"/banata/config/sms-providers/save",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: saveSmsProviderConfigSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const now = Date.now();
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"sms.manage",
+					);
+
+					const rows = await db.findMany<SmsProviderConfigRow>({
+						model: "smsProviderConfig",
+						where: [...scope.where],
+						limit: 1,
+					});
+
+					const existing = await getStoredSmsProviderConfig(db, scope.where);
+
+					const existingProviders = (existing.providers ?? {}) as Record<string, unknown>;
+					const mergedProviders = {
+						...existingProviders,
+						...(body.providers ?? {}),
+					};
+					const merged = {
+						...existing,
+						providers: mergedProviders,
+						activeProvider:
+							body.activeProvider !== undefined ? body.activeProvider : existing.activeProvider,
+						defaultChannel:
+							body.defaultChannel !== undefined ? body.defaultChannel : existing.defaultChannel,
+					};
+					const configJson = JSON.stringify(merged);
+
+					if (rows.length > 0 && rows[0]) {
+						await db.update<SmsProviderConfigRow>({
+							model: "smsProviderConfig",
+							where: [{ field: "id", operator: "eq", value: rows[0].id }],
+							update: { configJson, updatedAt: now },
+						});
+					} else {
+						await db.create<SmsProviderConfigRow>({
+							model: "smsProviderConfig",
+							data: {
+								...scope.data,
+								configJson,
+								createdAt: now,
+								updatedAt: now,
+							},
+						});
+					}
+
+					return ctx.json(merged);
+				},
+			),
+
+			validateSmsProviderConfig: createAuthEndpoint(
+				"/banata/config/sms-providers/validate",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: validateSmsProviderConfigSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as { providerId?: string } & Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "sms.manage");
+					const config = await getStoredSmsProviderConfig(db, scope.where);
+
+					return ctx.json(validateSmsProviderSetup(config, body.providerId));
+				},
+			),
+
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 			// Resource Types CRUD
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2965,7 +3553,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			listResourceTypes: createAuthEndpoint(
 				"/banata/config/resource-types/list",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -2999,7 +3588,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			createResourceType: createAuthEndpoint(
 				"/banata/config/resource-types/create",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: createResourceTypeSchema,
 				},
 				async (ctx) => {
@@ -3052,7 +3642,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			deleteResourceType: createAuthEndpoint(
 				"/banata/config/resource-types/delete",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: deleteResourceTypeSchema,
 				},
 				async (ctx) => {
@@ -3081,7 +3672,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getAddonConfig: createAuthEndpoint(
 				"/banata/config/addons/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -3110,7 +3702,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveAddonConfig: createAuthEndpoint(
 				"/banata/config/addons/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveAddonConfigSchema,
 				},
 				async (ctx) => {
@@ -3171,7 +3764,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getAuthConfiguration: createAuthEndpoint(
 				"/banata/config/auth-config/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -3196,7 +3790,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveAuthConfiguration: createAuthEndpoint(
 				"/banata/config/auth-config/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveAuthConfigSchema,
 				},
 				async (ctx) => {
@@ -3269,7 +3864,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			getProjectConfig: createAuthEndpoint(
 				"/banata/config/project/get",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: projectScopedEmpty,
 				},
 				async (ctx) => {
@@ -3321,7 +3917,8 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			saveProjectConfig: createAuthEndpoint(
 				"/banata/config/project/save",
 				{
-					method: "POST", requireHeaders: true,
+					method: "POST",
+					requireHeaders: true,
 					body: saveProjectConfigSchema,
 				},
 				async (ctx) => {
@@ -3393,6 +3990,3 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		},
 	};
 }
-
-
-

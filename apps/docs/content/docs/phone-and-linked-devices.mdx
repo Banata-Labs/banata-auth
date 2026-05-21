@@ -1,0 +1,348 @@
+---
+title: "Phone & Devices"
+description: "Phone OTP, WhatsApp OTP, linked-device sign-in, and offline POS terminal sessions."
+section: "Configure Authentication"
+order: 10
+---
+
+Phone and device authentication lets your users sign in with a phone number, approve a browser or desktop session from a trusted mobile device, and keep short-lived POS sessions working when a terminal is offline.
+
+This is useful for phone-first products, WhatsApp-style companion sessions, and merchant apps where a tablet or POS terminal needs scoped access without becoming a full account owner.
+
+---
+
+## Enable Phone OTP
+
+### From the Dashboard
+
+1. Open the Banata dashboard and select your project.
+2. Go to **Authentication > Methods**.
+3. Enable **Phone OTP**.
+4. Go to **SMS > Providers** and configure an SMS or WhatsApp delivery provider so Banata can send codes.
+
+Phone numbers must use E.164 format, for example `+254712345678`. Your UI should not reveal whether a phone number already belongs to an account.
+
+### For Self-Hosted Deployments
+
+Self-hosted deployments can provide the delivery function through `productionReadiness.sendPhoneOtp`, or use the provider configuration stored from **SMS > Providers**. Banata stores the OTP hash, expiry, attempt count, resend count, lockout state, channel, provider message ID, IP address, user agent, and device fingerprint.
+
+## SMS And WhatsApp Providers
+
+Banata supports these phone OTP delivery providers:
+
+| Provider | Channels | Required credentials |
+|---|---|---|
+| Twilio | SMS, WhatsApp | Account SID, auth token, sender number |
+| MessageBird | SMS | API key, originator |
+| Vonage | SMS | API key, API secret, sender |
+| Africa's Talking | SMS | Username, API key, optional sender ID |
+| Termii | SMS | API key, sender ID |
+| Mobitech | SMS | API key, sender ID, optional API URL override |
+| Meta WhatsApp Cloud API | WhatsApp | Access token, phone number ID, approved OTP template name |
+
+To switch providers, enable the provider you want under **SMS > Providers**, enter the required credentials, and save. The enabled provider becomes active for phone OTP delivery. Only one provider is active at a time.
+
+Before production launch, validate the active provider from **SMS > Providers** or through the configuration API. Validation checks that the selected provider is supported, enabled, and has the credentials Banata needs for that provider. It does not replace a real SMS or WhatsApp delivery test with production-like credentials.
+
+For WhatsApp production delivery, use an approved OTP template from your WhatsApp provider. Banata passes the generated code into the template body when a template name is configured.
+
+---
+
+## Phone OTP API
+
+### Send a Code
+
+```ts
+await fetch("/api/auth/phone/start", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    phoneNumber: "+254712345678",
+    purpose: "sign_in",
+    channel: "whatsapp",
+  }),
+});
+```
+
+### Verify a Code
+
+```ts
+await fetch("/api/auth/phone/verify", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    phoneNumber: "+254712345678",
+    purpose: "sign_in",
+    code: "123456",
+  }),
+});
+```
+
+### Resend a Code
+
+```ts
+await fetch("/api/auth/phone/resend", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    phoneNumber: "+254712345678",
+    purpose: "sign_in",
+    channel: "whatsapp",
+  }),
+});
+```
+
+### Link a Phone Number
+
+Use `/api/auth/phone/link` after the user has verified ownership of the phone number.
+
+```ts
+await fetch("/api/auth/phone/link", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    userId: "usr_123",
+    phoneNumber: "+254712345678",
+    verificationId: "phv_123",
+  }),
+});
+```
+
+### Unlink a Phone Number
+
+```ts
+await fetch("/api/auth/phone/unlink", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    userId: "usr_123",
+    phoneNumber: "+254712345678",
+  }),
+});
+```
+
+---
+
+## Mobile Primary Login
+
+Mobile apps can use Phone OTP as the primary sign-in method. After the user verifies the code, your app creates or links the user account and issues a `mobile_user_session`.
+
+A typical mobile flow looks like this:
+
+1. Collect the user's phone number and normalize it to E.164.
+2. Call `/api/auth/phone/start` with `purpose: "sign_in"` or `purpose: "sign_up"`.
+3. Deliver the code through SMS or WhatsApp.
+4. Call `/api/auth/phone/verify` with the code the user entered.
+5. Create or link the user's session.
+6. Bind the session to a trusted device record when device trust is enabled.
+
+Mobile sessions should carry the `mobile_user_session` class, the app audience, the project ID, and a `device_id` when the device is registered. For sensitive actions like changing recovery methods, approving a device, inviting admins, or creating API keys, require a fresh step-up.
+
+Do not store OTPs, refresh tokens, or one-time-token values in mobile logs. Use platform secure storage for refresh material.
+
+---
+
+## Enable Linked Devices
+
+Linked devices let a trusted session approve another device. A common example is a user approving a desktop browser from a mobile app.
+
+Use linked devices when you want:
+
+- A mobile app to approve web or desktop sessions.
+- A POS terminal to require owner approval before it can operate.
+- A revocable companion session with limited permissions.
+
+The approving device should show the app name, device name, platform, approximate location when available, short user code, requested scopes, and expiry before the user approves the request.
+
+---
+
+## Linked Device Flow
+
+### Start Authorization
+
+```ts
+const response = await fetch("/api/auth/device/start", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    clientId: "whatspoppin-web",
+    deviceName: "Chrome on Windows",
+    deviceType: "browser",
+    platform: "Windows",
+    requestedAudience: "whatspoppin-web",
+    requestedScopes: ["chat.operate"],
+  }),
+});
+```
+
+Render the returned QR challenge and short user code. The QR payload must contain only a challenge or nonce -- never credentials.
+
+### Approve or Deny
+
+```ts
+await fetch("/api/auth/device/approve", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    deviceCode,
+    approvedByUserId: "usr_123",
+  }),
+});
+```
+
+The secondary device polls `/api/auth/device/poll` no faster than the returned interval. Approved browser and desktop sessions become `linked_device_session`. POS terminals become `pos_offline_device_session`.
+
+Denied, expired, and consumed device codes cannot be reused. Linked sessions should not be allowed to change recovery methods without step-up.
+
+---
+
+## SDK Usage
+
+The SDK exposes the same phone and device primitives:
+
+```ts
+await banata.phoneAndDevices.startPhoneOtp({
+  projectId: "proj_123",
+  phoneNumber: "+254712345678",
+  purpose: "sign_in",
+  channel: "whatsapp",
+});
+
+await banata.phoneAndDevices.verifyPhoneOtp({
+  projectId: "proj_123",
+  phoneNumber: "+254712345678",
+  purpose: "sign_in",
+  code: "123456",
+});
+
+const authorization = await banata.phoneAndDevices.startDeviceAuthorization({
+  projectId: "proj_123",
+  clientId: "whatspoppin-web",
+  deviceName: "Chrome on Windows",
+  deviceType: "browser",
+  platform: "Windows",
+  requestedAudience: "whatspoppin-web",
+  requestedScopes: ["chat.operate"],
+});
+```
+
+The SDK and HTTP endpoints follow the same project-scoped behavior. Use the SDK from trusted backend code, not directly from the browser.
+
+Dashboard code can validate the stored SMS or WhatsApp provider before a launch check:
+
+```ts
+import { validateSmsProviderConfig } from "@/lib/dashboard-api";
+
+const readiness = await validateSmsProviderConfig("meta_whatsapp");
+console.log(readiness.ready);
+```
+
+---
+
+## POS Offline Snapshots
+
+Offline snapshots let a trusted POS terminal continue limited work when it temporarily cannot reach Banata Auth. They are short-lived permission bundles, not a replacement for online authorization.
+
+Self-hosted production deployments should configure `productionReadiness.signOfflinePermissionSnapshot` with KMS-backed signing. The endpoint returns `signingConfigured: false` when no signer is installed.
+
+```ts
+await fetch("/api/auth/device/offline-snapshot/issue", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    deviceId: "dev_pos_123",
+    userId: "usr_123",
+    organizationId: "org_123",
+    sessionId: "ses_123",
+    permissions: ["order.create", "catalog.read"],
+    expiresInSeconds: 43200,
+  }),
+});
+```
+
+A typical POS lifecycle looks like this:
+
+1. An owner or manager approves the POS terminal through the linked-device flow.
+2. Banata creates a trusted device record for the merchant organization.
+3. Banata issues a `pos_offline_device_session` with a short lifetime.
+4. The terminal requests `/api/auth/device/offline-snapshot/issue`.
+5. The terminal verifies the snapshot signature before each offline privileged action.
+6. The terminal syncs back online before expiry to refresh permissions and revocation state.
+
+Keep offline permissions narrow. For example, a cashier terminal may receive `catalog.read` and `order.create`, while refunds, payment settings, staff changes, and terminal approvals should require online step-up or an owner session.
+
+---
+
+## Revocation
+
+```ts
+await fetch("/api/auth/device/revoke", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    projectId: "proj_123",
+    deviceId: "dev_123",
+    revokedByUserId: "usr_123",
+    reason: "Lost terminal",
+  }),
+});
+```
+
+Revocation marks the device as revoked and writes an approval event. Your app should reject revoked device IDs during token and session validation.
+
+For offline POS, the maximum exposure window is the snapshot expiry. Keep that expiry short enough for the merchant's risk level, and require online refresh before high-risk actions.
+
+---
+
+## Security Considerations
+
+- **Do not put credentials in QR codes** -- QR payloads should contain only a challenge or nonce.
+- **Respect polling intervals** -- device polling must follow the returned `pollIntervalSeconds`.
+- **Use short expiries** -- OTPs, device codes, and offline snapshots should all expire quickly.
+- **Require step-up for sensitive actions** -- recovery changes, admin invites, API key creation, payment settings, refunds, and terminal approvals should require stronger or recent auth.
+- **Check revocation** -- your app should reject revoked device IDs and revoked token IDs.
+- **Keep offline access narrow** -- POS snapshots should include only the permissions needed for offline work.
+
+---
+
+## Troubleshooting
+
+### OTP is not delivered
+
+1. Confirm Phone OTP is enabled under **Authentication > Methods**.
+2. Check that your SMS or WhatsApp provider credentials are configured for the current environment.
+3. Verify the phone number is in E.164 format.
+4. Check provider logs for delivery failures or blocked sender IDs.
+
+### Device polling never completes
+
+Check that the primary device approved the same short user code shown on the secondary device. Also confirm the secondary device is respecting the polling interval and that the device code has not expired.
+
+### Offline POS snapshot is rejected
+
+Common causes:
+
+- the snapshot expired
+- the signature is invalid
+- the device was revoked
+- the app audience or project does not match
+- the requested permission is not present in the snapshot
+- the signing key was emergency-revoked
+
+---
+
+## Next Steps
+
+- [SDK Reference](/docs/sdk) -- Manage phone and device flows from trusted backend code.
+- [Production Readiness](/docs/production-readiness) -- Prepare phone OTP, linked devices, offline POS, and key custody for production.
+- [Environment Variables](/docs/env-vars) -- Configure SMS, WhatsApp, and production key custody variables.
+- [Passkeys](/docs/passkeys) -- Add phishing-resistant authentication for stronger step-up.
+- [Multi-Factor Auth](/docs/mfa) -- Require TOTP challenges for sensitive actions.

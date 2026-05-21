@@ -56,6 +56,51 @@ const schema = defineSchema({
 		.index("ownerId", ["ownerId"])
 		.index("createdAt", ["createdAt"]),
 
+	/**
+	 * Auth client table - relying applications inside a project.
+	 * Separates project identity from per-app audiences, redirects, origins,
+	 * and enabled auth methods.
+	 */
+	authClient: defineTable({
+		projectId: v.string(),
+		clientId: v.string(),
+		name: v.string(),
+		type: v.string(), // "first_party" | "customer_app" | "mobile_app" | "desktop_app" | "service"
+		allowedRedirectUris: v.optional(v.string()), // JSON stringified array
+		allowedOrigins: v.optional(v.string()), // JSON stringified array
+		allowedAudiences: v.optional(v.string()), // JSON stringified array
+		enabledAuthMethods: v.optional(v.string()), // JSON stringified array
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_clientId", ["projectId", "clientId"]),
+
+	/**
+	 * Service principals - non-human identities for backend-to-backend calls.
+	 * These are separate from human users and carry explicit audience, scopes,
+	 * credential hashes, and rotation windows.
+	 */
+	servicePrincipal: defineTable({
+		projectId: v.string(),
+		principalId: v.string(),
+		name: v.string(),
+		type: v.string(), // "backend_worker" | "automation_bridge" | "pos_sync" | "webhook_relay"
+		audience: v.string(),
+		scopes: v.optional(v.string()), // JSON stringified array
+		credentialKeyId: v.string(),
+		credentialHash: v.string(),
+		rotationWindowDays: v.float64(),
+		lastRotatedAt: v.float64(),
+		expiresAt: v.float64(),
+		revokedAt: v.optional(v.float64()),
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_principalId", ["projectId", "principalId"])
+		.index("projectId_credentialKeyId", ["projectId", "credentialKeyId"]),
+
 	// ─── Core Auth Tables ────────────────────────────────────────────
 
 	/**
@@ -128,6 +173,31 @@ const schema = defineSchema({
 
 		// Impersonation (admin plugin)
 		impersonatedBy: v.optional(v.string()),
+		impersonationReason: v.optional(v.string()),
+		impersonationSupportTicketId: v.optional(v.string()),
+		impersonationApprovedBy: v.optional(v.string()),
+		impersonationCustomerVisible: v.optional(v.boolean()),
+		impersonationStartedAt: v.optional(v.float64()),
+		impersonationExpiresAt: v.optional(v.float64()),
+
+		// Production session classification and token contract metadata
+		sessionClass: v.optional(v.string()),
+		authStrength: v.optional(v.string()),
+		deviceId: v.optional(v.string()),
+		deviceTrustLevel: v.optional(v.string()),
+		audience: v.optional(v.string()),
+		scopes: v.optional(v.string()), // JSON stringified array
+		lastStepUpAt: v.optional(v.float64()),
+		riskScore: v.optional(v.float64()),
+		revokedAt: v.optional(v.float64()),
+		revokedReason: v.optional(v.string()),
+		rotatedFromSessionId: v.optional(v.string()),
+		refreshSessionFamilyId: v.optional(v.string()),
+		refreshRotationCounter: v.optional(v.float64()),
+		refreshRotatedAt: v.optional(v.float64()),
+		refreshReuseDetectedAt: v.optional(v.float64()),
+		jti: v.optional(v.string()),
+		tokenVersion: v.optional(v.float64()),
 
 		createdAt: v.float64(),
 		updatedAt: v.float64(),
@@ -136,7 +206,11 @@ const schema = defineSchema({
 		.index("userId", ["userId"])
 		.index("projectId", ["projectId"])
 		.index("projectId_token", ["projectId", "token"])
-		.index("projectId_userId", ["projectId", "userId"]),
+		.index("projectId_userId", ["projectId", "userId"])
+		.index("projectId_sessionClass", ["projectId", "sessionClass"])
+		.index("projectId_deviceId", ["projectId", "deviceId"])
+		.index("projectId_refreshSessionFamilyId", ["projectId", "refreshSessionFamilyId"])
+		.index("projectId_jti", ["projectId", "jti"]),
 
 	/**
 	 * Account table - stores provider credentials (OAuth, email/password, SAML, etc.)
@@ -188,6 +262,168 @@ const schema = defineSchema({
 		.index("identifier", ["identifier"])
 		.index("projectId", ["projectId"])
 		.index("projectId_identifier", ["projectId", "identifier"]),
+
+	/**
+	 * Phone OTP verification lifecycle for SMS, WhatsApp, and voice channels.
+	 * OTP values are stored as hashes and scoped by project, phone, and purpose.
+	 */
+	phoneVerification: defineTable({
+		projectId: v.string(),
+		phoneNumberE164: v.string(),
+		purpose: v.string(),
+		otpHash: v.string(),
+		expiresAt: v.float64(),
+		attemptCount: v.float64(),
+		resendCount: v.float64(),
+		lastSentAt: v.float64(),
+		lockedUntil: v.optional(v.float64()),
+		channel: v.string(), // "sms" | "whatsapp" | "voice"
+		providerMessageId: v.optional(v.string()),
+		ipAddress: v.optional(v.string()),
+		userAgent: v.optional(v.string()),
+		deviceFingerprint: v.optional(v.string()),
+		status: v.string(), // "pending" | "verified" | "expired" | "locked"
+		verifiedUserId: v.optional(v.string()),
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_phoneNumberE164", ["projectId", "phoneNumberE164"])
+		.index("projectId_phone_purpose", ["projectId", "phoneNumberE164", "purpose"])
+		.index("projectId_status", ["projectId", "status"]),
+
+	/**
+	 * Verified phone identity linked to a user. This separates phone lifecycle
+	 * from generic user records and keeps phone-first account linking explicit.
+	 */
+	phoneIdentity: defineTable({
+		projectId: v.string(),
+		userId: v.string(),
+		phoneNumberE164: v.string(),
+		verifiedAt: v.float64(),
+		linkedAt: v.float64(),
+		unlinkedAt: v.optional(v.float64()),
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_userId", ["projectId", "userId"])
+		.index("projectId_phoneNumberE164", ["projectId", "phoneNumberE164"]),
+
+	/**
+	 * Registered device records used by linked-device, mobile, and POS flows.
+	 */
+	device: defineTable({
+		projectId: v.string(),
+		organizationId: v.optional(v.string()),
+		userId: v.optional(v.string()),
+		deviceName: v.string(),
+		deviceType: v.string(),
+		platform: v.string(),
+		publicKey: v.optional(v.string()),
+		trustLevel: v.string(),
+		lastSeenAt: v.optional(v.float64()),
+		revokedAt: v.optional(v.float64()),
+		revokedReason: v.optional(v.string()),
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_userId", ["projectId", "userId"])
+		.index("projectId_organizationId", ["projectId", "organizationId"])
+		.index("projectId_trustLevel", ["projectId", "trustLevel"]),
+
+	/**
+	 * OAuth device-grant-style authorization state for QR linked-device approval.
+	 */
+	deviceAuthorization: defineTable({
+		projectId: v.string(),
+		clientId: v.string(),
+		deviceCodeHash: v.string(),
+		userCodeHash: v.string(),
+		qrNonceHash: v.string(),
+		requestedScopes: v.optional(v.string()), // JSON stringified array
+		requestedAudience: v.string(),
+		deviceName: v.string(),
+		deviceType: v.string(),
+		platform: v.string(),
+		ipAddress: v.optional(v.string()),
+		userAgent: v.optional(v.string()),
+		expiresAt: v.float64(),
+		pollIntervalSeconds: v.float64(),
+		lastPolledAt: v.optional(v.float64()),
+		status: v.string(),
+		approvedByUserId: v.optional(v.string()),
+		approvedAt: v.optional(v.float64()),
+		organizationId: v.optional(v.string()),
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_deviceCodeHash", ["projectId", "deviceCodeHash"])
+		.index("projectId_status", ["projectId", "status"])
+		.index("projectId_expiresAt", ["projectId", "expiresAt"]),
+
+	deviceSession: defineTable({
+		projectId: v.string(),
+		deviceId: v.string(),
+		sessionId: v.string(),
+		userId: v.string(),
+		organizationId: v.optional(v.string()),
+		sessionClass: v.string(),
+		permissionSnapshot: v.optional(v.string()),
+		issuedAt: v.float64(),
+		expiresAt: v.float64(),
+		revokedAt: v.optional(v.float64()),
+		createdAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_deviceId", ["projectId", "deviceId"])
+		.index("projectId_sessionId", ["projectId", "sessionId"]),
+
+	deviceApprovalEvent: defineTable({
+		projectId: v.string(),
+		deviceAuthorizationId: v.string(),
+		deviceId: v.optional(v.string()),
+		actorUserId: v.string(),
+		action: v.string(),
+		ipAddress: v.optional(v.string()),
+		userAgent: v.optional(v.string()),
+		createdAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_deviceAuthorizationId", ["projectId", "deviceAuthorizationId"]),
+
+	sessionPolicy: defineTable({
+		projectId: v.string(),
+		sessionClass: v.string(),
+		maxLifetimeSeconds: v.float64(),
+		idleTimeoutSeconds: v.float64(),
+		refreshAllowed: v.boolean(),
+		requiresMfa: v.boolean(),
+		requiresTrustedDevice: v.boolean(),
+		allowedAudiences: v.optional(v.string()), // JSON stringified array
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_sessionClass", ["projectId", "sessionClass"]),
+
+	tokenRevocation: defineTable({
+		projectId: v.string(),
+		subjectType: v.string(),
+		subjectId: v.optional(v.string()),
+		sessionId: v.optional(v.string()),
+		jti: v.optional(v.string()),
+		reason: v.string(),
+		effectiveAt: v.float64(),
+		createdBy: v.string(),
+		createdAt: v.float64(),
+	})
+		.index("projectId", ["projectId"])
+		.index("projectId_subject", ["projectId", "subjectType", "subjectId"])
+		.index("projectId_sessionId", ["projectId", "sessionId"])
+		.index("projectId_jti", ["projectId", "jti"]),
 
 	// ─── Plugin Tables ──────────────────────────────────────────────
 
@@ -480,6 +716,9 @@ const schema = defineSchema({
 		changes: v.optional(v.string()),
 
 		idempotencyKey: v.optional(v.string()),
+		hash: v.optional(v.string()),
+		previousHash: v.optional(v.string()),
+		externalSinkStatus: v.optional(v.string()),
 		metadata: v.optional(v.any()),
 
 		occurredAt: v.float64(),
@@ -501,6 +740,9 @@ const schema = defineSchema({
 	webhookEndpoint: defineTable({
 		url: v.string(),
 		secret: v.string(),
+		secretVersion: v.optional(v.float64()),
+		previousSecret: v.optional(v.string()),
+		previousSecretExpiresAt: v.optional(v.float64()),
 
 		// Project scoping
 		projectId: v.optional(v.string()),
@@ -527,6 +769,8 @@ const schema = defineSchema({
 	webhookDelivery: defineTable({
 		endpointId: v.string(),
 		eventType: v.string(),
+		eventId: v.optional(v.string()),
+		idempotencyKey: v.optional(v.string()),
 
 		// Project scoping
 		projectId: v.optional(v.string()),
@@ -542,6 +786,8 @@ const schema = defineSchema({
 		errorMessage: v.optional(v.string()),
 
 		nextRetryAt: v.optional(v.float64()),
+		deadLetteredAt: v.optional(v.float64()),
+		replayOfDeliveryId: v.optional(v.string()),
 
 		deliveredAt: v.optional(v.float64()),
 		createdAt: v.float64(),
@@ -549,7 +795,9 @@ const schema = defineSchema({
 		.index("endpointId", ["endpointId"])
 		.index("status", ["status"])
 		.index("nextRetryAt", ["nextRetryAt"])
-		.index("projectId", ["projectId"]),
+		.index("projectId", ["projectId"])
+		.index("projectId_eventId", ["projectId", "eventId"])
+		.index("projectId_status_nextRetryAt", ["projectId", "status", "nextRetryAt"]),
 
 	// ─── Config Tables ────────────────────────────────────────────────
 
@@ -771,6 +1019,21 @@ const schema = defineSchema({
 	 */
 	emailProviderConfig: defineTable({
 		configJson: v.string(), // JSON-serialized email provider config
+
+		// Project scoping
+		projectId: v.optional(v.string()),
+
+		createdAt: v.float64(),
+		updatedAt: v.float64(),
+	}).index("projectId", ["projectId"]),
+
+	/**
+	 * SMS provider config table — stores SMS and WhatsApp provider settings
+	 * (which provider is active, API keys, sender IDs, etc.).
+	 * One row per project.
+	 */
+	smsProviderConfig: defineTable({
+		configJson: v.string(), // JSON-serialized SMS provider config
 
 		// Project scoping
 		projectId: v.optional(v.string()),

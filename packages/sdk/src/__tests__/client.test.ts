@@ -53,8 +53,8 @@ function mockFetchSequence(
 	return fn;
 }
 
-function getFetchCall(fetchMock: ReturnType<typeof vi.fn>) {
-	const call = fetchMock.mock.calls[0];
+function getFetchCall(fetchMock: ReturnType<typeof vi.fn>, index = 0) {
+	const call = fetchMock.mock.calls[index];
 	if (!call) {
 		throw new Error("Expected fetch to be called at least once");
 	}
@@ -69,13 +69,13 @@ interface MockFetchOptions {
 	[key: string]: unknown;
 }
 
-function getFetchOptions(fetchMock: ReturnType<typeof vi.fn>): MockFetchOptions {
-	const [, options] = getFetchCall(fetchMock);
+function getFetchOptions(fetchMock: ReturnType<typeof vi.fn>, index = 0): MockFetchOptions {
+	const [, options] = getFetchCall(fetchMock, index);
 	return (options ?? {}) as MockFetchOptions;
 }
 
-function getFetchUrl(fetchMock: ReturnType<typeof vi.fn>): string {
-	const [url] = getFetchCall(fetchMock);
+function getFetchUrl(fetchMock: ReturnType<typeof vi.fn>, index = 0): string {
+	const [url] = getFetchCall(fetchMock, index);
 	return url;
 }
 
@@ -149,6 +149,10 @@ describe("BanataAuth", () => {
 
 		it("has organizations resource", () => {
 			expect(client.organizations).toBeDefined();
+		});
+
+		it("has phoneAndDevices resource", () => {
+			expect(client.phoneAndDevices).toBeDefined();
 		});
 
 		it("has configuration resource", () => {
@@ -356,6 +360,49 @@ describe("HttpClient", () => {
 		});
 	});
 
+	describe("api keys resource", () => {
+		it("rotates an API key by creating a replacement and leaving the old key active by default", async () => {
+			const fetchMock = mockFetch({ body: { id: "key_new", key: "sk_new", name: "web-rotated" } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.apiKeys.rotate({
+				oldKeyId: "key_old",
+				name: "web-rotated",
+				permissions: ["user.read"],
+			});
+
+			expect(fetchMock).toHaveBeenCalledTimes(1);
+			expect(getFetchUrl(fetchMock)).toBe("https://api.example.com/api/auth/api-key/create");
+			expect(getFetchOptions(fetchMock).body).toBe(
+				JSON.stringify({ name: "web-rotated", permissions: ["user.read"] }),
+			);
+		});
+
+		it("can revoke the old API key after creating a replacement", async () => {
+			const fetchMock = mockFetchSequence([
+				{ body: { id: "key_new", key: "sk_new", name: "web-rotated" } },
+				{ body: {} },
+			]);
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.apiKeys.rotate({
+				oldKeyId: "key_old",
+				name: "web-rotated",
+				revokeOld: true,
+			});
+
+			expect(getFetchUrl(fetchMock, 0)).toBe("https://api.example.com/api/auth/api-key/create");
+			expect(getFetchUrl(fetchMock, 1)).toBe("https://api.example.com/api/auth/api-key/delete");
+			expect(getFetchOptions(fetchMock, 1).body).toBe(JSON.stringify({ keyId: "key_old" }));
+		});
+	});
+
 	describe("configuration resource", () => {
 		it("posts to the dashboard config endpoint", async () => {
 			const fetchMock = mockFetch({ body: { authMethods: { emailPassword: true } } });
@@ -366,7 +413,9 @@ describe("HttpClient", () => {
 
 			await client.configuration.getDashboardConfig();
 
-			expect(getFetchUrl(fetchMock)).toBe("https://api.example.com/api/auth/banata/config/dashboard");
+			expect(getFetchUrl(fetchMock)).toBe(
+				"https://api.example.com/api/auth/banata/config/dashboard",
+			);
 			const options = getFetchOptions(fetchMock);
 			expect(options.method).toBe("POST");
 			expect(options.body).toBe("{}");
@@ -387,6 +436,9 @@ describe("HttpClient", () => {
 					passkey: false,
 					magicLink: false,
 					emailOtp: false,
+					phoneOtp: false,
+					whatsappOtp: false,
+					linkedDevice: false,
 					twoFactor: false,
 					anonymous: false,
 					organization: false,
@@ -404,12 +456,169 @@ describe("HttpClient", () => {
 						passkey: false,
 						magicLink: false,
 						emailOtp: false,
+						phoneOtp: false,
+						whatsappOtp: false,
+						linkedDevice: false,
 						twoFactor: false,
 						anonymous: false,
 						organization: false,
 						username: false,
 					},
 				}),
+			);
+		});
+
+		it("validates social provider setup with project scope", async () => {
+			const fetchMock = mockFetch({
+				body: { providerId: "github", ready: true, errors: [], warnings: [], callbackUrls: [] },
+			});
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.configuration.validateSocialProviderSetup("github", "project_123");
+
+			expect(getFetchUrl(fetchMock)).toBe(
+				"https://api.example.com/api/auth/banata/config/social-providers/validate",
+			);
+			const options = getFetchOptions(fetchMock);
+			expect(options.method).toBe("POST");
+			expect(options.body).toBe(
+				JSON.stringify({ providerId: "github", projectId: "project_123" }),
+			);
+		});
+
+		it("lists and resets rate-limit buckets with project scope", async () => {
+			const fetchMock = mockFetchSequence([
+				{ body: { buckets: [] } },
+				{ body: { success: true, scope: "bucket" } },
+			]);
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.configuration.listRateLimitBuckets({ projectId: "project_123", limit: 50 });
+			await client.configuration.resetRateLimitBucket({
+				projectId: "project_123",
+				key: "project_123|127.0.0.1|/sign-in/email",
+			});
+
+			expect(getFetchUrl(fetchMock, 0)).toBe(
+				"https://api.example.com/api/auth/banata/config/rate-limits/list",
+			);
+			expect(getFetchOptions(fetchMock, 0).body).toBe(
+				JSON.stringify({ projectId: "project_123", limit: 50 }),
+			);
+			expect(getFetchUrl(fetchMock, 1)).toBe(
+				"https://api.example.com/api/auth/banata/config/rate-limits/reset",
+			);
+			expect(getFetchOptions(fetchMock, 1).body).toBe(
+				JSON.stringify({
+					projectId: "project_123",
+					key: "project_123|127.0.0.1|/sign-in/email",
+				}),
+			);
+		});
+	});
+
+	describe("phone and devices resource", () => {
+		it("starts phone OTP through the phone endpoint", async () => {
+			const fetchMock = mockFetch({ body: { verificationId: "phv_123" } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.phoneAndDevices.startPhoneOtp({
+				projectId: "project_123",
+				phoneNumber: "+254712345678",
+				channel: "whatsapp",
+			});
+
+			expect(getFetchUrl(fetchMock)).toBe("https://api.example.com/api/auth/phone/start");
+			expect(getFetchOptions(fetchMock).body).toBe(
+				JSON.stringify({
+					projectId: "project_123",
+					phoneNumber: "+254712345678",
+					channel: "whatsapp",
+				}),
+			);
+		});
+
+		it("starts device authorization through the QR device endpoint", async () => {
+			const fetchMock = mockFetch({ body: { deviceCode: "device_code" } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.phoneAndDevices.startDeviceAuthorization({
+				projectId: "project_123",
+				clientId: "whatspoppin-web",
+				deviceName: "Chrome on Windows",
+				deviceType: "browser",
+				platform: "Windows",
+				requestedAudience: "whatspoppin-web",
+				requestedScopes: ["chat.operate"],
+			});
+
+			expect(getFetchUrl(fetchMock)).toBe("https://api.example.com/api/auth/device/start");
+			expect(getFetchOptions(fetchMock).body).toBe(
+				JSON.stringify({
+					projectId: "project_123",
+					clientId: "whatspoppin-web",
+					deviceName: "Chrome on Windows",
+					deviceType: "browser",
+					platform: "Windows",
+					requestedAudience: "whatspoppin-web",
+					requestedScopes: ["chat.operate"],
+				}),
+			);
+		});
+
+		it("links and unlinks verified phone identities", async () => {
+			const fetchMock = mockFetch({ body: { linked: true } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.phoneAndDevices.linkPhone({
+				projectId: "project_123",
+				userId: "usr_123",
+				phoneNumber: "+254712345678",
+				verificationId: "phv_123",
+			});
+			await client.phoneAndDevices.unlinkPhone({
+				projectId: "project_123",
+				userId: "usr_123",
+				phoneNumber: "+254712345678",
+			});
+
+			expect(getFetchUrl(fetchMock, 0)).toBe("https://api.example.com/api/auth/phone/link");
+			expect(getFetchUrl(fetchMock, 1)).toBe("https://api.example.com/api/auth/phone/unlink");
+		});
+
+		it("issues POS offline permission snapshots", async () => {
+			const fetchMock = mockFetch({ body: { sessionClass: "pos_offline_device_session" } });
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.phoneAndDevices.issuePosOfflineSnapshot({
+				projectId: "project_123",
+				deviceId: "dev_pos_123",
+				userId: "usr_123",
+				organizationId: "org_123",
+				sessionId: "ses_123",
+				permissions: ["refund.create"],
+			});
+
+			expect(getFetchUrl(fetchMock)).toBe(
+				"https://api.example.com/api/auth/device/offline-snapshot/issue",
 			);
 		});
 	});

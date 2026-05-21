@@ -1,4 +1,9 @@
-import type { WebhookEndpoint, WebhookEvent, PaginatedResult } from "@banata-auth/shared";
+import type {
+	PaginatedResult,
+	WebhookDelivery,
+	WebhookEndpoint,
+	WebhookEvent,
+} from "@banata-auth/shared";
 import type { HttpClient } from "../client";
 
 /**
@@ -47,6 +52,35 @@ export class Webhooks {
 		return this.http.post<void>("/api/auth/banata/webhooks/delete", {
 			id: endpointId,
 		});
+	}
+
+	async listDeliveries(options?: {
+		endpointId?: string;
+		status?: "pending" | "success" | "failed" | "retrying";
+		limit?: number;
+		projectId?: string;
+	}): Promise<{ data: WebhookDelivery[] }> {
+		return this.http.post<{ data: WebhookDelivery[] }>(
+			"/api/auth/banata/webhooks/deliveries/list",
+			this.http.withProjectScope(
+				{
+					endpointId: options?.endpointId,
+					status: options?.status,
+					limit: options?.limit,
+				},
+				options?.projectId,
+			),
+		);
+	}
+
+	async replayDelivery(options: {
+		deliveryId: string;
+		projectId?: string;
+	}): Promise<{ replay: WebhookDelivery }> {
+		return this.http.post<{ replay: WebhookDelivery }>(
+			"/api/auth/banata/webhooks/deliveries/replay",
+			this.http.withProjectScope({ id: options.deliveryId }, options.projectId),
+		);
 	}
 
 	// ─── Signature Verification ────────────────────────────────────────────

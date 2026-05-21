@@ -10,6 +10,7 @@ import {
 	getRolePermissions,
 	requireGlobalAdmin,
 	requireProjectPermission,
+	requireProjectScopedPermission,
 	resolveProjectIdFromApiKey,
 } from "./types";
 
@@ -320,5 +321,68 @@ describe("RBAC helpers", () => {
 		ctx.headers = new Headers({ "x-api-key": "ba_live_project_key" });
 
 		await expect(resolveProjectIdFromApiKey(ctx, db)).resolves.toBe("project_1");
+	});
+
+	it("rejects explicit project scope that does not match the API key", async () => {
+		const encoder = new TextEncoder();
+		const digest = await crypto.subtle.digest("SHA-256", encoder.encode("ba_live_project_key"));
+		const hashedKey = Array.from(new Uint8Array(digest))
+			.map((byte) => byte.toString(16).padStart(2, "0"))
+			.join("");
+		const db = createAdapter({
+			apikey: [
+				{
+					id: "key_1",
+					key: hashedKey,
+					userId: "owner_1",
+					projectId: "project_1",
+				},
+			],
+		});
+		const ctx = createCtx({ user: { id: "owner_1" } });
+		ctx.headers = new Headers({ "x-api-key": "ba_live_project_key" });
+
+		await expect(
+			requireProjectScopedPermission(ctx as any, {
+				db,
+				body: { projectId: "project_2" },
+				permission: "sso.manage",
+			}),
+		).rejects.toMatchObject({ status: "FORBIDDEN" });
+	});
+
+	it("uses project scope from the API key when the request body omits projectId", async () => {
+		const encoder = new TextEncoder();
+		const digest = await crypto.subtle.digest("SHA-256", encoder.encode("ba_live_project_key"));
+		const hashedKey = Array.from(new Uint8Array(digest))
+			.map((byte) => byte.toString(16).padStart(2, "0"))
+			.join("");
+		const db = createAdapter({
+			apikey: [
+				{
+					id: "key_1",
+					key: hashedKey,
+					userId: "owner_1",
+					projectId: "project_1",
+				},
+			],
+			project: [{ id: "project_1", ownerId: "owner_1" }],
+			member: [],
+			roleDefinition: [],
+		});
+		const ctx = createCtx({ user: { id: "owner_1" } });
+		ctx.headers = new Headers({ "x-api-key": "ba_live_project_key" });
+
+		await expect(
+			requireProjectScopedPermission(ctx as any, {
+				db,
+				body: {},
+				permission: "sso.manage",
+			}),
+		).resolves.toMatchObject({
+			projectId: "project_1",
+			where: [{ field: "projectId", value: "project_1" }],
+			data: { projectId: "project_1" },
+		});
 	});
 });

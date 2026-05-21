@@ -62,6 +62,7 @@ interface ProviderConfigJson {
 			region?: string;
 			accessKeyId?: string;
 			secretAccessKey?: string;
+			accountId?: string;
 		}
 	>;
 	activeProvider: string | null;
@@ -205,7 +206,7 @@ async function loadProviderConfig(
 	if (!activeId) return null;
 
 	const providerConfig = config.providers[activeId];
-	if (!providerConfig?.enabled || !providerConfig.apiKey) return null;
+	if (!providerConfig?.enabled) return null;
 
 	const credentials: SenderCredentials = {
 		apiKey: providerConfig.apiKey,
@@ -213,6 +214,7 @@ async function loadProviderConfig(
 		region: providerConfig.region,
 		accessKeyId: providerConfig.accessKeyId,
 		secretAccessKey: providerConfig.secretAccessKey,
+		accountId: providerConfig.accountId,
 	};
 
 	const validation = validateCredentials(activeId as EmailProviderId, credentials);

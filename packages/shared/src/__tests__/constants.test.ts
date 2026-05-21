@@ -28,6 +28,12 @@ describe("constants", () => {
 			"event",
 			"webhookEndpoint",
 			"webhookDelivery",
+			"phoneVerification",
+			"device",
+			"deviceAuthorization",
+			"deviceSession",
+			"sessionPolicy",
+			"tokenRevocation",
 			"apiKey",
 			"role",
 			"vaultSecret",
@@ -80,6 +86,12 @@ describe("constants", () => {
 			expect(ID_PREFIXES.event).toBe("event");
 			expect(ID_PREFIXES.webhookEndpoint).toBe("wh");
 			expect(ID_PREFIXES.webhookDelivery).toBe("whd");
+			expect(ID_PREFIXES.phoneVerification).toBe("phv");
+			expect(ID_PREFIXES.device).toBe("dev");
+			expect(ID_PREFIXES.deviceAuthorization).toBe("da");
+			expect(ID_PREFIXES.deviceSession).toBe("dses");
+			expect(ID_PREFIXES.sessionPolicy).toBe("spol");
+			expect(ID_PREFIXES.tokenRevocation).toBe("trev");
 			expect(ID_PREFIXES.apiKey).toBe("ak");
 			expect(ID_PREFIXES.role).toBe("role");
 			expect(ID_PREFIXES.vaultSecret).toBe("vsec");

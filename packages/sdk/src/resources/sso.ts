@@ -48,6 +48,16 @@ export interface ListConnectionsOptions {
 	projectId?: string;
 }
 
+export interface ValidateConnectionResult {
+	providerId: string;
+	status: "passed" | "warning" | "failed";
+	issues: Array<{
+		code: string;
+		severity: "error" | "warning";
+		message: string;
+	}>;
+}
+
 /**
  * SSO resource.
  * Handles SSO connection management and authentication flows.
@@ -59,9 +69,7 @@ export class SSO {
 	 * Get the authorization URL to redirect the user to for SSO.
 	 * Supports routing by organization ID or callback URL.
 	 */
-	async getAuthorizationUrl(
-		options: GetAuthorizationUrlOptions,
-	): Promise<{ url: string }> {
+	async getAuthorizationUrl(options: GetAuthorizationUrlOptions): Promise<{ url: string }> {
 		return this.http.post<{ url: string }>("/api/auth/sign-in/sso", {
 			providerId: options.connectionId,
 			organizationId: options.organizationId,
@@ -81,15 +89,13 @@ export class SSO {
 	): Promise<{ profile: SsoProfile; accessToken: string }> {
 		throw new Error(
 			"getProfileAndToken() is not supported with Better Auth. " +
-			"SSO token exchange is handled internally via the callback URL.",
+				"SSO token exchange is handled internally via the callback URL.",
 		);
 	}
 
 	// ─── Connection Management ─────────────────────────────────────────────
 
-	async listConnections(
-		options?: ListConnectionsOptions,
-	): Promise<PaginatedResult<SsoConnection>> {
+	async listConnections(options?: ListConnectionsOptions): Promise<PaginatedResult<SsoConnection>> {
 		return this.http.post<PaginatedResult<SsoConnection>>(
 			"/api/auth/banata/sso/list-providers",
 			this.http.withProjectScope(
@@ -105,9 +111,27 @@ export class SSO {
 		);
 	}
 
-	async getConnection(connectionId: string, options?: { projectId?: string }): Promise<SsoConnection> {
+	async getConnection(
+		connectionId: string,
+		options?: { projectId?: string },
+	): Promise<SsoConnection> {
 		return this.http.post<SsoConnection>(
 			"/api/auth/banata/sso/get-provider",
+			this.http.withProjectScope(
+				{
+					providerId: connectionId,
+				},
+				options?.projectId,
+			),
+		);
+	}
+
+	async validateConnection(
+		connectionId: string,
+		options?: { projectId?: string },
+	): Promise<ValidateConnectionResult> {
+		return this.http.post<ValidateConnectionResult>(
+			"/api/auth/banata/sso/validate-provider",
 			this.http.withProjectScope(
 				{
 					providerId: connectionId,
@@ -168,7 +192,10 @@ export class SSO {
 		);
 	}
 
-	async activateConnection(connectionId: string, options?: { projectId?: string }): Promise<SsoConnection> {
+	async activateConnection(
+		connectionId: string,
+		options?: { projectId?: string },
+	): Promise<SsoConnection> {
 		return this.http.post<SsoConnection>(
 			"/api/auth/banata/sso/update-provider",
 			this.http.withProjectScope(
@@ -181,7 +208,10 @@ export class SSO {
 		);
 	}
 
-	async deactivateConnection(connectionId: string, options?: { projectId?: string }): Promise<SsoConnection> {
+	async deactivateConnection(
+		connectionId: string,
+		options?: { projectId?: string },
+	): Promise<SsoConnection> {
 		return this.http.post<SsoConnection>(
 			"/api/auth/banata/sso/update-provider",
 			this.http.withProjectScope(

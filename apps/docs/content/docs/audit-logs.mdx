@@ -283,6 +283,14 @@ When reviewing an event like this, you can immediately answer "who changed what,
 
 ---
 
+## Tamper-Evident Chain
+
+Audit events include `hash`, `previousHash`, and `externalSinkStatus` fields. Each new project-scoped event hashes its canonical event payload with the previous event hash, creating a tamper-evident chain that can be checked during export or external SIEM ingestion.
+
+For production, export audit logs to an external sink and alert when `externalSinkStatus` remains `pending` or `failed` beyond your incident threshold.
+
+---
+
 ## Compliance Use Cases
 
 ### SOC 2

@@ -250,6 +250,9 @@ export function prefetchRouteData(pathname: string) {
 		case "/emails/providers":
 			warmers.push(cachedPostJson("/api/auth/banata/config/email-providers/get", {}));
 			break;
+		case "/sms/providers":
+			warmers.push(cachedPostJson("/api/auth/banata/config/sms-providers/get", {}));
+			break;
 		case "/emails/configuration":
 			warmers.push(cachedPostJson("/api/auth/banata/config/emails/list", {}));
 			break;
@@ -334,10 +337,12 @@ function resolvePermissionForPath(path: string): string | null {
 	}
 	if (
 		path.startsWith("/api/auth/banata/emails/") ||
-		path.startsWith("/api/auth/banata/test-email")
+		path.startsWith("/api/auth/banata/test-email") ||
+		path.startsWith("/api/auth/banata/config/email-providers/")
 	) {
 		return "email.manage";
 	}
+	if (path.startsWith("/api/auth/banata/config/sms-providers/")) return "sms.manage";
 	if (path.startsWith("/api/auth/banata/config/")) return "dashboard.manage";
 	return null;
 }
@@ -1444,6 +1449,7 @@ export interface EmailProviderConfig {
 			region?: string;
 			accessKeyId?: string;
 			secretAccessKey?: string;
+			accountId?: string;
 		}
 	>;
 	activeProvider: string | null;
@@ -1470,7 +1476,81 @@ export async function saveEmailProviderConfig(
 	return payload as EmailProviderConfig;
 }
 
+export interface ProviderValidationReport {
+	providerId: string | null;
+	ready: boolean;
+	errors: Array<{ code: string; message: string }>;
+	warnings: Array<{ code: string; message: string }>;
+}
+
+export async function validateEmailProviderConfig(
+	providerId?: string,
+): Promise<ProviderValidationReport> {
+	const payload = await postJson("/api/auth/banata/config/email-providers/validate", {
+		...(providerId ? { providerId } : {}),
+	});
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Failed to validate email provider config");
+	}
+	return payload as ProviderValidationReport;
+}
+
+// â”€â”€ SMS Provider Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export interface SmsProviderConfig {
+	providers: Record<
+		string,
+		{
+			enabled: boolean;
+			apiKey?: string;
+			apiSecret?: string;
+			accountSid?: string;
+			authToken?: string;
+			fromNumber?: string;
+			senderId?: string;
+			username?: string;
+			phoneNumberId?: string;
+			templateName?: string;
+			templateLanguage?: string;
+			apiBaseUrl?: string;
+		}
+	>;
+	activeProvider: string | null;
+	defaultChannel?: "sms" | "whatsapp" | "voice";
+}
+
+export async function getSmsProviderConfig(): Promise<SmsProviderConfig> {
+	const payload = await cachedPostJson("/api/auth/banata/config/sms-providers/get", {});
+	if (typeof payload !== "object" || payload === null) {
+		return { providers: {}, activeProvider: null, defaultChannel: "sms" };
+	}
+	return payload as SmsProviderConfig;
+}
+
+export async function saveSmsProviderConfig(
+	config: Partial<SmsProviderConfig>,
+): Promise<SmsProviderConfig> {
+	const payload = await postJson("/api/auth/banata/config/sms-providers/save", config);
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Failed to save SMS provider config");
+	}
+	invalidateCache();
+	return payload as SmsProviderConfig;
+}
+
 // ── Resource Types ───────────────────────────────────────────────────
+
+export async function validateSmsProviderConfig(
+	providerId?: string,
+): Promise<ProviderValidationReport> {
+	const payload = await postJson("/api/auth/banata/config/sms-providers/validate", {
+		...(providerId ? { providerId } : {}),
+	});
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Failed to validate SMS provider config");
+	}
+	return payload as ProviderValidationReport;
+}
 
 export interface ResourceTypeItem {
 	id: string;

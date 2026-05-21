@@ -4,9 +4,8 @@ import { generateRandomString } from "better-auth/crypto";
 import { z } from "zod";
 import {
 	type PluginDBAdapter,
-	getProjectScope,
 	projectScopeSchema,
-	requireProjectPermission,
+	requireProjectScopedPermission,
 } from "./types";
 
 interface DomainVerificationRow extends Record<string, unknown> {
@@ -212,10 +211,9 @@ export function domainsPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					try {
 						const db = ctx.context.adapter as unknown as PluginDBAdapter;
-						const scope = getProjectScope(ctx.body);
-						await requireProjectPermission(ctx, {
+						const scope = await requireProjectScopedPermission(ctx, {
 							db,
-							projectId: scope.projectId,
+							body: ctx.body,
 							permission: "sso.manage",
 						});
 						await ensureOrganizationInProject(db, ctx.body.organizationId, scope.projectId!);
@@ -284,10 +282,9 @@ export function domainsPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					try {
 						const db = ctx.context.adapter as unknown as PluginDBAdapter;
-						const scope = getProjectScope(ctx.body);
-						await requireProjectPermission(ctx, {
+						const scope = await requireProjectScopedPermission(ctx, {
 							db,
-							projectId: scope.projectId,
+							body: ctx.body,
 							permission: "sso.read",
 						});
 						const record = await db.findOne<DomainVerificationRow>({
@@ -319,10 +316,9 @@ export function domainsPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					try {
 						const db = ctx.context.adapter as unknown as PluginDBAdapter;
-						const scope = getProjectScope(ctx.body);
-						await requireProjectPermission(ctx, {
+						const scope = await requireProjectScopedPermission(ctx, {
 							db,
-							projectId: scope.projectId,
+							body: ctx.body,
 							permission: "sso.manage",
 						});
 						const record = await db.findOne<DomainVerificationRow>({
@@ -385,10 +381,9 @@ export function domainsPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					try {
 						const db = ctx.context.adapter as unknown as PluginDBAdapter;
-						const scope = getProjectScope(ctx.body);
-						await requireProjectPermission(ctx, {
+						const scope = await requireProjectScopedPermission(ctx, {
 							db,
-							projectId: scope.projectId,
+							body: ctx.body,
 							permission: "sso.read",
 						});
 						const rows = await db.findMany<DomainVerificationRow>({
@@ -423,10 +418,9 @@ export function domainsPlugin(): BetterAuthPlugin {
 				async (ctx) => {
 					try {
 						const db = ctx.context.adapter as unknown as PluginDBAdapter;
-						const scope = getProjectScope(ctx.body);
-						await requireProjectPermission(ctx, {
+						const scope = await requireProjectScopedPermission(ctx, {
 							db,
-							projectId: scope.projectId,
+							body: ctx.body,
 							permission: "sso.manage",
 						});
 						const record = await db.findOne<DomainVerificationRow>({

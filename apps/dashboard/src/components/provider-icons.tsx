@@ -22,6 +22,14 @@ export const providerMeta: Record<string, { name: string; color: string }> = {
 	postmark: { name: "Postmark", color: "text-yellow-500" },
 	mailgun: { name: "Mailgun", color: "text-red-600" },
 	ses: { name: "AWS SES", color: "text-orange-400" },
+	cloudflare: { name: "Cloudflare", color: "text-orange-500" },
+	twilio: { name: "Twilio", color: "text-red-500" },
+	messagebird: { name: "MessageBird", color: "text-blue-500" },
+	vonage: { name: "Vonage", color: "text-teal-500" },
+	africas_talking: { name: "Africa's Talking", color: "text-green-600" },
+	termii: { name: "Termii", color: "text-cyan-500" },
+	mobitech: { name: "Mobitech", color: "text-emerald-600" },
+	meta_whatsapp: { name: "Meta WhatsApp", color: "text-green-500" },
 };
 
 // ---------------------------------------------------------------------------
@@ -301,6 +309,14 @@ const icons: Record<string, (props: IconSvgProps) => React.JSX.Element> = {
 	postmark: PostmarkIcon,
 	mailgun: MailgunIcon,
 	ses: SesIcon,
+	cloudflare: GlobeIcon,
+	twilio: GlobeIcon,
+	messagebird: GlobeIcon,
+	vonage: GlobeIcon,
+	africas_talking: GlobeIcon,
+	termii: GlobeIcon,
+	mobitech: GlobeIcon,
+	meta_whatsapp: GlobeIcon,
 };
 
 // ---------------------------------------------------------------------------

@@ -74,6 +74,21 @@ export class DirectorySync {
 		);
 	}
 
+	async rotateToken(
+		directoryId: string,
+		options?: { projectId?: string },
+	): Promise<Directory & { scimConfig: { baseUrl: string; bearerToken: string } }> {
+		return this.http.post(
+			"/api/auth/banata/scim/rotate-token",
+			this.http.withProjectScope(
+				{
+					providerId: directoryId,
+				},
+				options?.projectId,
+			),
+		);
+	}
+
 	async listUsers(options: {
 		directoryId: string;
 		state?: "active" | "suspended" | "deprovisioned";
@@ -130,7 +145,10 @@ export class DirectorySync {
 		);
 	}
 
-	async getGroup(directoryGroupId: string, options?: { projectId?: string }): Promise<DirectoryGroup> {
+	async getGroup(
+		directoryGroupId: string,
+		options?: { projectId?: string },
+	): Promise<DirectoryGroup> {
 		return this.http.post<DirectoryGroup>(
 			"/api/auth/banata/scim/get-group",
 			this.http.withProjectScope(

@@ -1,4 +1,5 @@
 import { handler } from "@/lib/auth-server";
+import { redactSensitiveObject, redactSensitiveString, redactUrl } from "@banata-auth/shared";
 
 function summarizeHeaders(headers: Headers) {
 	return {
@@ -21,7 +22,7 @@ async function logAndHandle(method: "GET" | "POST", request: Request) {
 	console.info("[dashboard-auth-route] request", {
 		method,
 		pathname: url.pathname,
-		search: url.search,
+		search: redactUrl(url.toString()).slice(url.origin.length + url.pathname.length),
 		headers: summarizeHeaders(request.headers),
 	});
 
@@ -31,7 +32,9 @@ async function logAndHandle(method: "GET" | "POST", request: Request) {
 			method,
 			pathname: url.pathname,
 			status: response.status,
-			location: response.headers.get("location"),
+			location: response.headers.get("location")
+				? redactUrl(response.headers.get("location") as string)
+				: null,
 			setCookieCount: response.headers.getSetCookie().length,
 		});
 		return response;
@@ -39,7 +42,10 @@ async function logAndHandle(method: "GET" | "POST", request: Request) {
 		console.error("[dashboard-auth-route] failure", {
 			method,
 			pathname: url.pathname,
-			error,
+			error: redactSensitiveObject({
+				name: error instanceof Error ? error.name : "UnknownError",
+				message: error instanceof Error ? error.message : redactSensitiveString(String(error)),
+			}),
 		});
 		throw error;
 	}

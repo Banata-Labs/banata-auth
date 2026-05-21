@@ -7,9 +7,11 @@ import { Domains } from "./resources/domains";
 import { Emails } from "./resources/emails";
 import { Events } from "./resources/events";
 import { Organizations } from "./resources/organizations";
+import { PhoneAndDevices } from "./resources/phone-and-devices";
 import { Portal } from "./resources/portal";
 import { Projects } from "./resources/projects";
 import { Rbac } from "./resources/rbac";
+import { SecurityControls } from "./resources/security";
 import { SSO } from "./resources/sso";
 import { UserManagement } from "./resources/user-management";
 import { Vault } from "./resources/vault";
@@ -223,6 +225,7 @@ export class BanataAuth {
 	readonly configuration: Configuration;
 	readonly userManagement: UserManagement;
 	readonly organizations: Organizations;
+	readonly phoneAndDevices: PhoneAndDevices;
 	readonly sso: SSO;
 	readonly directorySync: DirectorySync;
 	readonly auditLogs: AuditLogs;
@@ -234,6 +237,7 @@ export class BanataAuth {
 	readonly domains: Domains;
 	readonly rbac: Rbac;
 	readonly projects: Projects;
+	readonly security: SecurityControls;
 
 	constructor(options: string | BanataAuthOptions) {
 		const opts: BanataAuthOptions = typeof options === "string" ? { apiKey: options } : options;
@@ -250,6 +254,7 @@ export class BanataAuth {
 		this.configuration = new Configuration(this.httpClient);
 		this.userManagement = new UserManagement(this.httpClient);
 		this.organizations = new Organizations(this.httpClient);
+		this.phoneAndDevices = new PhoneAndDevices(this.httpClient);
 		this.sso = new SSO(this.httpClient);
 		this.directorySync = new DirectorySync(this.httpClient);
 		this.auditLogs = new AuditLogs(this.httpClient);
@@ -261,6 +266,7 @@ export class BanataAuth {
 		this.domains = new Domains(this.httpClient);
 		this.rbac = new Rbac(this.httpClient);
 		this.projects = new Projects(this.httpClient);
+		this.security = new SecurityControls(this.httpClient);
 	}
 
 	// Convenience aliases (WorkOS-compatible)

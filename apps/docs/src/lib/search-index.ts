@@ -4,8 +4,8 @@
  * DO NOT EDIT MANUALLY -- regenerate with:
  *   bun run scripts/generate-search-index.ts
  *
- * Pages: 42
- * Total headings: 699
+ * Pages: 44
+ * Total headings: 746
  */
 
 export interface SearchIndexHeading {
@@ -526,6 +526,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
+        "text": "Tamper-Evident Chain",
+        "anchor": "tamper-evident-chain",
+        "snippet": "Audit events include hash, previousHash, and externalSinkStatus fields. Each new project-scoped event hashes its canonical event payload with the previous event hash, creating a tamper-evident chain t"
+      },
+      {
+        "level": 2,
         "text": "Compliance Use Cases",
         "anchor": "compliance-use-cases",
         "snippet": ""
@@ -561,7 +567,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Webhooks — Get real-time notifications when audit events occur API Keys — Manage programmatic access to your project Deploy — Take your project to production with audit log monitoring in place"
       }
     ],
-    "searchText": "audit logs automatic audit trail for all auth events with custom event support, filtering, and export capabilities. audit event structure every audit event captures five pieces of information: auto-tracked events banata tracks 30 events automatically, grouped into five categories. user events session events email & password events organization events security events --- querying audit logs via the sdk use auditlogs.listevents to search and filter your audit trail programmatically. basic queries pagination audit logs use cursor-based pagination. the listmetadata object returned with each response contains the cursors you need to move forward and backward through results. querying via the dashboard you can also browse your audit trail in the banata dashboard. navigate to audit logs in the sidebar to see a searchable, filterable view of all events. the dashboard lets you filter by action type, ac custom audit events the 30 auto-tracked events cover authentication and authorization. for business-specific actions — like exporting a document, approving a request, or changing a billing plan — you can log custom event via the sdk via the logauditevent helper (server-side) inside convex functions, you can log audit events directly using the logauditevent helper: exporting audit logs you can export audit logs for compliance reporting, external analysis, or long-term archival. change tracking for any update event, banata captures a before-and-after snapshot so you can see exactly what changed. this is especially useful for investigating permission escalations, profile modifications, and co compliance use cases soc 2 soc 2 requires logging of user authentication events, access control changes, and account lifecycle events. banata covers these automatically: hipaa hipaa requires audit trails for access to electronic health information, login monitoring, and access control audits. banata provides: gdpr gdpr requires records of processing activities, account deletion tracking, and consent management. banata helps with: best practices supplement with custom events. the 30 auto-tracked events cover authentication and authorization. add custom events for business-critical actions like data exports, billing changes, and approval workf next steps webhooks — get real-time notifications when audit events occur api keys — manage programmatic access to your project deploy — take your project to production with audit log monitoring in place"
+    "searchText": "audit logs automatic audit trail for all auth events with custom event support, filtering, and export capabilities. audit event structure every audit event captures five pieces of information: auto-tracked events banata tracks 30 events automatically, grouped into five categories. user events session events email & password events organization events security events --- querying audit logs via the sdk use auditlogs.listevents to search and filter your audit trail programmatically. basic queries pagination audit logs use cursor-based pagination. the listmetadata object returned with each response contains the cursors you need to move forward and backward through results. querying via the dashboard you can also browse your audit trail in the banata dashboard. navigate to audit logs in the sidebar to see a searchable, filterable view of all events. the dashboard lets you filter by action type, ac custom audit events the 30 auto-tracked events cover authentication and authorization. for business-specific actions — like exporting a document, approving a request, or changing a billing plan — you can log custom event via the sdk via the logauditevent helper (server-side) inside convex functions, you can log audit events directly using the logauditevent helper: exporting audit logs you can export audit logs for compliance reporting, external analysis, or long-term archival. change tracking for any update event, banata captures a before-and-after snapshot so you can see exactly what changed. this is especially useful for investigating permission escalations, profile modifications, and co tamper-evident chain audit events include hash, previoushash, and externalsinkstatus fields. each new project-scoped event hashes its canonical event payload with the previous event hash, creating a tamper-evident chain t compliance use cases soc 2 soc 2 requires logging of user authentication events, access control changes, and account lifecycle events. banata covers these automatically: hipaa hipaa requires audit trails for access to electronic health information, login monitoring, and access control audits. banata provides: gdpr gdpr requires records of processing activities, account deletion tracking, and consent management. banata helps with: best practices supplement with custom events. the 30 auto-tracked events cover authentication and authorization. add custom events for business-critical actions like data exports, billing changes, and approval workf next steps webhooks — get real-time notifications when audit events occur api keys — manage programmatic access to your project deploy — take your project to production with audit log monitoring in place"
   },
   {
     "slug": "auth-configuration",
@@ -973,6 +979,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
+        "text": "Production Domain Decision",
+        "anchor": "production-domain-decision",
+        "snippet": "Before using Banata Auth as a production authority, record the final service name and domain set for the environment you are launching. At minimum, capture:"
+      },
+      {
+        "level": 2,
         "text": "Editing Domains in the Dashboard",
         "anchor": "editing-domains-in-the-dashboard",
         "snippet": "Open your project in the dashboard and navigate to Domains in the sidebar. Click the pencil icon next to any domain to edit its value inline. Press Enter to save your change or Escape to cancel."
@@ -1020,7 +1032,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Redirects — Configure redirect URIs for your authentication flows. Environment Variables — Set the environment variables your project needs. Deploying to Production — Walk through a full production de"
       }
     ],
-    "searchText": "domains configure the base urls for your authentication services, email delivery, admin portal, and hosted ui. default domains every project ships with four default domains. these are created automatically the first time you visit the domains page in your dashboard. editing domains in the dashboard open your project in the dashboard and navigate to domains in the sidebar. click the pencil icon next to any domain to edit its value inline. press enter to save your change or escape to cancel. adding custom domains in addition to the four defaults, you can create custom domains for any additional services your project needs. custom domains when you change a domain value to your own domain (for example, switching from auth.banata.dev to auth.mycompany.com), you need to configure dns and ssl so traffic reaches your banata auth deployment. dns setup create a cname record with your dns provider that points your custom domain to your banata auth service host. ssl certificates all production domains must serve traffic over https. if you deploy to vercel, ssl certificates are provisioned automatically for custom domains. for other hosting providers, make sure you provision a security admin-only access — only users with an admin role can view or modify domain configuration. default domains are protected — the four built-in domains cannot be deleted, only edited. troubleshooting \"authentication required\" — you must be signed in as an admin to manage domains. verify that your session is active and your user has an admin role. next steps redirects — configure redirect uris for your authentication flows. environment variables — set the environment variables your project needs. deploying to production — walk through a full production de"
+    "searchText": "domains configure the base urls for your authentication services, email delivery, admin portal, and hosted ui. default domains every project ships with four default domains. these are created automatically the first time you visit the domains page in your dashboard. production domain decision before using banata auth as a production authority, record the final service name and domain set for the environment you are launching. at minimum, capture: editing domains in the dashboard open your project in the dashboard and navigate to domains in the sidebar. click the pencil icon next to any domain to edit its value inline. press enter to save your change or escape to cancel. adding custom domains in addition to the four defaults, you can create custom domains for any additional services your project needs. custom domains when you change a domain value to your own domain (for example, switching from auth.banata.dev to auth.mycompany.com), you need to configure dns and ssl so traffic reaches your banata auth deployment. dns setup create a cname record with your dns provider that points your custom domain to your banata auth service host. ssl certificates all production domains must serve traffic over https. if you deploy to vercel, ssl certificates are provisioned automatically for custom domains. for other hosting providers, make sure you provision a security admin-only access — only users with an admin role can view or modify domain configuration. default domains are protected — the four built-in domains cannot be deleted, only edited. troubleshooting \"authentication required\" — you must be signed in as an admin to manage domains. verify that your session is active and your user has an admin role. next steps redirects — configure redirect uris for your authentication flows. environment variables — set the environment variables your project needs. deploying to production — walk through a full production de"
   },
   {
     "slug": "email-otp",
@@ -1431,13 +1443,19 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Email Providers",
         "anchor": "email-providers",
-        "snippet": "Banata supports five email delivery providers out of the box:"
+        "snippet": "Banata supports six email delivery providers out of the box:"
       },
       {
         "level": 3,
         "text": "Setting Up a Provider",
         "anchor": "setting-up-a-provider",
-        "snippet": "Go to Emails > Providers in the dashboard. Click Enable on your preferred provider. Enter your API key in the field that appears. Click Save Key."
+        "snippet": "Go to Emails > Providers in the dashboard. Click Enable on your preferred provider. Enter the required credentials in the fields that appear. Click Save Key."
+      },
+      {
+        "level": 3,
+        "text": "Validate Provider Setup",
+        "anchor": "validate-provider-setup",
+        "snippet": "Before production launch, validate the active provider from Emails > Providers or through the configuration API. Validation checks that the selected provider is supported, enabled, and has the credent"
       },
       {
         "level": 3,
@@ -1512,7 +1530,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Email Templates — Customize the content and branding of the emails Banata sends Invitations — Invitation lifecycle and email delivery"
       }
     ],
-    "searchText": "emails configure email providers, control transactional emails, and send branded emails programmatically. email providers banata supports five email delivery providers out of the box: setting up a provider go to emails > providers in the dashboard. click enable on your preferred provider. enter your api key in the field that appears. click save key. send a test email once your provider is active, click the send test email button at the top of the providers page. enter a recipient address and click send. this dispatches a real email through your active provider so  email configuration you control which types of transactional emails banata sends. each type can be toggled on or off independently from emails > configuration in the dashboard. authentication emails organization emails changes take effect immediately when you toggle an email type. if you disable a type, banata will not send those emails even when your application triggers the corresponding auth flow. branded email delivery all transactional emails — including organization invitation emails — are rendered using your project's branded template system. this means every email your users receive reflects your branding automa sending branded emails from code in addition to the automatic emails banata sends during auth flows, you can send branded emails programmatically. this works from any backend — node.js, bun, hono, express, next.js, or any runtime tha using the api send a branded email with a single http request. the email uses your configured provider and branding automatically: previewing without sending render a template to html without actually sending it — useful for testing or generating email content for your own delivery pipeline: overriding email callbacks if you need complete control over how specific email types are delivered (e.g., using your own email service instead of banata's), you can provide callbacks in your auth configuration: email events you can monitor email delivery from the dashboard under emails > events. this page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password re sdk usage you can also manage email provider configuration programmatically through the banata sdk: what's next email templates — customize the content and branding of the emails banata sends invitations — invitation lifecycle and email delivery"
+    "searchText": "emails configure email providers, control transactional emails, and send branded emails programmatically. email providers banata supports six email delivery providers out of the box: setting up a provider go to emails > providers in the dashboard. click enable on your preferred provider. enter the required credentials in the fields that appear. click save key. validate provider setup before production launch, validate the active provider from emails > providers or through the configuration api. validation checks that the selected provider is supported, enabled, and has the credent send a test email once your provider is active, click the send test email button at the top of the providers page. enter a recipient address and click send. this dispatches a real email through your active provider so  email configuration you control which types of transactional emails banata sends. each type can be toggled on or off independently from emails > configuration in the dashboard. authentication emails organization emails changes take effect immediately when you toggle an email type. if you disable a type, banata will not send those emails even when your application triggers the corresponding auth flow. branded email delivery all transactional emails — including organization invitation emails — are rendered using your project's branded template system. this means every email your users receive reflects your branding automa sending branded emails from code in addition to the automatic emails banata sends during auth flows, you can send branded emails programmatically. this works from any backend — node.js, bun, hono, express, next.js, or any runtime tha using the api send a branded email with a single http request. the email uses your configured provider and branding automatically: previewing without sending render a template to html without actually sending it — useful for testing or generating email content for your own delivery pipeline: overriding email callbacks if you need complete control over how specific email types are delivered (e.g., using your own email service instead of banata's), you can provide callbacks in your auth configuration: email events you can monitor email delivery from the dashboard under emails > events. this page shows a real-time feed of email activity including deliveries, verification sends, magic link dispatches, password re sdk usage you can also manage email provider configuration programmatically through the banata sdk: what's next email templates — customize the content and branding of the emails banata sends invitations — invitation lifecycle and email delivery"
   },
   {
     "slug": "env-vars",
@@ -1549,6 +1567,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "text": "Email Provider",
         "anchor": "email-provider",
         "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Phone And WhatsApp OTP Providers",
+        "anchor": "phone-and-whatsapp-otp-providers",
+        "snippet": "Banata Auth exposes phone OTP state and endpoints. Configure delivery from SMS > Providers, or provide your own delivery function through productionReadiness.sendPhoneOtp."
       },
       {
         "level": 3,
@@ -1605,7 +1629,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Convex Integration — Deep dive into the Convex backend configuration Deploy — Ship your self-hosted instance to production Quick Start — Set up a new project from scratch"
       }
     ],
-    "searchText": "environment variables complete reference for every environment variable you need when self-hosting banata auth with convex and next.js. quick reference --- convex environment variables you set these on your convex deployment with npx convex env set. they're available to your convex functions via process.env. core social oauth providers you only need to set credentials for the providers you've enabled in your socialproviders configuration. email provider passkeys (webauthn) managing convex variables next.js environment variables (.env.local) these live in your .env.local file and are available to your next.js application at build and runtime. example .env.local local development when you run convex locally with npx convex dev, your .env.local should point to the local endpoints: next_public_ safety reminder any variable prefixed with next_public_ gets embedded in your client-side javascript bundle and is visible to every user. never put secrets in next_public_ variables. production checklist before you go live, walk through each item: template .env.local copy this into your project as a starting point: next steps convex integration — deep dive into the convex backend configuration deploy — ship your self-hosted instance to production quick start — set up a new project from scratch"
+    "searchText": "environment variables complete reference for every environment variable you need when self-hosting banata auth with convex and next.js. quick reference --- convex environment variables you set these on your convex deployment with npx convex env set. they're available to your convex functions via process.env. core social oauth providers you only need to set credentials for the providers you've enabled in your socialproviders configuration. email provider phone and whatsapp otp providers banata auth exposes phone otp state and endpoints. configure delivery from sms > providers, or provide your own delivery function through productionreadiness.sendphoneotp. passkeys (webauthn) managing convex variables next.js environment variables (.env.local) these live in your .env.local file and are available to your next.js application at build and runtime. example .env.local local development when you run convex locally with npx convex dev, your .env.local should point to the local endpoints: next_public_ safety reminder any variable prefixed with next_public_ gets embedded in your client-side javascript bundle and is visible to every user. never put secrets in next_public_ variables. production checklist before you go live, walk through each item: template .env.local copy this into your project as a starting point: next steps convex integration — deep dive into the convex backend configuration deploy — ship your self-hosted instance to production quick start — set up a new project from scratch"
   },
   {
     "slug": "hosted-ui",
@@ -2643,6 +2667,246 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
     "searchText": "passkeys webauthn-based passwordless authentication using biometrics, security keys, or device credentials. enabling passkeys from the dashboard go to authentication > methods in your project. toggle on passkeys. configure the passkey settings panel that appears (see below). from the sdk if you prefer to configure passkeys programmatically, use savedashboardconfig: configuration options > important: the rpid must be a valid domain that matches or is a registrable suffix of the page origin. for example, if your app is at https://app.mycompany.com, the rpid can be \"app.mycompany.com\" o environment-specific values in most setups, your rp id and origin differ between development and production. a common pattern is to pass environment-specific values when calling savedashboardconfig, or simply configure them sepa browser and platform support passkeys are supported on all modern browsers and platforms: cross-device authentication modern passkey implementations support cross-device authentication -- a user can use their phone to authenticate on a desktop browser via bluetooth proximity. this is handled natively by the browser a client-side api banata auth provides four passkey methods on the auth client. register a passkey users must be signed in to register a passkey. this is typically called from a security settings page: sign in with a passkey list registered passkeys delete a passkey registration component example here is a complete react component that lets users manage their passkeys from a settings page: sign-in with passkey example you can add a passkey sign-in button alongside your existing sign-in form: resident vs. non-resident credentials webauthn defines two types of credentials: combining with other methods passkeys work well alongside other authentication methods. a common pattern is to let users sign up with email and password, then register a passkey from their account settings for faster future sign- security advantages over passwords --- troubleshooting \"webauthn not supported\" the user's browser does not support the webauthn api. this is rare on modern browsers but can occur in older versions or embedded browser views (e.g., in-app browsers). you can check for support befor \"registration cancelled\" the user dismissed the browser's passkey prompt. this is not an error -- simply allow the user to try again. \"origin mismatch\" the origin in your passkey configuration does not match the actual page origin. make sure it matches exactly, including protocol and port. for example, http://localhost:3000 is not the same as http:// \"passkey not found\" no registered credentials match the rpid. this can happen if: users locked out after losing a device if a user's only passkey was on a lost device, they need a fallback sign-in method. always enable at least one alternative method (email/password, magic link, or social oauth) so users can recover acc next steps email otp -- passwordless authentication via email codes multi-factor auth -- add totp as a second factor alongside passkeys email & password -- traditional authentication as a fallback"
   },
   {
+    "slug": "phone-and-linked-devices",
+    "title": "Phone & Devices",
+    "description": "Phone OTP, WhatsApp OTP, linked-device sign-in, and offline POS terminal sessions.",
+    "section": "Configure Authentication",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Enable Phone OTP",
+        "anchor": "enable-phone-otp",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "From the Dashboard",
+        "anchor": "from-the-dashboard",
+        "snippet": "Open the Banata dashboard and select your project. Go to Authentication > Methods. Enable Phone OTP. Go to SMS > Providers and configure an SMS or WhatsApp delivery provider so Banata can send codes."
+      },
+      {
+        "level": 3,
+        "text": "For Self-Hosted Deployments",
+        "anchor": "for-self-hosted-deployments",
+        "snippet": "Self-hosted deployments can provide the delivery function through productionReadiness.sendPhoneOtp, or use the provider configuration stored from SMS > Providers. Banata stores the OTP hash, expiry, a"
+      },
+      {
+        "level": 2,
+        "text": "SMS And WhatsApp Providers",
+        "anchor": "sms-and-whatsapp-providers",
+        "snippet": "Banata supports these phone OTP delivery providers:"
+      },
+      {
+        "level": 2,
+        "text": "Phone OTP API",
+        "anchor": "phone-otp-api",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Send a Code",
+        "anchor": "send-a-code",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Verify a Code",
+        "anchor": "verify-a-code",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Resend a Code",
+        "anchor": "resend-a-code",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Link a Phone Number",
+        "anchor": "link-a-phone-number",
+        "snippet": "Use /api/auth/phone/link after the user has verified ownership of the phone number."
+      },
+      {
+        "level": 3,
+        "text": "Unlink a Phone Number",
+        "anchor": "unlink-a-phone-number",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Mobile Primary Login",
+        "anchor": "mobile-primary-login",
+        "snippet": "Mobile apps can use Phone OTP as the primary sign-in method. After the user verifies the code, your app creates or links the user account and issues a mobile_user_session."
+      },
+      {
+        "level": 2,
+        "text": "Enable Linked Devices",
+        "anchor": "enable-linked-devices",
+        "snippet": "Linked devices let a trusted session approve another device. A common example is a user approving a desktop browser from a mobile app."
+      },
+      {
+        "level": 2,
+        "text": "Linked Device Flow",
+        "anchor": "linked-device-flow",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Start Authorization",
+        "anchor": "start-authorization",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "Approve or Deny",
+        "anchor": "approve-or-deny",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "SDK Usage",
+        "anchor": "sdk-usage",
+        "snippet": "The SDK exposes the same phone and device primitives:"
+      },
+      {
+        "level": 2,
+        "text": "POS Offline Snapshots",
+        "anchor": "pos-offline-snapshots",
+        "snippet": "Offline snapshots let a trusted POS terminal continue limited work when it temporarily cannot reach Banata Auth. They are short-lived permission bundles, not a replacement for online authorization."
+      },
+      {
+        "level": 2,
+        "text": "Revocation",
+        "anchor": "revocation",
+        "snippet": ""
+      },
+      {
+        "level": 2,
+        "text": "Security Considerations",
+        "anchor": "security-considerations",
+        "snippet": "Do not put credentials in QR codes -- QR payloads should contain only a challenge or nonce. Respect polling intervals -- device polling must follow the returned pollIntervalSeconds."
+      },
+      {
+        "level": 2,
+        "text": "Troubleshooting",
+        "anchor": "troubleshooting",
+        "snippet": ""
+      },
+      {
+        "level": 3,
+        "text": "OTP is not delivered",
+        "anchor": "otp-is-not-delivered",
+        "snippet": "Confirm Phone OTP is enabled under Authentication > Methods. Check that your SMS or WhatsApp provider credentials are configured for the current environment."
+      },
+      {
+        "level": 3,
+        "text": "Device polling never completes",
+        "anchor": "device-polling-never-completes",
+        "snippet": "Check that the primary device approved the same short user code shown on the secondary device. Also confirm the secondary device is respecting the polling interval and that the device code has not exp"
+      },
+      {
+        "level": 3,
+        "text": "Offline POS snapshot is rejected",
+        "anchor": "offline-pos-snapshot-is-rejected",
+        "snippet": "Common causes:"
+      },
+      {
+        "level": 2,
+        "text": "Next Steps",
+        "anchor": "next-steps",
+        "snippet": "SDK Reference -- Manage phone and device flows from trusted backend code. Production Readiness -- Prepare phone OTP, linked devices, offline POS, and key custody for production."
+      }
+    ],
+    "searchText": "phone & devices phone otp, whatsapp otp, linked-device sign-in, and offline pos terminal sessions. enable phone otp from the dashboard open the banata dashboard and select your project. go to authentication > methods. enable phone otp. go to sms > providers and configure an sms or whatsapp delivery provider so banata can send codes. for self-hosted deployments self-hosted deployments can provide the delivery function through productionreadiness.sendphoneotp, or use the provider configuration stored from sms > providers. banata stores the otp hash, expiry, a sms and whatsapp providers banata supports these phone otp delivery providers: phone otp api send a code verify a code resend a code link a phone number use /api/auth/phone/link after the user has verified ownership of the phone number. unlink a phone number mobile primary login mobile apps can use phone otp as the primary sign-in method. after the user verifies the code, your app creates or links the user account and issues a mobile_user_session. enable linked devices linked devices let a trusted session approve another device. a common example is a user approving a desktop browser from a mobile app. linked device flow start authorization approve or deny sdk usage the sdk exposes the same phone and device primitives: pos offline snapshots offline snapshots let a trusted pos terminal continue limited work when it temporarily cannot reach banata auth. they are short-lived permission bundles, not a replacement for online authorization. revocation security considerations do not put credentials in qr codes -- qr payloads should contain only a challenge or nonce. respect polling intervals -- device polling must follow the returned pollintervalseconds. troubleshooting otp is not delivered confirm phone otp is enabled under authentication > methods. check that your sms or whatsapp provider credentials are configured for the current environment. device polling never completes check that the primary device approved the same short user code shown on the secondary device. also confirm the secondary device is respecting the polling interval and that the device code has not exp offline pos snapshot is rejected common causes: next steps sdk reference -- manage phone and device flows from trusted backend code. production readiness -- prepare phone otp, linked devices, offline pos, and key custody for production."
+  },
+  {
+    "slug": "production-readiness",
+    "title": "Production Readiness",
+    "description": "Launch gates, security runbooks, and operational controls for running Banata Auth as an identity authority.",
+    "section": "Platform Operators",
+    "headings": [
+      {
+        "level": 2,
+        "text": "Required Launch Gates",
+        "anchor": "required-launch-gates",
+        "snippet": "Full monorepo typecheck and test suite pass in CI. Browser E2E tests pass for email/password, social OAuth, email OTP, phone OTP, passkeys, MFA, hosted UI callback, logout, and session refresh."
+      },
+      {
+        "level": 2,
+        "text": "Customer App Readiness Harness",
+        "anchor": "customer-app-readiness-harness",
+        "snippet": "Use apps/example-app as the customer-style integration harness. The example app calls Banata Auth through its own server, injects BANATA_API_KEY server-side, proxies /api/auth/* to BANATA_AUTH_URL, ca"
+      },
+      {
+        "level": 2,
+        "text": "Session Classes",
+        "anchor": "session-classes",
+        "snippet": "Every session or token must carry an explicit class:"
+      },
+      {
+        "level": 2,
+        "text": "Admin Portal Least Privilege",
+        "anchor": "admin-portal-least-privilege",
+        "snippet": "Admin Portal links are generated through the portal.create permission only. Do not grant dashboard-wide permissions to customer admins just so they can configure SSO, Directory Sync, audit logs, log s"
+      },
+      {
+        "level": 2,
+        "text": "Token Contract",
+        "anchor": "token-contract",
+        "snippet": "Access tokens must be short-lived and include:"
+      },
+      {
+        "level": 2,
+        "text": "Security Headers And Origin Policy",
+        "anchor": "security-headers-and-origin-policy",
+        "snippet": "Next.js integrations can use buildBanataSecurityHeaders or applyBanataSecurityHeaders from @banata-auth/nextjs to apply the baseline production headers: CSP, HSTS, X-Content-Type-Options, referrer pol"
+      },
+      {
+        "level": 2,
+        "text": "Phone And WhatsApp OTP",
+        "anchor": "phone-and-whatsapp-otp",
+        "snippet": "Phone OTP flows use /api/auth/phone/start and /api/auth/phone/verify. The backend stores OTP hashes, not raw OTPs, and tracks attempts, resend count, expiry, lockout, channel, provider message ID, IP "
+      },
+      {
+        "level": 2,
+        "text": "Linked Devices And POS Terminals",
+        "anchor": "linked-devices-and-pos-terminals",
+        "snippet": "Linked devices use /api/auth/device/start, /api/auth/device/poll, /api/auth/device/approve, /api/auth/device/deny, /api/auth/device/revoke, and /api/auth/devices."
+      },
+      {
+        "level": 2,
+        "text": "Key Custody Contract",
+        "anchor": "key-custody-contract",
+        "snippet": "Production and staging environments must keep these key purposes separated: app secret, JWT signing, vault encryption, refresh-token pepper, webhook signing, and offline POS snapshot signing. Shared c"
+      },
+      {
+        "level": 2,
+        "text": "Key Rotation Runbook",
+        "anchor": "key-rotation-runbook",
+        "snippet": "Create new signing key material and mark it active for newly issued tokens. Keep the previous signing key available for verification until the longest valid token expires."
+      },
+      {
+        "level": 2,
+        "text": "Operations Evidence Contract",
+        "anchor": "operations-evidence-contract",
+        "snippet": "Shared contracts expose validateOperationsReadinessEvidence for production operations proof. The evidence must cover required monitoring signals for auth errors, p95 latency, token issuance, OTP sends"
+      },
+      {
+        "level": 2,
+        "text": "Mature Platform Capabilities",
+        "anchor": "mature-platform-capabilities",
+        "snippet": "P2 and enterprise-only capabilities are tracked separately from production launch gates. Shared contracts expose validateMaturityReadinessPlan, and testing/auth-maturity-readiness.json records BYOK, d"
+      },
+      {
+        "level": 2,
+        "text": "Incident Runbooks",
+        "anchor": "incident-runbooks",
+        "snippet": "Minimum runbooks:"
+      }
+    ],
+    "searchText": "production readiness launch gates, security runbooks, and operational controls for running banata auth as an identity authority. required launch gates full monorepo typecheck and test suite pass in ci. browser e2e tests pass for email/password, social oauth, email otp, phone otp, passkeys, mfa, hosted ui callback, logout, and session refresh. customer app readiness harness use apps/example-app as the customer-style integration harness. the example app calls banata auth through its own server, injects banata_api_key server-side, proxies /api/auth/* to banata_auth_url, ca session classes every session or token must carry an explicit class: admin portal least privilege admin portal links are generated through the portal.create permission only. do not grant dashboard-wide permissions to customer admins just so they can configure sso, directory sync, audit logs, log s token contract access tokens must be short-lived and include: security headers and origin policy next.js integrations can use buildbanatasecurityheaders or applybanatasecurityheaders from @banata-auth/nextjs to apply the baseline production headers: csp, hsts, x-content-type-options, referrer pol phone and whatsapp otp phone otp flows use /api/auth/phone/start and /api/auth/phone/verify. the backend stores otp hashes, not raw otps, and tracks attempts, resend count, expiry, lockout, channel, provider message id, ip  linked devices and pos terminals linked devices use /api/auth/device/start, /api/auth/device/poll, /api/auth/device/approve, /api/auth/device/deny, /api/auth/device/revoke, and /api/auth/devices. key custody contract production and staging environments must keep these key purposes separated: app secret, jwt signing, vault encryption, refresh-token pepper, webhook signing, and offline pos snapshot signing. shared c key rotation runbook create new signing key material and mark it active for newly issued tokens. keep the previous signing key available for verification until the longest valid token expires. operations evidence contract shared contracts expose validateoperationsreadinessevidence for production operations proof. the evidence must cover required monitoring signals for auth errors, p95 latency, token issuance, otp sends mature platform capabilities p2 and enterprise-only capabilities are tracked separately from production launch gates. shared contracts expose validatematurityreadinessplan, and testing/auth-maturity-readiness.json records byok, d incident runbooks minimum runbooks:"
+  },
+  {
     "slug": "project-structure",
     "title": "Project Structure",
     "description": "The files and packages you add to your app to integrate with Banata Auth, and what Banata manages for you.",
@@ -2718,16 +2982,22 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "One project per application is the most common setup. But there are good reasons to use multiple projects:"
       },
       {
+        "level": 3,
+        "text": "Environment Separation",
+        "anchor": "environment-separation",
+        "snippet": "For production systems, use separate projects for development, staging, and production. Each environment should have its own API keys, domains, redirect URLs, OAuth apps, email or SMS providers, webho"
+      },
+      {
         "level": 2,
         "text": "Your Default Project",
         "anchor": "your-default-project",
-        "snippet": "When you first sign in to the Banata dashboard, a default project is automatically created for you. This is your starting point — you can use it immediately or create additional projects as needed."
+        "snippet": "When you first sign in to the Banata dashboard, a default project is automatically created for you. This is your starting point â€” you can use it immediately or create additional projects as needed."
       },
       {
         "level": 2,
         "text": "Switching Projects in the Dashboard",
         "anchor": "switching-projects-in-the-dashboard",
-        "snippet": "The project switcher in the dashboard lets you navigate between your projects. When you switch projects, the entire dashboard context changes — the users list, organizations, roles, providers, email t"
+        "snippet": "The project switcher in the dashboard lets you navigate between your projects. When you switch projects, the entire dashboard context changes â€” the users list, organizations, roles, providers, email"
       },
       {
         "level": 2,
@@ -2745,10 +3015,10 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "API Keys — How to create and manage project-scoped API keys Project Structure — What files to add to your app Quick Start — Set up your first app"
+        "snippet": "API Keys â€” How to create and manage project-scoped API keys Project Structure â€” What files to add to your app Quick Start â€” Set up your first app"
       }
     ],
-    "searchText": "projects projects are the isolation boundary in banata auth. each project has its own users, organizations, roles, and configuration. what a project contains each project is a completely independent auth environment with its own: when to use multiple projects one project per application is the most common setup. but there are good reasons to use multiple projects: your default project when you first sign in to the banata dashboard, a default project is automatically created for you. this is your starting point — you can use it immediately or create additional projects as needed. switching projects in the dashboard the project switcher in the dashboard lets you navigate between your projects. when you switch projects, the entire dashboard context changes — the users list, organizations, roles, providers, email t how your app connects to a project your app connects to a project through an api key: managing projects with the sdk you can list and manage projects programmatically using the admin sdk: next steps api keys — how to create and manage project-scoped api keys project structure — what files to add to your app quick start — set up your first app"
+    "searchText": "projects projects are the isolation boundary in banata auth. each project has its own users, organizations, roles, and configuration. what a project contains each project is a completely independent auth environment with its own: when to use multiple projects one project per application is the most common setup. but there are good reasons to use multiple projects: environment separation for production systems, use separate projects for development, staging, and production. each environment should have its own api keys, domains, redirect urls, oauth apps, email or sms providers, webho your default project when you first sign in to the banata dashboard, a default project is automatically created for you. this is your starting point â€” you can use it immediately or create additional projects as needed. switching projects in the dashboard the project switcher in the dashboard lets you navigate between your projects. when you switch projects, the entire dashboard context changes â€” the users list, organizations, roles, providers, email how your app connects to a project your app connects to a project through an api key: managing projects with the sdk you can list and manage projects programmatically using the admin sdk: next steps api keys â€” how to create and manage project-scoped api keys project structure â€” what files to add to your app quick start â€” set up your first app"
   },
   {
     "slug": "quickstart",
@@ -2940,6 +3210,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Radar's rate limiting detection rule complements Banata Auth's built-in per-endpoint rate limiting. The built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts"
       },
       {
+        "level": 3,
+        "text": "Rate Limit Operations",
+        "anchor": "rate-limit-operations",
+        "snippet": "Production operators can inspect and clear live limiter buckets through the SDK:"
+      },
+      {
         "level": 2,
         "text": "Troubleshooting",
         "anchor": "troubleshooting",
@@ -2952,7 +3228,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Bot Protection — Full API reference for @banata-auth/nextjs/bot-protection Settings — Project-level configuration Audit Logs — Track security events and suspicious activity"
       }
     ],
-    "searchText": "radar layered defense against bots, credential stuffing, and automated threats with configurable providers and detection rules. supported providers radar supports four bot detection providers. you can switch between them at any time from the dashboard. enable and configure radar in the dashboard turn on radar open your project in the dashboard navigate to radar in the sidebar click enable protection the status card turns green to confirm your project is protected configure detection rules click the configuration tab toggle individual detection rules on or off (see the table below for what each rule does) changes save automatically set up a bot detection provider in the configuration tab, toggle bot detection on under bot detection provider, select your provider from the dropdown enter the required credentials for that provider review the overview tab the overview tab shows detection statistics — total detections, allowed requests, challenged requests, and blocked requests — along with a timeline chart. these populate once radar is handling real tr detection rules radar provides four detection rules that work alongside your chosen bot provider for defense in depth. add bot protection to your app once you have configured a provider in the dashboard, wire up your next.js route handler to verify requests at runtime. config-aware approach (recommended) this approach reads your provider credentials from the dashboard automatically. when you change the provider or credentials in the dashboard, the change takes effect within one minute. direct provider approach (vercel botid) if you are deployed on vercel with botid installed, you can wire it up directly without reading from the dashboard config. combining with rate limiting radar's rate limiting detection rule complements banata auth's built-in per-endpoint rate limiting. the built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts troubleshooting \"bot detected. access denied.\" (403) — the provider flagged the request as automated. verify that the provider's client-side widget loaded correctly in your layout or form, and check for browser exten next steps bot protection — full api reference for @banata-auth/nextjs/bot-protection settings — project-level configuration audit logs — track security events and suspicious activity"
+    "searchText": "radar layered defense against bots, credential stuffing, and automated threats with configurable providers and detection rules. supported providers radar supports four bot detection providers. you can switch between them at any time from the dashboard. enable and configure radar in the dashboard turn on radar open your project in the dashboard navigate to radar in the sidebar click enable protection the status card turns green to confirm your project is protected configure detection rules click the configuration tab toggle individual detection rules on or off (see the table below for what each rule does) changes save automatically set up a bot detection provider in the configuration tab, toggle bot detection on under bot detection provider, select your provider from the dropdown enter the required credentials for that provider review the overview tab the overview tab shows detection statistics — total detections, allowed requests, challenged requests, and blocked requests — along with a timeline chart. these populate once radar is handling real tr detection rules radar provides four detection rules that work alongside your chosen bot provider for defense in depth. add bot protection to your app once you have configured a provider in the dashboard, wire up your next.js route handler to verify requests at runtime. config-aware approach (recommended) this approach reads your provider credentials from the dashboard automatically. when you change the provider or credentials in the dashboard, the change takes effect within one minute. direct provider approach (vercel botid) if you are deployed on vercel with botid installed, you can wire it up directly without reading from the dashboard config. combining with rate limiting radar's rate limiting detection rule complements banata auth's built-in per-endpoint rate limiting. the built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts rate limit operations production operators can inspect and clear live limiter buckets through the sdk: troubleshooting \"bot detected. access denied.\" (403) — the provider flagged the request as automated. verify that the provider's client-side widget loaded correctly in your layout or form, and check for browser exten next steps bot protection — full api reference for @banata-auth/nextjs/bot-protection settings — project-level configuration audit logs — track security events and suspicious activity"
   },
   {
     "slug": "react",
@@ -3303,7 +3579,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Step 1: Create Your Permissions",
         "anchor": "step-1-create-your-permissions",
-        "snippet": "Open your project in the dashboard. Navigate to Authorization > Permissions. Click Create Permission. Enter a slug using the resource.action format (for example, employee.read)."
+        "snippet": "Open your project in the dashboard. Navigate to Authorization > Permissions. Click Create Permission. Enter a slug using the resource.action format, or app.product_surface.resource.action for multi-ap"
       },
       {
         "level": 3,
@@ -3384,7 +3660,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Organizations Overview — Learn how organizations work and how members are managed. API Keys — Set up API key authentication for your project. Getting Started — Return to the setup guide if you haven't"
       }
     ],
-    "searchText": "roles & permissions define custom roles, create permissions, and control what users can do within organizations. the default role: super_admin when your project is created, banata seeds a single role called super_admin. this role has full access to every built-in permission and serves as the starting point for your authorization model. permission model permissions in banata are project-scoped. that means the permission catalog you define is shared across all organizations in your project. individual organizations do not maintain separate permission  built-in permissions these are seeded automatically when your project is created. they cover core platform operations and cannot be deleted or edited. examples include: custom permissions these are the permissions you create for your own application logic. use the resource.action naming convention to keep things consistent. examples: creating roles and permissions from the dashboard the dashboard gives you a visual way to manage your entire authorization model. follow these steps: step 1: create your permissions open your project in the dashboard. navigate to authorization > permissions. click create permission. enter a slug using the resource.action format (for example, employee.read). step 2: create your roles navigate to authorization > roles. click create role. enter a slug (for example, hr_manager), a display name, and an optional description. step 3: assign permissions to roles from the roles list, find the role you just created and click manage permissions. you will see the full list of available permissions (both built-in and custom). step 4: assign roles to members open the organization member screen. select a member and assign them the appropriate role slug. creating roles and permissions via the sdk you can also manage roles and permissions programmatically using the banata sdk. initialize the client manage roles manage permissions assigning and revoking roles roles are assigned at the organization level. a user can hold a role within a specific organization. permission checks use permission checks to determine whether a user is allowed to perform a specific action. you can pass the permission as a { resource, action } object. check a single permission check multiple permissions use the operator field to require that the user has all of the listed permissions: best practices keep super_admin limited. only assign it to trusted organization owners. create purpose-built roles for everyone else. next steps organizations overview — learn how organizations work and how members are managed. api keys — set up api key authentication for your project. getting started — return to the setup guide if you haven't"
+    "searchText": "roles & permissions define custom roles, create permissions, and control what users can do within organizations. the default role: super_admin when your project is created, banata seeds a single role called super_admin. this role has full access to every built-in permission and serves as the starting point for your authorization model. permission model permissions in banata are project-scoped. that means the permission catalog you define is shared across all organizations in your project. individual organizations do not maintain separate permission  built-in permissions these are seeded automatically when your project is created. they cover core platform operations and cannot be deleted or edited. examples include: custom permissions these are the permissions you create for your own application logic. use the resource.action naming convention to keep things consistent. examples: creating roles and permissions from the dashboard the dashboard gives you a visual way to manage your entire authorization model. follow these steps: step 1: create your permissions open your project in the dashboard. navigate to authorization > permissions. click create permission. enter a slug using the resource.action format, or app.product_surface.resource.action for multi-ap step 2: create your roles navigate to authorization > roles. click create role. enter a slug (for example, hr_manager), a display name, and an optional description. step 3: assign permissions to roles from the roles list, find the role you just created and click manage permissions. you will see the full list of available permissions (both built-in and custom). step 4: assign roles to members open the organization member screen. select a member and assign them the appropriate role slug. creating roles and permissions via the sdk you can also manage roles and permissions programmatically using the banata sdk. initialize the client manage roles manage permissions assigning and revoking roles roles are assigned at the organization level. a user can hold a role within a specific organization. permission checks use permission checks to determine whether a user is allowed to perform a specific action. you can pass the permission as a { resource, action } object. check a single permission check multiple permissions use the operator field to require that the user has all of the listed permissions: best practices keep super_admin limited. only assign it to trusted organization owners. create purpose-built roles for everyone else. next steps organizations overview — learn how organizations work and how members are managed. api keys — set up api key authentication for your project. getting started — return to the setup guide if you haven't"
   },
   {
     "slug": "scim",
@@ -3577,6 +3853,18 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
+        "text": "Phone and Devices",
+        "anchor": "phone-and-devices",
+        "snippet": "Use banata.phoneAndDevices from trusted backend code to start Phone OTP flows, approve linked devices, revoke devices, and issue POS offline snapshots."
+      },
+      {
+        "level": 2,
+        "text": "API Key Rotation",
+        "anchor": "api-key-rotation",
+        "snippet": ""
+      },
+      {
+        "level": 2,
         "text": "Webhooks",
         "anchor": "webhooks",
         "snippet": ""
@@ -3600,7 +3888,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "API Keys — Creating and managing API keys Organizations — Multi-tenant workspaces Roles & Permissions — Access control Webhooks — Event-driven integrations"
       }
     ],
-    "searchText": "sdk reference the admin sdk for managing users, organizations, roles, webhooks, and project configuration programmatically. getting started initialize the sdk with your project-scoped api key: resource managers the sdk organizes its functionality into resource managers, each accessed as a property on the banataauth instance: user management organizations roles and permissions configuration the sdk can update the same project configuration that the dashboard manages: auth methods branding social provider credentials webhooks audit logs error handling the sdk throws typed errors from @banata-auth/shared: next steps api keys — creating and managing api keys organizations — multi-tenant workspaces roles & permissions — access control webhooks — event-driven integrations"
+    "searchText": "sdk reference the admin sdk for managing users, organizations, roles, webhooks, and project configuration programmatically. getting started initialize the sdk with your project-scoped api key: resource managers the sdk organizes its functionality into resource managers, each accessed as a property on the banataauth instance: user management organizations roles and permissions configuration the sdk can update the same project configuration that the dashboard manages: auth methods branding social provider credentials phone and devices use banata.phoneanddevices from trusted backend code to start phone otp flows, approve linked devices, revoke devices, and issue pos offline snapshots. api key rotation webhooks audit logs error handling the sdk throws typed errors from @banata-auth/shared: next steps api keys — creating and managing api keys organizations — multi-tenant workspaces roles & permissions — access control webhooks — event-driven integrations"
   },
   {
     "slug": "self-hosting",
@@ -3945,7 +4233,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Adding Credentials via Dashboard",
         "anchor": "adding-credentials-via-dashboard",
-        "snippet": "Go to Authentication > Providers in your project. Select the provider you want to configure. Enter the Client ID and Client Secret. Save."
+        "snippet": "Go to Authentication > Providers in your project. Select the provider you want to configure. Enter the Client ID and Client Secret. Save. Run provider validation and register every returned HTTPS call"
       },
       {
         "level": 3,
@@ -4068,7 +4356,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Magic Links — Passwordless authentication via email Multi-Factor Auth — Add TOTP as a second factor Organizations — Multi-tenant workspaces"
       }
     ],
-    "searchText": "social oauth add social login with google, github, apple, microsoft, and more. step-by-step setup for each provider. supported providers --- setting up a provider the setup is the same for every provider: callback url pattern managed banata projects use the banata auth domain for all provider callbacks: adding credentials via dashboard go to authentication > providers in your project. select the provider you want to configure. enter the client id and client secret. save. adding credentials via convex environment for self-hosted setups, set the credentials on your convex deployment: provider setup guides google go to google cloud console > credentials. create a new oauth client id (web application type). add authorized redirect uri: https://auth.banata.dev/api/auth/callback/google github go to github developer settings > oauth apps. click new oauth app. set homepage url to your app url, for example http://localhost:3000. set authorization callback url to https://auth.banata.dev/api/au apple go to apple developer portal. create an app id with sign in with apple enabled. create a services id (this is your clientid). configure the redirect url: https://auth.banata.dev/api/auth/callback/appl microsoft (azure ad) go to azure portal > app registrations. click new registration. set redirect uri to https://auth.banata.dev/api/auth/callback/microsoft (web platform). note the application (client) id and directory ( facebook go to meta for developers. create a new app (consumer type). add facebook login and set the redirect uri: https://auth.banata.dev/api/auth/callback/facebook twitter (x) go to the twitter developer portal. create a new project and app with oauth 2.0 enabled. set callback url: https://auth.banata.dev/api/auth/callback/twitter discord go to the discord developer portal. create a new application. go to oauth2 and add redirect: https://auth.banata.dev/api/auth/callback/discord spotify, twitch, linkedin follow the same pattern on each provider's developer portal: spotify dashboard twitch developer console linkedin developer portal client-side usage initiating social sign-in using the socialbuttons component how the oauth flow works here's what happens when a user clicks \"sign in with github\": account linking for managed banata projects, the provider callback registered in github or google is on your banata auth domain, for example https://auth.banata.dev/api/auth/callback/{provider}. the callbackurl in au troubleshooting \"redirect_uri_mismatch\" error the callback url in your provider settings doesn't match the actual url. make sure it's exactly: managed banata: https://auth.banata.dev/api/auth/callback/{provider} \"access denied\" after granting permission verify the client secret is correctly set. check that the provider is configured in your banata project. for microsoft, make sure tenantid is set. user created without name or email some providers don't return all user fields by default. check the provider's scope settings to ensure you're requesting the right permissions. next steps magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
+    "searchText": "social oauth add social login with google, github, apple, microsoft, and more. step-by-step setup for each provider. supported providers --- setting up a provider the setup is the same for every provider: callback url pattern managed banata projects use the banata auth domain for all provider callbacks: adding credentials via dashboard go to authentication > providers in your project. select the provider you want to configure. enter the client id and client secret. save. run provider validation and register every returned https call adding credentials via convex environment for self-hosted setups, set the credentials on your convex deployment: provider setup guides google go to google cloud console > credentials. create a new oauth client id (web application type). add authorized redirect uri: https://auth.banata.dev/api/auth/callback/google github go to github developer settings > oauth apps. click new oauth app. set homepage url to your app url, for example http://localhost:3000. set authorization callback url to https://auth.banata.dev/api/au apple go to apple developer portal. create an app id with sign in with apple enabled. create a services id (this is your clientid). configure the redirect url: https://auth.banata.dev/api/auth/callback/appl microsoft (azure ad) go to azure portal > app registrations. click new registration. set redirect uri to https://auth.banata.dev/api/auth/callback/microsoft (web platform). note the application (client) id and directory ( facebook go to meta for developers. create a new app (consumer type). add facebook login and set the redirect uri: https://auth.banata.dev/api/auth/callback/facebook twitter (x) go to the twitter developer portal. create a new project and app with oauth 2.0 enabled. set callback url: https://auth.banata.dev/api/auth/callback/twitter discord go to the discord developer portal. create a new application. go to oauth2 and add redirect: https://auth.banata.dev/api/auth/callback/discord spotify, twitch, linkedin follow the same pattern on each provider's developer portal: spotify dashboard twitch developer console linkedin developer portal client-side usage initiating social sign-in using the socialbuttons component how the oauth flow works here's what happens when a user clicks \"sign in with github\": account linking for managed banata projects, the provider callback registered in github or google is on your banata auth domain, for example https://auth.banata.dev/api/auth/callback/{provider}. the callbackurl in au troubleshooting \"redirect_uri_mismatch\" error the callback url in your provider settings doesn't match the actual url. make sure it's exactly: managed banata: https://auth.banata.dev/api/auth/callback/{provider} \"access denied\" after granting permission verify the client secret is correctly set. check that the provider is configured in your banata project. for microsoft, make sure tenantid is set. user created without name or email some providers don't return all user fields by default. check the provider's scope settings to ensure you're requesting the right permissions. next steps magic links — passwordless authentication via email multi-factor auth — add totp as a second factor organizations — multi-tenant workspaces"
   },
   {
     "slug": "sso",
@@ -4167,6 +4455,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Redirect the user to their IdP for authentication:"
       },
       {
+        "level": 3,
+        "text": "Validate Provider Setup",
+        "anchor": "validate-provider-setup",
+        "snippet": "Before enabling an enterprise connection for production routing, validate its required fields and domain status:"
+      },
+      {
         "level": 2,
         "text": "Connection Field Reference",
         "anchor": "connection-field-reference",
@@ -4200,7 +4494,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 3,
         "text": "Domain Verification",
         "anchor": "domain-verification",
-        "snippet": "When you associate domains with an SSO connection, Banata Auth enforces that only users with matching email domains are routed through that connection. This prevents unauthorized domain claims and ens"
+        "snippet": "When you associate domains with an SSO connection, Banata Auth enforces that only users with matching verified email domains are routed through that connection. This prevents unauthorized domain claim"
       },
       {
         "level": 3,
@@ -4218,10 +4512,10 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "level": 2,
         "text": "Next Steps",
         "anchor": "next-steps",
-        "snippet": "Organizations — Learn how to create and manage the organizations that SSO connections belong to. Authentication — See how SSO fits into the broader Banata Auth authentication flow."
+        "snippet": "Organizations -- Learn how to create and manage the organizations that SSO connections belong to. Domains -- Verify the email domains used for SSO routing."
       }
     ],
-    "searchText": "single sign-on (sso) enterprise sso with saml 2.0 and openid connect (oidc) for organization-level authentication. supported protocols banata auth supports the two industry-standard sso protocols: how sso works organization-scoped connections every sso connection belongs to an organization. this gives you fine-grained control over which identity providers serve which customers: domain-based routing when a user initiates sso login, banata auth uses their email domain to determine which identity provider to route them to: just-in-time (jit) provisioning when a user authenticates via sso for the first time and no matching account exists, banata auth automatically: dashboard setup the fastest way to set up sso is through the banata auth dashboard. creating an sso connection navigate to the sso section in the dashboard. click create connection. select the organization that this connection belongs to. choose the protocol: saml 2.0 or oidc. configuring saml 2.0 after creating a saml connection, you need to exchange metadata between banata auth and the idp. configuring oidc for oidc connections, you'll need the following from the idp: sdk usage you can also manage sso connections programmatically with the banata auth sdk. initialize the client list sso connections retrieve all sso connections for your project: get a specific connection fetch details for a single connection by id: create a connection initiate sso login redirect the user to their idp for authentication: connection field reference each protocol requires different configuration fields. use these tables as a reference when setting up connections. saml 2.0 oidc fields marked as provided by banata auth (acsurl, spentityid) are generated when the connection is created and must be configured in the idp. security project scoping sso connections are scoped to your project. a connection created in one project cannot be accessed or used by another project, even within the same account. this ensures tenant isolation in multi-proj domain verification when you associate domains with an sso connection, banata auth enforces that only users with matching email domains are routed through that connection. this prevents unauthorized domain claims and ens signature validation for saml connections, banata auth validates the xml signature on every assertion using the x.509 certificate you provided during setup. assertions with invalid, expired, or missing signatures are reje additional safeguards replay protection — saml assertions include a unique id and timestamp. banata auth rejects assertions that have already been consumed or that fall outside the allowed time window. next steps organizations — learn how to create and manage the organizations that sso connections belong to. authentication — see how sso fits into the broader banata auth authentication flow."
+    "searchText": "single sign-on (sso) enterprise sso with saml 2.0 and openid connect (oidc) for organization-level authentication. supported protocols banata auth supports the two industry-standard sso protocols: how sso works organization-scoped connections every sso connection belongs to an organization. this gives you fine-grained control over which identity providers serve which customers: domain-based routing when a user initiates sso login, banata auth uses their email domain to determine which identity provider to route them to: just-in-time (jit) provisioning when a user authenticates via sso for the first time and no matching account exists, banata auth automatically: dashboard setup the fastest way to set up sso is through the banata auth dashboard. creating an sso connection navigate to the sso section in the dashboard. click create connection. select the organization that this connection belongs to. choose the protocol: saml 2.0 or oidc. configuring saml 2.0 after creating a saml connection, you need to exchange metadata between banata auth and the idp. configuring oidc for oidc connections, you'll need the following from the idp: sdk usage you can also manage sso connections programmatically with the banata auth sdk. initialize the client list sso connections retrieve all sso connections for your project: get a specific connection fetch details for a single connection by id: create a connection initiate sso login redirect the user to their idp for authentication: validate provider setup before enabling an enterprise connection for production routing, validate its required fields and domain status: connection field reference each protocol requires different configuration fields. use these tables as a reference when setting up connections. saml 2.0 oidc fields marked as provided by banata auth (acsurl, spentityid) are generated when the connection is created and must be configured in the idp. security project scoping sso connections are scoped to your project. a connection created in one project cannot be accessed or used by another project, even within the same account. this ensures tenant isolation in multi-proj domain verification when you associate domains with an sso connection, banata auth enforces that only users with matching verified email domains are routed through that connection. this prevents unauthorized domain claim signature validation for saml connections, banata auth validates the xml signature on every assertion using the x.509 certificate you provided during setup. assertions with invalid, expired, or missing signatures are reje additional safeguards replay protection — saml assertions include a unique id and timestamp. banata auth rejects assertions that have already been consumed or that fall outside the allowed time window. next steps organizations -- learn how to create and manage the organizations that sso connections belong to. domains -- verify the email domains used for sso routing."
   },
   {
     "slug": "username-auth",
@@ -4543,6 +4837,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 2,
+        "text": "Delivery Operations",
+        "anchor": "delivery-operations",
+        "snippet": "Operators can inspect delivery records and create replay records for idempotent reprocessing:"
+      },
+      {
+        "level": 2,
         "text": "Available Events",
         "anchor": "available-events",
         "snippet": "You can subscribe to any combination of the following events."
@@ -4596,6 +4896,6 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Audit Logs — Track and query a detailed history of auth events. SDK Reference — Explore the full SDK API, including webhook management methods. Deploy — Take your project to production with monitoring"
       }
     ],
-    "searchText": "webhooks receive real-time notifications when auth events occur — user sign-ups, session changes, organization updates, and more. setting up webhooks from the dashboard go to settings > webhooks in your project dashboard. click add endpoint. enter your endpoint url (e.g., https://myapp.com/api/webhooks/banata). select which events you want to receive. using the sdk you can also manage webhook endpoints programmatically: webhook payload format every webhook arrives as a post request with a json body: headers each request includes these headers: signing and verification every webhook is signed so you can confirm it was sent by banata auth and has not been tampered with. signature format the webhook-signature header looks like this: using the sdk (recommended) the sdk's constructevent method handles verification for you. it is async because it uses the web crypto api under the hood — always await it. manual verification if you prefer to verify signatures without the sdk (or you are using a language other than typescript), here is the process: retry policy if your endpoint returns a non-2xx status code (or is unreachable), banata auth retries with exponential backoff: available events you can subscribe to any combination of the following events. user events session events organization events security events --- complete next.js handler example here is a full webhook handler you can drop into a next.js app router project: testing locally during development, your local server is not publicly accessible. use a tunneling tool like ngrok to expose it: security best practices always verify signatures. never process a webhook payload without checking the hmac signature first. check timestamp freshness. reject webhooks with timestamps older than 5 minutes to guard against re next steps audit logs — track and query a detailed history of auth events. sdk reference — explore the full sdk api, including webhook management methods. deploy — take your project to production with monitoring"
+    "searchText": "webhooks receive real-time notifications when auth events occur — user sign-ups, session changes, organization updates, and more. setting up webhooks from the dashboard go to settings > webhooks in your project dashboard. click add endpoint. enter your endpoint url (e.g., https://myapp.com/api/webhooks/banata). select which events you want to receive. using the sdk you can also manage webhook endpoints programmatically: webhook payload format every webhook arrives as a post request with a json body: headers each request includes these headers: signing and verification every webhook is signed so you can confirm it was sent by banata auth and has not been tampered with. signature format the webhook-signature header looks like this: using the sdk (recommended) the sdk's constructevent method handles verification for you. it is async because it uses the web crypto api under the hood — always await it. manual verification if you prefer to verify signatures without the sdk (or you are using a language other than typescript), here is the process: retry policy if your endpoint returns a non-2xx status code (or is unreachable), banata auth retries with exponential backoff: delivery operations operators can inspect delivery records and create replay records for idempotent reprocessing: available events you can subscribe to any combination of the following events. user events session events organization events security events --- complete next.js handler example here is a full webhook handler you can drop into a next.js app router project: testing locally during development, your local server is not publicly accessible. use a tunneling tool like ngrok to expose it: security best practices always verify signatures. never process a webhook payload without checking the hmac signature first. check timestamp freshness. reject webhooks with timestamps older than 5 minutes to guard against re next steps audit logs — track and query a detailed history of auth events. sdk reference — explore the full sdk api, including webhook management methods. deploy — take your project to production with monitoring"
   }
 ];

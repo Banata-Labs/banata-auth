@@ -1,2 +1,9 @@
 
 .env.local
+.next
+.turbo
+.convex
+node_modules
+dist
+data
+tsconfig.tsbuildinfo

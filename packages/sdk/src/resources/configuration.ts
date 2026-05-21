@@ -23,6 +23,26 @@ export interface SaveSocialProviderCredentialOptions {
 	projectId?: string;
 }
 
+export interface ValidateSocialProviderResult {
+	providerId: string;
+	ready: boolean;
+	errors: Array<{ code: string; message: string }>;
+	warnings: Array<{ code: string; message: string }>;
+	callbackUrls: string[];
+}
+
+export interface RateLimitBucket {
+	id: string;
+	key: string;
+	projectId?: string;
+	ip: string | null;
+	path: string | null;
+	identifier: string | null;
+	count: number;
+	lastRequest: number;
+	ageSeconds: number;
+}
+
 export interface AuthConfiguration {
 	roleAssignment: boolean;
 	multipleRoles: boolean;
@@ -88,6 +108,36 @@ export class Configuration {
 		return this.http.post(
 			"/api/auth/banata/config/social-providers/delete",
 			this.http.withProjectScope({ providerId }, projectId),
+		);
+	}
+
+	async validateSocialProviderSetup(
+		providerId: string,
+		projectId?: string,
+	): Promise<ValidateSocialProviderResult> {
+		return this.http.post<ValidateSocialProviderResult>(
+			"/api/auth/banata/config/social-providers/validate",
+			this.http.withProjectScope({ providerId }, projectId),
+		);
+	}
+
+	async listRateLimitBuckets(input: {
+		projectId?: string;
+		limit?: number;
+	} = {}): Promise<{ buckets: RateLimitBucket[] }> {
+		return this.http.post<{ buckets: RateLimitBucket[] }>(
+			"/api/auth/banata/config/rate-limits/list",
+			this.http.withProjectScope(input, input.projectId),
+		);
+	}
+
+	async resetRateLimitBucket(input: {
+		projectId?: string;
+		key?: string;
+	}): Promise<{ success: boolean; scope: "bucket" | "project" }> {
+		return this.http.post<{ success: boolean; scope: "bucket" | "project" }>(
+			"/api/auth/banata/config/rate-limits/reset",
+			this.http.withProjectScope(input, input.projectId),
 		);
 	}
 

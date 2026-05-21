@@ -74,6 +74,8 @@ When you first enable Radar, impossible travel detection and device fingerprinti
 
 Once you have configured a provider in the dashboard, wire up your Next.js route handler to verify requests at runtime.
 
+The default route set protects sign-in, sign-up, password reset, magic link, email OTP, phone OTP, and linked-device authorization requests. Add custom `protectedPaths` only when your app exposes additional sensitive auth mutations.
+
 ### Config-Aware Approach (Recommended)
 
 This approach reads your provider credentials from the dashboard automatically. When you change the provider or credentials in the dashboard, the change takes effect within one minute.
@@ -117,6 +119,24 @@ export const POST = withBotProtection(handler.POST, { verify });
 ## Combining with Rate Limiting
 
 Radar's rate limiting detection rule complements Banata Auth's built-in per-endpoint rate limiting. The built-in rate limiter caps requests to specific auth endpoints (for example, 30 sign-in attempts per minute), while Radar's rate limiting looks at broader patterns across multiple endpoints and time windows. For maximum protection, enable both.
+
+### Rate Limit Operations
+
+Production operators can inspect and clear live limiter buckets through the SDK:
+
+```ts
+const { buckets } = await banata.configuration.listRateLimitBuckets({
+  projectId: "project_123",
+  limit: 100,
+});
+
+await banata.configuration.resetRateLimitBucket({
+  projectId: "project_123",
+  key: buckets[0]?.key,
+});
+```
+
+Use bucket resets for support cases where a legitimate user is locked out after repeated failed attempts. Clearing a whole project by omitting `key` should be treated as an incident action because it removes active brute-force protection for that project.
 
 ---
 

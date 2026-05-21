@@ -37,6 +37,8 @@ const breadcrumbMap: Record<string, string> = {
 	"/emails/events": "Events",
 	"/emails/providers": "Providers",
 	"/emails/configuration": "Configuration",
+	"/sms": "SMS",
+	"/sms/providers": "Providers",
 	"/events": "Events",
 	"/actions": "Actions",
 	"/notifications": "Notifications",

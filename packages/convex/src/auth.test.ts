@@ -81,21 +81,18 @@ describe("createBanataAuthOptions()", () => {
 
 	it("fails fast when runtime auth is created without BETTER_AUTH_SECRET", () => {
 		expect(() =>
-			createBanataAuthOptions(
-				{ runQuery: vi.fn() } as never,
-				{
-					authComponent: {
-						adapter: () => ({}),
-					} as never,
-					authConfig: {
-						providers: [getAuthConfigProvider()],
-					},
-					config: {
-						siteUrl: "http://localhost:3000",
-						secret: "",
-					},
+			createBanataAuthOptions({ runQuery: vi.fn() } as never, {
+				authComponent: {
+					adapter: () => ({}),
+				} as never,
+				authConfig: {
+					providers: [getAuthConfigProvider()],
 				},
-			),
+				config: {
+					siteUrl: "http://localhost:3000",
+					secret: "",
+				},
+			}),
 		).toThrow(/BETTER_AUTH_SECRET is required/i);
 	});
 
@@ -216,25 +213,22 @@ describe("createBanataAuthOptions()", () => {
 
 	it("scopes core adapter reads by the current project context", async () => {
 		const findOne = vi.fn(async () => null);
-		const options = createBanataAuthOptions(
-			{ runQuery: vi.fn() } as never,
-			{
-				authComponent: {
-					adapter: () =>
-						({
-							findOne,
-						}) as never,
-				} as never,
-				authConfig: {
-					providers: [getAuthConfigProvider()],
-				},
-				config: {
-					siteUrl: "http://localhost:3000",
-					secret: "test-secret",
-				},
-				requestProjectId: "proj_test",
+		const options = createBanataAuthOptions({ runQuery: vi.fn() } as never, {
+			authComponent: {
+				adapter: () =>
+					({
+						findOne,
+					}) as never,
+			} as never,
+			authConfig: {
+				providers: [getAuthConfigProvider()],
 			},
-		);
+			config: {
+				siteUrl: "http://localhost:3000",
+				secret: "test-secret",
+			},
+			requestProjectId: "proj_test",
+		});
 
 		await (options.database as { findOne: (input: unknown) => Promise<unknown> }).findOne({
 			model: "user",
@@ -252,25 +246,22 @@ describe("createBanataAuthOptions()", () => {
 
 	it("scopes core adapter creates by the current project context", async () => {
 		const create = vi.fn(async () => null);
-		const options = createBanataAuthOptions(
-			{ runQuery: vi.fn() } as never,
-			{
-				authComponent: {
-					adapter: () =>
-						({
-							create,
-						}) as never,
-				} as never,
-				authConfig: {
-					providers: [getAuthConfigProvider()],
-				},
-				config: {
-					siteUrl: "http://localhost:3000",
-					secret: "test-secret",
-				},
-				requestProjectId: "proj_test",
+		const options = createBanataAuthOptions({ runQuery: vi.fn() } as never, {
+			authComponent: {
+				adapter: () =>
+					({
+						create,
+					}) as never,
+			} as never,
+			authConfig: {
+				providers: [getAuthConfigProvider()],
 			},
-		);
+			config: {
+				siteUrl: "http://localhost:3000",
+				secret: "test-secret",
+			},
+			requestProjectId: "proj_test",
+		});
 
 		await (options.database as { create: (input: unknown) => Promise<unknown> }).create({
 			model: "user",
@@ -293,16 +284,29 @@ describe("createBanataAuthOptions()", () => {
 	it("uses Banata's project-scoped rate limiter instead of Better Auth's global limiter", () => {
 		const options = createOptions();
 		expect(options.rateLimit?.enabled).toBe(false);
-		expect(options.plugins?.some((plugin) => plugin.id === "banata-project-rate-limit")).toBe(
-			true,
+		expect(options.plugins?.some((plugin) => plugin.id === "banata-project-rate-limit")).toBe(true);
+	});
+
+	it("registers production readiness endpoints for phone OTP and linked devices", () => {
+		const options = createOptions({
+			authMethods: {
+				phoneOtp: true,
+				whatsappOtp: true,
+				linkedDevice: true,
+			},
+		});
+
+		const plugin = options.plugins?.find(
+			(candidate) => candidate.id === "banata-production-readiness",
 		);
+		expect(plugin).toBeDefined();
+		expect(plugin?.endpoints?.phoneStart).toBeDefined();
+		expect(plugin?.endpoints?.deviceStart).toBeDefined();
 	});
 
 	it("registers projectId-aware enterprise models", () => {
 		const options = createOptions();
-		const enterprisePlugin = options.plugins?.find(
-			(plugin) => plugin.id === "banata-enterprise",
-		) as
+		const enterprisePlugin = options.plugins?.find((plugin) => plugin.id === "banata-enterprise") as
 			| (BetterAuthPlugin & {
 					schema?: Record<
 						string,

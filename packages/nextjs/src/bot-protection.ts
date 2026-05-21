@@ -143,12 +143,17 @@ export interface ConfigAwareVerifierOptions {
 
 // ─── Default Protected Paths ────────────────────────────────────────
 
-const DEFAULT_PROTECTED_PATHS = [
+export const BANATA_DEFAULT_BOT_PROTECTED_PATHS = [
 	"/api/auth/sign-in",
 	"/api/auth/sign-up",
 	"/api/auth/forget-password",
 	"/api/auth/reset-password",
-];
+	"/api/auth/magic-link",
+	"/api/auth/email-otp",
+	"/api/auth/phone",
+	"/api/auth/device/start",
+	"/api/auth/device/poll",
+] as const;
 
 // ─── withBotProtection ──────────────────────────────────────────────
 
@@ -186,7 +191,7 @@ export function withBotProtection<THandler extends (...args: any[]) => Promise<R
 ): THandler {
 	const {
 		verify,
-		protectedPaths = DEFAULT_PROTECTED_PATHS,
+		protectedPaths = [...BANATA_DEFAULT_BOT_PROTECTED_PATHS],
 		failOpen = true,
 		blockedMessage = "Bot detected. Access denied.",
 	} = config;

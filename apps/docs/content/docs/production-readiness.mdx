@@ -1,0 +1,140 @@
+---
+title: "Production Readiness"
+description: "Launch gates, security runbooks, and operational controls for running Banata Auth as an identity authority."
+section: "Platform Operators"
+order: 6
+---
+
+Banata Auth is production-ready only when the platform, customer app, and operating team all pass the same gates. Passing typecheck or deploying the dashboard is not enough.
+
+## Required Launch Gates
+
+- Full monorepo typecheck and test suite pass in CI.
+- Browser E2E tests pass for email/password, social OAuth, email OTP, phone OTP, passkeys, MFA, hosted UI callback, logout, and session refresh.
+- Project isolation tests prove a browser-supplied project ID cannot override the server API key scope.
+- Token audience tests prove each customer app rejects tokens for other audiences.
+- Session revocation, device revocation, and token revocation are tested.
+- Rate limits protect sign-in, sign-up, password reset, magic link, email OTP, phone OTP, and device polling.
+- Audit logs are written for every high-risk event and can be exported.
+- Webhook signatures, retry, replay, and dead-letter behavior are tested.
+- SSO and SCIM are either validated against real providers or marked beta/disabled.
+- Production environment variables are present, separate from development, and not printed in logs.
+- Security headers, CSP, cookie policy, CSRF/origin handling, OAuth callbacks, and log redaction are reviewed.
+- Incident runbooks exist for key compromise, API key leak, OAuth provider compromise, webhook failure, and account takeover.
+
+Record the required browser scenarios in `testing/auth-e2e-scenarios.json` and run `bun run verify:auth-e2e-scenarios` to confirm the E2E plan covers every required auth flow. Record the focused security review in `testing/auth-security-review-checklist.json` and run `bun run verify:auth-security-review`. Record operational readiness in `testing/auth-operations-readiness.json` and run `bun run verify:auth-operations-readiness`. Use `testing/auth-production-launch-handoff.md`, `testing/auth-production-gate-evidence-template.json`, and `bun run verify:auth-production-gate-template` to see the proof required for each manual launch gate. Record launch evidence in `testing/auth-production-gates.json` and run `bun run verify:auth-production-gates`. The production-gates command intentionally fails while any gate is still `pending`.
+
+Before pushing or cutting a release, run `bun run verify:auth-local-readiness`. It wraps the local pre-push set: monorepo typecheck, monorepo tests, readiness verifiers, example-app typecheck/build, production gate template validation, and `git diff --check`.
+
+## Customer App Readiness Harness
+
+Use `apps/example-app` as the customer-style integration harness. The example app calls Banata Auth through its own server, injects `BANATA_API_KEY` server-side, proxies `/api/auth/*` to `BANATA_AUTH_URL`, can launch Banata-rendered hosted UI through `VITE_BANATA_HOSTED_AUTH_URL` and `VITE_BANATA_CLIENT_ID`, and completes hosted-auth handoff through `/auth/callback`. It must not use first-party internal project scope.
+
+Before recording browser E2E evidence, run the example app against the deployed or production-like Banata auth URL and verify sign-in, hosted callback, session bootstrap, organization flows, role enforcement, and ticket operations. The step-by-step checklist lives in `apps/example-app/README.md` and `testing/auth-readiness-test-guide.md`.
+
+## Session Classes
+
+Every session or token must carry an explicit class:
+
+| Session class | Use case | Default posture |
+|---|---|---|
+| `web_user_session` | Standard browser sessions | Refresh allowed, 7 day lifetime |
+| `mobile_user_session` | Mobile primary sessions | Trusted device required |
+| `linked_device_session` | QR-approved companion devices | Trusted device required, account recovery blocked without step-up |
+| `pos_offline_device_session` | POS terminals | No refresh, short offline lifetime, signed permission snapshot |
+| `admin_console_session` | Dashboard admins | MFA required, short idle timeout |
+| `support_impersonation_session` | Support access | MFA required, no refresh, customer-visible audit |
+| `service_to_service_token` | Backend integrations | No user behavior, scoped audience |
+| `api_key_session` | Customer API keys | Scoped permissions, rotation and revoke support |
+
+Server handlers must check session class, app audience, organization permission, recent step-up, and device trust for sensitive actions.
+
+Backend integrations should use service principals instead of human users. A service principal represents a non-human caller with a project, principal ID, audience, scopes, credential hash, credential key ID, expiry, and rotation window. Use `service_to_service_token` for worker-to-service access and `api_key_session` for customer-managed API key requests.
+
+Support impersonation must be short-lived and customer-visible. A support session should carry `support_impersonation_session`, the support user ID, a reason, support ticket ID, approver, start time, expiry, and customer-visible audit metadata. Shared contracts expose `supportImpersonationRequestSchema` and `supportImpersonationAuditSchema` so support access cannot be treated like a normal user session.
+
+## Admin Portal Least Privilege
+
+Admin Portal links are generated through the `portal.create` permission only. Do not grant dashboard-wide permissions to customer admins just so they can configure SSO, Directory Sync, audit logs, log streams, domains, or users.
+
+Each portal link is scoped to one organization and one portal intent, uses a random session token, and expires after five minutes by default. The maximum portal session lifetime is one hour. The portal UI must validate the token before rendering any organization configuration surface.
+
+## Token Contract
+
+Access tokens must be short-lived and include:
+
+- `iss`
+- `sub`
+- `aud`
+- `exp`
+- `iat`
+- `nbf`
+- `jti`
+- `sid`
+- `project_id`
+- `org_id`
+- `session_class`
+- `device_id`
+- `auth_strength`
+- `scope`
+- `token_version`
+
+Consumer apps must reject tokens with the wrong issuer, project, audience, expiration, not-before time, or token version. Shared production-readiness contracts expose `validateTokenContract` for this claim-level guard after the token signature has been verified by the app runtime.
+
+Emergency revocation is recorded through `/api/auth/token/revoke` and checked through `/api/auth/token/revocation/check`. Revocations can target a user, organization, app, session class, session ID, JWT ID, or the whole project.
+
+Refresh tokens must rotate by session family. Store only refresh token hashes, record the previous and next token hash for each rotation, increment a rotation counter, and revoke the session family if an old refresh token is reused. Shared production-readiness contracts expose `refreshTokenRotationSchema` and `refreshTokenReuseDetectionSchema` so deployments can record rotation and reuse evidence without storing raw refresh tokens.
+
+## Security Headers And Origin Policy
+
+Next.js integrations can use `buildBanataSecurityHeaders` or `applyBanataSecurityHeaders` from `@banata-auth/nextjs` to apply the baseline production headers: CSP, HSTS, `X-Content-Type-Options`, referrer policy, frame protection, permissions policy, COOP, and CORP. Use `assertTrustedOrigin` on unsafe auth mutations so cross-site `POST`, `PUT`, `PATCH`, and `DELETE` requests must come from the app origin or an explicitly allowed hosted-auth origin. Use `validateAuthCookiePolicy` in deployment checks to confirm auth cookies carry `Secure`, `HttpOnly`, and an accepted `SameSite` policy.
+
+Shared log-redaction helpers expose `redactUrl`, `redactSensitiveString`, and `redactSensitiveObject`. Use them for auth route logs, callback URLs, error messages, and provider diagnostics so API keys, bearer tokens, OTPs, cookies, webhook secrets, and session tokens do not appear in production logs.
+
+## Phone And WhatsApp OTP
+
+Phone OTP flows use `/api/auth/phone/start` and `/api/auth/phone/verify`. The backend stores OTP hashes, not raw OTPs, and tracks attempts, resend count, expiry, lockout, channel, provider message ID, IP address, user agent, and device fingerprint.
+
+Phone numbers must be normalized to E.164 before storage. The UI must not reveal whether a phone number already has an account.
+
+## Linked Devices And POS Terminals
+
+Linked devices use `/api/auth/device/start`, `/api/auth/device/poll`, `/api/auth/device/approve`, `/api/auth/device/deny`, `/api/auth/device/revoke`, and `/api/auth/devices`.
+
+The QR payload contains a nonce and approval challenge only. It never contains credentials. The approving device must show the requested app, device name, platform, approximate location when available, user code, and requested scopes before approval.
+
+Offline POS snapshots are issued through `/api/auth/device/offline-snapshot/issue`. Production deployments must configure KMS-backed signing through `productionReadiness.signOfflinePermissionSnapshot`; unsigned development snapshots are not acceptable for launch.
+
+## Key Custody Contract
+
+Production and staging environments must keep these key purposes separated: app secret, JWT signing, vault encryption, refresh-token pepper, webhook signing, and offline POS snapshot signing. Shared contracts expose `validateProductionKeyCustody` so deployment evidence can prove each purpose has a distinct KMS/HSM/external reference, access logging is enabled, and a break-glass runbook exists.
+
+## Key Rotation Runbook
+
+1. Create new signing key material and mark it active for newly issued tokens.
+2. Keep the previous signing key available for verification until the longest valid token expires.
+3. Rotate vault keys with a re-encryption job and preserve key version metadata.
+4. Rotate webhook secrets per endpoint with an overlap window.
+5. Revoke affected sessions or token families if compromise is suspected.
+6. Write audit events for every rotation step.
+7. Confirm consumer apps can fetch the updated JWKS and reject revoked tokens.
+
+## Operations Evidence Contract
+
+Shared contracts expose `validateOperationsReadinessEvidence` for production operations proof. The evidence must cover required monitoring signals for auth errors, p95 latency, token issuance, OTP sends, webhook delivery/dead letters, SCIM sync, SSO callbacks, audit sink status, and OAuth provider callbacks. It must also cover alert routes, customer status reporting, incident drills, retention policies for users/sessions/devices/audit/webhooks/SCIM/OTP/deleted projects, release approval, support tooling, and environment separation.
+
+Customer-facing readiness evidence also needs project setup, redirect URI validation, provider setup checklists, API key rotation, audit export, status page, data retention, and separate development, staging, and production projects. These controls are tracked by `requiredCustomerReadinessControls` in `@banata-auth/shared`.
+
+## Mature Platform Capabilities
+
+P2 and enterprise-only capabilities are tracked separately from production launch gates. Shared contracts expose `validateMaturityReadinessPlan`, and `testing/auth-maturity-readiness.json` records BYOK, device risk scoring, auth anomaly detection, session forensics, fine-grained authorization, and enterprise compliance packaging so these recommendations are explicit without claiming they are available before evidence exists.
+
+## Incident Runbooks
+
+Minimum runbooks:
+
+- Signing key compromise: rotate keys, revoke token families, force re-auth, publish incident timeline.
+- API key leak: disable key, issue replacement, inspect audit logs, notify project owners.
+- OAuth provider compromise: disable provider, rotate stored provider credentials, invalidate active provider-linked sessions.
+- Webhook delivery outage: pause retries if needed, inspect dead letters, replay idempotent events after recovery.
+- Account takeover: revoke sessions, require step-up, lock risky recovery methods, preserve audit trail.

@@ -69,6 +69,10 @@ import { enterpriseProvisioningPlugin } from "./plugins/enterprise";
 import { eventsPlugin } from "./plugins/events";
 import { organizationRbacPlugin } from "./plugins/organization-rbac";
 import { portalPlugin } from "./plugins/portal";
+import {
+	type ProductionReadinessPluginOptions,
+	productionReadinessPlugin,
+} from "./plugins/production-readiness";
 import { projectsPlugin } from "./plugins/projects";
 import { type BanataProtectionOptions, banataProtection } from "./plugins/protection";
 import { projectScopedRateLimitPlugin } from "./plugins/rate-limit";
@@ -237,6 +241,9 @@ export interface BanataAuthConfig {
 	/** Email/password auth behavior overrides. */
 	emailPassword?: BanataEmailPasswordConfig;
 
+	/** Phone, WhatsApp OTP, linked-device, and session/device hardening options. */
+	productionReadiness?: ProductionReadinessPluginOptions;
+
 	/**
 	 * Built-in email sending options.
 	 *
@@ -256,6 +263,9 @@ export interface BanataAuthConfig {
 		emailPassword?: boolean;
 		magicLink?: boolean;
 		emailOtp?: boolean;
+		phoneOtp?: boolean;
+		whatsappOtp?: boolean;
+		linkedDevice?: boolean;
 		passkey?: boolean;
 		twoFactor?: boolean;
 		anonymous?: boolean;
@@ -382,12 +392,7 @@ let warnedAboutStaticAdapterFallback = false;
 // Plugin models (rateLimit, organization, member, etc.) handle projectId
 // in their own plugin code and must NOT go through the adapter proxy —
 // Better Auth's adapter rejects unknown fields for plugin models.
-const projectScopedModelNames = new Set([
-	"user",
-	"session",
-	"account",
-	"verification",
-]);
+const projectScopedModelNames = new Set(["user", "session", "account", "verification"]);
 
 type AdapterMutationInput = {
 	model?: string;
@@ -608,7 +613,16 @@ function wrapAdapterObject(
 	}
 
 	const wrapped: Record<string, unknown> = { ...adapter };
-	const methodNames = ["create", "findOne", "findMany", "update", "updateMany", "delete", "deleteMany", "count"];
+	const methodNames = [
+		"create",
+		"findOne",
+		"findMany",
+		"update",
+		"updateMany",
+		"delete",
+		"deleteMany",
+		"count",
+	];
 
 	for (const name of methodNames) {
 		const original = adapter[name];
@@ -623,18 +637,17 @@ function wrapAdapterObject(
 	// `getCurrentAdapter`) to store the original instead of our wrapped version.
 	const originalTransaction = adapter.transaction;
 	if (typeof originalTransaction === "function") {
-		wrapped.transaction = async (
-			cb: (trx: Record<string, unknown>) => Promise<unknown>,
-		) => {
-			return (originalTransaction as Function).call(adapter, async (_trx: Record<string, unknown>) => {
-				// The factory passes its original unwrapped adapter as `trx`.
-				// Replace it with a wrapped version so project scoping applies.
-				const wrappedTrx =
-					_trx === adapter || !projectId
-						? wrapped
-						: wrapAdapterObject(_trx, requestProjectId);
-				return cb(wrappedTrx);
-			});
+		wrapped.transaction = async (cb: (trx: Record<string, unknown>) => Promise<unknown>) => {
+			return (originalTransaction as Function).call(
+				adapter,
+				async (_trx: Record<string, unknown>) => {
+					// The factory passes its original unwrapped adapter as `trx`.
+					// Replace it with a wrapped version so project scoping applies.
+					const wrappedTrx =
+						_trx === adapter || !projectId ? wrapped : wrapAdapterObject(_trx, requestProjectId);
+					return cb(wrappedTrx);
+				},
+			);
 		};
 	}
 
@@ -1017,8 +1030,7 @@ function buildSocialProviders(
 	for (const [key, value] of entries) {
 		if (value == null) continue;
 		const clientId = typeof value.clientId === "string" ? value.clientId.trim() : "";
-		const clientSecret =
-			typeof value.clientSecret === "string" ? value.clientSecret.trim() : "";
+		const clientSecret = typeof value.clientSecret === "string" ? value.clientSecret.trim() : "";
 		if (!clientId || !clientSecret) continue;
 		result[key] = {
 			...value,
@@ -1117,6 +1129,10 @@ function buildPlugins(
 		// Portal plugin — short-lived admin portal link generation
 		portalPlugin(),
 
+		// Phone/WhatsApp OTP, QR linked devices, POS device registration,
+		// session class data model, and token/device revocation primitives.
+		productionReadinessPlugin(config.productionReadiness),
+
 		// User management plugin — project-scoped /admin/* compatibility without Better Auth admin
 		userManagementPlugin(),
 
@@ -1204,11 +1220,11 @@ function buildPlugins(
 
 	if (methods.organization !== false) {
 		const consumerSendInvite = config.email?.sendInvitationEmail;
-		plugins.push(organizationRbacPlugin(
-			consumerSendInvite
-				? { sendInvitationEmail: consumerSendInvite }
-				: undefined,
-		));
+		plugins.push(
+			organizationRbacPlugin(
+				consumerSendInvite ? { sendInvitationEmail: consumerSendInvite } : undefined,
+			),
+		);
 	}
 
 	// SCIM — Better Auth stores `scimProvider.scimToken`; keep it hashed at rest.
@@ -1262,9 +1278,7 @@ function buildPlugins(
 					}
 
 					const authorizationHeader =
-						ctx.headers?.get("authorization") ??
-						ctx.request?.headers.get("authorization") ??
-						null;
+						ctx.headers?.get("authorization") ?? ctx.request?.headers.get("authorization") ?? null;
 					if (authorizationHeader) {
 						const [scheme, token] = authorizationHeader.split(/\s+/, 2);
 						if (scheme?.toLowerCase() === "bearer" && token?.trim()) {

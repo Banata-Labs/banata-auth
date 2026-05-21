@@ -1,13 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BanataAuth } from "../client";
+import { ApiKeys } from "../resources/api-keys";
 import { AuditLogs } from "../resources/audit-logs";
 import { Configuration } from "../resources/configuration";
 import { DirectorySync } from "../resources/directory-sync";
 import { Domains } from "../resources/domains";
 import { Events } from "../resources/events";
 import { Organizations } from "../resources/organizations";
+import { PhoneAndDevices } from "../resources/phone-and-devices";
 import { Portal } from "../resources/portal";
 import { Rbac } from "../resources/rbac";
+import { SecurityControls } from "../resources/security";
 import { SSO } from "../resources/sso";
 import { UserManagement } from "../resources/user-management";
 import { Vault } from "../resources/vault";
@@ -57,6 +60,22 @@ describe("Resource modules", () => {
 	});
 
 	// ─── UserManagement ─────────────────────────────────────────────────
+
+	describe("ApiKeys", () => {
+		it("is an instance of ApiKeys", () => {
+			expect(client.apiKeys).toBeInstanceOf(ApiKeys);
+		});
+
+		expectMethodsExist(ApiKeys.prototype, [
+			"create",
+			"createKey",
+			"list",
+			"listKeys",
+			"delete",
+			"deleteKey",
+			"rotate",
+		]);
+	});
 
 	describe("UserManagement", () => {
 		it("is an instance of UserManagement", () => {
@@ -109,6 +128,27 @@ describe("Resource modules", () => {
 		]);
 	});
 
+	describe("PhoneAndDevices", () => {
+		it("is an instance of PhoneAndDevices", () => {
+			expect(client.phoneAndDevices).toBeInstanceOf(PhoneAndDevices);
+		});
+
+		expectMethodsExist(PhoneAndDevices.prototype, [
+			"startPhoneOtp",
+			"verifyPhoneOtp",
+			"resendPhoneOtp",
+			"linkPhone",
+			"unlinkPhone",
+			"startDeviceAuthorization",
+			"pollDeviceAuthorization",
+			"approveDeviceAuthorization",
+			"denyDeviceAuthorization",
+			"revokeDevice",
+			"issuePosOfflineSnapshot",
+			"listDevices",
+		]);
+	});
+
 	describe("Configuration", () => {
 		it("is an instance of Configuration", () => {
 			expect(client.configuration).toBeInstanceOf(Configuration);
@@ -120,6 +160,9 @@ describe("Resource modules", () => {
 			"getSocialProviderCredentials",
 			"saveSocialProviderCredential",
 			"deleteSocialProviderCredential",
+			"validateSocialProviderSetup",
+			"listRateLimitBuckets",
+			"resetRateLimitBucket",
 			"getBrandingConfig",
 			"saveBrandingConfig",
 			"getAuthConfiguration",
@@ -139,6 +182,7 @@ describe("Resource modules", () => {
 			"getProfileAndToken",
 			"listConnections",
 			"getConnection",
+			"validateConnection",
 			"createConnection",
 			"updateConnection",
 			"deleteConnection",
@@ -159,6 +203,7 @@ describe("Resource modules", () => {
 			"getDirectory",
 			"createDirectory",
 			"deleteDirectory",
+			"rotateToken",
 			"listUsers",
 			"getUser",
 			"listGroups",
@@ -188,6 +233,17 @@ describe("Resource modules", () => {
 
 	// ─── Webhooks ───────────────────────────────────────────────────────
 
+	describe("SecurityControls", () => {
+		it("is an instance of SecurityControls", () => {
+			expect(client.security).toBeInstanceOf(SecurityControls);
+		});
+
+		expectMethodsExist(SecurityControls.prototype, [
+			"createTokenRevocation",
+			"checkTokenRevocation",
+		]);
+	});
+
 	describe("Webhooks", () => {
 		it("is an instance of Webhooks", () => {
 			expect(client.webhooks).toBeInstanceOf(Webhooks);
@@ -198,6 +254,8 @@ describe("Resource modules", () => {
 			"createEndpoint",
 			"updateEndpoint",
 			"deleteEndpoint",
+			"listDeliveries",
+			"replayDelivery",
 			"constructEvent",
 			"verifySignature",
 		]);

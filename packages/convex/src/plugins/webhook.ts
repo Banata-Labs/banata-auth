@@ -17,6 +17,7 @@ import { createAuthEndpoint } from "better-auth/api";
 import { z } from "zod";
 import {
 	type PluginDBAdapter,
+	type WebhookDeliveryRow,
 	type WebhookEndpointRow,
 	type WhereClause,
 	getProjectScope,
@@ -100,6 +101,20 @@ const deleteWebhookSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const listWebhookDeliveriesSchema = z
+	.object({
+		endpointId: z.string().optional(),
+		status: z.enum(["pending", "success", "failed", "retrying"]).optional(),
+		limit: z.number().min(1).max(200).optional(),
+	})
+	.merge(projectScopeSchema);
+
+const replayWebhookDeliverySchema = z
+	.object({
+		id: z.string(),
+	})
+	.merge(projectScopeSchema);
+
 function isAllowedWebhookUrl(url: string): boolean {
 	if (url.startsWith("https://")) return true;
 	return (
@@ -160,6 +175,8 @@ export function webhookSystem(_options?: WebhookPluginOptions): BetterAuthPlugin
 					errorMessage: { type: "string", required: false },
 					nextRetryAt: { type: "number", required: false },
 					deliveredAt: { type: "number", required: false },
+					deadLetteredAt: { type: "number", required: false },
+					replayOfDeliveryId: { type: "string", required: false },
 					createdAt: { type: "number", required: true },
 				},
 			},
@@ -332,6 +349,83 @@ export function webhookSystem(_options?: WebhookPluginOptions): BetterAuthPlugin
 					return ctx.json({ success: true });
 				},
 			),
+
+			listWebhookDeliveries: createAuthEndpoint(
+				"/banata/webhooks/deliveries/list",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: listWebhookDeliveriesSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = getProjectScope(body as Record<string, unknown>);
+					await requireProjectPermission(ctx, {
+						db,
+						permission: "webhook.manage",
+						projectId: scope.projectId,
+					});
+
+					const where: WhereClause[] = [...scope.where];
+					if (body.endpointId) where.push({ field: "endpointId", value: body.endpointId });
+					if (body.status) where.push({ field: "status", value: body.status });
+
+					const deliveries = await db.findMany<WebhookDeliveryRow>({
+						model: "webhookDelivery",
+						where,
+						limit: body.limit ?? 50,
+						sortBy: { field: "createdAt", direction: "desc" },
+					});
+
+					return ctx.json({ data: deliveries });
+				},
+			),
+
+			replayWebhookDelivery: createAuthEndpoint(
+				"/banata/webhooks/deliveries/replay",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: replayWebhookDeliverySchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const now = Date.now();
+					const scope = getProjectScope(body as Record<string, unknown>);
+					await requireProjectPermission(ctx, {
+						db,
+						permission: "webhook.manage",
+						projectId: scope.projectId,
+					});
+
+					const original = await db.findOne<WebhookDeliveryRow>({
+						model: "webhookDelivery",
+						where: [{ field: "id", value: body.id }, ...scope.where],
+					});
+					if (!original) {
+						throw ctx.error("NOT_FOUND", { message: "Webhook delivery not found." });
+					}
+
+					const replay = await db.create<WebhookDeliveryRow>({
+						model: "webhookDelivery",
+						data: {
+							...scope.data,
+							endpointId: original.endpointId,
+							eventType: original.eventType,
+							payload: original.payload,
+							attempt: 1,
+							maxAttempts: original.maxAttempts,
+							status: "pending",
+							replayOfDeliveryId: original.id,
+							createdAt: now,
+						},
+					});
+
+					return ctx.json({ replay });
+				},
+			),
 		},
 	};
 }
@@ -465,7 +559,7 @@ export async function dispatchWebhookEvent(
 				createdAt: now,
 			};
 			if (scope?.projectId) deliveryData.projectId = scope.projectId;
-			await adapter.create({
+			const delivery = await adapter.create<WebhookDeliveryRow>({
 				model: "webhookDelivery",
 				data: deliveryData,
 			});
@@ -485,6 +579,7 @@ export async function dispatchWebhookEvent(
 				});
 
 				const success = response.status >= 200 && response.status < 300;
+				const responseBody = await response.text().catch(() => "");
 				const newConsecutiveFailures = success ? 0 : (endpoint.consecutiveFailures ?? 0) + 1;
 
 				// Auto-disable endpoint if it exceeds max consecutive failures
@@ -505,6 +600,19 @@ export async function dispatchWebhookEvent(
 						updatedAt: now,
 					},
 				});
+				await adapter.update<WebhookDeliveryRow>({
+					model: "webhookDelivery",
+					where: [{ field: "id", operator: "eq", value: delivery.id }],
+					update: {
+						status: success ? "success" : response.status >= 500 ? "retrying" : "failed",
+						httpStatus: response.status,
+						responseBody: responseBody.slice(0, 4000),
+						errorMessage: success ? undefined : response.statusText,
+						nextRetryAt: success ? undefined : now + 5 * 60 * 1000,
+						deadLetteredAt: !success && delivery.attempt >= delivery.maxAttempts ? now : undefined,
+						deliveredAt: success ? now : undefined,
+					},
+				});
 			} catch {
 				// Network error — mark as failed, retry later via Convex scheduler
 				const newConsecutiveFailures = (endpoint.consecutiveFailures ?? 0) + 1;
@@ -520,6 +628,16 @@ export async function dispatchWebhookEvent(
 						consecutiveFailures: newConsecutiveFailures,
 						...(shouldDisable && { enabled: false }),
 						updatedAt: now,
+					},
+				});
+				await adapter.update<WebhookDeliveryRow>({
+					model: "webhookDelivery",
+					where: [{ field: "id", operator: "eq", value: delivery.id }],
+					update: {
+						status: delivery.attempt >= delivery.maxAttempts ? "failed" : "retrying",
+						errorMessage: "Network error",
+						nextRetryAt: now + 5 * 60 * 1000,
+						deadLetteredAt: delivery.attempt >= delivery.maxAttempts ? now : undefined,
 					},
 				});
 			}

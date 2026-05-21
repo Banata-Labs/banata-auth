@@ -45,6 +45,13 @@ All SCIM endpoints are authenticated using a bearer token. Each directory has it
 Authorization: Bearer scim_tok_xxxxxxxxxxxxxxxx
 ```
 
+The bearer token is shown only when the directory is created or rotated. Rotate tokens regularly or immediately after suspected exposure:
+
+```ts
+const rotated = await banata.directories.rotateToken("dir_01HXYZ...");
+console.log(rotated.scimConfig.bearerToken); // shown once
+```
+
 ---
 
 ## Supported SCIM Operations

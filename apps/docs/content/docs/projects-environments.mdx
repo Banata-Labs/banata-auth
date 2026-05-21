@@ -5,7 +5,7 @@ section: "Start Here"
 order: 4
 ---
 
-A project is the fundamental unit of isolation in Banata Auth. Everything — users, sessions, organizations, roles, providers, email templates, branding, and more — lives inside a project. When your app connects to Banata with an API key, it's connected to one specific project.
+A project is the fundamental unit of isolation in Banata Auth. Everything â€” users, sessions, organizations, roles, providers, email templates, branding, and more â€” lives inside a project. When your app connects to Banata with an API key, it's connected to one specific project.
 
 ---
 
@@ -13,15 +13,15 @@ A project is the fundamental unit of isolation in Banata Auth. Everything — us
 
 Each project is a completely independent auth environment with its own:
 
-- **Users and sessions** — user accounts, active sessions, and credentials
-- **Organizations** — workspaces, teams, and their members
-- **Roles and permissions** — the RBAC catalog for that project
-- **Auth methods** — which sign-in methods are enabled (email/password, social OAuth, etc.)
-- **Provider credentials** — OAuth client IDs and secrets for social providers
-- **Email configuration** — email provider, templates, and delivery settings
-- **Branding** — colors, logo, fonts, and other visual customization
-- **Enterprise features** — SSO connections, SCIM directories, audit logs, webhooks
-- **API keys** — the keys that connect apps to this project
+- **Users and sessions** â€” user accounts, active sessions, and credentials
+- **Organizations** â€” workspaces, teams, and their members
+- **Roles and permissions** â€” the RBAC catalog for that project
+- **Auth methods** â€” which sign-in methods are enabled (email/password, social OAuth, etc.)
+- **Provider credentials** â€” OAuth client IDs and secrets for social providers
+- **Email configuration** â€” email provider, templates, and delivery settings
+- **Branding** â€” colors, logo, fonts, and other visual customization
+- **Enterprise features** â€” SSO connections, SCIM directories, audit logs, webhooks
+- **API keys** â€” the keys that connect apps to this project
 
 If you have two apps using two different projects, their data is completely separate. A user in project A does not exist in project B.
 
@@ -39,19 +39,33 @@ If you have two apps using two different projects, their data is completely sepa
 | Multiple apps with separate users | One project per app |
 | White-label / multi-tenant platform | One project per tenant |
 
+### Environment Separation
+
+For production systems, use separate projects for development, staging, and production. Each environment should have its own API keys, domains, redirect URLs, OAuth apps, email or SMS providers, webhook endpoints, and secrets.
+
+Before onboarding customers, verify:
+
+- the final production service name and auth domains have been recorded
+- the production project does not reuse development or staging secrets
+- production, staging, and development run on separate deployments and databases
+- redirect URLs and trusted origins match only the intended environment
+- provider setup checklists are complete for every enabled auth method
+- API key rotation works without exposing the raw key after creation
+- audit export, status reporting, and data retention policies are documented
+
 ---
 
 ## Your Default Project
 
-When you first sign in to the Banata dashboard, a default project is automatically created for you. This is your starting point — you can use it immediately or create additional projects as needed.
+When you first sign in to the Banata dashboard, a default project is automatically created for you. This is your starting point â€” you can use it immediately or create additional projects as needed.
 
-The default project is tied to your dashboard admin account. It's not a global shared project — each dashboard admin gets their own default project on first login.
+The default project is tied to your dashboard admin account. It's not a global shared project â€” each dashboard admin gets their own default project on first login.
 
 ---
 
 ## Switching Projects in the Dashboard
 
-The project switcher in the dashboard lets you navigate between your projects. When you switch projects, the entire dashboard context changes — the users list, organizations, roles, providers, email templates, and everything else reflects the selected project.
+The project switcher in the dashboard lets you navigate between your projects. When you switch projects, the entire dashboard context changes â€” the users list, organizations, roles, providers, email templates, and everything else reflects the selected project.
 
 ---
 
@@ -68,7 +82,7 @@ You never need to pass a `projectId` in your app code for normal usage. The API 
 ```ts
 // The API key determines which project this app uses
 export const { handler } = createBanataAuthServer({
-  apiKey: process.env.BANATA_API_KEY!, // ← This binds to your project
+  apiKey: process.env.BANATA_API_KEY!, // â† This binds to your project
   authUrl: process.env.BANATA_AUTH_URL,
 });
 ```
@@ -97,6 +111,6 @@ For most apps, the dashboard is the primary way to manage projects. The SDK is u
 
 ## Next Steps
 
-- [API Keys](/docs/api-keys) — How to create and manage project-scoped API keys
-- [Project Structure](/docs/project-structure) — What files to add to your app
-- [Quick Start](/docs/quickstart) — Set up your first app
+- [API Keys](/docs/api-keys) â€” How to create and manage project-scoped API keys
+- [Project Structure](/docs/project-structure) â€” What files to add to your app
+- [Quick Start](/docs/quickstart) â€” Set up your first app

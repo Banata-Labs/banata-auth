@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Shared type definitions for Banata Auth plugins.
  *
  * These types provide type-safe interfaces for the Better Auth plugin system,
@@ -230,6 +230,9 @@ export interface AuditEventRow extends Record<string, unknown> {
 	requestId: string | null;
 	changes: string | null;
 	idempotencyKey: string | null;
+	hash?: string | null;
+	previousHash?: string | null;
+	externalSinkStatus?: string | null;
 	/** JSON-serialized Record<string, string> */
 	metadata: string | null;
 	occurredAt: number;
@@ -270,6 +273,8 @@ export interface WebhookDeliveryRow extends Record<string, unknown> {
 	errorMessage: string | null;
 	nextRetryAt: number | null;
 	deliveredAt: number | null;
+	deadLetteredAt?: number | null;
+	replayOfDeliveryId?: string | null;
 	createdAt: number;
 }
 
@@ -424,6 +429,17 @@ export interface EmailProviderConfigRow extends Record<string, unknown> {
 }
 
 /**
+ * Row shape for the `smsProviderConfig` table.
+ * Singleton row with JSON-serialized SMS and WhatsApp provider settings.
+ */
+export interface SmsProviderConfigRow extends Record<string, unknown> {
+	id: string;
+	configJson: string;
+	createdAt: number;
+	updatedAt: number;
+}
+
+/**
  * Row shape for the `resourceType` table.
  */
 export interface ResourceTypeRow extends Record<string, unknown> {
@@ -456,6 +472,18 @@ export interface ProjectConfigRow extends Record<string, unknown> {
 	projectId?: string;
 	createdAt: number;
 	updatedAt: number;
+}
+
+/**
+ * Row shape for the `rateLimit` table.
+ * Tracks project-scoped limiter buckets for operator inspection and resets.
+ */
+export interface RateLimitRow extends Record<string, unknown> {
+	id: string;
+	key: string;
+	count: number;
+	lastRequest: number;
+	projectId?: string;
 }
 
 // â”€â”€â”€ Project Row Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -711,6 +739,52 @@ export async function requireProjectPermission(
 	});
 }
 
+export async function requireProjectScopedPermission(
+	ctx: any,
+	params: {
+		db: PluginDBAdapter;
+		body: Record<string, unknown>;
+		permission: string;
+	},
+): Promise<{
+	where: WhereClause[];
+	data: Record<string, string>;
+	projectId: string;
+}> {
+	const explicitScope = getProjectScope(params.body, { optional: true });
+	const apiKeyProjectId = await resolveProjectIdFromApiKey(ctx as PluginEndpointContext, params.db);
+
+	if (
+		apiKeyProjectId &&
+		explicitScope.projectId &&
+		apiKeyProjectId !== explicitScope.projectId
+	) {
+		throw ctx.error("FORBIDDEN", {
+			message: "Project scope does not match the supplied API key.",
+		});
+	}
+
+	const projectId = apiKeyProjectId ?? explicitScope.projectId;
+	if (!projectId) {
+		throw ctx.error("BAD_REQUEST", {
+			message:
+				"Project scope is required. Provide projectId explicitly or use a project-scoped API key.",
+		});
+	}
+
+	await requireProjectPermission(ctx, {
+		db: params.db,
+		projectId,
+		permission: params.permission,
+	});
+
+	return {
+		where: [{ field: "projectId", value: projectId }],
+		data: { projectId },
+		projectId,
+	};
+}
+
 function normalizeScopeValue(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
@@ -730,10 +804,7 @@ function readProjectIdFromApiKeyMetadata(metadata: unknown): string | null {
 
 	const metadataRecord = metadata as Record<string, unknown>;
 	return normalizeScopeValue(
-		metadataRecord.projectId ??
-			metadataRecord.project_id ??
-			metadataRecord.project ??
-			null,
+		metadataRecord.projectId ?? metadataRecord.project_id ?? metadataRecord.project ?? null,
 	);
 }
 

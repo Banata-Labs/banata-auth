@@ -11,7 +11,7 @@ Banata handles transactional email delivery for your authentication flows. You c
 
 ## Email Providers
 
-Banata supports five email delivery providers out of the box:
+Banata supports six email delivery providers out of the box:
 
 - **Resend** — [resend.com/api-keys](https://resend.com/api-keys)
 - **SendGrid** — [app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys)
@@ -19,14 +19,24 @@ Banata supports five email delivery providers out of the box:
 - **Mailgun** — [app.mailgun.com/settings/api_security](https://app.mailgun.com/settings/api_security)
 - **Postmark** — [account.postmarkapp.com/servers](https://account.postmarkapp.com/servers)
 
+- **Cloudflare Email Service** — [Cloudflare REST API](https://developers.cloudflare.com/email-service/api/send-emails/rest-api/)
+
+Cloudflare Email Service is the outbound email product. Email Routing alone only handles inbound routing and forwarding, so use Email Service when Banata needs to send transactional email.
+
 ### Setting Up a Provider
 
 1. Go to **Emails > Providers** in the dashboard.
 2. Click **Enable** on your preferred provider.
-3. Enter your API key in the field that appears.
+3. Enter the required credentials in the fields that appear.
 4. Click **Save Key**.
 
 The provider you enable becomes your **active** provider automatically. Only one provider can be active at a time — enabling a new one switches delivery to it, and disabling the active provider sets it to none.
+
+### Validate Provider Setup
+
+Before production launch, validate the active provider from **Emails > Providers** or through the configuration API. Validation checks that the selected provider is supported, enabled, and has the credentials Banata needs for that provider.
+
+Validation does not replace a real send. After the setup report is ready, send a test email through the active provider and confirm delivery in the provider logs.
 
 ### Send a Test Email
 
@@ -178,6 +188,7 @@ You can also manage email provider configuration programmatically through the Ba
 import {
   getEmailProviderConfig,
   saveEmailProviderConfig,
+  validateEmailProviderConfig,
 } from "@/lib/dashboard-api";
 
 // Get current provider configuration
@@ -189,6 +200,21 @@ await saveEmailProviderConfig({
   providers: { sendgrid: { enabled: true, apiKey: "SG.xxx" } },
   activeProvider: "sendgrid",
 });
+
+// Switch to Cloudflare Email Service
+await saveEmailProviderConfig({
+  providers: {
+    cloudflare: {
+      enabled: true,
+      apiKey: "cf_api_token",
+      accountId: "cloudflare_account_id",
+    },
+  },
+  activeProvider: "cloudflare",
+});
+
+const readiness = await validateEmailProviderConfig("cloudflare");
+console.log(readiness.ready);
 ```
 
 For toggling email types in code:

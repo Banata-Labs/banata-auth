@@ -4,6 +4,9 @@ export interface RuntimeAuthMethods {
 	passkey: boolean;
 	magicLink: boolean;
 	emailOtp: boolean;
+	phoneOtp: boolean;
+	whatsappOtp: boolean;
+	linkedDevice: boolean;
 	twoFactor: boolean;
 	organization: boolean;
 	anonymous: boolean;

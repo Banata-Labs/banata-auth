@@ -52,6 +52,10 @@ export {
 } from "./projects";
 export { enterpriseProvisioningPlugin } from "./enterprise";
 export { portalPlugin } from "./portal";
+export {
+	productionReadinessPlugin,
+	type ProductionReadinessPluginOptions,
+} from "./production-readiness";
 export { organizationRbacPlugin, type OrganizationRbacPluginOptions } from "./organization-rbac";
 export { userManagementPlugin } from "./user-management";
 export {
@@ -77,6 +81,14 @@ export {
 	type EmailProviderCredentials,
 	type SendResult,
 } from "./email-sender";
+export {
+	sendSmsOtp,
+	validateSmsCredentials,
+	type SmsProviderId,
+	type SmsOtpMessage,
+	type SmsProviderCredentials,
+	type SmsSendResult,
+} from "./sms-sender";
 
 // Re-export scope helpers for consumers
 export {

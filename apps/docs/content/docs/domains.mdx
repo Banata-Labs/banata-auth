@@ -26,6 +26,22 @@ Default domains cannot be deleted, but you can edit their values at any time.
 
 ---
 
+## Production Domain Decision
+
+Before using Banata Auth as a production authority, record the final service name and domain set for the environment you are launching. At minimum, capture:
+
+- the authentication API domain
+- the hosted UI domain
+- the dashboard or admin portal domain
+- each customer app callback origin
+- the DNS and HTTPS owner for each domain
+
+Production, staging, and development should not share the same domain values. Keep separate OAuth apps, redirect URLs, provider credentials, webhook endpoints, API keys, and secret stores for each environment.
+
+Track this decision in the production gate `final-domain-deploy-isolation` before marking the launch ready.
+
+---
+
 ## Editing Domains in the Dashboard
 
 1. Open your project in the dashboard and navigate to **Domains** in the sidebar.

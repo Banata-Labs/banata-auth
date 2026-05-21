@@ -51,6 +51,15 @@ These are the permissions you create for your own application logic. Use the `re
 
 You can create, update, and delete custom permissions at any time from the dashboard or the SDK.
 
+For multi-app projects, use the `app.product_surface.resource.action` format so permissions cannot collide across products. Examples:
+
+- `ecommerce.pos.terminal.approve`
+- `ecommerce.admin.refund.create`
+- `whatspoppin.mobile.linked_device.approve`
+- `automation.whatsapp.instance.delete`
+
+The shared production readiness contracts expose `permissionNamespaceSchema` and `validatePermissionNamespaceCatalog` for teams that want to validate this catalog before launch.
+
 ---
 
 ## Creating Roles and Permissions from the Dashboard
@@ -62,7 +71,7 @@ The dashboard gives you a visual way to manage your entire authorization model. 
 1. Open your project in the dashboard.
 2. Navigate to **Authorization > Permissions**.
 3. Click **Create Permission**.
-4. Enter a slug using the `resource.action` format (for example, `employee.read`).
+4. Enter a slug using the `resource.action` format, or `app.product_surface.resource.action` for multi-app projects.
 5. Give it a human-readable name and optional description.
 6. Repeat for each permission your app needs.
 
@@ -223,7 +232,7 @@ const canManageHR = await banata.rbac.checkPermissions({
 
 2. **Use capability-based role names.** Names like `hr_manager`, `billing_viewer`, or `content_editor` communicate intent better than generic titles like `admin` or `user`.
 
-3. **Keep permissions granular.** Stick to the `resource.action` slug format. Fine-grained permissions like `invoice.approve` and `invoice.read` give you more flexibility than a broad `invoice.manage`.
+3. **Keep permissions granular.** Stick to `resource.action` for a single app, or `app.product_surface.resource.action` when one project serves multiple apps. Fine-grained permissions like `invoice.approve` and `invoice.read` give you more flexibility than a broad `invoice.manage`.
 
 4. **Always enforce checks server-side.** Client-side checks are useful for hiding UI elements, but your server (or serverless functions) should be the final authority on whether an action is allowed.
 

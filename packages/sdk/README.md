@@ -29,6 +29,32 @@ const banata = new BanataAuth({
 
 const users = await banata.users.listUsers({ limit: 20 });
 
+await banata.phoneAndDevices.startPhoneOtp({
+  phoneNumber: "+254712345678",
+  channel: "whatsapp",
+});
+
+await banata.phoneAndDevices.linkPhone({
+  userId: "usr_123",
+  phoneNumber: "+254712345678",
+  verificationId: "phv_123",
+});
+
+await banata.phoneAndDevices.issuePosOfflineSnapshot({
+  deviceId: "dev_pos_123",
+  userId: "usr_123",
+  organizationId: "org_123",
+  sessionId: "ses_123",
+  permissions: ["refund.create"],
+});
+
+await banata.security.createTokenRevocation({
+  subjectType: "session_class",
+  subjectId: "linked_device_session",
+  reason: "Incident response",
+  createdBy: "usr_admin",
+});
+
 await banata.rbac.updateRole({
   id: "role_123",
   permissions: ["employee.read", "leave.approve"],
@@ -41,12 +67,14 @@ await banata.rbac.updateRole({
 - `organizations`
 - `sso`
 - `directories`
+- `phoneAndDevices`
 - `webhooks`
 - `rbac`
 - `projects`
 - `vault`
 - `auditLogs`
 - `events`
+- `security`
 - `emails`
 - `domains`
 - `portal`

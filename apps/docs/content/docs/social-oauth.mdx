@@ -63,6 +63,15 @@ https://myapp.com/api/auth/callback/github         ← Self-hosted production
 2. Select the provider you want to configure.
 3. Enter the **Client ID** and **Client Secret**.
 4. Save.
+5. Run provider validation and register every returned HTTPS callback URL in the provider console.
+
+Validation checks that the provider has stored credentials, is not using demo credentials, and has at least one HTTPS callback origin. It returns the callback URLs Banata expects for that provider:
+
+```ts
+const report = await banata.configuration.validateSocialProviderSetup("github");
+```
+
+`report.ready` only means the local Banata setup is coherent. Before launch, still complete a real browser sign-in with each enabled provider so callback URI, origin, state, and customer-app return behavior are proven against GitHub, Google, or the relevant provider.
 
 ### Adding Credentials via Convex Environment
 

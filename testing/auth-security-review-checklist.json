@@ -1,0 +1,46 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"reviewItems": [
+		{
+			"id": "security-headers",
+			"status": "pending",
+			"description": "Review deployed dashboard, hosted UI, auth runtime, admin portal, and customer proxy responses for HSTS, frame, MIME sniffing, referrer, permissions, and cache-control headers."
+		},
+		{
+			"id": "content-security-policy",
+			"status": "pending",
+			"description": "Review CSP for dashboard, hosted UI, and admin portal; document required OAuth, passkey, bot-protection, image, script, style, and connect-src allowances."
+		},
+		{
+			"id": "cookie-policy",
+			"status": "pending",
+			"description": "Verify session, cross-domain handoff, MFA, device, and hosted UI cookies use appropriate HttpOnly, Secure, SameSite, domain, path, and expiry attributes."
+		},
+		{
+			"id": "csrf-origin-policy",
+			"status": "pending",
+			"description": "Verify trusted origin enforcement, CORS behavior, CSRF posture, hosted UI origin handling, and customer-app callback origin handling."
+		},
+		{
+			"id": "secret-log-redaction",
+			"status": "pending",
+			"description": "Inspect logs and error reporting to confirm API keys, OAuth secrets, OTPs, tokens, cookies, webhook secrets, and vault material are never logged."
+		},
+		{
+			"id": "oauth-callback-policy",
+			"status": "pending",
+			"description": "Review provider callback URLs, redirect allowlists, state handling, and customer-app return URLs for open-redirect and origin-confusion risks."
+		},
+		{
+			"id": "provider-dashboard-hardening",
+			"status": "pending",
+			"description": "Verify provider credential changes require least-privilege admin access, audit events, and post-change validation."
+		},
+		{
+			"id": "incident-logging-and-retention",
+			"status": "pending",
+			"description": "Verify audit retention, external sink delivery, status reporting, incident timeline capture, and support-access visibility."
+		}
+	]
+}

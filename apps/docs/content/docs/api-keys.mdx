@@ -83,6 +83,16 @@ BANATA_API_KEY=sk_live_your_project_key
 
 If you have multiple services connecting to the same project (e.g., your web app and a background job worker), create a separate API key for each. This way, if one key is compromised, you can revoke it without affecting the others.
 
+For backend-to-backend integrations, model the caller as a service principal. A service principal is a non-human identity with its own audience, scopes, credential hash, and rotation window. Use it for workers, automation bridges, POS sync services, and webhook relays that need `service_to_service_token` access instead of a user session.
+
+Service principals should:
+
+- use a dedicated API key or credential per service
+- request only the audience and scopes the service needs
+- rotate credentials on a short schedule, usually 30 days or less
+- write audit events when credentials are created, rotated, or revoked
+- never share credentials with browser code or human support sessions
+
 ### Rotate keys regularly
 
 To rotate an API key safely:
@@ -91,6 +101,8 @@ To rotate an API key safely:
 2. Deploy your app with the new key.
 3. Verify everything works with the new key.
 4. Revoke the old key in the dashboard.
+
+The dashboard also has a rotate action beside each key. It creates a replacement key and shows the raw value once. It does not revoke the old key automatically, so you can deploy and verify the replacement before cutting off live traffic.
 
 ---
 
@@ -107,15 +119,22 @@ const banata = new BanataAuth({
 });
 
 // Create a new API key
-const key = await banata.apiKeys.createKey({
+const key = await banata.apiKeys.create({
   name: "Production Web App",
 });
 
 // List all keys for the project
-const keys = await banata.apiKeys.listKeys();
+const keys = await banata.apiKeys.list();
+
+// Create a replacement key for rotation.
+// Leave revokeOld unset until the new key has been deployed and verified.
+const replacement = await banata.apiKeys.rotate({
+  oldKeyId: key.id,
+  name: "Production Web App replacement",
+});
 
 // Delete a key
-await banata.apiKeys.deleteKey({ keyId: key.id });
+await banata.apiKeys.delete(key.id);
 ```
 
 ---

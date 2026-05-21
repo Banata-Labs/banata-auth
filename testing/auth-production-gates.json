@@ -1,0 +1,72 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"gates": [
+		{
+			"id": "final-domain-deploy-isolation",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires final service name/domain decision and proof that production, staging, and development deployments are isolated."
+		},
+		{
+			"id": "ci-monorepo-checks",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires CI proof that full monorepo typecheck and test suite passed without timeout or hidden failures."
+		},
+		{
+			"id": "sms-whatsapp-provider-delivery",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires production-like SMS and WhatsApp OTP delivery proof."
+		},
+		{
+			"id": "phone-otp-session-issuance",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires proof that verified phone OTP creates or links a real authenticated session."
+		},
+		{
+			"id": "browser-e2e-core-auth",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires browser E2E for email/password, OAuth, email OTP, phone OTP, passkey, MFA, logout, session refresh, hosted UI callback, and customer-app return."
+		},
+		{
+			"id": "real-oauth-providers",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires GitHub and Google callback URI/origin proof against real providers."
+		},
+		{
+			"id": "sso-scim-real-idp",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires SAML/OIDC SSO and SCIM provisioning/deprovisioning proof against real IdPs or an explicit beta/disabled launch decision."
+		},
+		{
+			"id": "kms-key-custody",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires target production KMS/HSM integration evidence for signing, vault, refresh token, and offline POS snapshot key custody."
+		},
+		{
+			"id": "production-env-inventory",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires proof that target production environment variables are present, environment-scoped, and not printed in logs."
+		},
+		{
+			"id": "monitoring-alerting-incident-response",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires monitoring, alerting, status reporting, and incident response process verification."
+		},
+		{
+			"id": "security-review-signoff",
+			"status": "pending",
+			"evidence": [],
+			"notes": "Requires focused internal or external security review signoff before real customer launch."
+		}
+	]
+}

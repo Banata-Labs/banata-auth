@@ -271,6 +271,9 @@ export interface AuditEvent {
 		after?: Record<string, unknown>;
 	};
 	idempotencyKey?: string;
+	hash?: string;
+	previousHash?: string;
+	externalSinkStatus?: "pending" | "sent" | "failed";
 	metadata?: Record<string, string>;
 	occurredAt: Date;
 	createdAt: Date;
@@ -295,6 +298,24 @@ export interface WebhookEvent {
 	id: string;
 	type: string;
 	data: Record<string, unknown>;
+	createdAt: Date;
+}
+
+export interface WebhookDelivery {
+	id: string;
+	endpointId: string;
+	eventType: string;
+	payload: string;
+	attempt: number;
+	maxAttempts: number;
+	status: "pending" | "success" | "failed" | "retrying";
+	httpStatus: number | null;
+	responseBody: string | null;
+	errorMessage: string | null;
+	nextRetryAt: Date | null;
+	deliveredAt: Date | null;
+	deadLetteredAt: Date | null;
+	replayOfDeliveryId: string | null;
 	createdAt: Date;
 }
 

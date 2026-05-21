@@ -23,6 +23,9 @@ Banata Auth reads environment variables from **two separate runtimes**: the Conv
 | `NEXT_PUBLIC_SITE_URL` | `.env.local` | Recommended | App URL for build-time prerendering |
 | OAuth credentials | Convex | If using social auth | Provider-specific client ID and secret |
 | `RESEND_API_KEY` | Convex | If sending emails | Resend API key |
+| `BANATA_JWT_SIGNING_KEY_KMS_ID` | Convex/secrets manager | Production | KMS key for JWT signing custody |
+| `BANATA_VAULT_KMS_KEY_ID` | Convex/secrets manager | Production | KMS key for vault encryption custody |
+| SMS/WhatsApp provider credentials | Convex/secrets manager | If using phone OTP | Provider-specific phone delivery credentials |
 
 ---
 
@@ -36,6 +39,11 @@ You set these on your **Convex deployment** with `npx convex env set`. They're a
 |---|---|---|---|
 | `BETTER_AUTH_SECRET` | **Yes** | — | Cryptographic secret for signing sessions, tokens, and webhook payloads. Use a strong random string (32+ bytes). Generate one with `openssl rand -base64 32`. |
 | `SITE_URL` | **Yes** | — | Your app's public URL (e.g., `http://localhost:3000` in dev, `https://myapp.com` in production). Banata uses this for OAuth callback URLs, email links, and cookie configuration. |
+| `BANATA_AUTH_APP_SECRET` | Production | — | App-level secret separated from vault and token signing keys. |
+| `BANATA_JWT_SIGNING_KEY_KMS_ID` | Production | — | KMS/HSM key ID used for JWT signing key custody or wrapping. |
+| `BANATA_VAULT_KMS_KEY_ID` | Production | — | KMS/HSM key ID used for vault key custody or wrapping. |
+| `BANATA_REFRESH_TOKEN_PEPPER_KMS_ID` | Production | — | KMS/HSM key or secret reference used to protect refresh token hashes. |
+| `BANATA_WEBHOOK_SIGNING_PEPPER` | Production | — | Server-side pepper used when deriving per-endpoint webhook secrets. |
 
 ```bash
 # Set core variables
@@ -88,12 +96,32 @@ npx convex env set GOOGLE_CLIENT_SECRET "GOCSPX-..."
 | Variable | Required | Description |
 |---|---|---|
 | `RESEND_API_KEY` | If sending emails | API key from [Resend](https://resend.com). Used for verification emails, password resets, magic links, OTP codes, and invitations. |
+| `CLOUDFLARE_EMAIL_API_TOKEN` | If using Cloudflare Email Service | API token with permission to send email. |
+| `CLOUDFLARE_ACCOUNT_ID` | If using Cloudflare Email Service | Cloudflare account ID used by the Email Service REST API. |
 
 ```bash
 npx convex env set RESEND_API_KEY "re_..."
 ```
 
-> **Tip:** Resend is the default, but you can swap in any email provider (SendGrid, Postmark, Mailgun, etc.) by changing the `fetch()` call in your email callbacks.
+> **Tip:** You can manage Resend, SendGrid, Amazon SES, Mailgun, Postmark, and Cloudflare Email Service from **Emails > Providers**.
+
+### Phone And WhatsApp OTP Providers
+
+Banata Auth exposes phone OTP state and endpoints. Configure delivery from **SMS > Providers**, or provide your own delivery function through `productionReadiness.sendPhoneOtp`.
+
+| Variable | Required | Description |
+|---|---|---|
+| `SMS_PROVIDER_API_KEY` | If using SMS OTP | API key for your selected SMS provider. |
+| `SMS_PROVIDER_API_SECRET` | If required by the provider | Secondary secret for providers such as Vonage. |
+| `SMS_PROVIDER_ACCOUNT_SID` | If using Twilio | Twilio account SID. |
+| `SMS_PROVIDER_AUTH_TOKEN` | If using Twilio | Twilio auth token. |
+| `SMS_PROVIDER_SENDER_ID` | If using SMS OTP | Sender ID or phone number used for SMS delivery. |
+| `SMS_PROVIDER_USERNAME` | If required by the provider | Username for providers such as Africa's Talking. |
+| `SMS_PROVIDER_API_BASE_URL` | If required by the provider | Optional provider endpoint override, for example a Mobitech tenant or portal API URL. |
+| `WHATSAPP_CLOUD_API_TOKEN` | If using WhatsApp OTP | Meta WhatsApp Cloud API token or provider token. |
+| `WHATSAPP_PHONE_NUMBER_ID` | If using WhatsApp OTP | WhatsApp sender phone number ID. |
+
+Never log raw OTPs, provider tokens, or full phone numbers in production logs.
 
 ### Passkeys (WebAuthn)
 

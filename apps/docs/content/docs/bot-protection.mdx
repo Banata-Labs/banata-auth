@@ -81,6 +81,20 @@ export const POST = withBotProtection(handler.POST, { verify });
 
 Wraps a Next.js route handler with bot protection. Only requests whose path matches a protected prefix are verified — everything else passes through untouched.
 
+By default, Banata verifies sensitive auth mutations:
+
+- `/api/auth/sign-in`
+- `/api/auth/sign-up`
+- `/api/auth/forget-password`
+- `/api/auth/reset-password`
+- `/api/auth/magic-link`
+- `/api/auth/email-otp`
+- `/api/auth/phone`
+- `/api/auth/device/start`
+- `/api/auth/device/poll`
+
+You can override `protectedPaths` if your app exposes additional sensitive auth routes.
+
 ```typescript
 withBotProtection(handler.POST, {
   verify: async (request) => {

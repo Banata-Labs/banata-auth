@@ -179,6 +179,51 @@ const exportAuditLogsSchema = z
  * ];
  * ```
  */
+function stableStringify(value: unknown): string {
+	if (value === null || typeof value !== "object") return JSON.stringify(value);
+	if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+	const record = value as Record<string, unknown>;
+	return `{${Object.keys(record)
+		.sort()
+		.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
+		.join(",")}}`;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+	const bytes = new TextEncoder().encode(value);
+	const digest = await crypto.subtle.digest("SHA-256", bytes);
+	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function createAuditEventWithHash(
+	adapter: Pick<PluginDBAdapter, "create" | "findMany">,
+	data: Record<string, unknown>,
+): Promise<AuditEventRow> {
+	const where: WhereClause[] = [];
+	if (typeof data.projectId === "string") {
+		where.push({ field: "projectId", value: data.projectId });
+	}
+
+	const previous = await adapter.findMany<AuditEventRow>({
+		model: "auditEvent",
+		where,
+		limit: 1,
+		sortBy: { field: "createdAt", direction: "desc" },
+	});
+	const previousHash = previous[0]?.hash ?? previous[0]?.previousHash ?? "";
+	const hash = await sha256Hex(stableStringify({ ...data, previousHash }));
+
+	return await adapter.create<AuditEventRow>({
+		model: "auditEvent",
+		data: {
+			...data,
+			previousHash,
+			hash,
+			externalSinkStatus: "pending",
+		},
+	});
+}
+
 export function auditLog(options?: AuditLogPluginOptions): BetterAuthPlugin {
 	const autoLog = options?.autoLog !== false;
 	const autoLogActions = options?.autoLogActions ?? [];
@@ -205,6 +250,9 @@ export function auditLog(options?: AuditLogPluginOptions): BetterAuthPlugin {
 					requestId: { type: "string", required: false },
 					changes: { type: "string", required: false },
 					idempotencyKey: { type: "string", required: false },
+					hash: { type: "string", required: false },
+					previousHash: { type: "string", required: false },
+					externalSinkStatus: { type: "string", required: false },
 					metadata: { type: "string", required: false },
 					occurredAt: { type: "number", required: true },
 					createdAt: { type: "number", required: true },
@@ -315,10 +363,7 @@ export function auditLog(options?: AuditLogPluginOptions): BetterAuthPlugin {
 					if (body.idempotencyKey) data.idempotencyKey = body.idempotencyKey;
 					if (body.metadata) data.metadata = body.metadata;
 
-					const event = await db.create<AuditEventRow>({
-						model: "auditEvent",
-						data: data as AuditEventRow,
-					});
+					const event = await createAuditEventWithHash(db, data);
 
 					return ctx.json(event);
 				},
@@ -440,10 +485,7 @@ export function auditLog(options?: AuditLogPluginOptions): BetterAuthPlugin {
 							const ua = ctx.headers?.get("user-agent");
 							if (ua) auditData.userAgent = ua;
 
-							await db.create<AuditEventRow>({
-								model: "auditEvent",
-								data: auditData as AuditEventRow,
-							});
+							await createAuditEventWithHash(db, auditData);
 						} catch (err) {
 							// Audit logging should never break auth flows.
 							console.error(
@@ -516,7 +558,7 @@ export interface LogAuditEventParams {
  * ```
  */
 export async function logAuditEvent(
-	adapter: Pick<PluginDBAdapter, "create">,
+	adapter: Pick<PluginDBAdapter, "create" | "findMany">,
 	params: LogAuditEventParams,
 ): Promise<void> {
 	const now = Date.now();
@@ -545,10 +587,7 @@ export async function logAuditEvent(
 		if (params.idempotencyKey) data.idempotencyKey = params.idempotencyKey;
 		if (params.metadata) data.metadata = JSON.stringify(params.metadata);
 
-		await adapter.create({
-			model: "auditEvent",
-			data,
-		});
+		await createAuditEventWithHash(adapter, data);
 	} catch {
 		// Audit logging should never break auth flows
 		console.error("[BanataAuth] Failed to log audit event:", params.action);

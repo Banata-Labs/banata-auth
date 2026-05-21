@@ -52,6 +52,8 @@ npx convex deploy
 
 This creates an isolated production deployment with its own database, completely separate from your dev environment.
 
+Record the production deployment identifier, auth API domain, hosted UI domain, dashboard/admin portal domain, and customer callback domains before routing production traffic. This evidence belongs in the `final-domain-deploy-isolation` production gate.
+
 ### Set production environment variables
 
 ```bash
