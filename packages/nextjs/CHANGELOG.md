@@ -1,5 +1,11 @@
 # @banata-auth/nextjs
 
+## 0.2.6
+
+### Patch Changes
+
+- [`1c9ca98`](https://github.com/Banata-Labs/banata-auth/commit/1c9ca984011e8d1330922cfee4fd8f243b0b65b2) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Add `Cache-Control: no-store` to the default Banata security headers, with options to customize or omit the cache-control header.
+
 ## 0.2.5
 
 ### Patch Changes

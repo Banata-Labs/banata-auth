@@ -1,5 +1,12 @@
 # @banata-auth/dashboard
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [[`1c9ca98`](https://github.com/Banata-Labs/banata-auth/commit/1c9ca984011e8d1330922cfee4fd8f243b0b65b2)]:
+  - @banata-auth/nextjs@0.2.6
+
 ## 0.0.10
 
 ### Patch Changes
