@@ -87,7 +87,7 @@ Refresh tokens must rotate by session family. Store only refresh token hashes, r
 
 ## Security Headers And Origin Policy
 
-Next.js integrations can use `buildBanataSecurityHeaders` or `applyBanataSecurityHeaders` from `@banata-auth/nextjs` to apply the baseline production headers: CSP, HSTS, `X-Content-Type-Options`, referrer policy, frame protection, permissions policy, COOP, and CORP. Use `assertTrustedOrigin` on unsafe auth mutations so cross-site `POST`, `PUT`, `PATCH`, and `DELETE` requests must come from the app origin or an explicitly allowed hosted-auth origin. Use `validateAuthCookiePolicy` in deployment checks to confirm auth cookies carry `Secure`, `HttpOnly`, and an accepted `SameSite` policy.
+Next.js integrations can use `buildBanataSecurityHeaders` or `applyBanataSecurityHeaders` from `@banata-auth/nextjs` to apply the baseline production headers: CSP, HSTS, `X-Content-Type-Options`, referrer policy, frame protection, permissions policy, COOP, CORP, and `Cache-Control: no-store`. Use `assertTrustedOrigin` on unsafe auth mutations so cross-site `POST`, `PUT`, `PATCH`, and `DELETE` requests must come from the app origin or an explicitly allowed hosted-auth origin. Use `validateAuthCookiePolicy` in deployment checks to confirm auth cookies carry `Secure`, `HttpOnly`, and an accepted `SameSite` policy.
 
 Shared log-redaction helpers expose `redactUrl`, `redactSensitiveString`, and `redactSensitiveObject`. Use them for auth route logs, callback URLs, error messages, and provider diagnostics so API keys, bearer tokens, OTPs, cookies, webhook secrets, and session tokens do not appear in production logs.
 

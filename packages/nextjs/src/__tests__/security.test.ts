@@ -15,6 +15,14 @@ describe("security readiness helpers", () => {
 		expect(headers.get("x-content-type-options")).toBe("nosniff");
 		expect(headers.get("x-frame-options")).toBe("DENY");
 		expect(headers.get("permissions-policy")).toContain("camera=()");
+		expect(headers.get("cache-control")).toBe("no-store");
+	});
+
+	it("allows cache-control to be customized or omitted", () => {
+		expect(
+			buildBanataSecurityHeaders({ cacheControl: "private, max-age=60" }).get("cache-control"),
+		).toBe("private, max-age=60");
+		expect(buildBanataSecurityHeaders({ cacheControl: false }).has("cache-control")).toBe(false);
 	});
 
 	it("applies missing security headers without overwriting explicit values", () => {
@@ -79,10 +87,7 @@ describe("security readiness helpers", () => {
 		).toEqual([]);
 
 		expect(
-			validateAuthCookiePolicy([
-				"better-auth.session_token=abc; Path=/",
-				"theme=dark; Path=/",
-			]),
+			validateAuthCookiePolicy(["better-auth.session_token=abc; Path=/", "theme=dark; Path=/"]),
 		).toEqual([
 			{ cookieName: "better-auth.session_token", issue: "missing-secure" },
 			{ cookieName: "better-auth.session_token", issue: "missing-http-only" },

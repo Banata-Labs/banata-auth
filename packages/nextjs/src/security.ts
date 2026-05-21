@@ -3,6 +3,7 @@ export interface BanataSecurityHeadersOptions {
 	reportOnlyContentSecurityPolicy?: string;
 	includeStrictTransportSecurity?: boolean;
 	frameAncestors?: "none" | "self";
+	cacheControl?: string | false;
 }
 
 export interface OriginGuardOptions {
@@ -39,18 +40,16 @@ const DEFAULT_CSP = [
 	"upgrade-insecure-requests",
 ].join("; ");
 
-export function buildBanataSecurityHeaders(
-	options: BanataSecurityHeadersOptions = {},
-): Headers {
+export function buildBanataSecurityHeaders(options: BanataSecurityHeadersOptions = {}): Headers {
 	const headers = new Headers();
 	const csp =
 		options.contentSecurityPolicy === false
 			? null
-			: options.contentSecurityPolicy ??
+			: (options.contentSecurityPolicy ??
 				DEFAULT_CSP.replace(
 					"frame-ancestors 'none'",
 					options.frameAncestors === "self" ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
-				);
+				));
 
 	if (csp) {
 		headers.set("content-security-policy", csp);
@@ -67,6 +66,9 @@ export function buildBanataSecurityHeaders(
 	headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
 	headers.set("cross-origin-opener-policy", "same-origin");
 	headers.set("cross-origin-resource-policy", "same-site");
+	if (options.cacheControl !== false) {
+		headers.set("cache-control", options.cacheControl ?? "no-store");
+	}
 
 	return headers;
 }
