@@ -147,6 +147,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bun run verify:auth-live-smoke` passed after the auth-root live smoke check was tightened to require `/sign-in?redirect_url=%2F` for the managed dashboard root.
 - GitHub Actions CI run `26253115071` and Release run `26253115017` passed for commit `7c021c2395eca3b82d440e1c3afbb168d984696e`.
 - `bunx convex env list --prod` from `apps/dashboard` was attempted on 2026-05-21 and failed with Convex CLI project-access denial; production env inventory still requires an authorized Convex/Vercel account.
+- `vercel.cmd env ls production` was attempted for `apps/dashboard`, `apps/auth-ui`, and `apps/docs` on 2026-05-22 and failed because this CLI identity has no Vercel credentials; production env inventory still requires an authorized Vercel account or token.
 - A local `apps/dashboard/.env.local` key-name scan found only `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`, and `NEXT_PUBLIC_CONVEX_SITE_URL`; this is local metadata only and not production evidence.
 
 ## Completion Decision
