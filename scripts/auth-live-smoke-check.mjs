@@ -42,11 +42,14 @@ function fail(label, details) {
 }
 
 const requiredSecurityHeaders = [
+	"strict-transport-security",
 	"content-security-policy",
 	"x-frame-options",
 	"x-content-type-options",
 	"referrer-policy",
 	"permissions-policy",
+	"cross-origin-opener-policy",
+	"cross-origin-resource-policy",
 ];
 
 async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 302, 307, 308])) {
