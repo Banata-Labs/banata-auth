@@ -77,8 +77,8 @@ This audit separates local implementation evidence from production evidence. Pas
 | Step-by-step readiness testing guide | `testing/auth-readiness-test-guide.md` | local artifact complete |
 | Single-command local readiness check | `scripts/auth-local-readiness-check.mjs`, package script `verify:auth-local-readiness` | local artifact complete |
 | Docs build and search index | `bun run --cwd apps/docs build`, `apps/docs/src/lib/search-index.ts` | local artifact complete |
-| Hosted UI production styling | `apps/auth-ui/src/app/globals.css` scans `@banata-auth/react` and `packages/react/src`; live CSS check against `https://auth-ui.banata.dev/sign-in?client_id=testing-example-app` found `max-w-md`, `p-8`, `text-2xl`, `font-bold`, `tracking-tight`, and `mb-6` in the deployed stylesheet | deployed evidence recorded |
-| Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26227021993` passed for commit `b252f2d7afbbcabe0a4a9132f10c1c289b80f343`; Release run `26227021608` passed for the same commit | latest launch-run evidence recorded for the readiness commit |
+| Hosted UI production styling and GitHub redirect | `apps/auth-ui/src/app/globals.css`, `apps/auth-ui/src/lib/branding.ts`, hosted auth pages using local hosted auth proxy; live CSS check against `https://auth-ui.banata.dev/sign-in?client_id=testing-example-app` found shared auth component utilities and dashboard primary colors compiled as `#e85854` and `#b32228`; live browser click on `Continue with Github` reached GitHub login with `redirect_uri=https://auth.banata.dev/api/auth/callback/github` | deployed evidence recorded |
+| Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26228358427` passed for commit `3696e74c576077f3ef2fa27f9cb75d3d2311157e`; Release run `26228358432` passed for the same commit | latest launch-run evidence recorded for the readiness commit |
 | Production environment inventory proof | `apps/docs/content/docs/env-vars.mdx`, `testing/auth-production-env-inventory-template.json`, `scripts/auth-env-inventory-template-check.mjs`, `testing/auth-production-gates.json` gate `production-env-inventory`; live smoke verifies project public config resolves through a server API key | redacted production inventory and log review template present; filled production evidence pending |
 
 ## Production Launch Gates Evidence Matrix
@@ -89,7 +89,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 |---|---|---|
 | Final service name/domain and deploy isolation are decided | `apps/docs/content/docs/domains.mdx`, `apps/docs/content/docs/projects-environments.mdx`, `apps/docs/content/docs/deploy.mdx`, `testing/auth-production-gates.json` gate `final-domain-deploy-isolation` | local docs/checklist present; production decision and DNS/deploy evidence pending |
 | Full monorepo typecheck passes without timeout or hidden failures | `bun run typecheck` passed | locally satisfied |
-| Full monorepo test suite passes in CI | `.github/workflows/ci.yml`, `testing/auth-production-gates.json` gate `ci-monorepo-checks`, GitHub Actions run `26227021993` passed for commit `b252f2d7afbbcabe0a4a9132f10c1c289b80f343` | latest readiness-run evidence recorded |
+| Full monorepo test suite passes in CI | `.github/workflows/ci.yml`, `testing/auth-production-gates.json` gate `ci-monorepo-checks`, GitHub Actions run `26228358427` passed for commit `3696e74c576077f3ef2fa27f9cb75d3d2311157e` | latest readiness-run evidence recorded |
 | E2E browser tests pass for email/password, social OAuth, OTP, passkey, logout, session refresh, and hosted UI callback | `testing/auth-e2e-scenarios.json`, `testing/auth-production-gates.json` gate `browser-e2e-core-auth`; refresh-token rotation/reuse contracts are present locally | external/browser evidence pending |
 | Project isolation tests pass | production-readiness shared tests, Convex endpoint/resource tests, `testing/auth-e2e-scenarios.json` scenario `project-isolation` | local coverage present; deployed E2E pending |
 | App audience rejection tests pass | `validateTokenContract` tests in `packages/shared/src/__tests__/production-readiness.test.ts` | locally satisfied |
@@ -135,7 +135,11 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bun run --cwd packages/sdk build` passed.
 - `bun run verify:auth-live-smoke` passed against the deployed auth, hosted UI, and docs roots after push.
 - `npm view @banata-auth/sdk version` returned `0.2.3`.
-- GitHub Actions CI run `26227021993` and Release run `26227021608` passed for commit `b252f2d7afbbcabe0a4a9132f10c1c289b80f343`.
+- `bun run --cwd apps/auth-ui typecheck` passed after the hosted UI auth-flow and theming fix.
+- `bun run --cwd apps/auth-ui lint` passed after the hosted UI auth-flow and theming fix.
+- `bun run --cwd apps/auth-ui build` passed after the hosted UI auth-flow and theming fix.
+- Live hosted UI browser click on `Continue with Github` reached GitHub login with the Banata GitHub OAuth client and provider callback `https://auth.banata.dev/api/auth/callback/github`.
+- GitHub Actions CI run `26228358427` and Release run `26228358432` passed for commit `3696e74c576077f3ef2fa27f9cb75d3d2311157e`.
 
 ## Completion Decision
 
