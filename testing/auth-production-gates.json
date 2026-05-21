@@ -17,14 +17,14 @@
 			"id": "ci-monorepo-checks",
 			"status": "passed",
 			"evidence": [
-				"CI run for latest implementation commit 51eb1d6bbabe9a7b26993a7514894478a537e816 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26223495952",
-				"CI run 26223495952 completed the root lint, auth local readiness, and workspace build jobs for commit 51eb1d6bbabe9a7b26993a7514894478a537e816.",
-				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit 51eb1d6bbabe9a7b26993a7514894478a537e816.",
-				"GitHub Actions retains the CI logs and artifacts for run 26223495952 under the Banata-Labs/banata-auth repository.",
-				"Release run for commit 51eb1d6bbabe9a7b26993a7514894478a537e816 passed and published packages: https://github.com/Banata-Labs/banata-auth/actions/runs/26223495891",
+				"CI run for latest readiness commit b252f2d7afbbcabe0a4a9132f10c1c289b80f343 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26227021993",
+				"CI run 26227021993 completed the root lint, auth local readiness, and workspace build jobs for commit b252f2d7afbbcabe0a4a9132f10c1c289b80f343.",
+				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit b252f2d7afbbcabe0a4a9132f10c1c289b80f343.",
+				"GitHub Actions retains the CI logs and artifacts for run 26227021993 under the Banata-Labs/banata-auth repository.",
+				"Release run for commit b252f2d7afbbcabe0a4a9132f10c1c289b80f343 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26227021608",
 				"`bun run test:e2e` now resolves to scripts/auth-e2e-readiness-check.mjs and fails clearly until deployed browser evidence is attached."
 			],
-			"notes": "GitHub Actions CI and Release passed for the latest implementation commit after the hosted UI styling, example-app origin, and deterministic E2E gate fixes."
+			"notes": "GitHub Actions CI and Release passed for the latest readiness commit after the hosted UI styling, example-app origin, deterministic E2E gate, auth client contract, incident runbook, and env inventory template updates."
 		},
 		{
 			"id": "sms-whatsapp-provider-delivery",
