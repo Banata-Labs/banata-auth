@@ -80,6 +80,17 @@ function upstreamError(status: number, message: string): never {
 	});
 }
 
+function requestOrigin(c: {
+	req: { header(name: string): string | undefined; url: string };
+}): string {
+	const origin = c.req.header("origin");
+	if (origin) {
+		return origin;
+	}
+	const url = new URL(c.req.url);
+	return `${url.protocol}//${url.host}`;
+}
+
 export const appRoutes = new Hono();
 
 appRoutes.get("/bootstrap", async (c) => {
@@ -124,6 +135,7 @@ appRoutes.post("/organizations", async (c) => {
 		headers: {
 			"content-type": "application/json",
 			cookie: c.req.header("cookie") ?? "",
+			origin: requestOrigin(c),
 			"x-api-key": env.banataApiKey,
 			"x-forwarded-host": new URL(c.req.url).host,
 			"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),
@@ -179,6 +191,7 @@ appRoutes.post("/members/invite", async (c) => {
 		headers: {
 			"content-type": "application/json",
 			cookie: c.req.header("cookie") ?? "",
+			origin: requestOrigin(c),
 			"x-api-key": env.banataApiKey,
 			"x-forwarded-host": new URL(c.req.url).host,
 			"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),

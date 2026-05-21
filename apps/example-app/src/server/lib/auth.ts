@@ -31,6 +31,15 @@ function upstreamError(status: number, message: string): never {
 	});
 }
 
+function requestOrigin(c: Context): string {
+	const origin = c.req.header("origin");
+	if (origin) {
+		return origin;
+	}
+	const url = new URL(c.req.url);
+	return `${url.protocol}//${url.host}`;
+}
+
 async function banataRequest(
 	c: Context,
 	path: string,
@@ -42,6 +51,7 @@ async function banataRequest(
 	const headers = new Headers({
 		"content-type": "application/json",
 		cookie: c.req.header("cookie") ?? "",
+		origin: requestOrigin(c),
 		"x-api-key": env.banataApiKey,
 		"x-forwarded-host": new URL(c.req.url).host,
 		"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),

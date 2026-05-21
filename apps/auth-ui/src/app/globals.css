@@ -1,8 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Scan @banata-auth/react dist so Tailwind generates classes used by auth components */
+/* Scan @banata-auth/react so Tailwind generates classes used by shared auth components. */
 @source "@banata-auth/react";
+@source "../../../../packages/react/src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -83,8 +84,11 @@
 	}
 	body {
 		@apply min-h-screen bg-background text-foreground;
-		background-image: radial-gradient(circle at top, hsl(var(--primary) / 0.18), transparent 38%),
-			linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+		background-image: radial-gradient(
+				circle at top,
+				color-mix(in oklab, var(--primary) 18%, transparent),
+				transparent 38%
+			), linear-gradient(180deg, var(--background), var(--background));
 		background-attachment: fixed;
 	}
 
@@ -111,9 +115,14 @@ body::before {
 	inset: 24px;
 	z-index: -2;
 	border-radius: 32px;
-	border: 1px solid hsl(var(--border) / 0.55);
-	background: linear-gradient(180deg, hsl(var(--card) / 0.86), hsl(var(--background) / 0.8));
-	box-shadow: 0 40px 120px hsl(var(--primary) / 0.1), inset 0 1px 0 hsl(var(--foreground) / 0.04);
+	border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--card) 86%, transparent),
+		color-mix(in oklab, var(--background) 80%, transparent)
+	);
+	box-shadow: 0 40px 120px color-mix(in oklab, var(--primary) 10%, transparent), inset 0 1px 0
+		color-mix(in oklab, var(--foreground) 4%, transparent);
 }
 
 /* Noise texture overlay */

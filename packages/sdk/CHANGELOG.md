@@ -1,5 +1,11 @@
 # @banata-auth/sdk
 
+## 0.2.3
+
+### Patch Changes
+
+- Fix hosted UI production styling and customer example app live-origin forwarding.
+
 ## 0.2.2
 
 ### Patch Changes
