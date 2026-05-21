@@ -87,6 +87,14 @@ for (const gate of gates) {
 		failed = true;
 		continue;
 	}
+	if (
+		gate.status === "disabled-with-owner" &&
+		(typeof gate.owner !== "string" || gate.owner.trim().length < 3)
+	) {
+		console.error(`FAIL ${gate.id}: disabled gates must include an owner`);
+		failed = true;
+		continue;
+	}
 	for (const item of evidence) {
 		if (typeof item !== "string" || item.length < 20) {
 			console.error(`FAIL ${gate.id}: weak evidence reference ${JSON.stringify(item)}`);
@@ -94,6 +102,11 @@ for (const gate of gates) {
 		}
 	}
 	if (gate.status === "pending") {
+		if (typeof gate.notes !== "string" || gate.notes.trim().length < 20) {
+			console.error(`FAIL ${gate.id}: pending gates must include meaningful notes`);
+			failed = true;
+			continue;
+		}
 		console.error(`PENDING ${gate.id}: ${gate.notes ?? "production evidence required"}`);
 		failed = true;
 		continue;

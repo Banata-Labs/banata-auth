@@ -70,7 +70,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | GitHub/Google OAuth callback proof | `testing/auth-production-gates.json` gate `real-oauth-providers` | pending external evidence |
 | Monitoring, alerting, status reporting, incident response proof | `testing/auth-production-gates.json` gate `monitoring-alerting-incident-response` | pending external evidence |
 | Security review signoff | `testing/auth-production-gates.json` gate `security-review-signoff` | pending external evidence |
-| Manual production gate evidence handoff | `testing/auth-production-launch-handoff.md`, `testing/auth-production-gate-evidence-template.json`, `scripts/auth-production-gate-template-check.mjs` | local handoff complete |
+| Manual production gate evidence handoff | `testing/auth-production-launch-handoff.md`, `testing/auth-production-gate-evidence-template.json`, `scripts/auth-production-gate-template-check.mjs`, `scripts/auth-production-gates-check.mjs` | local handoff complete; pending and disabled gates require explicit notes or owner evidence |
 | Customer-style example app | `apps/example-app/src/server/lib/banata.ts`, `apps/example-app/src/server/lib/env.ts`, `apps/example-app/src/client/lib/hosted-ui-url.ts`, `apps/example-app/src/client/routes/auth-callback.tsx`, `apps/example-app/README.md` | local artifact complete |
 | Step-by-step readiness testing guide | `testing/auth-readiness-test-guide.md` | local artifact complete |
 | Single-command local readiness check | `scripts/auth-local-readiness-check.mjs`, package script `verify:auth-local-readiness` | local artifact complete |

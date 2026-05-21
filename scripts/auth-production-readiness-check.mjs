@@ -431,6 +431,8 @@ const artifactChecks = [
 					/unknown production gate/,
 					/duplicate production gate/,
 					/weak evidence reference/,
+					/disabled gates must include an owner/,
+					/pending gates must include meaningful notes/,
 					/requiredEvidence/,
 					/at least/,
 					/PENDING/,
