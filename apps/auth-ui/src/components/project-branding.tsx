@@ -18,7 +18,7 @@ export function ProjectAuthLogo({
 		<div
 			className="flex items-center justify-center rounded-2xl border bg-background/70 p-3 shadow-sm"
 			style={{
-				borderColor: "hsl(var(--border))",
+				borderColor: "var(--border)",
 			}}
 		>
 			<img

@@ -10,7 +10,11 @@ import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
+import {
+	HOSTED_AUTH_BASE_URL,
+	postCrossDomainAuthJson,
+	useProjectAuthClient,
+} from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useState } from "react";
@@ -19,9 +23,8 @@ export default function EmailOtpPage() {
 	const [email, setEmail] = useState("");
 	const [otp, setOtp] = useState("");
 	const [step, setStep] = useState<"request" | "verify">("request");
-	const { config, customerAuthBaseUrl, error, hasScope, hostedAuthUrl, isLoading, scopedPath } =
-		useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config, error, hasScope, hostedAuthUrl, isLoading, scopedPath } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard branding={config?.branding} />;
@@ -56,10 +59,9 @@ export default function EmailOtpPage() {
 				<form
 					onSubmit={async (event) => {
 						event.preventDefault();
-						if (!customerAuthBaseUrl) return;
 						await postCrossDomainAuthJson(
 							authClient,
-							customerAuthBaseUrl,
+							HOSTED_AUTH_BASE_URL,
 							"/email-otp/send-verification-otp",
 							{ email, type: "sign-in" },
 						);
@@ -82,8 +84,7 @@ export default function EmailOtpPage() {
 				<form
 					onSubmit={async (event) => {
 						event.preventDefault();
-						if (!customerAuthBaseUrl) return;
-						await postCrossDomainAuthJson(authClient, customerAuthBaseUrl, "/sign-in/email-otp", {
+						await postCrossDomainAuthJson(authClient, HOSTED_AUTH_BASE_URL, "/sign-in/email-otp", {
 							email,
 							otp,
 							callbackURL: hostedAuthUrl("/callback") ?? scopedPath("/callback"),

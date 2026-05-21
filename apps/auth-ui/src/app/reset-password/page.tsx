@@ -16,8 +16,8 @@ export default function ResetPasswordPage() {
 			: (new URLSearchParams(window.location.search).get("token") ?? "");
 	const [password, setPassword] = useState("");
 	const [done, setDone] = useState(false);
-	const { config, customerAuthBaseUrl } = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 
 	return (
 		<AuthCard

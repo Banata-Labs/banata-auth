@@ -25,8 +25,6 @@ interface UseProjectAuthConfigResult {
 	scopedPath: (path: string) => string;
 	scopedApiPath: (path: string) => string;
 	hostedAuthUrl: (path: string) => string | null;
-	customerOrigin: string | null;
-	customerAuthBaseUrl: string | null;
 	customerCallbackUrl: string | null;
 	enabledSocialProviders: Array<{ id: string; label: string }>;
 }
@@ -111,16 +109,6 @@ function parseRedirectUrl(value: string | null): URL | null {
 	} catch {
 		return null;
 	}
-}
-
-function toCustomerOrigin(scope: ProjectAuthScope): string | null {
-	const redirectUrl = parseRedirectUrl(scope.redirectUrl);
-	return redirectUrl?.origin ?? null;
-}
-
-function toCustomerAuthBaseUrl(scope: ProjectAuthScope): string | null {
-	const origin = toCustomerOrigin(scope);
-	return origin ? `${origin}/api/auth` : null;
 }
 
 function toCustomerCallbackUrl(scope: ProjectAuthScope): string | null {
@@ -242,8 +230,6 @@ export function useProjectAuthConfig(): UseProjectAuthConfigResult {
 		scopedPath: (path) => appendScope(path, scope),
 		scopedApiPath: (path) => appendScope(path, scope),
 		hostedAuthUrl: (path) => toHostedAuthUrl(path, scope),
-		customerOrigin: toCustomerOrigin(scope),
-		customerAuthBaseUrl: toCustomerAuthBaseUrl(scope),
 		customerCallbackUrl: toCustomerCallbackUrl(scope),
 		enabledSocialProviders,
 	};

@@ -124,7 +124,6 @@ export default function SignInPage() {
 	const [error, setError] = useState<string | null>(null);
 	const {
 		config,
-		customerAuthBaseUrl,
 		error: configError,
 		enabledSocialProviders,
 		hasScope,
@@ -132,7 +131,7 @@ export default function SignInPage() {
 		isLoading,
 		scopedPath,
 	} = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const authClient = useProjectAuthClient();
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard branding={config?.branding} />;

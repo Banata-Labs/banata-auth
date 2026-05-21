@@ -13,17 +13,9 @@ import { AuthCard, SignUpForm, SocialButtons } from "@banata-auth/react";
 import Link from "next/link";
 
 export default function SignUpPage() {
-	const {
-		config,
-		customerAuthBaseUrl,
-		error,
-		enabledSocialProviders,
-		hasScope,
-		hostedAuthUrl,
-		isLoading,
-		scopedPath,
-	} = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config, error, enabledSocialProviders, hasScope, hostedAuthUrl, isLoading, scopedPath } =
+		useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 
 	if (!hasScope) {
 		return <MissingProjectScopeCard branding={config?.branding} />;

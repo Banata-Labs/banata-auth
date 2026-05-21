@@ -2,7 +2,11 @@
 
 import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
-import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
+import {
+	HOSTED_AUTH_BASE_URL,
+	postCrossDomainAuthJson,
+	useProjectAuthClient,
+} from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useEffect, useState } from "react";
@@ -24,20 +28,15 @@ export default function OrgSelectorPage() {
 	const [orgs, setOrgs] = useState<Org[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { config, customerAuthBaseUrl, scopedPath } = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config, scopedPath } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 
 	useEffect(() => {
-		if (!customerAuthBaseUrl) {
-			setError("Hosted auth is missing the customer app callback target.");
-			setIsLoading(false);
-			return;
-		}
 		void (async () => {
 			try {
 				const response = await postCrossDomainAuthJson(
 					authClient,
-					customerAuthBaseUrl,
+					HOSTED_AUTH_BASE_URL,
 					"/organization/list",
 					{},
 				);
@@ -63,7 +62,7 @@ export default function OrgSelectorPage() {
 				setIsLoading(false);
 			}
 		})();
-	}, [authClient, customerAuthBaseUrl, scopedPath]);
+	}, [authClient, scopedPath]);
 
 	return (
 		<div className="mt-14">

@@ -20,8 +20,8 @@ function getOttFromWindow(): string | null {
 }
 
 export default function CallbackPage() {
-	const { config, customerAuthBaseUrl, customerCallbackUrl, scopedPath } = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config, customerCallbackUrl, scopedPath } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 	const { data: session, isPending } = authClient.useSession();
 	const [status, setStatus] = useState<"verifying" | "redirecting" | "idle" | "error">("verifying");
 	const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function CallbackPage() {
 	const hasStartedRedirectRef = useRef(false);
 
 	useEffect(() => {
-		if (!customerAuthBaseUrl || hasHandledOttRef.current) {
+		if (hasHandledOttRef.current) {
 			return;
 		}
 
@@ -66,7 +66,7 @@ export default function CallbackPage() {
 				);
 			}
 		})();
-	}, [authClient, customerAuthBaseUrl]);
+	}, [authClient]);
 
 	useEffect(() => {
 		if (isPending || !session?.user || !customerCallbackUrl || hasStartedRedirectRef.current) {

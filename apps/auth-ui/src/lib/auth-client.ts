@@ -28,6 +28,8 @@ interface CrossDomainActions {
 	};
 }
 
+export const HOSTED_AUTH_BASE_URL = "/api/auth";
+
 function normalizeBaseUrl(value: string | null | undefined): string {
 	const trimmed = value?.replace(/\/$/, "");
 	if (trimmed?.startsWith("http://") || trimmed?.startsWith("https://")) {

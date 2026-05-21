@@ -4,7 +4,11 @@ import { ProjectAuthLogo } from "@/components/project-branding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { postCrossDomainAuthJson, useProjectAuthClient } from "@/lib/auth-client";
+import {
+	HOSTED_AUTH_BASE_URL,
+	postCrossDomainAuthJson,
+	useProjectAuthClient,
+} from "@/lib/auth-client";
 import { useProjectAuthConfig } from "@/lib/project-auth";
 import { AuthCard } from "@banata-auth/react";
 import { useState } from "react";
@@ -12,8 +16,8 @@ import { useState } from "react";
 export default function MfaPage() {
 	const [code, setCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const { config, customerAuthBaseUrl, scopedPath } = useProjectAuthConfig();
-	const authClient = useProjectAuthClient(customerAuthBaseUrl);
+	const { config, scopedPath } = useProjectAuthConfig();
+	const authClient = useProjectAuthClient();
 
 	return (
 		<AuthCard
@@ -25,13 +29,9 @@ export default function MfaPage() {
 				onSubmit={async (event) => {
 					event.preventDefault();
 					setError(null);
-					if (!customerAuthBaseUrl) {
-						setError("Hosted auth is missing the customer app auth endpoint.");
-						return;
-					}
 					const response = await postCrossDomainAuthJson(
 						authClient,
-						customerAuthBaseUrl,
+						HOSTED_AUTH_BASE_URL,
 						"/two-factor/verify",
 						{ code },
 					);

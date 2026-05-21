@@ -98,6 +98,14 @@ function getFontStack(font: string): string {
 	}
 }
 
+function hslColor(value: { h: number; s: number; l: number }): string {
+	return `hsl(${value.h} ${value.s}% ${value.l}%)`;
+}
+
+function hslTriplet(h: number, s: number, l: number): string {
+	return `hsl(${h} ${s}% ${l}%)`;
+}
+
 export function deriveBrandingCssVariables(
 	branding: RuntimeBrandingConfig,
 ): Record<string, string> {
@@ -107,48 +115,48 @@ export function deriveBrandingCssVariables(
 
 	if (branding.darkMode) {
 		return {
-			"--background": `${background.h} ${background.s}% ${background.l}%`,
-			"--foreground": "0 0% 95%",
-			"--card": `${background.h} ${background.s}% ${Math.min(background.l + 4, 100)}%`,
-			"--card-foreground": "0 0% 95%",
-			"--popover": `${background.h} ${background.s}% ${Math.min(background.l + 4, 100)}%`,
-			"--popover-foreground": "0 0% 95%",
-			"--primary": `${primary.h} ${primary.s}% ${primary.l}%`,
-			"--primary-foreground": "0 0% 100%",
-			"--secondary": `${background.h} ${background.s}% ${Math.min(background.l + 10, 100)}%`,
-			"--secondary-foreground": "0 0% 95%",
-			"--muted": `${background.h} ${background.s}% ${Math.min(background.l + 8, 100)}%`,
-			"--muted-foreground": "0 0% 64%",
-			"--accent": `${background.h} ${background.s}% ${Math.min(background.l + 10, 100)}%`,
-			"--accent-foreground": "0 0% 95%",
-			"--destructive": "0 72% 51%",
-			"--border": `${background.h} ${background.s}% ${Math.min(background.l + 15, 100)}%`,
-			"--input": `${background.h} ${background.s}% ${Math.min(background.l + 15, 100)}%`,
-			"--ring": `${primary.h} ${primary.s}% ${primary.l}%`,
+			"--background": hslColor(background),
+			"--foreground": hslTriplet(0, 0, 95),
+			"--card": hslTriplet(background.h, background.s, Math.min(background.l + 4, 100)),
+			"--card-foreground": hslTriplet(0, 0, 95),
+			"--popover": hslTriplet(background.h, background.s, Math.min(background.l + 4, 100)),
+			"--popover-foreground": hslTriplet(0, 0, 95),
+			"--primary": hslColor(primary),
+			"--primary-foreground": hslTriplet(0, 0, 100),
+			"--secondary": hslTriplet(background.h, background.s, Math.min(background.l + 10, 100)),
+			"--secondary-foreground": hslTriplet(0, 0, 95),
+			"--muted": hslTriplet(background.h, background.s, Math.min(background.l + 8, 100)),
+			"--muted-foreground": hslTriplet(0, 0, 64),
+			"--accent": hslTriplet(background.h, background.s, Math.min(background.l + 10, 100)),
+			"--accent-foreground": hslTriplet(0, 0, 95),
+			"--destructive": hslTriplet(0, 72, 51),
+			"--border": hslTriplet(background.h, background.s, Math.min(background.l + 15, 100)),
+			"--input": hslTriplet(background.h, background.s, Math.min(background.l + 15, 100)),
+			"--ring": hslColor(primary),
 			"--radius": `${branding.borderRadius}px`,
 			"--font-app-sans": fontStack,
 		};
 	}
 
 	return {
-		"--background": `${background.h} ${background.s}% ${Math.max(background.l, 96)}%`,
-		"--foreground": "0 0% 4%",
-		"--card": "0 0% 100%",
-		"--card-foreground": "0 0% 4%",
-		"--popover": "0 0% 100%",
-		"--popover-foreground": "0 0% 4%",
-		"--primary": `${primary.h} ${primary.s}% ${primary.l}%`,
-		"--primary-foreground": "0 0% 100%",
-		"--secondary": "0 0% 96%",
-		"--secondary-foreground": "0 0% 9%",
-		"--muted": "0 0% 96%",
-		"--muted-foreground": "0 0% 45%",
-		"--accent": "0 0% 96%",
-		"--accent-foreground": "0 0% 9%",
-		"--destructive": "0 84% 60%",
-		"--border": "0 0% 90%",
-		"--input": "0 0% 90%",
-		"--ring": `${primary.h} ${primary.s}% ${primary.l}%`,
+		"--background": hslTriplet(background.h, background.s, Math.max(background.l, 96)),
+		"--foreground": hslTriplet(0, 0, 4),
+		"--card": hslTriplet(0, 0, 100),
+		"--card-foreground": hslTriplet(0, 0, 4),
+		"--popover": hslTriplet(0, 0, 100),
+		"--popover-foreground": hslTriplet(0, 0, 4),
+		"--primary": hslColor(primary),
+		"--primary-foreground": hslTriplet(0, 0, 100),
+		"--secondary": hslTriplet(0, 0, 96),
+		"--secondary-foreground": hslTriplet(0, 0, 9),
+		"--muted": hslTriplet(0, 0, 96),
+		"--muted-foreground": hslTriplet(0, 0, 45),
+		"--accent": hslTriplet(0, 0, 96),
+		"--accent-foreground": hslTriplet(0, 0, 9),
+		"--destructive": hslTriplet(0, 84, 60),
+		"--border": hslTriplet(0, 0, 90),
+		"--input": hslTriplet(0, 0, 90),
+		"--ring": hslColor(primary),
 		"--radius": `${branding.borderRadius}px`,
 		"--font-app-sans": fontStack,
 	};
@@ -211,8 +219,8 @@ export function applyBrandingToDocument(branding: RuntimeBrandingConfig | null |
 	}
 
 	if (!branding) {
-		root.classList.remove("dark");
-		root.classList.add("light");
+		root.classList.remove("light");
+		root.classList.add("dark");
 		delete root.dataset[BRANDING_VAR_DATASET_KEY];
 		updateBrandingFont("system");
 		styleEl.textContent = "";
