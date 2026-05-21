@@ -8,7 +8,8 @@
 			"evidence": [
 				"Live smoke on 2026-05-21: https://auth.banata.dev returned 200 OK from Vercel.",
 				"Live smoke on 2026-05-21: https://auth-ui.banata.dev returned 200 OK from Vercel.",
-				"Live smoke on 2026-05-21: https://auth-docs.banata.dev returned 307 Temporary Redirect to /docs from Vercel."
+				"Live smoke on 2026-05-21: https://auth-docs.banata.dev returned 307 Temporary Redirect to /docs from Vercel.",
+				"Hosted UI live CSS check on 2026-05-21 confirmed the deployed sign-in stylesheet includes shared auth component utilities such as max-w-md, p-8, text-2xl, font-bold, tracking-tight, and mb-6."
 			],
 			"notes": "Public production URLs are reachable, but this gate still requires final service-name decision records plus proof that production, staging, and development deployments, databases, secrets, OAuth apps, SMS/email providers, webhook endpoints, and API keys are isolated."
 		},
@@ -16,12 +17,14 @@
 			"id": "ci-monorepo-checks",
 			"status": "passed",
 			"evidence": [
-				"CI run for launch commit 1b1bd2a passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26221342292",
-				"CI run 26221342292 completed the root lint, auth local readiness, and workspace build jobs for commit 1b1bd2a.",
-				"`bun run verify:auth-local-readiness` passed locally before push and is invoked by the CI auth local readiness step.",
-				"GitHub Actions retains the CI logs and artifacts for run 26221342292 under the Banata-Labs/banata-auth repository."
+				"CI run for latest launch commit f8d67255b1a76379a4facf683d8535879ca001e4 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26222744928",
+				"CI run 26222744928 completed the root lint, auth local readiness, and workspace build jobs for commit f8d67255b1a76379a4facf683d8535879ca001e4.",
+				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit f8d67255b1a76379a4facf683d8535879ca001e4.",
+				"GitHub Actions retains the CI logs and artifacts for run 26222744928 under the Banata-Labs/banata-auth repository.",
+				"Release run for commit f8d67255b1a76379a4facf683d8535879ca001e4 passed and published packages: https://github.com/Banata-Labs/banata-auth/actions/runs/26222745144",
+				"`npm view @banata-auth/sdk version` returned 0.2.3 after the release run."
 			],
-			"notes": "GitHub Actions CI passed for the exact latest main commit after the dashboard/example-app lint fixes."
+			"notes": "GitHub Actions CI and Release passed for the exact latest main commit after the hosted UI styling and example-app origin fixes."
 		},
 		{
 			"id": "sms-whatsapp-provider-delivery",
