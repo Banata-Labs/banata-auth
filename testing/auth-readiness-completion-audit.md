@@ -145,6 +145,8 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bunx next build` passed in `apps/dashboard` and reported `ƒ Proxy (Middleware)`.
 - Live unauthenticated check against `https://auth.banata.dev/` returned `307` to `/sign-in?redirect_url=%2F` and did not serve `user@example.com` or the dashboard shell.
 - GitHub Actions CI run `26252014227` and Release run `26252014229` passed for commit `a0efbbbeb4fbba9e7938b81d46495d5b151fabee`.
+- `bunx convex env list --prod` from `apps/dashboard` was attempted on 2026-05-21 and failed with Convex CLI project-access denial; production env inventory still requires an authorized Convex/Vercel account.
+- A local `apps/dashboard/.env.local` key-name scan found only `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`, and `NEXT_PUBLIC_CONVEX_SITE_URL`; this is local metadata only and not production evidence.
 
 ## Completion Decision
 

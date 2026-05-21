@@ -69,9 +69,11 @@
 			"id": "production-env-inventory",
 			"status": "pending",
 			"evidence": [
-				"Live smoke on 2026-05-21 with the local server API key resolved /api/auth/banata/config/public with 200 OK from https://auth.banata.dev."
+				"Live smoke on 2026-05-21 with the local server API key resolved /api/auth/banata/config/public with 200 OK from https://auth.banata.dev.",
+				"Convex production env inventory attempt on 2026-05-21 ran `bunx convex env list --prod` from apps/dashboard and was blocked by Convex CLI project access: the CLI identity does not have access to the selected project.",
+				"Local apps/dashboard/.env.local key-name scan on 2026-05-21 found only CONVEX_DEPLOYMENT, NEXT_PUBLIC_CONVEX_URL, and NEXT_PUBLIC_CONVEX_SITE_URL; this is not production inventory proof."
 			],
-			"notes": "The auth service can resolve project public config through the server API key, but this gate still requires a redacted production env inventory, environment separation proof, and log review."
+			"notes": "The auth service can resolve project public config through the server API key, but production env inventory is still blocked until an account with Convex/Vercel production access exports redacted variable names, environment separation proof, and log review evidence."
 		},
 		{
 			"id": "monitoring-alerting-incident-response",
