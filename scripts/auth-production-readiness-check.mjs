@@ -630,6 +630,37 @@ const artifactChecks = [
 		],
 	},
 	{
+		id: "production-evidence-collection-runbook",
+		requirement:
+			"Production evidence collection runbook gives authorized operators exact collection steps for every external launch gate.",
+		file: "testing/auth-production-evidence-collection.md",
+		patterns: [
+			/Auth Production Evidence Collection/,
+			/Do not paste secrets/,
+			/vercel\.cmd env ls production/,
+			/bunx convex env list --prod/,
+			/sms-whatsapp-provider-delivery/,
+			/phone-otp-session-issuance/,
+			/browser-e2e-core-auth/,
+			/real-oauth-providers/,
+			/sso-scim-real-idp/,
+			/kms-key-custody/,
+			/monitoring-alerting-incident-response/,
+			/security-review-signoff/,
+			/verify:auth-production-gates/,
+		],
+		also: [
+			{
+				file: "testing/auth-production-launch-handoff.md",
+				patterns: [/auth-production-evidence-collection\.md/],
+			},
+			{
+				file: "testing/auth-readiness-test-guide.md",
+				patterns: [/auth-production-evidence-collection\.md/],
+			},
+		],
+	},
+	{
 		id: "live-smoke-command",
 		requirement:
 			"A repeatable live smoke command exists for shallow deployed auth, hosted UI, docs, and optional project public config checks.",

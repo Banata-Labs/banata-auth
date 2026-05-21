@@ -146,6 +146,8 @@ Attach evidence in `testing/auth-production-gates.json` for:
 
 Use `testing/auth-production-env-inventory-template.json` to collect the production env inventory. Keep values redacted. Record only the variable name, runtime, secret-store or deployment metadata, environment scope, and log-review evidence.
 
+Use `testing/auth-production-evidence-collection.md` for the exact privileged commands and evidence targets for Vercel, Convex, providers, E2E, KMS/HSM, monitoring, and security signoff.
+
 Use `testing/auth-incident-runbooks.md` for the minimum incident drills that need evidence before launch.
 
 After each evidence update:
