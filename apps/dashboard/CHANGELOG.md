@@ -1,5 +1,12 @@
 # @banata-auth/dashboard
 
+## 0.0.10
+
+### Patch Changes
+
+- Updated dependencies [[`c2d962d`](https://github.com/Banata-Labs/banata-auth/commit/c2d962d54577b833103c2f267d4ed05ff67731cb)]:
+  - @banata-auth/sdk@0.2.2
+
 ## 0.0.9
 
 ### Patch Changes

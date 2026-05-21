@@ -1,5 +1,11 @@
 # @banata-auth/sdk
 
+## 0.2.2
+
+### Patch Changes
+
+- [`c2d962d`](https://github.com/Banata-Labs/banata-auth/commit/c2d962d54577b833103c2f267d4ed05ff67731cb) Thanks [@Shujaagideon](https://github.com/Shujaagideon)! - Expose the production readiness SDK surface for phone/device and security controls.
+
 ## 0.2.0
 
 ### Minor Changes
