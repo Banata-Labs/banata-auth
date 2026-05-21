@@ -62,6 +62,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Bot protection on sensitive auth routes | `BANATA_DEFAULT_BOT_PROTECTED_PATHS` and `withBotProtection` in `packages/nextjs/src/bot-protection.ts`, `packages/nextjs/src/__tests__/bot-protection.test.ts`, `apps/docs/content/docs/bot-protection.mdx`, and `apps/docs/content/docs/radar.mdx` | local artifact complete; selected provider production proof pending under security/operations gates |
 | Secret, token, cookie, and callback URL log redaction | `packages/shared/src/log-redaction.ts`, `packages/shared/src/__tests__/log-redaction.test.ts`, `apps/dashboard/src/app/api/auth/[...all]/route.ts` | local artifact complete |
 | Required auth browser E2E coverage is enumerated | `testing/auth-e2e-scenarios.json`, `scripts/auth-e2e-scenarios-check.mjs` | scenario plan complete |
+| Required auth browser E2E evidence is enforced by a deterministic command | `scripts/auth-e2e-readiness-check.mjs`, package scripts `test:e2e` and `verify:auth-e2e-readiness`, `.github/workflows/e2e.yml` | command fails clearly until deployed browser evidence is attached |
 | Security headers, CSP, cookie, CSRF/origin, callback, and log-redaction review | `testing/auth-security-review-checklist.json`, `scripts/auth-security-review-check.mjs` | checklist complete, signoff pending |
 | Monitoring, alerting, status reporting, data retention, release approvals, customer-facing onboarding controls, support tooling, and environment separation | `packages/shared/src/operations-readiness.ts`, `packages/shared/src/__tests__/operations-readiness.test.ts`, `testing/auth-operations-readiness.json`, `scripts/auth-operations-readiness-check.mjs` | local contract/checklist complete, external verification pending |
 | P2 BYOK, device risk scoring, anomaly detection, session forensics, fine-grained auth, and compliance packaging | `packages/shared/src/maturity-readiness.ts`, `packages/shared/src/__tests__/maturity-readiness.test.ts`, `testing/auth-maturity-readiness.json`, `scripts/auth-maturity-readiness-check.mjs` | roadmap/evidence tracking complete |
@@ -122,6 +123,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bun run typecheck` passed after the example-app hosted UI harness and stricter production gate checks were added.
 - `bun run test` passed after the example-app hosted UI harness and stricter production gate checks were added.
 - `bun run verify:auth-production-gates` failed as expected because external production evidence is still pending.
+- `bun run test:e2e` was changed from a hanging Turbo task to `scripts/auth-e2e-readiness-check.mjs`; it now fails clearly while required deployed browser scenarios remain pending.
 - `bun run --cwd apps/auth-ui build` passed after the hosted UI styling fix.
 - `bun run --cwd apps/auth-ui lint` passed.
 - `bun run --cwd apps/auth-ui typecheck` passed.

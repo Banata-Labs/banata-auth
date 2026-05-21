@@ -94,6 +94,24 @@ Verify:
 
 Run browser E2E against a deployed or production-like environment and attach the report to `testing/auth-production-gates.json`.
 
+Use the manifest command to verify that every required scenario is listed:
+
+```bash
+bun run verify:auth-e2e-scenarios
+```
+
+Use the E2E readiness command only after deployed browser evidence has been collected and attached to `testing/auth-e2e-scenarios.json`:
+
+```bash
+bun run test:e2e
+```
+
+Expected result:
+
+- `bun run verify:auth-e2e-scenarios` passes when the manifest lists every required scenario.
+- `bun run test:e2e` fails while any scenario is still `pending` or lacks evidence.
+- `bun run test:e2e` passes only when every required scenario is marked `passed` with a concrete evidence reference.
+
 Required scenarios:
 
 - email/password sign-up, sign-in, logout

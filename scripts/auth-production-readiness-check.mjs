@@ -88,10 +88,7 @@ const artifactChecks = [
 			},
 			{
 				file: "apps/docs/content/docs/roles-permissions.mdx",
-				patterns: [
-					/app\.product_surface\.resource\.action/,
-					/validatePermissionNamespaceCatalog/,
-				],
+				patterns: [/app\.product_surface\.resource\.action/, /validatePermissionNamespaceCatalog/],
 			},
 		],
 	},
@@ -292,7 +289,11 @@ const artifactChecks = [
 		also: [
 			{
 				file: "packages/convex/src/component/schema.ts",
-				patterns: [/servicePrincipal: defineTable/, /projectId_principalId/, /projectId_credentialKeyId/],
+				patterns: [
+					/servicePrincipal: defineTable/,
+					/projectId_principalId/,
+					/projectId_credentialKeyId/,
+				],
 			},
 			{
 				file: "apps/docs/content/docs/api-keys.mdx",
@@ -315,11 +316,19 @@ const artifactChecks = [
 		also: [
 			{
 				file: "packages/convex/src/component/schema.ts",
-				patterns: [/impersonationReason/, /impersonationSupportTicketId/, /impersonationCustomerVisible/],
+				patterns: [
+					/impersonationReason/,
+					/impersonationSupportTicketId/,
+					/impersonationCustomerVisible/,
+				],
 			},
 			{
 				file: "packages/convex/src/plugins/user-management.ts",
-				patterns: [/support_impersonation_session/, /impersonationCustomerVisible: true/, /supportTicketId/],
+				patterns: [
+					/support_impersonation_session/,
+					/impersonationCustomerVisible: true/,
+					/supportTicketId/,
+				],
 			},
 			{
 				file: "apps/docs/content/docs/production-readiness.mdx",
@@ -388,13 +397,18 @@ const artifactChecks = [
 		also: [
 			{
 				file: "packages/shared/src/__tests__/key-custody.test.ts",
-				patterns: [/rejects missing key purposes/, /rejects reused custody references/, /requires access logging/],
+				patterns: [
+					/rejects missing key purposes/,
+					/rejects reused custody references/,
+					/requires access logging/,
+				],
 			},
 		],
 	},
 	{
 		id: "production-gate-evidence",
-		requirement: "Production launch gates have a strict evidence manifest, evidence template, and failing verifier.",
+		requirement:
+			"Production launch gates have a strict evidence manifest, evidence template, and failing verifier.",
 		file: "testing/auth-production-gates.json",
 		patterns: [
 			/"final-domain-deploy-isolation"/,
@@ -480,8 +494,17 @@ const artifactChecks = [
 				patterns: [/requiredScenarioIds/, /hosted-ui-callback/, /project-isolation/],
 			},
 			{
+				file: "scripts/auth-e2e-readiness-check.mjs",
+				patterns: [
+					/Browser E2E is not production-ready/,
+					/evidenceReferences/,
+					/hosted-ui-callback/,
+					/project-isolation/,
+				],
+			},
+			{
 				file: "package.json",
-				patterns: [/verify:auth-e2e-scenarios/],
+				patterns: [/verify:auth-e2e-scenarios/, /verify:auth-e2e-readiness/, /test:e2e/],
 			},
 		],
 	},
@@ -696,7 +719,10 @@ const artifactChecks = [
 		also: [
 			{
 				file: "packages/nextjs/src/__tests__/security.test.ts",
-				patterns: [/rejects missing or untrusted origins/, /reports auth cookies missing production attributes/],
+				patterns: [
+					/rejects missing or untrusted origins/,
+					/reports auth cookies missing production attributes/,
+				],
 			},
 			{
 				file: "packages/nextjs/src/index.ts",
@@ -728,7 +754,12 @@ const artifactChecks = [
 			},
 			{
 				file: "apps/docs/content/docs/bot-protection.mdx",
-				patterns: [/\/api\/auth\/magic-link/, /\/api\/auth\/email-otp/, /\/api\/auth\/phone/, /\/api\/auth\/device\/start/],
+				patterns: [
+					/\/api\/auth\/magic-link/,
+					/\/api\/auth\/email-otp/,
+					/\/api\/auth\/phone/,
+					/\/api\/auth\/device\/start/,
+				],
 			},
 		],
 	},
