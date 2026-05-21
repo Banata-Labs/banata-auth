@@ -152,6 +152,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - Public DNS checks on 2026-05-22 confirmed `auth.banata.dev`, `auth-ui.banata.dev`, and `auth-docs.banata.dev` resolve to public Vercel IPv4/IPv6 addresses.
 - Public HTTPS checks on 2026-05-22 confirmed `auth.banata.dev` returns `307` to `/sign-in?redirect_url=%2F`, `auth-ui.banata.dev` returns `200`, and `auth-docs.banata.dev` returns `307` to `/docs`, all with `server=Vercel`.
 - `bun run verify:auth-live-smoke` passed on 2026-05-22 after commit `638f34b`, including deployed CSP, frame, MIME sniffing, referrer, and permissions header checks for auth, hosted UI, and docs.
+- `bun run verify:auth-live-smoke` passed on 2026-05-22 after commit `83d6e8a`, including `Cache-Control: no-store` checks for the auth dashboard and hosted UI sign-in pages.
 
 ## Completion Decision
 

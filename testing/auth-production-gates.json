@@ -88,9 +88,10 @@
 			"id": "security-review-signoff",
 			"status": "pending",
 			"evidence": [
-				"Live smoke on 2026-05-22 after commit 638f34b confirmed auth.banata.dev/sign-in, auth-ui.banata.dev/sign-in, and auth-docs.banata.dev/docs include CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy headers."
+				"Live smoke on 2026-05-22 after commit 638f34b confirmed auth.banata.dev/sign-in, auth-ui.banata.dev/sign-in, and auth-docs.banata.dev/docs include CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy headers.",
+				"Live smoke on 2026-05-22 after commit 83d6e8a confirmed auth.banata.dev/sign-in and auth-ui.banata.dev/sign-in include Cache-Control: no-store while retaining the required security headers."
 			],
-			"notes": "Security header smoke evidence exists, but this gate still requires focused internal or external security review signoff covering CSP allowances, cookie policy, CSRF/origin behavior, OAuth callbacks, secret redaction, incident logging, and accepted residual risks."
+			"notes": "Security header and no-store cache-control smoke evidence exists, but this gate still requires focused internal or external security review signoff covering CSP allowances, cookie policy, CSRF/origin behavior, OAuth callbacks, secret redaction, incident logging, and accepted residual risks."
 		}
 	]
 }
