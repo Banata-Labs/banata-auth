@@ -154,8 +154,8 @@ export function Sidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { data } = authClient.useSession();
-	const userName = data?.user?.name ?? "User";
-	const userEmail = data?.user?.email ?? "user@example.com";
+	const userName = data?.user?.name ?? data?.user?.email ?? "Signed out";
+	const userEmail = data?.user?.email ?? "No active session";
 	const userImage = data?.user?.image;
 	const userInitial = userName.charAt(0).toUpperCase();
 

@@ -4,9 +4,10 @@ import { ProjectEnvironmentProvider } from "@/components/project-environment-pro
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Moon, Search, Sun } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const breadcrumbMap: Record<string, string> = {
@@ -113,6 +114,25 @@ function ThemeToggle() {
 }
 
 function ProtectedContent({ children }: { children: React.ReactNode }) {
+	const pathname = usePathname();
+	const router = useRouter();
+	const { data, isPending } = authClient.useSession();
+
+	useEffect(() => {
+		if (isPending || data?.user) return;
+
+		const redirectUrl = pathname || "/";
+		router.replace(`/sign-in?force=1&redirect_url=${encodeURIComponent(redirectUrl)}`);
+	}, [data?.user, isPending, pathname, router]);
+
+	if (isPending || !data?.user) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+				{isPending ? "Loading..." : "Redirecting to sign in..."}
+			</div>
+		);
+	}
+
 	return (
 		<ProjectEnvironmentProvider>
 			<div className="min-h-screen bg-background">
@@ -129,7 +149,7 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
 								size="sm"
 								className="h-8 gap-2 px-2.5 text-muted-foreground"
 								disabled
-								title="Search — Coming soon"
+								title="Search - Coming soon"
 							>
 								<Search className="size-4" />
 								<span>Search</span>
