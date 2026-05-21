@@ -6,12 +6,13 @@
 			"id": "final-domain-deploy-isolation",
 			"status": "pending",
 			"evidence": [
-				"Live smoke on 2026-05-21: https://auth.banata.dev returned 200 OK from Vercel.",
+				"Live smoke on 2026-05-21 after commit a0efbbbeb confirmed https://auth.banata.dev returns 307 to /sign-in?redirect_url=%2F for unauthenticated root access.",
 				"Live smoke on 2026-05-21: https://auth-ui.banata.dev returned 200 OK from Vercel.",
 				"Live smoke on 2026-05-21: https://auth-docs.banata.dev returned 307 Temporary Redirect to /docs from Vercel.",
 				"Hosted UI live CSS check on 2026-05-21 confirmed the deployed sign-in stylesheet includes shared auth component utilities such as max-w-md, p-8, text-2xl, font-bold, tracking-tight, and mb-6.",
 				"Hosted UI live CSS check on 2026-05-21 after commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e confirmed the deployed stylesheet includes dashboard primary colors compiled as #e85854 and #b32228.",
-				"Hosted UI live browser check on 2026-05-21 clicked Continue with Github on https://auth-ui.banata.dev/sign-in?client_id=testing-example-app and reached GitHub login with redirect_uri=https://auth.banata.dev/api/auth/callback/github."
+				"Hosted UI live browser check on 2026-05-21 clicked Continue with Github on https://auth-ui.banata.dev/sign-in?client_id=testing-example-app and reached GitHub login with redirect_uri=https://auth.banata.dev/api/auth/callback/github.",
+				"Dashboard guard production check on 2026-05-21 confirmed unauthenticated https://auth.banata.dev/ no longer serves the dashboard shell or the former user@example.com fallback."
 			],
 			"notes": "Public production URLs are reachable, but this gate still requires final service-name decision records plus proof that production, staging, and development deployments, databases, secrets, OAuth apps, SMS/email providers, webhook endpoints, and API keys are isolated."
 		},
@@ -19,14 +20,14 @@
 			"id": "ci-monorepo-checks",
 			"status": "passed",
 			"evidence": [
-				"CI run for latest readiness commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26228358427",
-				"CI run 26228358427 completed the root lint, auth local readiness, and workspace build jobs for commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e.",
-				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e.",
-				"GitHub Actions retains the CI logs and artifacts for run 26228358427 under the Banata-Labs/banata-auth repository.",
-				"Release run for commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26228358432",
+				"CI run for latest readiness commit a0efbbbeb4fbba9e7938b81d46495d5b151fabee passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26252014227",
+				"CI run 26252014227 completed the root lint, auth local readiness, and workspace build jobs for commit a0efbbbeb4fbba9e7938b81d46495d5b151fabee.",
+				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit a0efbbbeb4fbba9e7938b81d46495d5b151fabee.",
+				"GitHub Actions retains the CI logs and artifacts for run 26252014227 under the Banata-Labs/banata-auth repository.",
+				"Release run for commit a0efbbbeb4fbba9e7938b81d46495d5b151fabee passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26252014229",
 				"`bun run test:e2e` now resolves to scripts/auth-e2e-readiness-check.mjs and fails clearly until deployed browser evidence is attached."
 			],
-			"notes": "GitHub Actions CI and Release passed for the latest readiness commit after the hosted UI auth flow, hosted UI theming, example-app origin, deterministic E2E gate, auth client contract, incident runbook, and env inventory template updates."
+			"notes": "GitHub Actions CI and Release passed for the latest readiness commit after the dashboard root auth guard fix, hosted UI auth flow, hosted UI theming, example-app origin, deterministic E2E gate, auth client contract, incident runbook, and env inventory template updates."
 		},
 		{
 			"id": "sms-whatsapp-provider-delivery",
