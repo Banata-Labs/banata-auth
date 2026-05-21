@@ -151,6 +151,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - A local `apps/dashboard/.env.local` key-name scan found only `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`, and `NEXT_PUBLIC_CONVEX_SITE_URL`; this is local metadata only and not production evidence.
 - Public DNS checks on 2026-05-22 confirmed `auth.banata.dev`, `auth-ui.banata.dev`, and `auth-docs.banata.dev` resolve to public Vercel IPv4/IPv6 addresses.
 - Public HTTPS checks on 2026-05-22 confirmed `auth.banata.dev` returns `307` to `/sign-in?redirect_url=%2F`, `auth-ui.banata.dev` returns `200`, and `auth-docs.banata.dev` returns `307` to `/docs`, all with `server=Vercel`.
+- `bun run verify:auth-live-smoke` passed on 2026-05-22 after commit `638f34b`, including deployed CSP, frame, MIME sniffing, referrer, and permissions header checks for auth, hosted UI, and docs.
 
 ## Completion Decision
 
