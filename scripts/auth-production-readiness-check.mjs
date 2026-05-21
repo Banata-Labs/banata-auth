@@ -390,7 +390,7 @@ const artifactChecks = [
 	{
 		id: "env-inventory",
 		requirement:
-			"Environment inventory includes split production key custody and phone-provider variables.",
+			"Environment inventory includes split production key custody, phone-provider variables, and a redacted production evidence template.",
 		file: "apps/docs/content/docs/env-vars.mdx",
 		patterns: [
 			/BANATA_AUTH_APP_SECRET/,
@@ -399,6 +399,37 @@ const artifactChecks = [
 			/BANATA_REFRESH_TOKEN_PEPPER_KMS_ID/,
 			/BANATA_WEBHOOK_SIGNING_PEPPER/,
 			/WHATSAPP_CLOUD_API_TOKEN/,
+			/auth-production-env-inventory-template\.json/,
+		],
+		also: [
+			{
+				file: "testing/auth-production-env-inventory-template.json",
+				patterns: [
+					/"BETTER_AUTH_SECRET"/,
+					/"BANATA_AUTH_APP_SECRET"/,
+					/"BANATA_JWT_SIGNING_KEY_KMS_ID"/,
+					/"BANATA_VAULT_KMS_KEY_ID"/,
+					/"BANATA_REFRESH_TOKEN_PEPPER_KMS_ID"/,
+					/"BANATA_WEBHOOK_SIGNING_PEPPER"/,
+					/"BANATA_API_KEY"/,
+					/"VITE_BANATA_HOSTED_AUTH_URL"/,
+					/"environmentScoped": true/,
+					/"forbiddenValues"/,
+				],
+			},
+			{
+				file: "scripts/auth-env-inventory-template-check.mjs",
+				patterns: [
+					/requiredVariables/,
+					/BANATA_JWT_SIGNING_KEY_KMS_ID/,
+					/disallowedEvidencePatterns/,
+					/logReview\.forbiddenValues/,
+				],
+			},
+			{
+				file: "package.json",
+				patterns: [/verify:auth-env-inventory-template/],
+			},
 		],
 	},
 	{
@@ -633,6 +664,7 @@ const artifactChecks = [
 			/verify:auth-e2e-scenarios/,
 			/verify:auth-security-review/,
 			/verify:auth-operations-readiness/,
+			/verify:auth-env-inventory-template/,
 			/verify:auth-maturity-readiness/,
 			/verify:auth-production-gate-template/,
 			/apps\/docs/,

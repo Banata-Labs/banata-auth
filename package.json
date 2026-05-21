@@ -16,6 +16,7 @@
 		"verify:auth-production-gates": "node scripts/auth-production-gates-check.mjs",
 		"verify:auth-local-readiness": "node scripts/auth-local-readiness-check.mjs",
 		"verify:auth-live-smoke": "node scripts/auth-live-smoke-check.mjs",
+		"verify:auth-env-inventory-template": "node scripts/auth-env-inventory-template-check.mjs",
 		"verify:auth-maturity-readiness": "node scripts/auth-maturity-readiness-check.mjs",
 		"verify:auth-operations-readiness": "node scripts/auth-operations-readiness-check.mjs",
 		"verify:auth-security-review": "node scripts/auth-security-review-check.mjs",

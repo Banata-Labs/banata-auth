@@ -20,6 +20,7 @@ bun run verify:auth-readiness
 bun run verify:auth-e2e-scenarios
 bun run verify:auth-security-review
 bun run verify:auth-operations-readiness
+bun run verify:auth-env-inventory-template
 bun run verify:auth-maturity-readiness
 bun run verify:auth-production-gate-template
 bun run --cwd apps/docs build
@@ -142,11 +143,14 @@ Attach evidence in `testing/auth-production-gates.json` for:
 - monitoring, alerting, status reporting, and incident response verification
 - security review signoff
 
+Use `testing/auth-production-env-inventory-template.json` to collect the production env inventory. Keep values redacted. Record only the variable name, runtime, secret-store or deployment metadata, environment scope, and log-review evidence.
+
 Use `testing/auth-incident-runbooks.md` for the minimum incident drills that need evidence before launch.
 
 After each evidence update:
 
 ```bash
+bun run verify:auth-env-inventory-template
 bun run verify:auth-production-gates
 bun run verify:auth-readiness
 ```

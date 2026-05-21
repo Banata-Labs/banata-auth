@@ -5,7 +5,7 @@
  *   bun run scripts/generate-search-index.ts
  *
  * Pages: 44
- * Total headings: 747
+ * Total headings: 748
  */
 
 export interface SearchIndexHeading {
@@ -1576,6 +1576,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
       },
       {
         "level": 3,
+        "text": "Production Inventory Evidence",
+        "anchor": "production-inventory-evidence",
+        "snippet": "Use testing/auth-production-env-inventory-template.json when you prepare the managed production launch evidence."
+      },
+      {
+        "level": 3,
         "text": "Passkeys (WebAuthn)",
         "anchor": "passkeys-webauthn",
         "snippet": ""
@@ -1629,7 +1635,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Convex Integration — Deep dive into the Convex backend configuration Deploy — Ship your self-hosted instance to production Quick Start — Set up a new project from scratch"
       }
     ],
-    "searchText": "environment variables complete reference for every environment variable you need when self-hosting banata auth with convex and next.js. quick reference --- convex environment variables you set these on your convex deployment with npx convex env set. they're available to your convex functions via process.env. core social oauth providers you only need to set credentials for the providers you've enabled in your socialproviders configuration. email provider phone and whatsapp otp providers banata auth exposes phone otp state and endpoints. configure delivery from sms > providers, or provide your own delivery function through productionreadiness.sendphoneotp. passkeys (webauthn) managing convex variables next.js environment variables (.env.local) these live in your .env.local file and are available to your next.js application at build and runtime. example .env.local local development when you run convex locally with npx convex dev, your .env.local should point to the local endpoints: next_public_ safety reminder any variable prefixed with next_public_ gets embedded in your client-side javascript bundle and is visible to every user. never put secrets in next_public_ variables. production checklist before you go live, walk through each item: template .env.local copy this into your project as a starting point: next steps convex integration — deep dive into the convex backend configuration deploy — ship your self-hosted instance to production quick start — set up a new project from scratch"
+    "searchText": "environment variables complete reference for every environment variable you need when self-hosting banata auth with convex and next.js. quick reference --- convex environment variables you set these on your convex deployment with npx convex env set. they're available to your convex functions via process.env. core social oauth providers you only need to set credentials for the providers you've enabled in your socialproviders configuration. email provider phone and whatsapp otp providers banata auth exposes phone otp state and endpoints. configure delivery from sms > providers, or provide your own delivery function through productionreadiness.sendphoneotp. production inventory evidence use testing/auth-production-env-inventory-template.json when you prepare the managed production launch evidence. passkeys (webauthn) managing convex variables next.js environment variables (.env.local) these live in your .env.local file and are available to your next.js application at build and runtime. example .env.local local development when you run convex locally with npx convex dev, your .env.local should point to the local endpoints: next_public_ safety reminder any variable prefixed with next_public_ gets embedded in your client-side javascript bundle and is visible to every user. never put secrets in next_public_ variables. production checklist before you go live, walk through each item: template .env.local copy this into your project as a starting point: next steps convex integration — deep dive into the convex backend configuration deploy — ship your self-hosted instance to production quick start — set up a new project from scratch"
   },
   {
     "slug": "hosted-ui",

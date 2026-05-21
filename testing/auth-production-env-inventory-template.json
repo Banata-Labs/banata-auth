@@ -1,0 +1,134 @@
+{
+	"version": 1,
+	"updatedAt": "2026-05-21",
+	"environment": "production",
+	"deployment": {
+		"name": "production",
+		"authUrl": "https://auth.banata.dev",
+		"hostedUiUrl": "https://auth-ui.banata.dev",
+		"docsUrl": "https://auth-docs.banata.dev",
+		"releaseIdentifier": "commit-or-deployment-id",
+		"secretStore": "provider-secret-store-name"
+	},
+	"variables": [
+		{
+			"name": "BETTER_AUTH_SECRET",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "present-redacted",
+			"environmentScoped": true,
+			"notes": "Record the secret-store reference or env var metadata only; never paste the value."
+		},
+		{
+			"name": "SITE_URL",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "https://auth.banata.dev",
+			"environmentScoped": true,
+			"notes": "Must match the production auth service URL."
+		},
+		{
+			"name": "BANATA_AUTH_APP_SECRET",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "present-redacted",
+			"environmentScoped": true,
+			"notes": "Production app secret reference, separated from vault and token signing custody."
+		},
+		{
+			"name": "BANATA_JWT_SIGNING_KEY_KMS_ID",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "kms-key-reference-redacted",
+			"environmentScoped": true,
+			"notes": "KMS/HSM/external reference for JWT signing custody."
+		},
+		{
+			"name": "BANATA_VAULT_KMS_KEY_ID",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "kms-key-reference-redacted",
+			"environmentScoped": true,
+			"notes": "KMS/HSM/external reference for vault encryption custody."
+		},
+		{
+			"name": "BANATA_REFRESH_TOKEN_PEPPER_KMS_ID",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "kms-key-reference-redacted",
+			"environmentScoped": true,
+			"notes": "KMS/HSM/external reference for refresh-token pepper custody."
+		},
+		{
+			"name": "BANATA_WEBHOOK_SIGNING_PEPPER",
+			"runtime": "convex",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "present-redacted",
+			"environmentScoped": true,
+			"notes": "Production webhook pepper reference; do not paste raw value."
+		},
+		{
+			"name": "BANATA_API_KEY",
+			"runtime": "customer-server",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "present-redacted",
+			"environmentScoped": true,
+			"notes": "Customer app server API key. It must not be available in browser/public env."
+		},
+		{
+			"name": "BANATA_AUTH_URL",
+			"runtime": "customer-server",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "https://auth.banata.dev",
+			"environmentScoped": true,
+			"notes": "Customer server proxy target for Banata Auth."
+		},
+		{
+			"name": "VITE_BANATA_HOSTED_AUTH_URL",
+			"runtime": "customer-client",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "https://auth-ui.banata.dev",
+			"environmentScoped": true,
+			"notes": "Public hosted UI URL; no secret value."
+		},
+		{
+			"name": "VITE_BANATA_CLIENT_ID",
+			"runtime": "customer-client",
+			"required": true,
+			"status": "pending",
+			"valueEvidence": "client-id-redacted",
+			"environmentScoped": true,
+			"notes": "Public project client ID."
+		}
+	],
+	"logReview": {
+		"status": "pending",
+		"reviewedSources": [
+			"deployment logs",
+			"auth runtime logs",
+			"customer proxy logs",
+			"error reporting"
+		],
+		"forbiddenValues": [
+			"raw API keys",
+			"OAuth client secrets",
+			"OTP codes",
+			"cookies",
+			"session tokens",
+			"refresh tokens",
+			"KMS plaintext",
+			"provider credentials"
+		],
+		"evidence": []
+	}
+}

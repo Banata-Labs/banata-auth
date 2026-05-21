@@ -7,6 +7,7 @@ const checks = [
 	["bun", ["run", "verify:auth-e2e-scenarios"]],
 	["bun", ["run", "verify:auth-security-review"]],
 	["bun", ["run", "verify:auth-operations-readiness"]],
+	["bun", ["run", "verify:auth-env-inventory-template"]],
 	["bun", ["run", "verify:auth-maturity-readiness"]],
 	["bun", ["run", "verify:auth-production-gate-template"]],
 	["bun", ["run", "--cwd", "apps/docs", "build"]],

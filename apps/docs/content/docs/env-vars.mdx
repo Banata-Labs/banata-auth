@@ -123,6 +123,26 @@ Banata Auth exposes phone OTP state and endpoints. Configure delivery from **SMS
 
 Never log raw OTPs, provider tokens, or full phone numbers in production logs.
 
+### Production Inventory Evidence
+
+Use `testing/auth-production-env-inventory-template.json` when you prepare the managed production launch evidence.
+
+For each required variable, record:
+
+- the runtime that owns the variable
+- whether the value is present
+- the secret-store or deployment metadata, with the value redacted
+- whether the value is scoped to production only
+- notes for any missing, blocked, or rotated value
+
+Then run:
+
+```bash
+bun run verify:auth-env-inventory-template
+```
+
+Do not paste raw API keys, OAuth secrets, OTPs, cookies, session tokens, refresh tokens, KMS plaintext, or provider credentials into the inventory file. The production gate only accepts redacted inventory and log-review evidence.
+
 ### Passkeys (WebAuthn)
 
 | Variable | Required | Description |

@@ -18,6 +18,7 @@ Or run the same checks manually:
 - `bun run verify:auth-e2e-scenarios`
 - `bun run verify:auth-security-review`
 - `bun run verify:auth-operations-readiness`
+- `bun run verify:auth-env-inventory-template`
 - `bun run verify:auth-maturity-readiness`
 - `bun run verify:auth-production-gate-template`
 - `bun run --cwd apps/docs build`
@@ -41,6 +42,8 @@ The harness must prove:
 ## Production Gate Evidence
 
 After deployment, use `testing/auth-production-gate-evidence-template.json` to collect real evidence for each gate, then update `testing/auth-production-gates.json`.
+
+Use `testing/auth-production-env-inventory-template.json` for the production environment inventory gate. Keep every secret redacted. Record deployment metadata, runtime ownership, environment scope, secret-store references, and log-review evidence only.
 
 Run:
 
@@ -70,6 +73,7 @@ For `passed` gates, attach one meaningful evidence reference for each required e
 - `testing/auth-readiness-completion-audit.md`
 - `testing/auth-production-gates.json`
 - `testing/auth-production-gate-evidence-template.json`
+- `testing/auth-production-env-inventory-template.json`
 - `testing/auth-readiness-test-guide.md`
 - `testing/auth-incident-runbooks.md`
 - `apps/example-app/README.md`

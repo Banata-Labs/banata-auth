@@ -79,7 +79,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Docs build and search index | `bun run --cwd apps/docs build`, `apps/docs/src/lib/search-index.ts` | local artifact complete |
 | Hosted UI production styling | `apps/auth-ui/src/app/globals.css` scans `@banata-auth/react` and `packages/react/src`; live CSS check against `https://auth-ui.banata.dev/sign-in?client_id=testing-example-app` found `max-w-md`, `p-8`, `text-2xl`, `font-bold`, `tracking-tight`, and `mb-6` in the deployed stylesheet | deployed evidence recorded |
 | Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26223495952` passed for commit `51eb1d6bbabe9a7b26993a7514894478a537e816`; Release run `26223495891` published packages for the same commit | latest launch-run evidence recorded for the implementation commit |
-| Production environment inventory proof | `testing/auth-production-gates.json` gate `production-env-inventory`; live smoke verifies project public config resolves through a server API key | redacted production inventory and log review pending |
+| Production environment inventory proof | `apps/docs/content/docs/env-vars.mdx`, `testing/auth-production-env-inventory-template.json`, `scripts/auth-env-inventory-template-check.mjs`, `testing/auth-production-gates.json` gate `production-env-inventory`; live smoke verifies project public config resolves through a server API key | redacted production inventory and log review template present; filled production evidence pending |
 
 ## Production Launch Gates Evidence Matrix
 
@@ -100,7 +100,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 | Audit logs are tested | audit hash-chain code/tests/docs | locally satisfied |
 | Webhook signatures and retry are tested | webhook delivery/replay/dead-letter code/tests/docs | local coverage present; deployed delivery proof pending |
 | SSO/SCIM are either fully tested or disabled/marked beta | hardening code/docs exist, including verified-domain SSO routing validation; `testing/auth-production-gates.json` gate `sso-scim-real-idp` | real-IdP evidence or beta/disabled launch decision pending |
-| Production env vars are documented and present | `apps/docs/content/docs/env-vars.mdx`; `testing/auth-production-gates.json` gate `production-env-inventory` | docs satisfied; deployed env evidence pending |
+| Production env vars are documented and present | `apps/docs/content/docs/env-vars.mdx`, `testing/auth-production-env-inventory-template.json`, `scripts/auth-env-inventory-template-check.mjs`, `testing/auth-production-gates.json` gate `production-env-inventory` | docs/template satisfied; deployed env evidence pending |
 | Security headers and cookie settings are reviewed | `packages/nextjs/src/security.ts`, tests, `testing/auth-security-review-checklist.json` | local helper coverage present; review signoff pending |
 | Logging excludes secrets and tokens | `packages/shared/src/log-redaction.ts`, tests, dashboard auth route usage | locally satisfied |
 | Incident runbooks exist | `apps/docs/content/docs/production-readiness.mdx`, `testing/auth-production-launch-handoff.md`, `testing/auth-incident-runbooks.md` | local runbooks documented; incident drill evidence pending |
