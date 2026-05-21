@@ -12,9 +12,11 @@
 				"Hosted UI live CSS check on 2026-05-21 confirmed the deployed sign-in stylesheet includes shared auth component utilities such as max-w-md, p-8, text-2xl, font-bold, tracking-tight, and mb-6.",
 				"Hosted UI live CSS check on 2026-05-21 after commit 3696e74c576077f3ef2fa27f9cb75d3d2311157e confirmed the deployed stylesheet includes dashboard primary colors compiled as #e85854 and #b32228.",
 				"Hosted UI live browser check on 2026-05-21 clicked Continue with Github on https://auth-ui.banata.dev/sign-in?client_id=testing-example-app and reached GitHub login with redirect_uri=https://auth.banata.dev/api/auth/callback/github.",
-				"Dashboard guard production check on 2026-05-21 confirmed unauthenticated https://auth.banata.dev/ no longer serves the dashboard shell or the former user@example.com fallback."
+				"Dashboard guard production check on 2026-05-21 confirmed unauthenticated https://auth.banata.dev/ no longer serves the dashboard shell or the former user@example.com fallback.",
+				"Public DNS check on 2026-05-22 confirmed auth.banata.dev, auth-ui.banata.dev, and auth-docs.banata.dev resolve to public Vercel IPv4/IPv6 addresses.",
+				"Public HTTPS check on 2026-05-22 confirmed auth.banata.dev returns 307 to /sign-in?redirect_url=%2F, auth-ui.banata.dev returns 200, and auth-docs.banata.dev returns 307 to /docs, all with server=Vercel."
 			],
-			"notes": "Public production URLs are reachable, but this gate still requires final service-name decision records plus proof that production, staging, and development deployments, databases, secrets, OAuth apps, SMS/email providers, webhook endpoints, and API keys are isolated."
+			"notes": "Public production DNS and HTTPS are reachable, but this gate still requires final service-name decision records plus proof that production, staging, and development deployments, databases, secrets, OAuth apps, SMS/email providers, webhook endpoints, and API keys are isolated."
 		},
 		{
 			"id": "ci-monorepo-checks",

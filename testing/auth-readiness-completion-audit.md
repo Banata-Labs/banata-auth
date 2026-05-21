@@ -149,6 +149,8 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bunx convex env list --prod` from `apps/dashboard` was attempted on 2026-05-21 and failed with Convex CLI project-access denial; production env inventory still requires an authorized Convex/Vercel account.
 - `vercel.cmd env ls production` was attempted for `apps/dashboard`, `apps/auth-ui`, and `apps/docs` on 2026-05-22 and failed because this CLI identity has no Vercel credentials; production env inventory still requires an authorized Vercel account or token.
 - A local `apps/dashboard/.env.local` key-name scan found only `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`, and `NEXT_PUBLIC_CONVEX_SITE_URL`; this is local metadata only and not production evidence.
+- Public DNS checks on 2026-05-22 confirmed `auth.banata.dev`, `auth-ui.banata.dev`, and `auth-docs.banata.dev` resolve to public Vercel IPv4/IPv6 addresses.
+- Public HTTPS checks on 2026-05-22 confirmed `auth.banata.dev` returns `307` to `/sign-in?redirect_url=%2F`, `auth-ui.banata.dev` returns `200`, and `auth-docs.banata.dev` returns `307` to `/docs`, all with `server=Vercel`.
 
 ## Completion Decision
 
