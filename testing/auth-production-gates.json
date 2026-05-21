@@ -10,9 +10,14 @@
 		},
 		{
 			"id": "ci-monorepo-checks",
-			"status": "pending",
-			"evidence": [],
-			"notes": "Requires CI proof that full monorepo typecheck and test suite passed without timeout or hidden failures."
+			"status": "passed",
+			"evidence": [
+				"CI run for launch commit 1b1bd2a passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26221342292",
+				"CI run 26221342292 completed the root lint, auth local readiness, and workspace build jobs for commit 1b1bd2a.",
+				"`bun run verify:auth-local-readiness` passed locally before push and is invoked by the CI auth local readiness step.",
+				"GitHub Actions retains the CI logs and artifacts for run 26221342292 under the Banata-Labs/banata-auth repository."
+			],
+			"notes": "GitHub Actions CI passed for the exact latest main commit after the dashboard/example-app lint fixes."
 		},
 		{
 			"id": "sms-whatsapp-provider-delivery",

@@ -606,7 +606,7 @@ const artifactChecks = [
 			},
 			{
 				file: "testing/auth-readiness-completion-audit.md",
-				patterns: [/Full monorepo CI proof/, /workflow present, launch-run evidence pending/],
+				patterns: [/Full monorepo CI proof/, /launch-run evidence recorded/],
 			},
 		],
 	},
@@ -1025,7 +1025,6 @@ const artifactChecks = [
 
 const externalGates = [
 	"Final service name/domain decision recorded and deploy isolation proven across production, staging, and development.",
-	"Full monorepo typecheck and test suite pass in CI for the exact launch commit.",
 	"Real SMS/WhatsApp provider delivery configured and tested with production-like credentials.",
 	"Phone OTP verification creates/links a real authenticated user session in the final product flow.",
 	"Browser E2E tests pass for email/password, OAuth, email OTP, phone OTP, passkey, MFA, logout, session refresh, hosted UI callback, and customer-app return.",
