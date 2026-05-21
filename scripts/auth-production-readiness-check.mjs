@@ -673,6 +673,8 @@ const artifactChecks = [
 			/BANATA_CLIENT_ID/,
 			/banata\/config\/public/,
 			/auth-public-config/,
+			/auth-security-headers/,
+			/content-security-policy/,
 		],
 		also: [
 			{

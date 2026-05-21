@@ -41,6 +41,14 @@ function fail(label, details) {
 	console.error(`FAIL ${label}: ${details}`);
 }
 
+const requiredSecurityHeaders = [
+	"content-security-policy",
+	"x-frame-options",
+	"x-content-type-options",
+	"referrer-policy",
+	"permissions-policy",
+];
+
 async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 302, 307, 308])) {
 	try {
 		let response = await fetch(url, { method: "HEAD", redirect: "manual" });
@@ -55,6 +63,20 @@ async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 3
 			return;
 		}
 		fail(label, detail);
+	} catch (err) {
+		fail(label, err instanceof Error ? err.message : String(err));
+	}
+}
+
+async function probeSecurityHeaders(label, url) {
+	try {
+		const response = await fetch(url, { method: "GET", redirect: "manual" });
+		const missing = requiredSecurityHeaders.filter((header) => !response.headers.get(header));
+		if (missing.length > 0) {
+			fail(label, `missing ${missing.join(", ")}`);
+			return;
+		}
+		pass(label, "required security headers present");
 	} catch (err) {
 		fail(label, err instanceof Error ? err.message : String(err));
 	}
@@ -143,6 +165,12 @@ if (shouldExpectManagedAuthRedirect) {
 }
 await probeHeadOrGet("hosted-ui-root", hostedUiUrl);
 await probeHeadOrGet("docs-root", docsUrl);
+await probeSecurityHeaders("auth-security-headers", `${authUrl}/sign-in`);
+await probeSecurityHeaders(
+	"hosted-ui-security-headers",
+	`${hostedUiUrl}/sign-in?client_id=testing-example-app`,
+);
+await probeSecurityHeaders("docs-security-headers", `${docsUrl}/docs`);
 if (shouldVerifyDns) {
 	await probeDns("auth-root-dns", authUrl);
 	await probeDns("hosted-ui-root-dns", hostedUiUrl);
