@@ -142,6 +142,8 @@ Attach evidence in `testing/auth-production-gates.json` for:
 - monitoring, alerting, status reporting, and incident response verification
 - security review signoff
 
+Use `testing/auth-incident-runbooks.md` for the minimum incident drills that need evidence before launch.
+
 After each evidence update:
 
 ```bash

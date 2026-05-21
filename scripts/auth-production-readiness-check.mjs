@@ -470,6 +470,7 @@ const artifactChecks = [
 					/Customer App Harness/,
 					/verify:auth-production-gates/,
 					/Do Not Mark Production Ready Until/,
+					/auth-incident-runbooks\.md/,
 				],
 			},
 		],
@@ -626,7 +627,12 @@ const artifactChecks = [
 			},
 			{
 				file: "testing/auth-production-launch-handoff.md",
-				patterns: [/verify:auth-local-readiness/, /apps\/docs build/, /single catch-all link/],
+				patterns: [
+					/verify:auth-local-readiness/,
+					/apps\/docs build/,
+					/single catch-all link/,
+					/auth-incident-runbooks\.md/,
+				],
 			},
 			{
 				file: "testing/auth-readiness-completion-audit.md",
@@ -678,6 +684,7 @@ const artifactChecks = [
 			/Not complete/,
 			/sms-whatsapp-provider-delivery/,
 			/security-review-signoff/,
+			/auth-incident-runbooks\.md/,
 		],
 	},
 	{
@@ -823,6 +830,34 @@ const artifactChecks = [
 			{
 				file: "package.json",
 				patterns: [/verify:auth-operations-readiness/],
+			},
+		],
+	},
+	{
+		id: "incident-runbooks",
+		requirement:
+			"Incident runbooks cover signing key compromise, API key leak, OAuth compromise, webhook outage, audit sink failure, account takeover, and OTP provider outage.",
+		file: "testing/auth-incident-runbooks.md",
+		patterns: [
+			/Signing Key Compromise/,
+			/API Key Leak/,
+			/OAuth Provider Compromise/,
+			/Webhook Outage/,
+			/Audit Sink Failure/,
+			/Account Takeover/,
+			/OTP Provider Outage/,
+			/KMS\/HSM/,
+			/status page/,
+			/evidence record/,
+		],
+		also: [
+			{
+				file: "testing/auth-readiness-test-guide.md",
+				patterns: [/auth-incident-runbooks\.md/, /incident drills/],
+			},
+			{
+				file: "testing/auth-production-launch-handoff.md",
+				patterns: [/auth-incident-runbooks\.md/],
 			},
 		],
 	},

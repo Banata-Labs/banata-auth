@@ -101,7 +101,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 | Production env vars are documented and present | `apps/docs/content/docs/env-vars.mdx`; `testing/auth-production-gates.json` gate `production-env-inventory` | docs satisfied; deployed env evidence pending |
 | Security headers and cookie settings are reviewed | `packages/nextjs/src/security.ts`, tests, `testing/auth-security-review-checklist.json` | local helper coverage present; review signoff pending |
 | Logging excludes secrets and tokens | `packages/shared/src/log-redaction.ts`, tests, dashboard auth route usage | locally satisfied |
-| Incident runbooks exist | `apps/docs/content/docs/production-readiness.mdx`, `testing/auth-production-launch-handoff.md` | local docs satisfied; incident drill evidence pending |
+| Incident runbooks exist | `apps/docs/content/docs/production-readiness.mdx`, `testing/auth-production-launch-handoff.md`, `testing/auth-incident-runbooks.md` | local runbooks documented; incident drill evidence pending |
 
 ## Commands Run
 

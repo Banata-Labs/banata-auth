@@ -71,5 +71,6 @@ For `passed` gates, attach one meaningful evidence reference for each required e
 - `testing/auth-production-gates.json`
 - `testing/auth-production-gate-evidence-template.json`
 - `testing/auth-readiness-test-guide.md`
+- `testing/auth-incident-runbooks.md`
 - `apps/example-app/README.md`
 - `apps/docs/content/docs/production-readiness.mdx`
