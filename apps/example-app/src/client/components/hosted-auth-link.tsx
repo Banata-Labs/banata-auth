@@ -1,5 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import { buildHostedAuthUrl, type HostedAuthMode } from "@/lib/hosted-ui-url";
+import { type HostedAuthMode, buildHostedAuthUrl } from "@/lib/hosted-ui-url";
 import { cn } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 

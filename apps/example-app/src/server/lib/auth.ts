@@ -52,15 +52,12 @@ async function banataRequest(
 		headers.set("better-auth-cookie", betterAuthCookie);
 	}
 
-	const response = await fetch(
-		`${env.banataAuthUrl}${path}`,
-		{
-			method: init?.method ?? "POST",
-			headers,
-			redirect: "manual",
-			body: init?.method === "GET" ? undefined : JSON.stringify(init?.body ?? {}),
-		},
-	);
+	const response = await fetch(`${env.banataAuthUrl}${path}`, {
+		method: init?.method ?? "POST",
+		headers,
+		redirect: "manual",
+		body: init?.method === "GET" ? undefined : JSON.stringify(init?.body ?? {}),
+	});
 
 	if (response.status === 401) {
 		unauthorized();

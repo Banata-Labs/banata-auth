@@ -119,26 +119,23 @@ appRoutes.post("/organizations", async (c) => {
 	await requireViewer(c);
 	const body = await parseJson<CreateOrganizationInput>(c.req.raw, createOrganizationSchema);
 
-	const response = await fetch(
-		`${env.banataAuthUrl}/api/auth/organization/create`,
-		{
-			method: "POST",
-			headers: {
-				"content-type": "application/json",
-				cookie: c.req.header("cookie") ?? "",
-				"x-api-key": env.banataApiKey,
-				"x-forwarded-host": new URL(c.req.url).host,
-				"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),
-			},
-			body: JSON.stringify({
-				name: body.name,
-				slug: body.name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, "-")
-					.replace(/^-+|-+$/g, ""),
-			}),
+	const response = await fetch(`${env.banataAuthUrl}/api/auth/organization/create`, {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+			cookie: c.req.header("cookie") ?? "",
+			"x-api-key": env.banataApiKey,
+			"x-forwarded-host": new URL(c.req.url).host,
+			"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),
 		},
-	);
+		body: JSON.stringify({
+			name: body.name,
+			slug: body.name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-+|-+$/g, ""),
+		}),
+	});
 
 	if (!response.ok) {
 		const text = await response.text().catch(() => "");
@@ -177,24 +174,21 @@ appRoutes.post("/members/invite", async (c) => {
 	const appRole = await ensureAppRole(organization.id, viewer.user.id, inferSeedRole(member.role));
 	requireAppRole(appRole, ["admin"]);
 
-	const response = await fetch(
-		`${env.banataAuthUrl}/api/auth/organization/invite-member`,
-		{
-			method: "POST",
-			headers: {
-				"content-type": "application/json",
-				cookie: c.req.header("cookie") ?? "",
-				"x-api-key": env.banataApiKey,
-				"x-forwarded-host": new URL(c.req.url).host,
-				"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),
-			},
-			body: JSON.stringify({
-				organizationId: body.organizationId,
-				email: body.email,
-				role: "member",
-			}),
+	const response = await fetch(`${env.banataAuthUrl}/api/auth/organization/invite-member`, {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+			cookie: c.req.header("cookie") ?? "",
+			"x-api-key": env.banataApiKey,
+			"x-forwarded-host": new URL(c.req.url).host,
+			"x-forwarded-proto": new URL(c.req.url).protocol.replace(/:$/, ""),
 		},
-	);
+		body: JSON.stringify({
+			organizationId: body.organizationId,
+			email: body.email,
+			role: "member",
+		}),
+	});
 
 	if (!response.ok) {
 		const text = await response.text().catch(() => "");
