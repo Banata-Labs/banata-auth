@@ -52,6 +52,7 @@ Expected result:
 - `auth-root` returns `307` or `308` to `/sign-in?redirect_url=%2F` for the managed `https://auth.banata.dev` dashboard root, and the response must not contain the dashboard fallback user.
 - `hosted-ui-root` returns 200 or a redirect from the hosted UI.
 - `docs-root` returns 200 or a redirect from the docs site.
+- For the managed Banata domains, `auth-root-dns`, `hosted-ui-root-dns`, and `docs-root-dns` each resolve at least one public A or AAAA record.
 - `auth-public-config` passes when a valid `BANATA_API_KEY`, `BANATA_CLIENT_ID`, `VITE_BANATA_CLIENT_ID`, or `BANATA_PROJECT_ID` is provided.
 
 Create `apps/example-app/.env.local`:

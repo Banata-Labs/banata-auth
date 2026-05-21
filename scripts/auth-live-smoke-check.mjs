@@ -1,3 +1,5 @@
+import { resolve4, resolve6 } from "node:dns/promises";
+
 const DEFAULT_AUTH_URL = "https://auth.banata.dev";
 const DEFAULT_HOSTED_UI_URL = "https://auth-ui.banata.dev";
 const DEFAULT_DOCS_URL = "https://auth-docs.banata.dev";
@@ -14,6 +16,11 @@ const projectId = process.env.BANATA_PROJECT_ID;
 const clientId = process.env.BANATA_CLIENT_ID || process.env.VITE_BANATA_CLIENT_ID;
 const shouldExpectManagedAuthRedirect =
 	process.env.BANATA_EXPECT_AUTH_ROOT_REDIRECT === "1" || authUrl === DEFAULT_AUTH_URL;
+const shouldVerifyDns =
+	process.env.BANATA_VERIFY_DNS === "1" ||
+	(authUrl === DEFAULT_AUTH_URL &&
+		hostedUiUrl === DEFAULT_HOSTED_UI_URL &&
+		docsUrl === DEFAULT_DOCS_URL);
 
 let failed = false;
 
@@ -51,6 +58,21 @@ async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 3
 	} catch (err) {
 		fail(label, err instanceof Error ? err.message : String(err));
 	}
+}
+
+async function probeDns(label, url) {
+	const host = new URL(url).hostname;
+	const [ipv4Result, ipv6Result] = await Promise.allSettled([resolve4(host), resolve6(host)]);
+	const ipv4 = ipv4Result.status === "fulfilled" ? ipv4Result.value : [];
+	const ipv6 = ipv6Result.status === "fulfilled" ? ipv6Result.value : [];
+	const addresses = [...ipv4, ...ipv6];
+
+	if (addresses.length === 0) {
+		fail(label, `${host} has no public A or AAAA records`);
+		return;
+	}
+
+	pass(label, `${host} resolves ${addresses.length} public A/AAAA record(s)`);
 }
 
 async function probeManagedAuthRoot() {
@@ -121,6 +143,11 @@ if (shouldExpectManagedAuthRedirect) {
 }
 await probeHeadOrGet("hosted-ui-root", hostedUiUrl);
 await probeHeadOrGet("docs-root", docsUrl);
+if (shouldVerifyDns) {
+	await probeDns("auth-root-dns", authUrl);
+	await probeDns("hosted-ui-root-dns", hostedUiUrl);
+	await probeDns("docs-root-dns", docsUrl);
+}
 await probePublicConfig();
 
 if (failed) {
