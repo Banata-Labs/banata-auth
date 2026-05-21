@@ -5,7 +5,7 @@
  *   bun run scripts/generate-search-index.ts
  *
  * Pages: 44
- * Total headings: 746
+ * Total headings: 747
  */
 
 export interface SearchIndexHeading {
@@ -3006,6 +3006,12 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "Your app connects to a project through an API key:"
       },
       {
+        "level": 3,
+        "text": "Auth Clients",
+        "anchor": "auth-clients",
+        "snippet": "A project can have more than one relying application. Each auth client records the app-specific clientId, display name, type, redirect URIs, trusted origins, allowed audiences, and enabled auth method"
+      },
+      {
         "level": 2,
         "text": "Managing Projects with the SDK",
         "anchor": "managing-projects-with-the-sdk",
@@ -3018,7 +3024,7 @@ export const SEARCH_INDEX: SearchIndexEntry[] = [
         "snippet": "API Keys â€” How to create and manage project-scoped API keys Project Structure â€” What files to add to your app Quick Start â€” Set up your first app"
       }
     ],
-    "searchText": "projects projects are the isolation boundary in banata auth. each project has its own users, organizations, roles, and configuration. what a project contains each project is a completely independent auth environment with its own: when to use multiple projects one project per application is the most common setup. but there are good reasons to use multiple projects: environment separation for production systems, use separate projects for development, staging, and production. each environment should have its own api keys, domains, redirect urls, oauth apps, email or sms providers, webho your default project when you first sign in to the banata dashboard, a default project is automatically created for you. this is your starting point â€” you can use it immediately or create additional projects as needed. switching projects in the dashboard the project switcher in the dashboard lets you navigate between your projects. when you switch projects, the entire dashboard context changes â€” the users list, organizations, roles, providers, email how your app connects to a project your app connects to a project through an api key: managing projects with the sdk you can list and manage projects programmatically using the admin sdk: next steps api keys â€” how to create and manage project-scoped api keys project structure â€” what files to add to your app quick start â€” set up your first app"
+    "searchText": "projects projects are the isolation boundary in banata auth. each project has its own users, organizations, roles, and configuration. what a project contains each project is a completely independent auth environment with its own: when to use multiple projects one project per application is the most common setup. but there are good reasons to use multiple projects: environment separation for production systems, use separate projects for development, staging, and production. each environment should have its own api keys, domains, redirect urls, oauth apps, email or sms providers, webho your default project when you first sign in to the banata dashboard, a default project is automatically created for you. this is your starting point â€” you can use it immediately or create additional projects as needed. switching projects in the dashboard the project switcher in the dashboard lets you navigate between your projects. when you switch projects, the entire dashboard context changes â€” the users list, organizations, roles, providers, email how your app connects to a project your app connects to a project through an api key: auth clients a project can have more than one relying application. each auth client records the app-specific clientid, display name, type, redirect uris, trusted origins, allowed audiences, and enabled auth method managing projects with the sdk you can list and manage projects programmatically using the admin sdk: next steps api keys â€” how to create and manage project-scoped api keys project structure â€” what files to add to your app quick start â€” set up your first app"
   },
   {
     "slug": "quickstart",

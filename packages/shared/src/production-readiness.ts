@@ -18,8 +18,34 @@ export type DeviceAuthorizationStatus = (typeof deviceAuthorizationStatuses)[num
 export const deviceTypes = ["browser", "mobile", "desktop", "pos_terminal", "service"] as const;
 export type DeviceType = (typeof deviceTypes)[number];
 
-export const servicePrincipalTypes = ["backend_worker", "automation_bridge", "pos_sync", "webhook_relay"] as const;
+export const servicePrincipalTypes = [
+	"backend_worker",
+	"automation_bridge",
+	"pos_sync",
+	"webhook_relay",
+] as const;
 export type ServicePrincipalType = (typeof servicePrincipalTypes)[number];
+
+export const authClientTypes = [
+	"first_party",
+	"customer_app",
+	"mobile_app",
+	"desktop_app",
+	"service",
+] as const;
+export type AuthClientType = (typeof authClientTypes)[number];
+
+export const authClientAuthMethods = [
+	"email_password",
+	"email_otp",
+	"phone_otp",
+	"social_oauth",
+	"passkey",
+	"mfa",
+	"sso",
+	"linked_device",
+] as const;
+export type AuthClientAuthMethod = (typeof authClientAuthMethods)[number];
 
 export const sessionClasses = [
 	"web_user_session",
@@ -57,6 +83,21 @@ export const e164PhoneNumberSchema = z
 export const projectIdSchema = z.string().trim().min(1);
 
 export const requestedScopesSchema = z.array(z.string().trim().min(1).max(128)).max(50).default([]);
+
+export const authClientSchema = z.object({
+	projectId: projectIdSchema,
+	clientId: z.string().trim().min(1).max(120),
+	name: z.string().trim().min(1).max(120),
+	type: z.enum(authClientTypes),
+	allowedRedirectUris: z.array(z.string().url()).min(1).max(50),
+	allowedOrigins: z.array(z.string().url()).min(1).max(50),
+	allowedAudiences: z.array(z.string().trim().min(1).max(255)).min(1).max(50),
+	enabledAuthMethods: z.array(z.enum(authClientAuthMethods)).min(1),
+	createdAt: z.number().int().positive(),
+	updatedAt: z.number().int().positive(),
+});
+
+export type AuthClientContract = z.infer<typeof authClientSchema>;
 
 export const permissionSegmentSchema = z
 	.string()
@@ -196,7 +237,12 @@ export const supportImpersonationRequestSchema = z.object({
 	reason: z.string().trim().min(10).max(500),
 	supportTicketId: z.string().trim().min(1).max(120),
 	approvedByUserId: z.string().trim().min(1).optional(),
-	expiresInSeconds: z.number().int().positive().max(60 * 60).default(30 * 60),
+	expiresInSeconds: z
+		.number()
+		.int()
+		.positive()
+		.max(60 * 60)
+		.default(30 * 60),
 	customerVisible: z.literal(true),
 });
 
@@ -421,12 +467,7 @@ export function buildNamespacedPermission(params: {
 	resource: string;
 	action: string;
 }): string {
-	return [
-		params.appAudience,
-		params.productSurface,
-		params.resource,
-		params.action,
-	].join(".");
+	return [params.appAudience, params.productSurface, params.resource, params.action].join(".");
 }
 
 export function validatePermissionNamespaceCatalog(
@@ -436,9 +477,7 @@ export function validatePermissionNamespaceCatalog(
 	for (const entry of entries) {
 		const expected = buildNamespacedPermission(entry);
 		if (entry.permission !== expected) {
-			throw new Error(
-				`Permission ${entry.permission} must match namespace ${expected}.`,
-			);
+			throw new Error(`Permission ${entry.permission} must match namespace ${expected}.`);
 		}
 		if (seen.has(entry.permission)) {
 			throw new Error(`Duplicate permission namespace: ${entry.permission}.`);

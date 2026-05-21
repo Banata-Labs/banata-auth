@@ -12,6 +12,7 @@ This audit separates local implementation evidence from production evidence. Pas
 - Banata Auth has linked-device / QR authorization contracts, storage, endpoints, SDK methods, and docs.
 - Sessions, token claims, token audience, device trust, step-up, revocation, and KasiLabs permission presets are explicit.
 - Permission namespaces are explicit per app and product surface for multi-app projects.
+- Auth clients define per-application redirect URIs, origins, audiences, and enabled auth methods.
 - Key custody contracts, environment inventory, and rotation/runbooks are documented, with production KMS/HSM proof tracked separately.
 - SSO and SCIM have hardening controls, token rotation, provider validation, SDK methods, docs, and real-IdP proof tracked separately.
 - Audit logs are tamper-evident and webhooks have delivery operations.
@@ -47,6 +48,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Admin Portal least-privilege links | `portal.create` seeded permission in `packages/convex/src/plugins/config.ts`, short-lived scoped portal sessions in `packages/convex/src/plugins/portal.ts`, and `apps/docs/content/docs/production-readiness.mdx` section `Admin Portal Least Privilege` | local artifact complete |
 | KasiLabs permission presets | `kasilabsPermissionPresets` in shared production readiness contracts | local artifact complete |
 | App/product-surface permission namespace | `permissionNamespaceSchema`, `namespacedPermissionSchema`, and `validatePermissionNamespaceCatalog` in `packages/shared/src/production-readiness.ts`; docs in `apps/docs/content/docs/roles-permissions.mdx` | local artifact complete |
+| Auth client contract | `authClientSchema` in `packages/shared/src/production-readiness.ts`, `authClient` table in `packages/convex/src/component/schema.ts`, docs in `apps/docs/content/docs/projects-environments.mdx` | local artifact complete |
 | KMS-backed key separation | `packages/shared/src/key-custody.ts`, `packages/shared/src/__tests__/key-custody.test.ts`, `apps/docs/content/docs/env-vars.mdx`, `apps/docs/content/docs/production-readiness.mdx`, gate `kms-key-custody` | local contract/docs complete, external evidence pending |
 | SSO hardening and validation | `validateSsoConnectionReadiness` in `packages/convex/src/plugins/enterprise.ts`, domain recomputation in `packages/convex/src/plugins/domains.ts`, `packages/convex/src/plugins/enterprise.test.ts`, `packages/sdk/src/resources/sso.ts`, `apps/docs/content/docs/sso.mdx` | local artifact complete |
 | SCIM hashed token and rotation | `packages/convex/src/plugins/enterprise.ts`, `packages/sdk/src/resources/directory-sync.ts`, `apps/docs/content/docs/scim.mdx` | local artifact complete |

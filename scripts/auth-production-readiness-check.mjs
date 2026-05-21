@@ -111,6 +111,27 @@ const artifactChecks = [
 			/refreshSessionFamilyId/,
 			/refreshReuseDetectedAt/,
 		],
+		also: [
+			{
+				file: "packages/shared/src/production-readiness.ts",
+				patterns: [
+					/authClientSchema/,
+					/authClientTypes/,
+					/allowedRedirectUris/,
+					/allowedOrigins/,
+					/allowedAudiences/,
+					/enabledAuthMethods/,
+				],
+			},
+			{
+				file: "packages/shared/src/__tests__/production-readiness.test.ts",
+				patterns: [/validates relying auth client configuration/],
+			},
+			{
+				file: "apps/docs/content/docs/projects-environments.mdx",
+				patterns: [/Auth Clients/, /allowed audiences/, /trusted origins/],
+			},
+		],
 	},
 	{
 		id: "convex-endpoints",

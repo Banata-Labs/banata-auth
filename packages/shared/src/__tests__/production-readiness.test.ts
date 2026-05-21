@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	authClientSchema,
 	defaultSessionPolicies,
 	deviceAuthorizationDecisionSchema,
 	deviceAuthorizationStartSchema,
@@ -12,12 +13,12 @@ import {
 	phoneOtpVerifySchema,
 	phoneUnlinkSchema,
 	posOfflineSnapshotIssueSchema,
+	refreshTokenReuseDetectionSchema,
+	refreshTokenRotationSchema,
 	requireAudience,
 	requireRecentStepUp,
 	requireSessionClass,
 	requireTrustedDevice,
-	refreshTokenReuseDetectionSchema,
-	refreshTokenRotationSchema,
 	servicePrincipalSchema,
 	servicePrincipalTokenRequestSchema,
 	supportImpersonationAuditSchema,
@@ -31,6 +32,36 @@ import {
 } from "../production-readiness";
 
 describe("production readiness contracts", () => {
+	it("validates relying auth client configuration", () => {
+		const client = authClientSchema.parse({
+			projectId: "proj_123",
+			clientId: "whatspoppin-web",
+			name: "Whatspoppin Web",
+			type: "customer_app",
+			allowedRedirectUris: ["https://app.whatspoppin.example/auth/callback"],
+			allowedOrigins: ["https://app.whatspoppin.example"],
+			allowedAudiences: ["whatspoppin-web"],
+			enabledAuthMethods: ["email_password", "phone_otp", "social_oauth", "linked_device"],
+			createdAt: 2_000_000_000,
+			updatedAt: 2_000_000_000,
+		});
+
+		expect(client.type).toBe("customer_app");
+		expect(client.allowedAudiences).toEqual(["whatspoppin-web"]);
+		expect(() =>
+			authClientSchema.parse({
+				...client,
+				allowedRedirectUris: [],
+			}),
+		).toThrow();
+		expect(() =>
+			authClientSchema.parse({
+				...client,
+				type: "unknown",
+			}),
+		).toThrow();
+	});
+
 	it("requires E.164 phone numbers for phone and WhatsApp OTP starts", () => {
 		expect(
 			phoneOtpStartSchema.parse({
@@ -189,21 +220,21 @@ describe("production readiness contracts", () => {
 		expect(() =>
 			validateTokenContract({ ...claims, iss: "https://evil.example" }, options),
 		).toThrow(/issuer/);
-		expect(() =>
-			validateTokenContract({ ...claims, project_id: "proj_other" }, options),
-		).toThrow(/project/);
-		expect(() =>
-			validateTokenContract({ ...claims, aud: "other-app" }, options),
-		).toThrow(/audience/);
-		expect(() =>
-			validateTokenContract({ ...claims, exp: 1_999_000_000 }, options),
-		).toThrow(/expired/);
-		expect(() =>
-			validateTokenContract({ ...claims, nbf: 2_000_100_000 }, options),
-		).toThrow(/not valid yet/);
-		expect(() =>
-			validateTokenContract({ ...claims, token_version: 1 }, options),
-		).toThrow(/version/);
+		expect(() => validateTokenContract({ ...claims, project_id: "proj_other" }, options)).toThrow(
+			/project/,
+		);
+		expect(() => validateTokenContract({ ...claims, aud: "other-app" }, options)).toThrow(
+			/audience/,
+		);
+		expect(() => validateTokenContract({ ...claims, exp: 1_999_000_000 }, options)).toThrow(
+			/expired/,
+		);
+		expect(() => validateTokenContract({ ...claims, nbf: 2_000_100_000 }, options)).toThrow(
+			/not valid yet/,
+		);
+		expect(() => validateTokenContract({ ...claims, token_version: 1 }, options)).toThrow(
+			/version/,
+		);
 	});
 
 	it("validates emergency token revocation contracts", () => {

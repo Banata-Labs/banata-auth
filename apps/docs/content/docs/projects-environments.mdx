@@ -79,6 +79,20 @@ Your app connects to a project through an API key:
 
 You never need to pass a `projectId` in your app code for normal usage. The API key handles project binding.
 
+### Auth Clients
+
+A project can have more than one relying application. Each auth client records the app-specific `clientId`, display name, type, redirect URIs, trusted origins, allowed audiences, and enabled auth methods.
+
+Use separate auth clients when one project serves different application surfaces, such as:
+
+- a customer web app
+- a mobile app
+- a desktop companion app
+- a POS terminal
+- a backend service
+
+Keep redirect URIs and trusted origins narrow. A customer web app should not share callback URLs with the dashboard, a mobile app, or a staging deployment. Audience values should match the app that will consume the token, and consumer apps should reject tokens for any other audience.
+
 ```ts
 // The API key determines which project this app uses
 export const { handler } = createBanataAuthServer({
