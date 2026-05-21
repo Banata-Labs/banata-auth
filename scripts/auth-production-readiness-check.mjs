@@ -694,7 +694,13 @@ const artifactChecks = [
 		also: [
 			{
 				file: "scripts/auth-security-review-check.mjs",
-				patterns: [/requiredIds/, /secret-log-redaction/, /oauth-callback-policy/],
+				patterns: [
+					/requiredIds/,
+					/secret-log-redaction/,
+					/oauth-callback-policy/,
+					/passed review items need concrete evidence/,
+					/blocked review items need an owner/,
+				],
 			},
 			{
 				file: "package.json",
@@ -804,7 +810,13 @@ const artifactChecks = [
 		also: [
 			{
 				file: "scripts/auth-operations-readiness-check.mjs",
-				patterns: [/requiredIds/, /monitoring-signals/, /customer-facing-product-readiness/],
+				patterns: [
+					/requiredIds/,
+					/monitoring-signals/,
+					/customer-facing-product-readiness/,
+					/passed operations items need concrete evidence/,
+					/blocked operations items need an owner/,
+				],
 			},
 			{
 				file: "package.json",

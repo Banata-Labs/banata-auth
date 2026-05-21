@@ -151,4 +151,6 @@ bun run verify:auth-readiness
 
 For each gate marked `passed`, add one meaningful evidence reference for every required item in `testing/auth-production-gate-evidence-template.json`. A short placeholder or a single catch-all link will fail the gate checker.
 
+For security and operations checklist items, keep items `pending` until the review or operational proof exists. If you mark an item `passed`, add at least one concrete `evidence`, `evidenceReferences`, or `evidenceUrl` entry. If you mark an item `blocked`, add an `owner`.
+
 Production is not ready until `bun run verify:auth-production-gates` passes.
