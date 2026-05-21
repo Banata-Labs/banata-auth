@@ -133,8 +133,8 @@ export default function ApiKeysPage() {
 					<CardHeader>
 						<CardTitle className="text-sm text-primary">New API key created</CardTitle>
 						<CardDescription>
-							Copy it now - it will not be shown again. Deploy the replacement, verify
-							traffic, then revoke the old key.
+							Copy it now - it will not be shown again. Deploy the replacement, verify traffic, then
+							revoke the old key.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>

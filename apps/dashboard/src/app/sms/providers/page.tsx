@@ -193,7 +193,11 @@ export default function SmsProvidersPage() {
 				...config.providers,
 				[id]: updatedProvider,
 			};
-			const activeProvider = enabled ? id : config.activeProvider === id ? null : config.activeProvider;
+			const activeProvider = enabled
+				? id
+				: config.activeProvider === id
+					? null
+					: config.activeProvider;
 			const previous = config;
 			setTogglingId(id);
 			setConfig({ ...config, providers: updatedProviders, activeProvider });
@@ -217,7 +221,10 @@ export default function SmsProvidersPage() {
 
 	const handleSaveProvider = useCallback(
 		async (meta: ProviderMeta) => {
-			const providerConfig = { ...(config.providers[meta.id] ?? {}), enabled: isProviderEnabled(meta.id) };
+			const providerConfig = {
+				...(config.providers[meta.id] ?? {}),
+				enabled: isProviderEnabled(meta.id),
+			};
 			for (const field of meta.fields) {
 				const value = draftValues[`${meta.id}.${field.key}`]?.trim();
 				if (value) providerConfig[field.key] = value;
