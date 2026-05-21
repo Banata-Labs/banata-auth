@@ -17,14 +17,14 @@
 			"id": "ci-monorepo-checks",
 			"status": "passed",
 			"evidence": [
-				"CI run for latest launch commit f8d67255b1a76379a4facf683d8535879ca001e4 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26222744928",
-				"CI run 26222744928 completed the root lint, auth local readiness, and workspace build jobs for commit f8d67255b1a76379a4facf683d8535879ca001e4.",
-				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit f8d67255b1a76379a4facf683d8535879ca001e4.",
-				"GitHub Actions retains the CI logs and artifacts for run 26222744928 under the Banata-Labs/banata-auth repository.",
-				"Release run for commit f8d67255b1a76379a4facf683d8535879ca001e4 passed and published packages: https://github.com/Banata-Labs/banata-auth/actions/runs/26222745144",
-				"`npm view @banata-auth/sdk version` returned 0.2.3 after the release run."
+				"CI run for latest implementation commit 51eb1d6bbabe9a7b26993a7514894478a537e816 passed: https://github.com/Banata-Labs/banata-auth/actions/runs/26223495952",
+				"CI run 26223495952 completed the root lint, auth local readiness, and workspace build jobs for commit 51eb1d6bbabe9a7b26993a7514894478a537e816.",
+				"`bun run verify:auth-local-readiness` passed in the CI Auth local readiness step for commit 51eb1d6bbabe9a7b26993a7514894478a537e816.",
+				"GitHub Actions retains the CI logs and artifacts for run 26223495952 under the Banata-Labs/banata-auth repository.",
+				"Release run for commit 51eb1d6bbabe9a7b26993a7514894478a537e816 passed and published packages: https://github.com/Banata-Labs/banata-auth/actions/runs/26223495891",
+				"`bun run test:e2e` now resolves to scripts/auth-e2e-readiness-check.mjs and fails clearly until deployed browser evidence is attached."
 			],
-			"notes": "GitHub Actions CI and Release passed for the exact latest main commit after the hosted UI styling and example-app origin fixes."
+			"notes": "GitHub Actions CI and Release passed for the latest implementation commit after the hosted UI styling, example-app origin, and deterministic E2E gate fixes."
 		},
 		{
 			"id": "sms-whatsapp-provider-delivery",

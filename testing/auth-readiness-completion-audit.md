@@ -76,7 +76,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Single-command local readiness check | `scripts/auth-local-readiness-check.mjs`, package script `verify:auth-local-readiness` | local artifact complete |
 | Docs build and search index | `bun run --cwd apps/docs build`, `apps/docs/src/lib/search-index.ts` | local artifact complete |
 | Hosted UI production styling | `apps/auth-ui/src/app/globals.css` scans `@banata-auth/react` and `packages/react/src`; live CSS check against `https://auth-ui.banata.dev/sign-in?client_id=testing-example-app` found `max-w-md`, `p-8`, `text-2xl`, `font-bold`, `tracking-tight`, and `mb-6` in the deployed stylesheet | deployed evidence recorded |
-| Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26222744928` passed for commit `f8d67255b1a76379a4facf683d8535879ca001e4`; Release run `26222745144` published packages for the same commit | latest launch-run evidence recorded |
+| Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26223495952` passed for commit `51eb1d6bbabe9a7b26993a7514894478a537e816`; Release run `26223495891` published packages for the same commit | latest launch-run evidence recorded for the implementation commit |
 | Production environment inventory proof | `testing/auth-production-gates.json` gate `production-env-inventory`; live smoke verifies project public config resolves through a server API key | redacted production inventory and log review pending |
 
 ## Production Launch Gates Evidence Matrix
@@ -87,7 +87,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 |---|---|---|
 | Final service name/domain and deploy isolation are decided | `apps/docs/content/docs/domains.mdx`, `apps/docs/content/docs/projects-environments.mdx`, `apps/docs/content/docs/deploy.mdx`, `testing/auth-production-gates.json` gate `final-domain-deploy-isolation` | local docs/checklist present; production decision and DNS/deploy evidence pending |
 | Full monorepo typecheck passes without timeout or hidden failures | `bun run typecheck` passed | locally satisfied |
-| Full monorepo test suite passes in CI | `.github/workflows/ci.yml`, `testing/auth-production-gates.json` gate `ci-monorepo-checks`, GitHub Actions run `26222744928` passed for commit `f8d67255b1a76379a4facf683d8535879ca001e4` | latest launch-run evidence recorded |
+| Full monorepo test suite passes in CI | `.github/workflows/ci.yml`, `testing/auth-production-gates.json` gate `ci-monorepo-checks`, GitHub Actions run `26223495952` passed for commit `51eb1d6bbabe9a7b26993a7514894478a537e816` | latest implementation-run evidence recorded |
 | E2E browser tests pass for email/password, social OAuth, OTP, passkey, logout, session refresh, and hosted UI callback | `testing/auth-e2e-scenarios.json`, `testing/auth-production-gates.json` gate `browser-e2e-core-auth`; refresh-token rotation/reuse contracts are present locally | external/browser evidence pending |
 | Project isolation tests pass | production-readiness shared tests, Convex endpoint/resource tests, `testing/auth-e2e-scenarios.json` scenario `project-isolation` | local coverage present; deployed E2E pending |
 | App audience rejection tests pass | `validateTokenContract` tests in `packages/shared/src/__tests__/production-readiness.test.ts` | locally satisfied |
@@ -133,7 +133,7 @@ This section maps every launch gate named in `AUTH_PRODUCTION_READINESS_AUDIT.md
 - `bun run --cwd packages/sdk build` passed.
 - `bun run verify:auth-live-smoke` passed against the deployed auth, hosted UI, and docs roots after push.
 - `npm view @banata-auth/sdk version` returned `0.2.3`.
-- GitHub Actions CI run `26222744928` and Release run `26222745144` passed for commit `f8d67255b1a76379a4facf683d8535879ca001e4`.
+- GitHub Actions CI run `26223495952` and Release run `26223495891` passed for commit `51eb1d6bbabe9a7b26993a7514894478a537e816`.
 
 ## Completion Decision
 
