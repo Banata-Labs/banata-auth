@@ -829,6 +829,22 @@ const artifactChecks = [
 				file: "packages/nextjs/src/index.ts",
 				patterns: [/buildBanataSecurityHeaders/, /assertTrustedOrigin/, /validateAuthCookiePolicy/],
 			},
+			{
+				file: "apps/dashboard/next.config.ts",
+				patterns: [/Content-Security-Policy/, /X-Frame-Options/, /Permissions-Policy/],
+			},
+			{
+				file: "apps/auth-ui/next.config.ts",
+				patterns: [/Content-Security-Policy/, /X-Frame-Options/, /Permissions-Policy/],
+			},
+			{
+				file: "apps/docs/next.config.ts",
+				patterns: [/Content-Security-Policy/, /X-Frame-Options/, /Permissions-Policy/],
+			},
+			{
+				file: "apps/admin-portal/next.config.ts",
+				patterns: [/Content-Security-Policy/, /X-Frame-Options/, /Permissions-Policy/],
+			},
 		],
 	},
 	{
