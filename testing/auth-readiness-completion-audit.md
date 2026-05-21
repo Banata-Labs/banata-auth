@@ -32,7 +32,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Requirement | Evidence | Status |
 |---|---|---|
 | Audit file exists and was used as source of truth | `AUTH_PRODUCTION_READINESS_AUDIT.md` | present |
-| Final service name/domain and deploy isolation | `apps/docs/content/docs/domains.mdx`, `apps/docs/content/docs/projects-environments.mdx`, `apps/docs/content/docs/deploy.mdx`, `testing/auth-production-gates.json` gate `final-domain-deploy-isolation`, `testing/auth-production-gate-evidence-template.json` | local docs/evidence checklist complete; final production domain/deploy proof pending |
+| Final service name/domain and deploy isolation | `apps/docs/content/docs/domains.mdx`, `apps/docs/content/docs/projects-environments.mdx`, `apps/docs/content/docs/deploy.mdx`, `testing/auth-production-gates.json` gate `final-domain-deploy-isolation`, `testing/auth-production-gate-evidence-template.json`, `bun run verify:auth-live-smoke` | public production URLs are reachable; final service-name decision and deploy isolation proof pending |
 | Phone/WhatsApp OTP auth | `packages/shared/src/production-readiness.ts`, `packages/convex/src/plugins/production-readiness.ts`, `packages/sdk/src/resources/phone-and-devices.ts`, `apps/docs/content/docs/phone-and-linked-devices.mdx` sections `Phone OTP` and `Mobile Primary Login` | local artifact complete |
 | SMS/WhatsApp provider configuration | `packages/convex/src/plugins/sms-sender.ts`, `packages/convex/src/plugins/sms-sender.test.ts`, `packages/convex/src/plugins/config.ts` endpoints `/banata/config/sms-providers/get`, `/save`, and `/validate`, `apps/dashboard/src/app/sms/providers/page.tsx`, `apps/docs/content/docs/phone-and-linked-devices.mdx` section `SMS And WhatsApp Providers`; supported SMS services include Twilio, MessageBird, Vonage, Africa's Talking, Termii, and Mobitech | local artifact complete; real provider delivery pending |
 | Cloudflare Email Service provider | `packages/convex/src/plugins/email-sender.ts`, `packages/convex/src/plugins/email-sender.test.ts`, `packages/convex/src/plugins/config.ts` endpoint `/banata/config/email-providers/validate`, `apps/dashboard/src/app/emails/providers/page.tsx`, `apps/docs/content/docs/emails.mdx` | local artifact complete; real Cloudflare send pending if selected |
@@ -75,7 +75,7 @@ This audit separates local implementation evidence from production evidence. Pas
 | Single-command local readiness check | `scripts/auth-local-readiness-check.mjs`, package script `verify:auth-local-readiness` | local artifact complete |
 | Docs build and search index | `bun run --cwd apps/docs build`, `apps/docs/src/lib/search-index.ts` | local artifact complete |
 | Full monorepo CI proof | `.github/workflows/ci.yml` runs `bun run verify:auth-local-readiness`; `testing/auth-production-gates.json` gate `ci-monorepo-checks`; GitHub Actions run `26221342292` passed for commit `1b1bd2a` | launch-run evidence recorded |
-| Production environment inventory proof | `testing/auth-production-gates.json` gate `production-env-inventory` | pending deployment evidence |
+| Production environment inventory proof | `testing/auth-production-gates.json` gate `production-env-inventory`; live smoke verifies project public config resolves through a server API key | redacted production inventory and log review pending |
 
 ## Production Launch Gates Evidence Matrix
 

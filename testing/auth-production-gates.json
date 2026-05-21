@@ -5,8 +5,12 @@
 		{
 			"id": "final-domain-deploy-isolation",
 			"status": "pending",
-			"evidence": [],
-			"notes": "Requires final service name/domain decision and proof that production, staging, and development deployments are isolated."
+			"evidence": [
+				"Live smoke on 2026-05-21: https://auth.banata.dev returned 200 OK from Vercel.",
+				"Live smoke on 2026-05-21: https://auth-ui.banata.dev returned 200 OK from Vercel.",
+				"Live smoke on 2026-05-21: https://auth-docs.banata.dev returned 307 Temporary Redirect to /docs from Vercel."
+			],
+			"notes": "Public production URLs are reachable, but this gate still requires final service-name decision records plus proof that production, staging, and development deployments, databases, secrets, OAuth apps, SMS/email providers, webhook endpoints, and API keys are isolated."
 		},
 		{
 			"id": "ci-monorepo-checks",
@@ -58,8 +62,10 @@
 		{
 			"id": "production-env-inventory",
 			"status": "pending",
-			"evidence": [],
-			"notes": "Requires proof that target production environment variables are present, environment-scoped, and not printed in logs."
+			"evidence": [
+				"Live smoke on 2026-05-21 with the local server API key resolved /api/auth/banata/config/public with 200 OK from https://auth.banata.dev."
+			],
+			"notes": "The auth service can resolve project public config through the server API key, but this gate still requires a redacted production env inventory, environment separation proof, and log review."
 		},
 		{
 			"id": "monitoring-alerting-incident-response",

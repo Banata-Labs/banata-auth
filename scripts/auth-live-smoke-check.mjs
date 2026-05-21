@@ -9,6 +9,7 @@ const hostedUiUrl = normalizeUrl(
 		DEFAULT_HOSTED_UI_URL,
 );
 const docsUrl = normalizeUrl(process.env.BANATA_DOCS_URL || DEFAULT_DOCS_URL);
+const apiKey = process.env.BANATA_API_KEY;
 const projectId = process.env.BANATA_PROJECT_ID;
 const clientId = process.env.BANATA_CLIENT_ID || process.env.VITE_BANATA_CLIENT_ID;
 
@@ -51,10 +52,10 @@ async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 3
 }
 
 async function probePublicConfig() {
-	if (!projectId && !clientId) {
+	if (!apiKey && !projectId && !clientId) {
 		skip(
 			"auth-public-config",
-			"set BANATA_CLIENT_ID, VITE_BANATA_CLIENT_ID, or BANATA_PROJECT_ID to verify project-scoped public config",
+			"set BANATA_API_KEY, BANATA_CLIENT_ID, VITE_BANATA_CLIENT_ID, or BANATA_PROJECT_ID to verify project-scoped public config",
 		);
 		return;
 	}
@@ -66,7 +67,10 @@ async function probePublicConfig() {
 	try {
 		const response = await fetch(`${authUrl}/api/auth/banata/config/public`, {
 			method: "POST",
-			headers: { "content-type": "application/json" },
+			headers: {
+				"content-type": "application/json",
+				...(apiKey ? { "x-api-key": apiKey } : {}),
+			},
 			body: JSON.stringify(body),
 			redirect: "manual",
 		});

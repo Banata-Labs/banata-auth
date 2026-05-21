@@ -560,6 +560,7 @@ const artifactChecks = [
 			/auth\.banata\.dev/,
 			/auth-ui\.banata\.dev/,
 			/auth-docs\.banata\.dev/,
+			/BANATA_API_KEY/,
 			/BANATA_CLIENT_ID/,
 			/banata\/config\/public/,
 			/auth-public-config/,

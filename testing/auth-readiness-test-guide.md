@@ -39,9 +39,10 @@ Run a shallow live smoke check against the hosted service URLs:
 bun run verify:auth-live-smoke
 ```
 
-To also verify project-scoped public config, include a project client ID or project ID:
+To also verify project-scoped public config, include a server API key, project client ID, or project ID:
 
 ```bash
+BANATA_API_KEY=project_server_api_key bun run verify:auth-live-smoke
 BANATA_CLIENT_ID=project_client_id_from_dashboard bun run verify:auth-live-smoke
 ```
 
@@ -50,7 +51,7 @@ Expected result:
 - `auth-root` returns 200 or a redirect from the deployed auth service.
 - `hosted-ui-root` returns 200 or a redirect from the hosted UI.
 - `docs-root` returns 200 or a redirect from the docs site.
-- `auth-public-config` passes when a valid `BANATA_CLIENT_ID`, `VITE_BANATA_CLIENT_ID`, or `BANATA_PROJECT_ID` is provided.
+- `auth-public-config` passes when a valid `BANATA_API_KEY`, `BANATA_CLIENT_ID`, `VITE_BANATA_CLIENT_ID`, or `BANATA_PROJECT_ID` is provided.
 
 Create `apps/example-app/.env.local`:
 
