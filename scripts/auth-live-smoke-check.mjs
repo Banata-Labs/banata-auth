@@ -12,6 +12,8 @@ const docsUrl = normalizeUrl(process.env.BANATA_DOCS_URL || DEFAULT_DOCS_URL);
 const apiKey = process.env.BANATA_API_KEY;
 const projectId = process.env.BANATA_PROJECT_ID;
 const clientId = process.env.BANATA_CLIENT_ID || process.env.VITE_BANATA_CLIENT_ID;
+const shouldExpectManagedAuthRedirect =
+	process.env.BANATA_EXPECT_AUTH_ROOT_REDIRECT === "1" || authUrl === DEFAULT_AUTH_URL;
 
 let failed = false;
 
@@ -51,6 +53,32 @@ async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 3
 	}
 }
 
+async function probeManagedAuthRoot() {
+	try {
+		const response = await fetch(authUrl, { method: "GET", redirect: "manual" });
+		const location = response.headers.get("location") || "";
+		const server = response.headers.get("server") || "unknown server";
+		const text = await response.text();
+		const detail = `${response.status} ${response.statusText}${location ? ` -> ${location}` : ""}; server=${server}`;
+
+		if (response.status !== 307 && response.status !== 308) {
+			fail("auth-root", `${detail}; expected unauthenticated root redirect to /sign-in`);
+			return;
+		}
+		if (!location.startsWith("/sign-in") || !location.includes("redirect_url=%2F")) {
+			fail("auth-root", `${detail}; expected /sign-in?redirect_url=%2F`);
+			return;
+		}
+		if (text.includes("user@example.com")) {
+			fail("auth-root", `${detail}; response still contains the dashboard fallback user`);
+			return;
+		}
+		pass("auth-root", detail);
+	} catch (err) {
+		fail("auth-root", err instanceof Error ? err.message : String(err));
+	}
+}
+
 async function probePublicConfig() {
 	if (!apiKey && !projectId && !clientId) {
 		skip(
@@ -86,7 +114,11 @@ async function probePublicConfig() {
 	}
 }
 
-await probeHeadOrGet("auth-root", authUrl);
+if (shouldExpectManagedAuthRedirect) {
+	await probeManagedAuthRoot();
+} else {
+	await probeHeadOrGet("auth-root", authUrl);
+}
 await probeHeadOrGet("hosted-ui-root", hostedUiUrl);
 await probeHeadOrGet("docs-root", docsUrl);
 await probePublicConfig();
