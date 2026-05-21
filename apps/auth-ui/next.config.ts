@@ -12,6 +12,7 @@ const securityHeaders = [
 	{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
 	{ key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 	{ key: "Cross-Origin-Resource-Policy", value: "same-site" },
+	{ key: "Cache-Control", value: "no-store" },
 ];
 
 const nextConfig: NextConfig = {

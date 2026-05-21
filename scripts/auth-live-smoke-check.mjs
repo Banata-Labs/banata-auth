@@ -71,13 +71,20 @@ async function probeHeadOrGet(label, url, allowedStatuses = new Set([200, 301, 3
 	}
 }
 
-async function probeSecurityHeaders(label, url) {
+async function probeSecurityHeaders(label, url, options = {}) {
 	try {
 		const response = await fetch(url, { method: "GET", redirect: "manual" });
 		const missing = requiredSecurityHeaders.filter((header) => !response.headers.get(header));
 		if (missing.length > 0) {
 			fail(label, `missing ${missing.join(", ")}`);
 			return;
+		}
+		if (options.requireNoStore) {
+			const cacheControl = response.headers.get("cache-control") || "";
+			if (!cacheControl.toLowerCase().includes("no-store")) {
+				fail(label, `cache-control must include no-store; got ${cacheControl || "missing"}`);
+				return;
+			}
 		}
 		pass(label, "required security headers present");
 	} catch (err) {
@@ -168,10 +175,11 @@ if (shouldExpectManagedAuthRedirect) {
 }
 await probeHeadOrGet("hosted-ui-root", hostedUiUrl);
 await probeHeadOrGet("docs-root", docsUrl);
-await probeSecurityHeaders("auth-security-headers", `${authUrl}/sign-in`);
+await probeSecurityHeaders("auth-security-headers", `${authUrl}/sign-in`, { requireNoStore: true });
 await probeSecurityHeaders(
 	"hosted-ui-security-headers",
 	`${hostedUiUrl}/sign-in?client_id=testing-example-app`,
+	{ requireNoStore: true },
 );
 await probeSecurityHeaders("docs-security-headers", `${docsUrl}/docs`);
 if (shouldVerifyDns) {
