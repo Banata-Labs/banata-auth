@@ -542,12 +542,37 @@ const artifactChecks = [
 		patterns: [
 			/Local Static Checks/,
 			/verify:auth-local-readiness/,
+			/verify:auth-live-smoke/,
 			/Example App Customer Harness/,
 			/Provider And Browser E2E Gates/,
 			/External Service Gates/,
 			/verify:auth-production-gates/,
 			/BANATA_AUTH_URL/,
 			/VITE_BANATA_HOSTED_AUTH_URL/,
+		],
+	},
+	{
+		id: "live-smoke-command",
+		requirement:
+			"A repeatable live smoke command exists for shallow deployed auth, hosted UI, docs, and optional project public config checks.",
+		file: "scripts/auth-live-smoke-check.mjs",
+		patterns: [
+			/auth\.banata\.dev/,
+			/auth-ui\.banata\.dev/,
+			/auth-docs\.banata\.dev/,
+			/BANATA_CLIENT_ID/,
+			/banata\/config\/public/,
+			/auth-public-config/,
+		],
+		also: [
+			{
+				file: "package.json",
+				patterns: [/verify:auth-live-smoke/],
+			},
+			{
+				file: "apps/example-app/README.md",
+				patterns: [/verify:auth-live-smoke/],
+			},
 		],
 	},
 	{

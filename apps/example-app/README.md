@@ -38,6 +38,7 @@ From the repo root:
 
 ```bash
 bun install
+bun run verify:auth-live-smoke
 bun run --cwd apps/example-app typecheck
 bun run --cwd apps/example-app build
 bun run --cwd apps/example-app db:reset
