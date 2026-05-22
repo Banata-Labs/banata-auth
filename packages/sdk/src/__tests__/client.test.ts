@@ -523,6 +523,70 @@ describe("HttpClient", () => {
 		});
 	});
 
+	describe("project domain resource", () => {
+		it("adds project domains using an HTTPS origin scoped to the API key project", async () => {
+			const fetchMock = mockFetch({
+				body: {
+					domain: {
+						id: "dom_123",
+						origin: "https://kasilabs.com",
+						oauthCallbackUrls: ["https://kasilabs.com/api/auth/callback/github"],
+						verified: true,
+						createdAt: 1,
+						updatedAt: 1,
+					},
+				},
+			});
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.addProjectDomain({
+				origin: "https://kasilabs.com",
+				projectId: "project_123",
+			});
+
+			expect(getFetchUrl(fetchMock)).toBe(
+				"https://api.example.com/api/auth/banata/config/project-domains/add",
+			);
+			expect(getFetchOptions(fetchMock).body).toBe(
+				JSON.stringify({ origin: "https://kasilabs.com", projectId: "project_123" }),
+			);
+		});
+
+		it("lists and removes project domains separately from organization verification", async () => {
+			const fetchMock = mockFetchSequence([{ body: { domains: [] } }, { body: {} }]);
+			const client = new BanataAuth({
+				apiKey: "sk_test_key",
+				baseUrl: "https://api.example.com",
+			});
+
+			await client.projects.listProjectDomains({
+				projectId: "project_123",
+				providerIds: ["github", "google"],
+			});
+			await client.projects.removeProjectDomain({
+				projectId: "project_123",
+				origin: "https://kasilabs.com",
+			});
+
+			expect(getFetchUrl(fetchMock, 0)).toBe(
+				"https://api.example.com/api/auth/banata/config/project-domains/list",
+			);
+			expect(JSON.parse(getFetchOptions(fetchMock, 0).body ?? "{}")).toEqual({
+				projectId: "project_123",
+				providerIds: ["github", "google"],
+			});
+			expect(getFetchUrl(fetchMock, 1)).toBe(
+				"https://api.example.com/api/auth/banata/config/project-domains/remove",
+			);
+			expect(getFetchOptions(fetchMock, 1).body).toBe(
+				JSON.stringify({ origin: "https://kasilabs.com", projectId: "project_123" }),
+			);
+		});
+	});
+
 	describe("phone and devices resource", () => {
 		it("starts phone OTP through the phone endpoint", async () => {
 			const fetchMock = mockFetch({ body: { verificationId: "phv_123" } });

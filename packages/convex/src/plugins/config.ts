@@ -665,6 +665,18 @@ const deleteDomainSchema = z
 	})
 	.merge(projectScopeSchema);
 
+const projectDomainSchema = z
+	.object({
+		origin: z.string().min(1).max(2048),
+	})
+	.merge(projectScopeSchema);
+
+const listProjectDomainsSchema = z
+	.object({
+		providerIds: z.array(z.string().min(1).max(64)).optional(),
+	})
+	.merge(projectScopeSchema);
+
 // â”€â”€â”€ Redirect Config Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const saveRedirectsSchema = z
@@ -1294,6 +1306,55 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		);
 	}
 
+	const PROJECT_DOMAIN_KEY_PREFIX = "project-domain:";
+
+	function normalizeProjectDomainOrigin(origin: string): string {
+		let parsed: URL;
+		try {
+			parsed = new URL(origin.trim());
+		} catch {
+			throw new Error("Project domain must be a valid HTTPS origin.");
+		}
+
+		if (parsed.protocol !== "https:") {
+			throw new Error("Project domain must use an HTTPS origin.");
+		}
+		if (parsed.pathname !== "/" || parsed.search || parsed.hash) {
+			throw new Error("Project domain must be an origin without a path, query, or hash.");
+		}
+
+		return parsed.origin;
+	}
+
+	function projectDomainKey(origin: string): string {
+		return `${PROJECT_DOMAIN_KEY_PREFIX}${origin}`;
+	}
+
+	function isProjectDomainRow(row: DomainConfigRow): boolean {
+		return row.domainKey.startsWith(PROJECT_DOMAIN_KEY_PREFIX);
+	}
+
+	function buildOAuthCallbackUrls(origin: string, providerIds?: string[]): string[] {
+		const ids = (providerIds && providerIds.length > 0 ? providerIds : ["github", "google"]).map((id) =>
+			id.trim(),
+		);
+		return Array.from(
+			new Set(ids.filter(Boolean).map((providerId) => `${origin}/api/auth/callback/${providerId}`)),
+		).sort();
+	}
+
+	function serializeProjectDomain(row: DomainConfigRow, providerIds?: string[]) {
+		const origin = normalizeProjectDomainOrigin(row.value);
+		return {
+			id: row.id,
+			origin,
+			oauthCallbackUrls: buildOAuthCallbackUrls(origin, providerIds),
+			createdAt: row.createdAt,
+			updatedAt: row.updatedAt,
+			verified: true,
+		};
+	}
+
 	async function validateSocialProviderSetup(
 		db: PluginDBAdapter,
 		projectId: string,
@@ -1352,6 +1413,7 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 		const callbackUrls = Array.from(
 			new Set(
 				domains
+					.filter(isProjectDomainRow)
 					.map((domain) => domain.value?.trim())
 					.filter((value): value is string => Boolean(value))
 					.filter((value) => value.startsWith("https://"))
@@ -1361,8 +1423,9 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 
 		if (callbackUrls.length === 0) {
 			errors.push({
-				code: "missing_https_callback_origin",
-				message: "Add at least one HTTPS project domain before enabling production OAuth.",
+				code: "missing_project_domain",
+				message:
+					"Add at least one HTTPS project domain before enabling production OAuth callbacks.",
 			});
 		}
 
@@ -2869,6 +2932,177 @@ export function configPlugin(options?: ConfigPluginOptions): BetterAuthPlugin {
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 			// Domain Config CRUD
 			// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+			addProjectDomain: createAuthEndpoint(
+				"/banata/config/project-domains/add",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: projectDomainSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const now = Date.now();
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.manage",
+					);
+
+					let origin: string;
+					try {
+						origin = normalizeProjectDomainOrigin(body.origin);
+					} catch (error) {
+						throw ctx.error("BAD_REQUEST", {
+							message: error instanceof Error ? error.message : "Invalid project domain origin.",
+						});
+					}
+
+					const domainKey = projectDomainKey(origin);
+					const existing = await db.findMany<DomainConfigRow>({
+						model: "domainConfig",
+						where: [{ field: "domainKey", value: domainKey }, ...scope.where],
+						limit: 1,
+					});
+
+					let row: DomainConfigRow;
+					if (existing.length > 0 && existing[0]) {
+						const updated = await db.update<DomainConfigRow>({
+							model: "domainConfig",
+							where: [{ field: "id", operator: "eq", value: existing[0].id }],
+							update: {
+								title: origin,
+								description: "Project OAuth callback origin",
+								value: origin,
+								isDefault: false,
+								updatedAt: now,
+							},
+						});
+						row = updated ?? { ...existing[0], value: origin, updatedAt: now };
+					} else {
+						row = await db.create<DomainConfigRow>({
+							model: "domainConfig",
+							data: {
+								...scope.data,
+								domainKey,
+								title: origin,
+								description: "Project OAuth callback origin",
+								value: origin,
+								isDefault: false,
+								createdAt: now,
+								updatedAt: now,
+							},
+						});
+					}
+
+					return ctx.json({ domain: serializeProjectDomain(row) });
+				},
+			),
+
+			listProjectDomains: createAuthEndpoint(
+				"/banata/config/project-domains/list",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: listProjectDomainsSchema,
+				},
+				async (ctx) => {
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const body = ctx.body as { providerIds?: string[] } & Record<string, unknown>;
+					const scope = await requireScopedPermission(ctx, db, body, "dashboard.read");
+
+					const rows = await db.findMany<DomainConfigRow>({
+						model: "domainConfig",
+						where: [...scope.where],
+						limit: 100,
+						sortBy: { field: "createdAt", direction: "asc" },
+					});
+
+					return ctx.json({
+						domains: rows
+							.filter(isProjectDomainRow)
+							.map((row) => serializeProjectDomain(row, body.providerIds)),
+					});
+				},
+			),
+
+			removeProjectDomain: createAuthEndpoint(
+				"/banata/config/project-domains/remove",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: projectDomainSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.manage",
+					);
+
+					let origin: string;
+					try {
+						origin = normalizeProjectDomainOrigin(body.origin);
+					} catch (error) {
+						throw ctx.error("BAD_REQUEST", {
+							message: error instanceof Error ? error.message : "Invalid project domain origin.",
+						});
+					}
+
+					await db.delete({
+						model: "domainConfig",
+						where: [{ field: "domainKey", value: projectDomainKey(origin) }, ...scope.where],
+					});
+
+					return ctx.json({ success: true });
+				},
+			),
+
+			verifyProjectDomain: createAuthEndpoint(
+				"/banata/config/project-domains/verify",
+				{
+					method: "POST",
+					requireHeaders: true,
+					body: projectDomainSchema,
+				},
+				async (ctx) => {
+					const body = ctx.body;
+					const db = ctx.context.adapter as unknown as PluginDBAdapter;
+					const scope = await requireScopedPermission(
+						ctx,
+						db,
+						body as Record<string, unknown>,
+						"dashboard.read",
+					);
+
+					let origin: string;
+					try {
+						origin = normalizeProjectDomainOrigin(body.origin);
+					} catch (error) {
+						throw ctx.error("BAD_REQUEST", {
+							message: error instanceof Error ? error.message : "Invalid project domain origin.",
+						});
+					}
+
+					const rows = await db.findMany<DomainConfigRow>({
+						model: "domainConfig",
+						where: [{ field: "domainKey", value: projectDomainKey(origin) }, ...scope.where],
+						limit: 1,
+					});
+					if (!rows[0]) {
+						throw ctx.error("NOT_FOUND", {
+							message: "Project domain has not been added for this project.",
+						});
+					}
+
+					return ctx.json({ domain: serializeProjectDomain(rows[0]) });
+				},
+			),
 
 			listDomains: createAuthEndpoint(
 				"/banata/config/domains/list",

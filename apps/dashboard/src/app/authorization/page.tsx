@@ -1,11 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthorizationPage() {
+	const router = useRouter();
+
 	useEffect(() => {
-		window.location.replace("/authorization/roles");
-	}, []);
+		router.replace("/authorization/roles");
+	}, [router]);
 
 	return null;
 }

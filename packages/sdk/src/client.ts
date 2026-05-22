@@ -279,4 +279,20 @@ export class BanataAuth {
 	get orgs(): Organizations {
 		return this.organizations;
 	}
+
+	addProjectDomain(...args: Parameters<Projects["addProjectDomain"]>) {
+		return this.projects.addProjectDomain(...args);
+	}
+
+	listProjectDomains(...args: Parameters<Projects["listProjectDomains"]>) {
+		return this.projects.listProjectDomains(...args);
+	}
+
+	removeProjectDomain(...args: Parameters<Projects["removeProjectDomain"]>) {
+		return this.projects.removeProjectDomain(...args);
+	}
+
+	verifyProjectDomain(...args: Parameters<Projects["verifyProjectDomain"]>) {
+		return this.projects.verifyProjectDomain(...args);
+	}
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthenticationPage() {
+	const router = useRouter();
+
 	useEffect(() => {
-		window.location.replace("/authentication/methods");
-	}, []);
+		router.replace("/authentication/methods");
+	}, [router]);
 
 	return null;
 }

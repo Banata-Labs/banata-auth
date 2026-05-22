@@ -9,6 +9,7 @@ import { Events } from "../resources/events";
 import { Organizations } from "../resources/organizations";
 import { PhoneAndDevices } from "../resources/phone-and-devices";
 import { Portal } from "../resources/portal";
+import { Projects } from "../resources/projects";
 import { Rbac } from "../resources/rbac";
 import { SecurityControls } from "../resources/security";
 import { SSO } from "../resources/sso";
@@ -125,6 +126,25 @@ describe("Resource modules", () => {
 			"sendInvitation",
 			"revokeInvitation",
 			"listInvitations",
+		]);
+	});
+
+	describe("Projects", () => {
+		it("is an instance of Projects", () => {
+			expect(client.projects).toBeInstanceOf(Projects);
+		});
+
+		expectMethodsExist(Projects.prototype, [
+			"listProjects",
+			"getProject",
+			"createProject",
+			"updateProject",
+			"deleteProject",
+			"ensureDefaultProject",
+			"addProjectDomain",
+			"listProjectDomains",
+			"removeProjectDomain",
+			"verifyProjectDomain",
 		]);
 	});
 

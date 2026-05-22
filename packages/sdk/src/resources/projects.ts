@@ -29,6 +29,35 @@ export interface UpdateProjectOptions {
 	logoUrl?: string;
 }
 
+export interface ProjectDomain {
+	id: string;
+	origin: string;
+	oauthCallbackUrls: string[];
+	createdAt: number;
+	updatedAt: number;
+	verified: boolean;
+}
+
+export interface AddProjectDomainOptions {
+	origin: string;
+	projectId?: string;
+}
+
+export interface ListProjectDomainsOptions {
+	projectId?: string;
+	providerIds?: string[];
+}
+
+export interface RemoveProjectDomainOptions {
+	origin: string;
+	projectId?: string;
+}
+
+export interface VerifyProjectDomainOptions {
+	origin: string;
+	projectId?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Projects Resource
 // ---------------------------------------------------------------------------
@@ -103,5 +132,48 @@ export class Projects {
 		project: SdkProject | null;
 	}> {
 		return this.http.post("/api/auth/banata/projects/ensure-default");
+	}
+
+	/**
+	 * Add an HTTPS origin for OAuth callbacks in the API key's project.
+	 */
+	async addProjectDomain(input: AddProjectDomainOptions): Promise<ProjectDomain> {
+		const response = await this.http.post<{ domain: ProjectDomain }>(
+			"/api/auth/banata/config/project-domains/add",
+			this.http.withProjectScope({ origin: input.origin }, input.projectId),
+		);
+		return response.domain;
+	}
+
+	/**
+	 * List HTTPS project origins and their OAuth callback URLs.
+	 */
+	async listProjectDomains(input: ListProjectDomainsOptions = {}): Promise<ProjectDomain[]> {
+		const response = await this.http.post<{ domains: ProjectDomain[] }>(
+			"/api/auth/banata/config/project-domains/list",
+			this.http.withProjectScope({ providerIds: input.providerIds }, input.projectId),
+		);
+		return response.domains;
+	}
+
+	/**
+	 * Remove an HTTPS origin from the API key's project.
+	 */
+	async removeProjectDomain(input: RemoveProjectDomainOptions): Promise<void> {
+		await this.http.post<void>(
+			"/api/auth/banata/config/project-domains/remove",
+			this.http.withProjectScope({ origin: input.origin }, input.projectId),
+		);
+	}
+
+	/**
+	 * Verify that an HTTPS origin is present for the API key's project.
+	 */
+	async verifyProjectDomain(input: VerifyProjectDomainOptions): Promise<ProjectDomain> {
+		const response = await this.http.post<{ domain: ProjectDomain }>(
+			"/api/auth/banata/config/project-domains/verify",
+			this.http.withProjectScope({ origin: input.origin }, input.projectId),
+		);
+		return response.domain;
 	}
 }

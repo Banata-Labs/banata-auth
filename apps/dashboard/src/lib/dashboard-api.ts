@@ -291,6 +291,8 @@ function resolvePermissionForPath(path: string): string | null {
 	if (path.startsWith("/api/auth/banata/config/permissions/create")) return "permission.create";
 	if (path.startsWith("/api/auth/banata/config/permissions/update")) return "permission.update";
 	if (path.startsWith("/api/auth/banata/config/permissions/delete")) return "permission.delete";
+	if (path.startsWith("/api/auth/banata/config/project-domains/list")) return "dashboard.read";
+	if (path.startsWith("/api/auth/banata/config/project-domains/verify")) return "dashboard.read";
 	if (path.startsWith("/api/auth/banata/webhooks/")) return "webhook.manage";
 	if (path.startsWith("/api/auth/banata/audit-logs/")) return "audit.read";
 	if (
@@ -1336,6 +1338,45 @@ export async function saveDomain(domain: {
 export async function deleteDomain(domainKey: string): Promise<void> {
 	await postJson("/api/auth/banata/config/domains/delete", { domainKey });
 	invalidateCache();
+}
+
+export interface ProjectDomainItem {
+	id: string;
+	origin: string;
+	oauthCallbackUrls: string[];
+	createdAt: number;
+	updatedAt: number;
+	verified: boolean;
+}
+
+export async function addProjectDomain(origin: string): Promise<ProjectDomainItem> {
+	const payload = await postJson("/api/auth/banata/config/project-domains/add", { origin });
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Failed to add project domain");
+	}
+	invalidateCache();
+	return (payload as { domain: ProjectDomainItem }).domain;
+}
+
+export async function listProjectDomains(providerIds?: string[]): Promise<ProjectDomainItem[]> {
+	const payload = await cachedPostJson("/api/auth/banata/config/project-domains/list", {
+		providerIds,
+	});
+	if (typeof payload !== "object" || payload === null) return [];
+	return ((payload as { domains?: ProjectDomainItem[] }).domains ?? []) as ProjectDomainItem[];
+}
+
+export async function removeProjectDomain(origin: string): Promise<void> {
+	await postJson("/api/auth/banata/config/project-domains/remove", { origin });
+	invalidateCache();
+}
+
+export async function verifyProjectDomain(origin: string): Promise<ProjectDomainItem> {
+	const payload = await postJson("/api/auth/banata/config/project-domains/verify", { origin });
+	if (typeof payload !== "object" || payload === null) {
+		throw new Error("Failed to verify project domain");
+	}
+	return (payload as { domain: ProjectDomainItem }).domain;
 }
 
 // ── Redirect Config ──────────────────────────────────────────────────

@@ -7,10 +7,211 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SkeletonHeader, SkeletonMethodCard } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { type DashboardConfig, getDashboardConfig, saveDashboardConfig } from "@/lib/dashboard-api";
-import { Clock, FileCode2, Globe, Loader2 } from "lucide-react";
+import { Clock, FileCode2, Globe, Loader2, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+interface SessionConfigCard {
+	id: string;
+	icon: LucideIcon;
+	iconColor: string;
+	title: string;
+	description: string;
+	details: { label: string; value: string }[];
+}
+
+function parseCorsOrigins(raw: string | undefined): string[] {
+	return raw
+		? raw
+				.split(/\r?\n|,/)
+				.map((origin) => origin.trim())
+				.filter(Boolean)
+		: [];
+}
+
+function buildSessionsPatch(
+	config: DashboardConfig | null,
+	editingCard: string,
+	editValues: Record<string, string>,
+) {
+	const baseSessions = {
+		maxSessionLength: config?.sessions?.maxSessionLength ?? "7d",
+		accessTokenDuration: config?.sessions?.accessTokenDuration ?? "15m",
+		inactivityTimeout: config?.sessions?.inactivityTimeout ?? "2d",
+		corsOrigins: config?.sessions?.corsOrigins ?? [],
+	};
+
+	if (editingCard === "cors") {
+		return {
+			...baseSessions,
+			corsOrigins: parseCorsOrigins(editValues.corsOrigins),
+		};
+	}
+
+	return {
+		...baseSessions,
+		maxSessionLength: editValues.maxSessionLength ?? "",
+		accessTokenDuration: editValues.accessTokenDuration ?? "",
+		inactivityTimeout: editValues.inactivityTimeout ?? "",
+	};
+}
+
+function SessionConfigCardView({
+	cfg,
+	isEditing,
+	isSaving,
+	editValues,
+	onStartEditing,
+	onCancelEditing,
+	onSave,
+	onEditValue,
+}: {
+	cfg: SessionConfigCard;
+	isEditing: boolean;
+	isSaving: boolean;
+	editValues: Record<string, string>;
+	onStartEditing: (id: string) => void;
+	onCancelEditing: () => void;
+	onSave: () => void;
+	onEditValue: (key: string, value: string) => void;
+}) {
+	const Icon = cfg.icon;
+	const isEditable = cfg.id === "session-lifetime" || cfg.id === "cors";
+
+	return (
+		<Card>
+			<CardHeader>
+				<div className="flex items-start justify-between">
+					<div className="flex items-start gap-4">
+						<div className="flex size-10 items-center justify-center rounded-lg border border-border bg-muted/50">
+							<Icon className={`size-5 ${cfg.iconColor}`} />
+						</div>
+						<div className="space-y-1">
+							<CardTitle className="text-sm">{cfg.title}</CardTitle>
+							<CardDescription className="max-w-md">{cfg.description}</CardDescription>
+						</div>
+					</div>
+					{isEditing ? (
+						<div className="flex items-center gap-2">
+							<Button variant="ghost" size="sm" disabled={isSaving} onClick={onCancelEditing}>
+								Cancel
+							</Button>
+							<Button size="sm" disabled={isSaving} onClick={onSave}>
+								{isSaving && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
+								Save
+							</Button>
+						</div>
+					) : (
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={!isEditable}
+							onClick={isEditable ? () => onStartEditing(cfg.id) : undefined}
+						>
+							{isEditable ? "Manage" : "Coming soon"}
+						</Button>
+					)}
+				</div>
+			</CardHeader>
+			<SessionConfigCardContent
+				cfg={cfg}
+				isEditing={isEditing}
+				isSaving={isSaving}
+				editValues={editValues}
+				onEditValue={onEditValue}
+			/>
+		</Card>
+	);
+}
+
+function SessionConfigCardContent({
+	cfg,
+	isEditing,
+	isSaving,
+	editValues,
+	onEditValue,
+}: {
+	cfg: SessionConfigCard;
+	isEditing: boolean;
+	isSaving: boolean;
+	editValues: Record<string, string>;
+	onEditValue: (key: string, value: string) => void;
+}) {
+	if (isEditing && cfg.id === "session-lifetime") {
+		return (
+			<CardContent>
+				<Separator className="mb-4" />
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+					{[
+						{ key: "maxSessionLength", label: "Max session length" },
+						{ key: "accessTokenDuration", label: "Access token duration" },
+						{ key: "inactivityTimeout", label: "Inactivity timeout" },
+					].map((field) => (
+						<div key={field.key} className="space-y-1.5">
+							<label
+								htmlFor={`session-${field.key}`}
+								className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60"
+							>
+								{field.label}
+							</label>
+							<Input
+								id={`session-${field.key}`}
+								value={editValues[field.key] ?? ""}
+								placeholder="e.g. 7d, 1h, 15m"
+								disabled={isSaving}
+								onChange={(e) => onEditValue(field.key, e.target.value)}
+							/>
+						</div>
+					))}
+				</div>
+			</CardContent>
+		);
+	}
+
+	if (isEditing && cfg.id === "cors") {
+		return (
+			<CardContent>
+				<Separator className="mb-4" />
+				<div className="space-y-1.5">
+					<label
+						htmlFor="session-cors-origins"
+						className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60"
+					>
+						Allowed web origins
+					</label>
+					<Textarea
+						id="session-cors-origins"
+						value={editValues.corsOrigins ?? ""}
+						placeholder="https://app.example.com"
+						disabled={isSaving}
+						rows={5}
+						onChange={(e) => onEditValue("corsOrigins", e.target.value)}
+					/>
+				</div>
+			</CardContent>
+		);
+	}
+
+	if (cfg.details.length === 0) return null;
+
+	return (
+		<CardContent>
+			<Separator className="mb-4" />
+			<div className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-3">
+				{cfg.details.map((detail) => (
+					<div key={detail.label} className="space-y-0.5">
+						<p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+							{detail.label}
+						</p>
+						<p className="text-sm font-medium">{detail.value}</p>
+					</div>
+				))}
+			</div>
+		</CardContent>
+	);
+}
 
 export default function SessionsPage() {
 	const [config, setConfig] = useState<DashboardConfig | null>(null);
@@ -46,6 +247,11 @@ export default function SessionsPage() {
 				inactivityTimeout: config.sessions.inactivityTimeout ?? "2d",
 			});
 		}
+		if (cardId === "cors") {
+			setEditValues({
+				corsOrigins: (config?.sessions?.corsOrigins ?? []).join("\n"),
+			});
+		}
 		setEditingCard(cardId);
 	};
 
@@ -55,16 +261,11 @@ export default function SessionsPage() {
 	};
 
 	const handleSave = async () => {
-		if (editingCard !== "session-lifetime") return;
+		if (editingCard !== "session-lifetime" && editingCard !== "cors") return;
 		setIsSaving(true);
 		try {
 			const updatedConfig = await saveDashboardConfig({
-				sessions: {
-					...config!.sessions,
-					maxSessionLength: editValues.maxSessionLength ?? "",
-					accessTokenDuration: editValues.accessTokenDuration ?? "",
-					inactivityTimeout: editValues.inactivityTimeout ?? "",
-				},
+				sessions: buildSessionsPatch(config, editingCard, editValues),
 			});
 			setConfig(updatedConfig);
 			setEditingCard(null);
@@ -151,91 +352,23 @@ export default function SessionsPage() {
 
 			<div className="grid gap-4">
 				{sessionConfigs.map((cfg) => {
-					const Icon = cfg.icon;
-					const isEditing = editingCard === cfg.id;
-					const isEditable = cfg.id === "session-lifetime";
 					return (
-						<Card key={cfg.id}>
-							<CardHeader>
-								<div className="flex items-start justify-between">
-									<div className="flex items-start gap-4">
-										<div className="flex size-10 items-center justify-center rounded-lg border border-border bg-muted/50">
-											<Icon className={`size-5 ${cfg.iconColor}`} />
-										</div>
-										<div className="space-y-1">
-											<CardTitle className="text-sm">{cfg.title}</CardTitle>
-											<CardDescription className="max-w-md">{cfg.description}</CardDescription>
-										</div>
-									</div>
-									{isEditing ? (
-										<div className="flex items-center gap-2">
-											<Button variant="ghost" size="sm" disabled={isSaving} onClick={cancelEditing}>
-												Cancel
-											</Button>
-											<Button size="sm" disabled={isSaving} onClick={handleSave}>
-												{isSaving && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
-												Save
-											</Button>
-										</div>
-									) : (
-										<Button
-											variant="outline"
-											size="sm"
-											onClick={isEditable ? () => startEditing(cfg.id) : undefined}
-										>
-											Manage
-										</Button>
-									)}
-								</div>
-							</CardHeader>
-							{isEditing && cfg.id === "session-lifetime" ? (
-								<CardContent>
-									<Separator className="mb-4" />
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-										{[
-											{ key: "maxSessionLength", label: "Max session length" },
-											{ key: "accessTokenDuration", label: "Access token duration" },
-											{ key: "inactivityTimeout", label: "Inactivity timeout" },
-										].map((field) => (
-											<div key={field.key} className="space-y-1.5">
-												<label
-													htmlFor={`session-${field.key}`}
-													className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60"
-												>
-													{field.label}
-												</label>
-												<Input
-													id={`session-${field.key}`}
-													value={editValues[field.key] ?? ""}
-													placeholder="e.g. 7d, 1h, 15m"
-													disabled={isSaving}
-													onChange={(e) =>
-														setEditValues((prev) => ({
-															...prev,
-															[field.key]: e.target.value,
-														}))
-													}
-												/>
-											</div>
-										))}
-									</div>
-								</CardContent>
-							) : cfg.details.length > 0 ? (
-								<CardContent>
-									<Separator className="mb-4" />
-									<div className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-3">
-										{cfg.details.map((detail) => (
-											<div key={detail.label} className="space-y-0.5">
-												<p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-													{detail.label}
-												</p>
-												<p className="text-sm font-medium">{detail.value}</p>
-											</div>
-										))}
-									</div>
-								</CardContent>
-							) : null}
-						</Card>
+						<SessionConfigCardView
+							key={cfg.id}
+							cfg={cfg}
+							isEditing={editingCard === cfg.id}
+							isSaving={isSaving}
+							editValues={editValues}
+							onStartEditing={startEditing}
+							onCancelEditing={cancelEditing}
+							onSave={handleSave}
+							onEditValue={(key, value) =>
+								setEditValues((prev) => ({
+									...prev,
+									[key]: value,
+								}))
+							}
+						/>
 					);
 				})}
 			</div>

@@ -16,7 +16,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SkeletonCard, SkeletonHeader, SkeletonInput } from "@/components/ui/skeleton";
-import { type DomainConfigItem, deleteDomain, listDomains, saveDomain } from "@/lib/dashboard-api";
+import {
+	type DomainConfigItem,
+	type ProjectDomainItem,
+	addProjectDomain,
+	deleteDomain,
+	listDomains,
+	listProjectDomains,
+	removeProjectDomain,
+	saveDomain,
+} from "@/lib/dashboard-api";
 import { Check, Info, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -66,6 +75,10 @@ export default function DomainsPage() {
 	const [newTitle, setNewTitle] = useState("");
 	const [newDescription, setNewDescription] = useState("");
 	const [newValue, setNewValue] = useState("");
+	const [projectDomains, setProjectDomains] = useState<ProjectDomainItem[]>([]);
+	const [projectOrigin, setProjectOrigin] = useState("");
+	const [savingProjectOrigin, setSavingProjectOrigin] = useState(false);
+	const [removingProjectOrigin, setRemovingProjectOrigin] = useState<string | null>(null);
 
 	const { reportError } = useBackendStatus();
 
@@ -77,7 +90,8 @@ export default function DomainsPage() {
 		}
 
 		try {
-			let items = await listDomains();
+			const [initialItems, origins] = await Promise.all([listDomains(), listProjectDomains()]);
+			let items = initialItems;
 
 			// Seed defaults on first load if backend is empty
 			if (items.length === 0) {
@@ -86,6 +100,7 @@ export default function DomainsPage() {
 			}
 
 			setDomains(items);
+			setProjectDomains(origins);
 		} catch (err) {
 			reportError(err);
 		} finally {
@@ -176,6 +191,37 @@ export default function DomainsPage() {
 		}
 	};
 
+	const handleAddProjectDomain = async () => {
+		const trimmed = projectOrigin.trim();
+		if (!trimmed) return;
+
+		setSavingProjectOrigin(true);
+		try {
+			await addProjectDomain(trimmed);
+			const items = await listProjectDomains();
+			setProjectDomains(items);
+			setProjectOrigin("");
+			toast.success("Project domain added");
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : "Failed to add project domain");
+		} finally {
+			setSavingProjectOrigin(false);
+		}
+	};
+
+	const handleRemoveProjectDomain = async (origin: string) => {
+		setRemovingProjectOrigin(origin);
+		try {
+			await removeProjectDomain(origin);
+			setProjectDomains((prev) => prev.filter((item) => item.origin !== origin));
+			toast.success("Project domain removed");
+		} catch {
+			toast.error("Failed to remove project domain");
+		} finally {
+			setRemovingProjectOrigin(null);
+		}
+	};
+
 	const isAddFormValid = newTitle.trim() && newValue.trim();
 
 	if (loading) {
@@ -216,6 +262,92 @@ export default function DomainsPage() {
 			</div>
 
 			<div className="grid gap-4">
+				<Card>
+					<CardHeader>
+						<div className="flex items-start justify-between gap-4">
+							<div className="space-y-1">
+								<CardTitle className="text-sm">Project OAuth origins</CardTitle>
+								<CardDescription className="max-w-xl">
+									HTTPS app origins used to build social provider callback URLs.
+								</CardDescription>
+							</div>
+						</div>
+					</CardHeader>
+					<CardContent className="grid gap-4">
+						<div className="flex flex-col gap-2 sm:flex-row">
+							<Input
+								value={projectOrigin}
+								onChange={(e) => setProjectOrigin(e.target.value)}
+								placeholder="https://kasilabs.com"
+								disabled={savingProjectOrigin}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") handleAddProjectDomain();
+								}}
+							/>
+							<Button
+								className="shrink-0"
+								onClick={handleAddProjectDomain}
+								disabled={!projectOrigin.trim() || savingProjectOrigin}
+							>
+								{savingProjectOrigin ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Plus className="size-4" />
+								)}
+								Add origin
+							</Button>
+						</div>
+
+						{projectDomains.length > 0 ? (
+							<div className="grid gap-3">
+								{projectDomains.map((domain) => (
+									<div
+										key={domain.origin}
+										className="rounded-md border border-border bg-muted/20 px-3 py-3"
+									>
+										<div className="flex items-start justify-between gap-3">
+											<div className="min-w-0 space-y-2">
+												<div className="flex items-center gap-2">
+													<code className="truncate rounded bg-muted px-2 py-1 text-sm">
+														{domain.origin}
+													</code>
+													<Badge variant="secondary">Verified</Badge>
+												</div>
+												<div className="grid gap-1">
+													{domain.oauthCallbackUrls.map((url) => (
+														<code
+															key={url}
+															className="block truncate text-xs text-muted-foreground"
+														>
+															{url}
+														</code>
+													))}
+												</div>
+											</div>
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() => handleRemoveProjectDomain(domain.origin)}
+												disabled={removingProjectOrigin === domain.origin}
+											>
+												{removingProjectOrigin === domain.origin ? (
+													<Loader2 className="size-3.5 animate-spin" />
+												) : (
+													<Trash2 className="size-3.5 text-destructive" />
+												)}
+											</Button>
+										</div>
+									</div>
+								))}
+							</div>
+						) : (
+							<p className="text-sm text-muted-foreground">
+								No project OAuth origins have been added.
+							</p>
+						)}
+					</CardContent>
+				</Card>
+
 				{domains.map((domain) => (
 					<Card key={domain.domainKey}>
 						<CardHeader>
